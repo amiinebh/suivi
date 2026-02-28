@@ -8,52 +8,30 @@ POST_URL = "https://shipsgo.com/api/v1.2/ContainerService/PostContainerInfo"
 GET_URL  = "https://shipsgo.com/api/v1.2/ContainerService/GetContainerInfo"
 
 CONTAINER_PREFIX_MAP = {
-    # CMA CGM â€” full prefix list
     "CMAU": "CMA CGM", "CGMU": "CMA CGM", "APHU": "CMA CGM", "APLU": "CMA CGM",
     "CSFU": "CMA CGM", "TCNU": "CMA CGM", "TLLU": "CMA CGM", "SEGU": "CMA CGM",
     "TTNU": "CMA CGM", "ECMU": "CMA CGM", "DVRU": "CMA CGM", "SMUU": "CMA CGM",
     "SEKU": "CMA CGM", "FSCU": "CMA CGM", "GESU": "CMA CGM", "REGU": "CMA CGM",
     "CRXU": "CMA CGM", "GLDU": "CMA CGM", "TRHU": "CMA CGM", "LGHU": "CMA CGM",
-    "ANNU": "CMA CGM", "CXDU": "CMA CGM", "DFSU": "CMA CGM", "FCGU": "CMA CGM",
-    # Hapag-Lloyd
     "HLCU": "Hapag-Lloyd", "HLXU": "Hapag-Lloyd", "UACU": "Hapag-Lloyd",
-    # Maersk
     "MAEU": "Maersk", "MSKU": "Maersk", "MCPU": "Maersk", "MRKU": "Maersk",
-    "TRLU": "Maersk", "TEMU": "Maersk", "TEXU": "Maersk",
-    # MSC
+    "TRLU": "Maersk", "TEMU": "Maersk",
     "MSCU": "MSC", "MEDU": "MSC", "MSDU": "MSC", "BMOU": "MSC",
-    # Evergreen
     "EISU": "Evergreen", "EMCU": "Evergreen", "EGHU": "Evergreen", "TCKU": "Evergreen",
-    # COSCO
     "CCLU": "COSCO", "CBHU": "COSCO", "COSU": "COSCO", "OOLU": "COSCO",
-    # ONE
     "ONEY": "ONE", "NYKU": "ONE", "MOFU": "ONE",
-    # Yang Ming
     "YMLU": "Yang Ming", "YMTU": "Yang Ming",
-    # HMM
     "HMMU": "HMM", "HDMU": "HMM",
-    # ZIM
     "ZIMU": "ZIM", "ZCSU": "ZIM",
-    # PIL
     "PILU": "PIL",
 }
 
 CARRIER_NAME_MAP = {
-    "cma":         "CMA CGM",
-    "cma cgm":     "CMA CGM",
-    "cmacgm":      "CMA CGM",
-    "hapag":       "Hapag-Lloyd",
-    "hapag-lloyd": "Hapag-Lloyd",
-    "hapag lloyd": "Hapag-Lloyd",
-    "maersk":      "Maersk",
-    "msc":         "MSC",
-    "evergreen":   "Evergreen",
-    "cosco":       "COSCO",
-    "one":         "ONE",
-    "yang ming":   "Yang Ming",
-    "hmm":         "HMM",
-    "zim":         "ZIM",
-    "pil":         "PIL",
+    "cma": "CMA CGM", "cma cgm": "CMA CGM", "cmacgm": "CMA CGM",
+    "hapag": "Hapag-Lloyd", "hapag-lloyd": "Hapag-Lloyd", "hapag lloyd": "Hapag-Lloyd",
+    "maersk": "Maersk", "msc": "MSC", "evergreen": "Evergreen",
+    "cosco": "COSCO", "one": "ONE", "yang ming": "Yang Ming",
+    "hmm": "HMM", "zim": "ZIM", "pil": "PIL",
 }
 
 STATUS_MAP = {
@@ -86,40 +64,27 @@ def map_status(raw: str):
 def parse_eta(val) -> str:
     if not val: return None
     s = str(val).strip()
-    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d",
-                "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"):
-        try:
-            return datetime.strptime(s[:len(fmt)], fmt).strftime("%Y-%m-%d")
+    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"):
+        try: return datetime.strptime(s[:len(fmt)], fmt).strftime("%Y-%m-%d")
         except: pass
-    # try just first 10 chars
     try: return datetime.strptime(s[:10], "%Y-%m-%d").strftime("%Y-%m-%d")
     except: pass
     return None
 
 def extract_eta(data: dict) -> str:
-    """Try every possible field name Shipsgo might use for ETA."""
-    eta_fields = [
-        "eta", "ETA", "Eta",
-        "estimatedArrival", "EstimatedArrival",
-        "etaFinalDestination", "EtaFinalDestination",
-        "arrivalDate", "ArrivalDate",
-        "estimatedTimeArrival", "EstimatedTimeArrival",
-        "etaDate", "EtaDate",
-        "finalEta", "FinalEta",
-        "portEta", "PortEta",
-        "dischargeEta", "DischargeEta",
-    ]
+    eta_fields = ["eta","ETA","Eta","estimatedArrival","EstimatedArrival",
+                  "etaFinalDestination","EtaFinalDestination","arrivalDate",
+                  "ArrivalDate","estimatedTimeArrival","etaDate","finalEta","portEta"]
     for field in eta_fields:
         val = data.get(field)
         if val:
             parsed = parse_eta(val)
             if parsed: return parsed
-
-    # Search nested â€” Shipsgo sometimes puts ETA inside routeList or legs
-    for key in ["routeList", "RouteList", "legs", "Legs", "containers", "Containers"]:
+    # Search inside nested lists (routeList / legs)
+    for key in ["routeList","RouteList","legs","Legs","containers","Containers"]:
         nested = data.get(key)
         if isinstance(nested, list) and nested:
-            last = nested[-1]  # last leg = final destination
+            last = nested[-1]
             if isinstance(last, dict):
                 for field in eta_fields:
                     val = last.get(field)
@@ -129,29 +94,30 @@ def extract_eta(data: dict) -> str:
     return None
 
 def extract_vessel(data: dict) -> str:
-    fields = ["vesselName","VesselName","vessel","Vessel",
-              "currentVesselName","CurrentVesselName","shipName","ShipName"]
-    for f in fields:
+    for f in ["vesselName","VesselName","vessel","Vessel","currentVesselName","shipName"]:
         v = data.get(f)
         if v and str(v).strip(): return str(v).strip()
     return ""
 
 def track_and_update(db: Session, shipment) -> dict:
-    container_no  = (shipment.ref2 or "").strip()
+    container_no = (shipment.ref2 or "").strip()
     if not container_no:
         return {"ref": shipment.ref, "status": "skipped", "reason": "No container number"}
 
     shipping_line = get_shipping_line(shipment.carrier or "", container_no)
 
-    # â”€â”€ STEP 1: POST to register container â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â”€â”€ STEP 1: POST with correct param name "authCode" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     request_id = None
     try:
-        post_r = requests.post(POST_URL, data={
-            "authorizationCode": SHIPSGO_TOKEN,
-            "containerNumber":   container_no,
-            "shippingLine":      shipping_line,
-        }, timeout=20)
-
+        post_r = requests.post(POST_URL,
+            data={
+                "authCode":        SHIPSGO_TOKEN,   # âœ… correct param name
+                "containerNumber": container_no,
+                "shippingLine":    shipping_line,
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=20
+        )
         if post_r.status_code == 200:
             try:
                 pd = post_r.json()
@@ -160,31 +126,28 @@ def track_and_update(db: Session, shipment) -> dict:
                 elif isinstance(pd, dict):
                     request_id = (pd.get("requestId") or pd.get("ContainerRequestId") or
                                   pd.get("containerRequestId") or pd.get("id"))
-                elif isinstance(pd, str) and pd.isdigit():
-                    request_id = int(pd)
+                elif isinstance(pd, str) and pd.strip().lstrip("-").isdigit():
+                    request_id = int(pd.strip())
             except: pass
-
     except Exception as e:
         return {"ref": shipment.ref, "status": "error", "reason": f"POST failed: {str(e)}"}
 
-    # â”€â”€ Small wait so Shipsgo can process â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    time.sleep(2)
+    # Small wait
+    time.sleep(3)
 
-    # â”€â”€ STEP 2: GET voyage info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â”€â”€ STEP 2: GET with correct param name "authCode" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     try:
-        params = {"authorizationCode": SHIPSGO_TOKEN}
-        if request_id:
-            params["requestId"] = request_id
-        else:
-            params["requestId"] = container_no
+        get_params = {
+            "authCode":  SHIPSGO_TOKEN,   # âœ… correct param name
+            "requestId": request_id if request_id else container_no,
+        }
 
-        get_r = requests.get(GET_URL, params=params, timeout=20)
+        get_r = requests.get(GET_URL, params=get_params, timeout=20)
 
         if get_r.status_code != 200:
             return {"ref": shipment.ref, "status": "error",
                     "reason": f"GET HTTP {get_r.status_code}",
-                    "shipping_line": shipping_line,
-                    "request_id": request_id}
+                    "shipping_line": shipping_line, "request_id": request_id}
 
         data = get_r.json()
 
