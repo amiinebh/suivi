@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
@@ -14,17 +14,30 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#0a0f1e;--bg2:#0f1629;--bg3:#151d35;
-  --card:#1a2240;--card2:#1f2a4a;--border:#2a3a5c;
   --accent:#4f8ef7;--accent2:#6c63ff;
   --green:#22c55e;--yellow:#f59e0b;--red:#ef4444;
   --orange:#f97316;--cyan:#06b6d4;
+  --radius:14px;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+/* ── DARK theme (default) ── */
+[data-theme="dark"]{
+  --bg:#0a0f1e;--bg2:#0f1629;--bg3:#151d35;
+  --card:#1a2240;--card2:#1f2a4a;--border:#2a3a5c;
   --text:#e8eaf6;--text2:#8892b0;--text3:#4a5568;
-  --radius:14px;--shadow:0 8px 32px rgba(0,0,0,.5);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --shadow:0 8px 32px rgba(0,0,0,.5);
+  --modal-overlay:rgba(0,0,0,.65);
+}
+/* ── LIGHT theme ── */
+[data-theme="light"]{
+  --bg:#f0f4ff;--bg2:#ffffff;--bg3:#e8edf8;
+  --card:#ffffff;--card2:#f5f7ff;--border:#d0d8f0;
+  --text:#1a2040;--text2:#5a6a8a;--text3:#a0aec0;
+  --shadow:0 4px 24px rgba(79,142,247,.1);
+  --modal-overlay:rgba(30,40,80,.5);
 }
 html,body{height:100%;overflow:hidden}
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);transition:background .25s,color .25s;
   display:flex;flex-direction:column;}
 
 /* ── Scrollbars ── */
@@ -194,7 +207,7 @@ select.filter{background:var(--card);border:1px solid var(--border);color:var(--
   border-radius:8px;padding:7px 12px;font-size:12px;outline:none;flex-shrink:0;font-family:inherit}
 
 /* ── Modal ── */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
+.overlay{display:none;position:fixed;inset:0;background:var(--modal-overlay);
   backdrop-filter:blur(6px);z-index:500;align-items:flex-end;justify-content:center}
 .overlay.open{display:flex}
 /* Desktop: center modal */
@@ -329,11 +342,41 @@ textarea.form-control{resize:none;min-height:72px}
 /* Version watermark */
 .version-tag{position:fixed;bottom:4px;left:8px;font-size:9px;
   color:var(--text3);z-index:1;pointer-events:none}
+
+/* ── Light theme overrides ── */
+[data-theme="light"] .sidebar{border-right-color:var(--border)}
+[data-theme="light"] .topbar{border-bottom-color:var(--border)}
+[data-theme="light"] .bottom-nav{border-top-color:var(--border);background:var(--bg2)}
+[data-theme="light"] th{background:var(--bg3);color:var(--text2)}
+[data-theme="light"] .stat-card:hover{border-color:var(--accent)}
+[data-theme="light"] .form-control{background:var(--bg3);border-color:var(--border)}
+[data-theme="light"] .form-control:focus{background:#fff}
+[data-theme="light"] .nav-item:hover{background:var(--bg3)}
+[data-theme="light"] .search-box{background:var(--bg3)}
+[data-theme="light"] select.filter{background:var(--bg3)}
+[data-theme="light"] .ship-card:active{background:var(--bg3)}
+[data-theme="light"] .detail-item{background:var(--bg3)}
+[data-theme="light"] .modal{background:var(--bg2)}
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:var(--border)}
+[data-theme="light"] .badge-pending{background:rgba(245,158,11,.1)}
+[data-theme="light"] .badge-sailing,[data-theme="light"] .badge-transit{background:rgba(79,142,247,.1)}
+[data-theme="light"] .badge-arrived,[data-theme="light"] .badge-delivered{background:rgba(34,197,94,.1)}
+[data-theme="light"] .badge-delayed{background:rgba(239,68,68,.1)}
+[data-theme="light"] .badge-discharged{background:rgba(6,182,212,.1)}
+[data-theme="light"] .stat-icon.blue{background:rgba(79,142,247,.12)}
+[data-theme="light"] .stat-icon.green{background:rgba(34,197,94,.12)}
+[data-theme="light"] .stat-icon.orange{background:rgba(249,115,22,.12)}
+[data-theme="light"] .stat-icon.red{background:rgba(239,68,68,.12)}
+[data-theme="light"] .stat-icon.cyan{background:rgba(6,182,212,.12)}
+[data-theme="light"] .stat-icon.purple{background:rgba(108,99,255,.12)}
+[data-theme="light"] .version-tag{color:var(--text3)}
+[data-theme="light"] .sidebar-user{background:var(--bg3)}
+[data-theme="light"] .nav-item.active{background:rgba(79,142,247,.1)}
 </style>
 </head>
 <body>
 <div id="toast-wrap"></div>
-<div class="version-tag">v25</div>
+<div class="version-tag">v26</div>
 
 <!-- FAB for mobile -->
 <button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
@@ -381,7 +424,10 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-magnifying-glass"></i>
       <input id="global-search" placeholder="Search…" oninput="onSearch(this.value)"/>
     </div>
-    <div class="topbar-actions-desktop" style="display:flex;gap:8px">
+    <div class="topbar-actions-desktop" style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-ghost btn-icon btn-sm" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme" style="font-size:16px">
+        🌙
+      </button>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()">
         <i class="fa fa-plus"></i> New
       </button>
@@ -455,6 +501,9 @@ textarea.form-control{resize:none;min-height:72px}
     </button>
     <button class="bnav-item" id="bnav-export" onclick="exportXLSX()">
       <i class="fa fa-download"></i><span>Export</span>
+    </button>
+    <button class="bnav-item" id="bnav-theme" onclick="toggleTheme()">
+      <i class="fa fa-circle-half-stroke"></i><span>Theme</span>
     </button>
   </div>
 </nav>
@@ -848,7 +897,8 @@ async function saveShipment(){
     else r=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
     if(r&&r.id){
       toast(editId?'Updated ✅':'Added ✅','success');
-      closeModal('modal-add'); loadDashboard(); loadShipments();
+      closeModal('modal-add'); initTheme();
+loadDashboard(); loadShipments();
     } else toast('Unexpected response','error');
   }catch(e){ toast('❌ '+e.message,'error'); console.error(e); }
   btn.innerHTML='<i class="fa fa-floppy-disk"></i> Save Shipment'; btn.disabled=false;
@@ -878,7 +928,8 @@ async function deleteShipment(sid){
   try{
     await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
     toast('Deleted','success'); closeModal('modal-detail');
-    loadDashboard(); loadShipments();
+    initTheme();
+loadDashboard(); loadShipments();
   }catch(e){ toast(e.message,'error'); }
 }
 
@@ -900,7 +951,29 @@ async function trackAll(){
 }
 function exportXLSX(){ window.open('/api/export/xlsx','_blank'); }
 
+/* ── Theme ── */
+function toggleTheme(){
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  const btn = document.getElementById('theme-toggle');
+  if(btn) btn.textContent = next === 'dark' ? '🌙' : '☀️';
+  const bnav = document.getElementById('bnav-theme');
+  if(bnav) bnav.querySelector('span').textContent = next === 'dark' ? 'Light' : 'Dark';
+}
+function initTheme(){
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('theme-toggle');
+  if(btn) btn.textContent = saved === 'dark' ? '🌙' : '☀️';
+  const bnav = document.getElementById('bnav-theme');
+  if(bnav) bnav.querySelector('span').textContent = saved === 'dark' ? 'Light' : 'Dark';
+}
+
 /* ── Init ── */
+initTheme();
 loadDashboard();
 </script>
 </body>
