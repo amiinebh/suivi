@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Response, Request
+from auth import get_current_user, require_admin, hash_password, verify_password, create_token
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
@@ -187,7 +188,7 @@ def health(db: Session = Depends(get_db)):
         return {"status": "error", "db": str(e)}
 
 
-# ── Shipsgo Proxy (avoids CORS from browser) ────────────────────────────────
+# ══ Shipsgo Proxy ══════════════════════════════════════════════════════
 import httpx
 from fastapi import Request as ProxyRequest
 
@@ -198,62 +199,21 @@ async def shipsgo_proxy(path: str, request: ProxyRequest):
     api_key = request.headers.get("X-Shipsgo-User-Token","")
     body    = await request.body()
     params  = dict(request.query_params)
-    hdrs = {
-        "X-Shipsgo-User-Token": api_key,
-        "Accept":               "application/json",
-        "Content-Type":         "application/json",
-    }
+    hdrs = {"X-Shipsgo-User-Token":api_key,"Accept":"application/json","Content-Type":"application/json"}
     url = f"{SHIPSGO_BASE}/{path}"
     async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.request(
-            method=request.method, url=url,
-            headers=hdrs, params=params, content=body,
-        )
+        resp = await client.request(method=request.method,url=url,headers=hdrs,params=params,content=body)
     try:    data = resp.json()
     except: data = {"raw": resp.text}
-    return JSONResponse(
-        content=data, status_code=resp.status_code,
-        headers={
-            "X-Shipsgo-Credits-Remaining": resp.headers.get("X-Shipsgo-Credits-Remaining",""),
-            "X-Shipsgo-Credits-Cost":      resp.headers.get("X-Shipsgo-Credits-Cost",""),
-        }
-    )
+    return JSONResponse(content=data, status_code=resp.status_code)
 
-# ── Debug page ───────────────────────────────────────────────────────────────
 @app.get("/debug")
 def debug_page():
-    from fastapi.responses import FileResponse
     return FileResponse("static/debug.html")
 
-# ── Track debug endpoint ─────────────────────────────────────────────────────
-@app.post("/api/shipments/{sid}/track-debug")
-def track_debug(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
-    import requests as req_lib
-    s = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
-    if not s: return {"error": "Shipment not found"}
-    token = os.getenv("SHIPSGO_TOKEN") or os.getenv("SHIPSGO_API_KEY","")
-    hdrs  = {"X-Shipsgo-User-Token": token, "Accept": "application/json",
-             "Content-Type": "application/json"}
-    result = {"token_set": bool(token), "ref": s.ref,
-              "container": s.ref2, "shipsgo_id": s.shipsgo_id}
-    if s.shipsgo_id:
-        r = req_lib.get(f"https://api.shipsgo.com/v2/ocean/shipments/{s.shipsgo_id}",
-                        headers=hdrs, timeout=20)
-        result["get"] = {"status": r.status_code, "body": r.json() if r.content else {}}
-    else:
-        r = req_lib.post("https://api.shipsgo.com/v2/ocean/shipments",
-                         headers=hdrs, json={"container_number": s.ref2 or ""}, timeout=20)
-        result["post"] = {"status": r.status_code, "body": r.json() if r.content else {}}
-    return result
+# ══ Auth & User Management ══════════════════════════════════════════════
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# AUTH & USER MANAGEMENT
-# ══════════════════════════════════════════════════════════════════════════════
-import auth as auth_module
-from auth import get_current_user, require_admin, hash_password, verify_password, create_token
-
-# ── Auto-create admin on first run ───────────────────────────────────────────
+# ── Auto-create admin on first run ──────────────────────────────────────────
 def ensure_admin(db):
     from models import User
     if not db.query(User).filter(User.role=="admin").first():
@@ -269,28 +229,28 @@ def ensure_admin(db):
 
 @app.on_event("startup")
 def on_startup():
-    # Import ALL models so create_all knows about every table including users
     import models as _models
     from database import Base, engine, SessionLocal, run_migrations
-    Base.metadata.create_all(bind=engine)   # creates users table if missing
-    run_migrations()                         # adds any missing columns
+    Base.metadata.create_all(bind=engine)
+    run_migrations()
     db = SessionLocal()
     try: ensure_admin(db)
-    except Exception as e:
-        print(f"⚠️ ensure_admin error: {e}")
+    except Exception as e: print(f"⚠️ ensure_admin: {e}")
     finally: db.close()
 
-# ── Login ─────────────────────────────────────────────────────────────────────
 @app.post("/api/auth/login")
 def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
     from models import User
-    user = db.query(User).filter(User.email == body.email, User.is_active == True).first()
+    user = db.query(User).filter(User.email==body.email, User.is_active==True).first()
     if not user or not verify_password(body.password, user.hashed_pw):
         raise HTTPException(401, "Invalid email or password")
     token = create_token(user.id, user.role, user.name)
     return {"access_token": token, "role": user.role, "name": user.name}
 
-# ── List users (admin only) ───────────────────────────────────────────────────
+@app.get("/api/auth/me")
+def me(current=Depends(get_current_user)):
+    return current
+
 @app.get("/api/users")
 def list_users(db: Session = Depends(get_db), current=Depends(require_admin)):
     from models import User
@@ -298,39 +258,43 @@ def list_users(db: Session = Depends(get_db), current=Depends(require_admin)):
     return [{"id":u.id,"email":u.email,"name":u.name,"role":u.role,
              "is_active":u.is_active,"created_at":u.created_at} for u in users]
 
-# ── Create user (admin only) ──────────────────────────────────────────────────
 @app.post("/api/users")
-def create_user(body: schemas.UserCreate, db: Session = Depends(get_db),
-                current=Depends(require_admin)):
+def create_user(body: schemas.UserCreate, db: Session = Depends(get_db), current=Depends(require_admin)):
     from models import User
-    if db.query(User).filter(User.email == body.email).first():
+    if db.query(User).filter(User.email==body.email).first():
         raise HTTPException(409, "Email already exists")
     u = User(email=body.email, name=body.name, role=body.role,
              hashed_pw=hash_password(body.password), is_active=True)
     db.add(u); db.commit(); db.refresh(u)
     return {"id":u.id,"email":u.email,"name":u.name,"role":u.role}
 
-# ── Toggle user active (admin only) ──────────────────────────────────────────
 @app.patch("/api/users/{uid}/toggle")
 def toggle_user(uid: int, db: Session = Depends(get_db), current=Depends(require_admin)):
     from models import User
     u = db.query(User).filter(User.id==uid).first()
     if not u: raise HTTPException(404,"User not found")
-    if u.role == "admin": raise HTTPException(400,"Cannot deactivate admin")
+    if u.role=="admin": raise HTTPException(400,"Cannot deactivate admin")
     u.is_active = not u.is_active; db.commit()
     return {"id":u.id,"is_active":u.is_active}
 
-# ── Delete user (admin only) ──────────────────────────────────────────────────
 @app.delete("/api/users/{uid}")
 def delete_user(uid: int, db: Session = Depends(get_db), current=Depends(require_admin)):
     from models import User
     u = db.query(User).filter(User.id==uid).first()
     if not u: raise HTTPException(404,"User not found")
-    if u.role == "admin": raise HTTPException(400,"Cannot delete admin")
+    if u.role=="admin": raise HTTPException(400,"Cannot delete admin")
     db.delete(u); db.commit()
     return {"deleted": uid}
 
-# ── Me endpoint ───────────────────────────────────────────────────────────────
-@app.get("/api/auth/me")
-def me(current=Depends(get_current_user)):
-    return current, current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user)
+@app.post("/api/shipments/{sid}/track-debug")
+def track_debug(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    import requests as req_lib
+    s = db.query(models.Shipment).filter(models.Shipment.id==sid).first()
+    if not s: return {"error":"Not found"}
+    token = os.getenv("SHIPSGO_TOKEN") or os.getenv("SHIPSGO_API_KEY","")
+    hdrs  = {"X-Shipsgo-User-Token":token,"Accept":"application/json","Content-Type":"application/json"}
+    result = {"token_set":bool(token),"ref":s.ref,"container":s.ref2,"shipsgo_id":s.shipsgo_id}
+    if s.shipsgo_id:
+        r = req_lib.get(f"https://api.shipsgo.com/v2/ocean/shipments/{s.shipsgo_id}",headers=hdrs,timeout=20)
+        result["get"] = {"status":r.status_code,"body":r.json() if r.content else {}}
+    return result
