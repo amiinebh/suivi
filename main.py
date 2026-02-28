@@ -32,7 +32,19 @@ scheduler.start()
 
 # ── Pages ────────────────────────────────────────────────────────────────────
 @app.get("/")
-def root(): return FileResponse("static/index.html")
+def root():
+    from fastapi.responses import Response
+    with open("static/index.html", "rb") as f:
+        content = f.read()
+    return Response(
+        content=content,
+        media_type="text/html",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        }
+    )
 
 @app.get("/track/{ref}")
 def client_portal(ref: str): return FileResponse("static/portal/index.html")
