@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 import models
 
 SHIPSGO_TOKEN = os.getenv("SHIPSGO_TOKEN", "3fd0583a-9281-4c30-8d9d-ececa0fff69c")
-SHIPSGO_URL   = "https://shipsgo.com/api/v1.2/ContainerService/GetContainerInfo"
+POST_URL = "https://shipsgo.com/api/v1.2/ContainerService/PostContainerInfo"
+GET_URL  = "https://shipsgo.com/api/v1.2/ContainerService/GetContainerInfo"
 
-# â”€â”€ Shipsgo exact shipping line names â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-# Must match exactly as in Shipsgo's list. If unknown â†’ "OTHERS"
+# â”€â”€ Carrier name map â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 CARRIER_MAP = {
     "cma":         "CMA CGM",
     "cma cgm":     "CMA CGM",
@@ -20,58 +20,43 @@ CARRIER_MAP = {
     "msc":         "MSC",
     "evergreen":   "Evergreen",
     "cosco":       "COSCO",
-    "coscol":      "COSCO",
     "one":         "ONE",
     "yang ming":   "Yang Ming",
     "yangming":    "Yang Ming",
     "hmm":         "HMM",
-    "pil":         "PIL",
     "zim":         "ZIM",
+    "pil":         "PIL",
 }
 
-# â”€â”€ Auto-detect carrier from container prefix â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 CONTAINER_PREFIX_MAP = {
-    # CMA CGM prefixes
     "CMAU": "CMA CGM", "CGMU": "CMA CGM", "APHU": "CMA CGM", "APLU": "CMA CGM",
     "CSFU": "CMA CGM", "TCNU": "CMA CGM", "TLLU": "CMA CGM", "SEGU": "CMA CGM",
     "TTNU": "CMA CGM", "ECMU": "CMA CGM", "DVRU": "CMA CGM", "SMUU": "CMA CGM",
-    # Hapag-Lloyd
     "HLCU": "Hapag-Lloyd", "HLXU": "Hapag-Lloyd",
-    # Maersk
     "MAEU": "Maersk", "MSKU": "Maersk", "MCPU": "Maersk", "MRKU": "Maersk",
-    # MSC
     "MSCU": "MSC", "MEDU": "MSC", "MSDU": "MSC",
-    # Evergreen
     "EISU": "Evergreen", "EMCU": "Evergreen", "EGHU": "Evergreen",
-    # COSCO
     "CCLU": "COSCO", "CBHU": "COSCO", "COSU": "COSCO",
-    # ONE
-    "ONEY": "ONE", "NYKU": "ONE", "MOFU": "ONE",
-    # Yang Ming
+    "ONEY": "ONE",  "NYKU": "ONE",
     "YMLU": "Yang Ming", "YMTU": "Yang Ming",
-    # HMM
-    "HMMU": "HMM", "HDMU": "HMM",
-    # ZIM
-    "ZIMU": "ZIM", "ZCSU": "ZIM",
+    "HMMU": "HMM",  "HDMU": "HMM",
+    "ZIMU": "ZIM",  "ZCSU": "ZIM",
 }
 
 STATUS_MAP = {
-    "In Transit": ["in transit","vessel departure","departed","on board","loaded","sailing","at sea","transshipment"],
+    "In Transit": ["in transit","vessel departure","departed","on board","loaded",
+                   "sailing","at sea","transshipment","vessel arrived"],
     "Delivered":  ["delivered","final delivery","gate out","picked up","completed","discharged"],
-    "Customs":    ["customs","customs hold","import customs","export customs","inspection","under examination"],
-    "Delayed":    ["rollover","delayed","missed connection","vessel change","rolled over","off schedule"],
+    "Customs":    ["customs","customs hold","import customs","export customs","inspection"],
+    "Delayed":    ["rollover","delayed","missed connection","vessel change","rolled over"],
     "Pending":    ["pending","booking","confirmed","not departed","pre-departure","awaiting"],
 }
 
 def get_shipping_line(carrier: str, container_no: str) -> str:
-    """Detect carrier from carrier field or container prefix."""
-    # Try carrier name first
     if carrier:
         c = carrier.lower().strip()
         for key, val in CARRIER_MAP.items():
-            if key in c:
-                return val
-    # Try container prefix
+            if key in c: return val
     if container_no and len(container_no) >= 4:
         prefix = container_no[:4].upper()
         if prefix in CONTAINER_PREFIX_MAP:
@@ -85,44 +70,75 @@ def map_status(raw: str):
         if any(k in r for k in keywords): return status
     return None
 
+def parse_eta(eta_raw: str):
+    if not eta_raw: return None
+    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"):
+        try:
+            return datetime.strptime(eta_raw[:19], fmt[:len(eta_raw[:19])]).strftime("%Y-%m-%d")
+        except: pass
+    return None
+
 def track_and_update(db: Session, shipment) -> dict:
-    container_no = (shipment.ref2 or "").strip()
+    container_no  = (shipment.ref2 or "").strip()
     if not container_no:
         return {"ref": shipment.ref, "status": "skipped", "reason": "No container number"}
 
     shipping_line = get_shipping_line(shipment.carrier or "", container_no)
 
+    # â”€â”€ STEP 1: POST to register container with Shipsgo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     try:
-        r = requests.get(SHIPSGO_URL, params={
+        post_resp = requests.post(POST_URL, data={
             "authorizationCode": SHIPSGO_TOKEN,
-            "containerNo":       container_no,
-            "shippingLineCode":  shipping_line,
+            "containerNumber":   container_no,
+            "shippingLine":      shipping_line,
         }, timeout=20)
 
-        if r.status_code != 200:
+        request_id = None
+        if post_resp.status_code == 200:
+            post_data = post_resp.json()
+            # Shipsgo returns requestId or ContainerRequestId
+            request_id = (post_data.get("requestId") or
+                          post_data.get("ContainerRequestId") or
+                          post_data.get("containerRequestId") or
+                          str(post_data) if isinstance(post_data, int) else None)
+    except Exception as e:
+        return {"ref": shipment.ref, "status": "error", "reason": f"POST failed: {str(e)}"}
+
+    # â”€â”€ STEP 2: GET voyage data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    try:
+        # Can use requestId OR container number directly
+        get_params = {"authorizationCode": SHIPSGO_TOKEN}
+        if request_id:
+            get_params["requestId"] = request_id
+        else:
+            # fallback: use container number as requestId
+            get_params["requestId"] = container_no
+
+        get_resp = requests.get(GET_URL, params=get_params, timeout=20)
+
+        if get_resp.status_code != 200:
             return {"ref": shipment.ref, "status": "error",
-                    "reason": f"HTTP {r.status_code}", "shipping_line": shipping_line}
+                    "reason": f"GET HTTP {get_resp.status_code}",
+                    "shipping_line": shipping_line}
 
-        data = r.json()
+        data = get_resp.json()
 
-        # â”€â”€ Parse response fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        # â”€â”€ Parse all possible field names Shipsgo uses â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         raw_status = (data.get("containerStatus") or data.get("status") or
-                      data.get("lastEvent") or "")
-        vessel     = (data.get("vesselName") or data.get("vessel") or
-                      data.get("currentVesselName") or "")
-        eta_raw    = (data.get("eta") or data.get("estimatedArrival") or
-                      data.get("etaFinalDestination") or "")
+                      data.get("lastEvent") or data.get("ContainerStatus") or "")
 
-        # Parse ETA to YYYY-MM-DD
-        new_eta = None
-        for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"):
-            try:
-                new_eta = datetime.strptime(eta_raw[:len(fmt)], fmt).strftime("%Y-%m-%d")
-                break
-            except: pass
+        vessel = (data.get("vesselName") or data.get("vessel") or
+                  data.get("VesselName") or data.get("currentVesselName") or "")
 
-        new_status = map_status(raw_status)
-        changed = []
+        # ETA â€” try all known field names
+        eta_raw = (data.get("eta") or data.get("ETA") or
+                   data.get("estimatedArrival") or data.get("EstimatedArrival") or
+                   data.get("etaFinalDestination") or data.get("EtaFinalDestination") or
+                   data.get("arrivalDate") or data.get("ArrivalDate") or "")
+
+        new_eta    = parse_eta(str(eta_raw)) if eta_raw else None
+        new_status = map_status(str(raw_status))
+        changed    = []
 
         obj = db.query(models.Shipment).filter(models.Shipment.id == shipment.id).first()
         if new_status and new_status != obj.status:
@@ -139,19 +155,18 @@ def track_and_update(db: Session, shipment) -> dict:
             "ref":           shipment.ref,
             "container":     container_no,
             "shipping_line": shipping_line,
+            "request_id":    request_id,
             "raw_status":    raw_status,
             "new_status":    new_status,
             "vessel":        vessel,
             "eta":           new_eta,
             "changed":       changed,
             "status":        "updated" if changed else "no_change",
-            "raw_response":  data,
+            "debug":         data,   # full raw response for debugging
         }
 
-    except requests.exceptions.Timeout:
-        return {"ref": shipment.ref, "status": "error", "reason": "Timeout"}
     except Exception as e:
-        return {"ref": shipment.ref, "status": "error", "reason": str(e)}
+        return {"ref": shipment.ref, "status": "error", "reason": f"GET failed: {str(e)}"}
 
 
 def run_auto_tracking(db: Session) -> list:
