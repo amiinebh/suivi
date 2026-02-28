@@ -158,6 +158,11 @@ def geojson(sid: int, db: Session = Depends(get_db)):
     if not gj: raise HTTPException(404, "No map data")
     return gj
 
+
+@app.get("/api/kpis")
+def get_kpis(db: Session = Depends(get_db)):
+    return crud.get_kpis(db)
+
 # ── Stats ─────────────────────────────────────────────────────────────────────
 @app.get("/api/stats")
 def stats(db: Session = Depends(get_db)):
