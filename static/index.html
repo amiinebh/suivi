@@ -650,6 +650,9 @@ textarea.form-control{resize:none;min-height:72px}
     <button class="bnav-item admin-only" id="bnav-analytics" onclick="showPage('analytics',null);setBottomNav('analytics')">
       <i class="fa fa-chart-line"></i><span>KPIs</span>
     </button>
+    <button class="bnav-item admin-only" id="bnav-users" onclick="showPage('users',null);setBottomNav('users')">
+      <i class="fa fa-users"></i><span>Team</span>
+    </button>
     <button class="bnav-item" id="bnav-sync" onclick="trackAll()">
       <i class="fa fa-rotate"></i><span>Sync</span>
     </button>
@@ -774,7 +777,7 @@ let editId=null, currentDetailId=null, allShipments=[];
 function showPage(id,el){
   // Role guards
   if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
-  if(id==='users') setTimeout(loadUsers, 150);
+  if(id==='users'){ setTimeout(loadUsers, 150); setBottomNav('users'); }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
