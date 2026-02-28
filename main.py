@@ -258,3 +258,8 @@ try:
         )
 except ImportError:
     pass
+
+@app.get("/debug")
+def debug_page():
+    from fastapi.responses import FileResponse
+    return FileResponse("static/debug.html")
