@@ -24,7 +24,7 @@ ALGORITHM      = "HS256"
 TOKEN_MINUTES  = 480
 oauth2_scheme  = OAuth2PasswordBearer(tokenUrl="token")
 
-# ── SEED ──────────────────────────────────────────────────────────────────
+# â”€â”€ SEED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def seed():
     db = SessionLocal()
     try:
@@ -33,7 +33,7 @@ def seed():
             u.hashed_password = _pwd.hash(ADMIN_PASS)
             u.role = "admin"
             db.commit()
-            print(f"✅ Admin password RESET → {ADMIN_USER} / {ADMIN_PASS}")
+            print(f"âœ… Admin password RESET â†’ {ADMIN_USER} / {ADMIN_PASS}")
         else:
             db.add(models.User(
                 username=ADMIN_USER, full_name="Administrator",
@@ -41,16 +41,16 @@ def seed():
                 hashed_password=_pwd.hash(ADMIN_PASS), role="admin"
             ))
             db.commit()
-            print(f"✅ Admin CREATED → {ADMIN_USER} / {ADMIN_PASS}")
+            print(f"âœ… Admin CREATED â†’ {ADMIN_USER} / {ADMIN_PASS}")
     except Exception as e:
         db.rollback()
-        print(f"⚠️ Seed error: {e}")
+        print(f"âš ï¸ Seed error: {e}")
     finally:
         db.close()
 
 seed()
 
-# ── APP ───────────────────────────────────────────────────────────────────
+# â”€â”€ APP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app = FastAPI(title="FreightTrack Pro")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
@@ -77,10 +77,10 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if not user: raise HTTPException(status_code=401, detail="User not found")
     return user
 
-# ── EMERGENCY RESET ENDPOINT (no auth needed) ─────────────────────────────
+# â”€â”€ EMERGENCY RESET ENDPOINT (no auth needed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.get("/reset-admin")
 def reset_admin():
-    """Emergency: resets admin password to Admin1234! — remove after first login."""
+    """Emergency: resets admin password to Admin1234! â€” remove after first login."""
     db = SessionLocal()
     try:
         u = db.query(models.User).filter(models.User.username == ADMIN_USER).first()
@@ -88,7 +88,7 @@ def reset_admin():
             u.hashed_password = _pwd.hash(ADMIN_PASS)
             u.role = "admin"
             db.commit()
-            return {"message": f"✅ Admin password reset to: {ADMIN_PASS}", "username": ADMIN_USER}
+            return {"message": f"âœ… Admin password reset to: {ADMIN_PASS}", "username": ADMIN_USER}
         else:
             db.add(models.User(
                 username=ADMIN_USER, full_name="Administrator",
@@ -96,14 +96,14 @@ def reset_admin():
                 hashed_password=_pwd.hash(ADMIN_PASS), role="admin"
             ))
             db.commit()
-            return {"message": f"✅ Admin created. Username: {ADMIN_USER}  Password: {ADMIN_PASS}"}
+            return {"message": f"âœ… Admin created. Username: {ADMIN_USER}  Password: {ADMIN_PASS}"}
     except Exception as e:
         db.rollback()
         return {"error": str(e)}
     finally:
         db.close()
 
-# ── AUTH ──────────────────────────────────────────────────────────────────
+# â”€â”€ AUTH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.post("/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
@@ -129,7 +129,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db), current_us
                     email=user.email, hashed_password=_pwd.hash(user.password), role=user.role)
     db.add(u); db.commit(); db.refresh(u); return u
 
-# ── SHIPMENTS ─────────────────────────────────────────────────────────────
+# â”€â”€ SHIPMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.get("/shipments", response_model=List[schemas.ShipmentOut])
 def get_shipments(db: Session = Depends(get_db), _=Depends(get_current_user)):
     return db.query(models.Shipment).order_by(models.Shipment.id.desc()).all()
@@ -175,7 +175,7 @@ def get_stats(db: Session = Depends(get_db), _=Depends(get_current_user)):
             "road":       sum(1 for s in all_s if s.mode == "Road"),
             "air":        sum(1 for s in all_s if s.mode == "Air")}
 
-# ── SHIPSGO ───────────────────────────────────────────────────────────────
+# â”€â”€ SHIPSGO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.post("/shipments/{shipment_id}/refresh")
 def refresh_single(shipment_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
     s = db.query(models.Shipment).filter(models.Shipment.id == shipment_id).first()
@@ -188,7 +188,7 @@ def refresh_all(db: Session = Depends(get_db), current_user=Depends(get_current_
     if current_user.role not in ("admin","operator"): raise HTTPException(403, "Not allowed")
     return {"updated": tracker.run_auto_tracking(db)}
 
-# ── SCHEDULER ─────────────────────────────────────────────────────────────
+# â”€â”€ SCHEDULER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 scheduler = BackgroundScheduler()
 def scheduled_tracking():
     db = SessionLocal()
@@ -198,7 +198,7 @@ def scheduled_tracking():
 scheduler.add_job(scheduled_tracking, "interval", hours=4, id="auto_track")
 scheduler.start()
 
-# ── STATIC ────────────────────────────────────────────────────────────────
+# â”€â”€ STATIC â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
