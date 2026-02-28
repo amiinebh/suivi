@@ -102,7 +102,22 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         eta=body.get("eta") or None,
         status=body.get("status") or "Pending",
     )
-    return crud.create_shipment(db, s)
+    ship = crud.create_shipment(db, s)
+    # Auto-register with Shipsgo if container/AWB provided
+    if ship.ref2:
+        try:
+            import tracker as _t
+            from database import SessionLocal
+            bg_db = SessionLocal()
+            import threading
+            def _bg():
+                try: _t.track_and_update(bg_db, bg_db.query(models.Shipment).filter(models.Shipment.id==ship.id).first())
+                except Exception as e: logger.warning(f"Auto-track: {e}")
+                finally: bg_db.close()
+            threading.Thread(target=_bg, daemon=True).start()
+        except Exception as e:
+            logger.warning(f"Auto-track start: {e}")
+    return ship
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
 def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):

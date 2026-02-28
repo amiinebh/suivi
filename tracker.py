@@ -95,7 +95,14 @@ def track_ocean(db: Session, shipment):
         logger.info(f"[{shipment.ref}] POST response: {r.status_code} {r.text[:300]}")
         if r.status_code in (200, 201, 409):
             d = r.json()
-            shipsgo_id = (d.get("shipment") or {}).get("id")
+            # v2 API: try both response shapes
+            shipsgo_id = (
+                (d.get("data") or {}).get("id") or
+                (d.get("shipment") or {}).get("id") or
+                d.get("id")
+            )
+            if not shipsgo_id and isinstance(d.get("data"), list) and d["data"]:
+                shipsgo_id = d["data"][0].get("id")
         else:
             return {"ref": shipment.ref, "status": "error",
                     "reason": f"POST {r.status_code}: {r.text[:300]}"}
@@ -111,40 +118,58 @@ def track_ocean(db: Session, shipment):
         db.commit()
 
     r2 = requests.get(f"{OCEAN}/{shipsgo_id}", headers=headers(), timeout=20)
-    logger.info(f"[{shipment.ref}] GET response: {r2.status_code} {r2.text[:500]}")
+    logger.info(f"[{shipment.ref}] GET {r2.status_code} — keys: {list(r2.json().keys()) if r2.status_code==200 else r2.text[:200]}")
     if r2.status_code != 200:
         return {"ref": shipment.ref, "status": "error",
                 "reason": f"GET {r2.status_code}: {r2.text[:300]}"}
 
     data  = r2.json()
-    ship  = data.get("shipment") or {}
+    # v2 API: data lives under "data" or "shipment" key
+    ship  = data.get("data") or data.get("shipment") or data or {}
+    if isinstance(ship, list): ship = ship[0] if ship else {}
     route = ship.get("route") or {}
-    pod_d = route.get("port_of_discharge") or {}
-    pol_d = route.get("port_of_loading") or {}
+    pod_d = route.get("port_of_discharge") or route.get("destination") or {}
+    pol_d = route.get("port_of_loading") or route.get("origin") or {}
 
-    # ETA: try date_of_discharge, fallback to initial
+    # ETA: try all known Shipsgo v2 field names
     new_eta = (parse_date(pod_d.get("date_of_discharge")) or
-               parse_date(pod_d.get("date_of_discharge_initial")))
+               parse_date(pod_d.get("date_of_discharge_initial")) or
+               parse_date(pod_d.get("eta")) or
+               parse_date(pod_d.get("estimated_arrival")) or
+               parse_date(ship.get("eta")))
     new_etd = (parse_date(pol_d.get("date_of_loading")) or
-               parse_date(pol_d.get("date_of_loading_initial")))
+               parse_date(pol_d.get("date_of_loading_initial")) or
+               parse_date(pol_d.get("etd")) or
+               parse_date(pol_d.get("estimated_departure")) or
+               parse_date(ship.get("etd")))
 
     raw_status = ship.get("status","")
     new_status = map_status(str(raw_status))
 
-    new_pol = ((pol_d.get("location") or {}).get("name") or "")
-    new_pod = ((pod_d.get("location") or {}).get("name") or "")
+    def _port_name(d):
+        if not d: return ""
+        return (d.get("name") or (d.get("location") or {}).get("name") or
+                (d.get("port") or {}).get("name") or d.get("port_name") or "")
+    new_pol = _port_name(pol_d)
+    new_pod = _port_name(pod_d)
 
-    # Extract vessel from containers
-    containers = ship.get("containers") or []
-    new_vessel = ""
+    # Extract vessel from containers or direct field
+    containers = ship.get("containers") or ship.get("container") or []
+    if isinstance(containers, dict): containers = [containers]
+    new_vessel = ship.get("vessel_name") or ship.get("vessel") or ""
+    if isinstance(new_vessel, dict): new_vessel = new_vessel.get("name","")
     for c in containers:
+        if not isinstance(c, dict): continue
         v = c.get("vessel") or {}
         if isinstance(v, dict) and v.get("name"):
             new_vessel = v["name"]; break
+        elif isinstance(v, str) and v:
+            new_vessel = v; break
 
     # Carrier
     carrier_info = ship.get("carrier") or {}
-    new_carrier = carrier_info.get("name","") if isinstance(carrier_info, dict) else ""
+    new_carrier = (carrier_info.get("name","") if isinstance(carrier_info, dict)
+                   else str(carrier_info)) if carrier_info else ""
 
     changed = []
     if new_status and new_status != obj.status:
