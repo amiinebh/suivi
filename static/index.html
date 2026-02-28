@@ -275,10 +275,28 @@ function badge(s){
   return `<span class="badge ${m[s]||'badge-default'}">${i[s]||''} ${s}</span>`;
 }
 
-async function apiFetch(url,opts={}){
-  const r=await fetch(API+url,{headers:{'Content-Type':'application/json'},...opts});
-  if(!r.ok){const e=await r.json().catch(()=>{});throw new Error(e?.detail||r.statusText);}
-  return r.json();
+async function apiFetch(url, options={}){
+  const defaultHeaders = {'Content-Type':'application/json', 'Accept':'application/json'};
+  const mergedOptions = {...options, headers: {...defaultHeaders, ...(options.headers||{})}};
+  let res;
+  try {
+    res = await fetch(url, mergedOptions);
+  } catch(networkErr) {
+    throw new Error('Network error: ' + networkErr.message);
+  }
+  if(!res.ok){
+    let errMsg = `HTTP ${res.status}`;
+    try {
+      const errBody = await res.json();
+      errMsg = errBody.detail || errBody.message || JSON.stringify(errBody);
+    } catch(_) {
+      errMsg = await res.text().catch(() => errMsg);
+    }
+    throw new Error(errMsg);
+  }
+  // Handle empty responses (204 No Content)
+  const text = await res.text();
+  return text ? JSON.parse(text) : {};
 }
 
 async function loadDashboard(){
@@ -447,29 +465,65 @@ function openEditModal(id){
 }
 
 async function saveShipment(){
-  const ref=document.getElementById('f-ref').value.trim();
-  if(!ref){toast('Reference is required','error');return;}
-  const btn=document.getElementById('btn-save');
-  btn.innerHTML='<span class="spinner"></span> Saving…'; btn.disabled=true;
-  const data={ref,ref2:document.getElementById('f-ref2').value.trim()||null,
-    booking_no:document.getElementById('f-booking').value.trim()||null,
-    mode:document.getElementById('f-mode').value,
-    carrier:document.getElementById('f-carrier').value.trim()||null,
-    client:document.getElementById('f-client').value.trim()||null,
-    client_email:document.getElementById('f-client-email').value.trim()||null,
-    pol:document.getElementById('f-pol').value.trim()||null,
-    pod:document.getElementById('f-pod').value.trim()||null,
-    etd:document.getElementById('f-etd').value||null,
-    eta:document.getElementById('f-eta').value||null,
-    status:document.getElementById('f-status').value,
-    note:document.getElementById('f-note').value.trim()||null};
-  try{
-    if(editId) await apiFetch(`/api/shipments/${editId}`,{method:'PATCH',body:JSON.stringify(data)});
-    else await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
-    toast(editId?'Shipment updated':'Shipment added','success');
-    closeModal('modal-add'); loadDashboard(); loadShipments();
-  }catch(e){toast(e.message,'error');}
-  btn.innerHTML='💾 Save'; btn.disabled=false;
+  const refEl = document.getElementById('f-ref');
+  if(!refEl){ toast('Form error: ref field missing','error'); return; }
+  const ref = refEl.value.trim();
+  if(!ref){ toast('Reference is required','error'); return; }
+
+  const btn = document.getElementById('btn-save');
+  btn.innerHTML = '<span class="spinner"></span> Saving…';
+  btn.disabled = true;
+
+  const g = id => {
+    const el = document.getElementById(id);
+    if(!el) return null;
+    const v = el.value.trim();
+    return v === '' ? null : v;
+  };
+
+  const data = {
+    ref:          ref,
+    ref2:         g('f-ref2'),
+    booking_no:   g('f-booking'),
+    mode:         (document.getElementById('f-mode')||{}).value || 'Ocean',
+    carrier:      g('f-carrier'),
+    client:       g('f-client'),
+    client_email: g('f-client-email'),
+    pol:          g('f-pol'),
+    pod:          g('f-pod'),
+    etd:          g('f-etd'),
+    eta:          g('f-eta'),
+    status:       (document.getElementById('f-status')||{}).value || 'Pending',
+    note:         g('f-note'),
+  };
+
+  console.log('[saveShipment] payload:', JSON.stringify(data));
+  console.log('[saveShipment] editId:', editId);
+
+  try {
+    let result;
+    if(editId){
+      result = await apiFetch(`/api/shipments/${editId}`, {method:'PATCH', body:JSON.stringify(data)});
+    } else {
+      result = await apiFetch('/api/shipments', {method:'POST', body:JSON.stringify(data)});
+    }
+    console.log('[saveShipment] result:', result);
+    if(result && result.id){
+      toast(editId ? 'Shipment updated ✅' : 'Shipment added ✅', 'success');
+      closeModal('modal-add');
+      await loadDashboard();
+      await loadShipments();
+    } else {
+      toast('Server returned unexpected response — check console', 'error');
+      console.error('[saveShipment] unexpected result:', result);
+    }
+  } catch(e) {
+    toast('❌ ' + e.message, 'error');
+    console.error('[saveShipment] error:', e);
+  }
+
+  btn.innerHTML = '💾 Save';
+  btn.disabled = false;
 }
 
 // ── Track ──────────────────────────────────────────────────────────────────
