@@ -346,3 +346,84 @@ def track_debug(sid: int, db: Session = Depends(get_db), current=Depends(get_cur
         r = req_lib.get(f"https://api.shipsgo.com/v2/ocean/shipments/{s.shipsgo_id}",headers=hdrs,timeout=20)
         result["get"] = {"status":r.status_code,"body":r.json() if r.content else {}}
     return result
+
+# ══ Shipsgo Deep Debug ════════════════════════════════════════════════
+@app.get("/api/debug/shipsgo")
+def shipsgo_debug(db: Session = Depends(get_db), current=Depends(get_current_user)):
+    """Full Shipsgo connectivity + POST test — returns raw API responses."""
+    import requests as req_lib
+    token = os.getenv("SHIPSGO_TOKEN") or os.getenv("SHIPSGO_API_KEY","")
+    result = {"token_set": bool(token), "token_preview": token[:6]+"…" if token else ""}
+
+    hdrs = {"X-Shipsgo-User-Token": token, "Accept": "application/json",
+            "Content-Type": "application/json"}
+
+    # 1. List existing ocean shipments (verifies token works)
+    try:
+        r = req_lib.get("https://api.shipsgo.com/v2/ocean/shipments?take=3",
+                        headers=hdrs, timeout=15)
+        result["list_status"] = r.status_code
+        result["list_body"] = r.json() if r.content else {}
+    except Exception as e:
+        result["list_error"] = str(e)
+
+    # 2. Try a test POST with a known valid CMA CGM container prefix
+    test_body = {"container_number": "CMAU0000001", "carrier": "CMDU",
+                 "reference": "DEBUG-TEST-001"}
+    try:
+        r2 = req_lib.post("https://api.shipsgo.com/v2/ocean/shipments",
+                          headers=hdrs, json=test_body, timeout=15)
+        result["test_post_status"] = r2.status_code
+        result["test_post_body"] = r2.json() if r2.content else {}
+        # If 409, grab the existing id
+        if r2.status_code == 409:
+            result["test_post_note"] = "409 = already exists (token works!)"
+    except Exception as e:
+        result["test_post_error"] = str(e)
+
+    # 3. Check all shipments in DB that have no shipsgo_id
+    unregistered = db.query(models.Shipment).filter(
+        models.Shipment.shipsgo_id == None,
+        models.Shipment.ref2 != None,
+        models.Shipment.ref2 != ""
+    ).all()
+    result["unregistered_shipments"] = [
+        {"id": s.id, "ref": s.ref, "container": s.ref2, "carrier": s.carrier}
+        for s in unregistered
+    ]
+
+    return result
+
+@app.post("/api/shipments/{sid}/force-register")
+def force_register(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    """Force re-register a specific shipment with Shipsgo and return full raw response."""
+    import requests as req_lib
+    s = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
+    if not s: raise HTTPException(404, "Shipment not found")
+    token = os.getenv("SHIPSGO_TOKEN") or os.getenv("SHIPSGO_API_KEY","")
+    hdrs = {"X-Shipsgo-User-Token": token, "Accept": "application/json",
+            "Content-Type": "application/json"}
+    ref = (s.ref or "").strip()
+    if len(ref) < 5: ref = ref + "-FTP"
+
+    import tracker as _t
+    scac = _t.resolve_scac(s.ref2 or "", s.carrier or "")
+    body = {"container_number": s.ref2, "reference": ref[:128]}
+    if scac: body["carrier"] = scac
+    if s.booking_no: body["booking_number"] = s.booking_no
+    if s.client_email: body["followers"] = [s.client_email]
+
+    try:
+        r = req_lib.post("https://api.shipsgo.com/v2/ocean/shipments",
+                         headers=hdrs, json=body, timeout=20)
+        d = {}
+        try: d = r.json()
+        except: d = {"raw": r.text}
+        # Save shipsgo_id if we got one
+        sid_val = (d.get("shipment") or {}).get("id")
+        if sid_val and not s.shipsgo_id:
+            s.shipsgo_id = sid_val; db.commit()
+        return {"status": r.status_code, "body": d, "body_sent": body,
+                "scac_resolved": scac, "shipsgo_id_saved": sid_val}
+    except Exception as e:
+        return {"error": str(e), "body_sent": body}
