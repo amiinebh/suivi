@@ -10,67 +10,57 @@ from passlib.context import CryptContext
 from typing import Optional, List
 import os
 
-import models, schemas, crud, tracker
+import models, schemas, tracker
 from database import SessionLocal, engine
 from apscheduler.schedulers.background import BackgroundScheduler
 
-# â”€â”€ CREATE TABLES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 models.Base.metadata.create_all(bind=engine)
 
-# â”€â”€ SEED: always ensure admin exists with correct password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "Admin1234!"
+_pwd           = CryptContext(schemes=["bcrypt"], deprecated="auto")
+ADMIN_USER     = "admin"
+ADMIN_PASS     = "Admin1234!"
+SECRET_KEY     = os.getenv("SECRET_KEY", "freighttrack-secret-2026")
+ALGORITHM      = "HS256"
+TOKEN_MINUTES  = 480
+oauth2_scheme  = OAuth2PasswordBearer(tokenUrl="token")
 
-def auto_seed():
+# ── SEED ──────────────────────────────────────────────────────────────────
+def seed():
     db = SessionLocal()
     try:
-        user = db.query(models.User).filter(models.User.username == ADMIN_USERNAME).first()
-        if not user:
-            u = models.User(
-                username=ADMIN_USERNAME,
-                full_name="Administrator",
-                email="admin@freighttrack.com",
-                hashed_password=_pwd.hash(ADMIN_PASSWORD),
-                role="admin"
-            )
-            db.add(u)
+        u = db.query(models.User).filter(models.User.username == ADMIN_USER).first()
+        if u:
+            u.hashed_password = _pwd.hash(ADMIN_PASS)
+            u.role = "admin"
             db.commit()
-            print(f"âœ… Admin created â€” username: {ADMIN_USERNAME}  password: {ADMIN_PASSWORD}")
+            print(f"✅ Admin password RESET → {ADMIN_USER} / {ADMIN_PASS}")
         else:
-            # Force-reset password in case it was wrong
-            user.hashed_password = _pwd.hash(ADMIN_PASSWORD)
+            db.add(models.User(
+                username=ADMIN_USER, full_name="Administrator",
+                email="admin@freighttrack.com",
+                hashed_password=_pwd.hash(ADMIN_PASS), role="admin"
+            ))
             db.commit()
-            print(f"âœ… Admin password reset â€” username: {ADMIN_USERNAME}  password: {ADMIN_PASSWORD}")
+            print(f"✅ Admin CREATED → {ADMIN_USER} / {ADMIN_PASS}")
     except Exception as e:
-        print(f"âš ï¸ Seed error: {e}")
         db.rollback()
+        print(f"⚠️ Seed error: {e}")
     finally:
         db.close()
 
-auto_seed()
+seed()
 
-# â”€â”€ APP SETUP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── APP ───────────────────────────────────────────────────────────────────
 app = FastAPI(title="FreightTrack Pro")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
-
-SECRET_KEY    = os.getenv("SECRET_KEY", "freighttrack-secret-2026")
-ALGORITHM     = "HS256"
-TOKEN_MINUTES = 480
-
-pwd_context   = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def get_db():
     db = SessionLocal()
     try:    yield db
     finally: db.close()
 
-def verify_password(plain, hashed):
-    return pwd_context.verify(plain, hashed)
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+def create_access_token(data, expires_delta=None):
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
     to_encode.update({"exp": expire})
@@ -79,49 +69,67 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if not username:
-            raise HTTPException(status_code=401, detail="Invalid token")
+        username = payload.get("sub")
+        if not username: raise HTTPException(status_code=401, detail="Invalid token")
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
     user = db.query(models.User).filter(models.User.username == username).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+    if not user: raise HTTPException(status_code=401, detail="User not found")
     return user
 
-# â”€â”€ AUTH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── EMERGENCY RESET ENDPOINT (no auth needed) ─────────────────────────────
+@app.get("/reset-admin")
+def reset_admin():
+    """Emergency: resets admin password to Admin1234! — remove after first login."""
+    db = SessionLocal()
+    try:
+        u = db.query(models.User).filter(models.User.username == ADMIN_USER).first()
+        if u:
+            u.hashed_password = _pwd.hash(ADMIN_PASS)
+            u.role = "admin"
+            db.commit()
+            return {"message": f"✅ Admin password reset to: {ADMIN_PASS}", "username": ADMIN_USER}
+        else:
+            db.add(models.User(
+                username=ADMIN_USER, full_name="Administrator",
+                email="admin@freighttrack.com",
+                hashed_password=_pwd.hash(ADMIN_PASS), role="admin"
+            ))
+            db.commit()
+            return {"message": f"✅ Admin created. Username: {ADMIN_USER}  Password: {ADMIN_PASS}"}
+    except Exception as e:
+        db.rollback()
+        return {"error": str(e)}
+    finally:
+        db.close()
+
+# ── AUTH ──────────────────────────────────────────────────────────────────
 @app.post("/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    if not user or not _pwd.verify(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     token = create_access_token({"sub": user.username}, timedelta(minutes=TOKEN_MINUTES))
     return {"access_token": token, "token_type": "bearer", "role": user.role, "name": user.full_name}
 
 @app.get("/users/me", response_model=schemas.UserOut)
-def me(current_user=Depends(get_current_user)):
-    return current_user
+def me(current_user=Depends(get_current_user)): return current_user
 
 @app.get("/users", response_model=List[schemas.UserOut])
 def list_users(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin only")
+    if current_user.role != "admin": raise HTTPException(403, "Admin only")
     return db.query(models.User).all()
 
 @app.post("/users/register", response_model=schemas.UserOut)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin only")
+    if current_user.role != "admin": raise HTTPException(403, "Admin only")
     if db.query(models.User).filter(models.User.username == user.username).first():
-        raise HTTPException(status_code=400, detail="Username already exists")
-    u = models.User(
-        username=user.username, full_name=user.full_name,
-        email=user.email, hashed_password=_pwd.hash(user.password), role=user.role
-    )
-    db.add(u); db.commit(); db.refresh(u)
-    return u
+        raise HTTPException(400, "Username exists")
+    u = models.User(username=user.username, full_name=user.full_name,
+                    email=user.email, hashed_password=_pwd.hash(user.password), role=user.role)
+    db.add(u); db.commit(); db.refresh(u); return u
 
-# â”€â”€ SHIPMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── SHIPMENTS ─────────────────────────────────────────────────────────────
 @app.get("/shipments", response_model=List[schemas.ShipmentOut])
 def get_shipments(db: Session = Depends(get_db), _=Depends(get_current_user)):
     return db.query(models.Shipment).order_by(models.Shipment.id.desc()).all()
@@ -129,68 +137,59 @@ def get_shipments(db: Session = Depends(get_db), _=Depends(get_current_user)):
 @app.get("/shipments/{shipment_id}", response_model=schemas.ShipmentOut)
 def get_shipment(shipment_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
     s = db.query(models.Shipment).filter(models.Shipment.id == shipment_id).first()
-    if not s: raise HTTPException(status_code=404, detail="Not found")
+    if not s: raise HTTPException(404, "Not found")
     return s
 
 @app.post("/shipments", response_model=schemas.ShipmentOut)
 def create_shipment(shipment: schemas.ShipmentCreate, db: Session = Depends(get_db),
                     current_user=Depends(get_current_user)):
     if db.query(models.Shipment).filter(models.Shipment.ref == shipment.ref).first():
-        raise HTTPException(status_code=400, detail="Reference already exists")
+        raise HTTPException(400, "Reference exists")
     obj = models.Shipment(**shipment.model_dump(), created_by=current_user.id)
-    db.add(obj); db.commit(); db.refresh(obj)
-    return obj
+    db.add(obj); db.commit(); db.refresh(obj); return obj
 
 @app.put("/shipments/{shipment_id}", response_model=schemas.ShipmentOut)
 def update_shipment(shipment_id: int, shipment: schemas.ShipmentCreate,
                     db: Session = Depends(get_db), _=Depends(get_current_user)):
     obj = db.query(models.Shipment).filter(models.Shipment.id == shipment_id).first()
-    if not obj: raise HTTPException(status_code=404, detail="Not found")
-    for k, v in shipment.model_dump().items():
-        setattr(obj, k, v)
-    db.commit(); db.refresh(obj)
-    return obj
+    if not obj: raise HTTPException(404, "Not found")
+    for k, v in shipment.model_dump().items(): setattr(obj, k, v)
+    db.commit(); db.refresh(obj); return obj
 
 @app.delete("/shipments/{shipment_id}")
 def delete_shipment(shipment_id: int, db: Session = Depends(get_db),
                     current_user=Depends(get_current_user)):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin only")
+    if current_user.role != "admin": raise HTTPException(403, "Admin only")
     obj = db.query(models.Shipment).filter(models.Shipment.id == shipment_id).first()
-    if not obj: raise HTTPException(status_code=404, detail="Not found")
-    db.delete(obj); db.commit()
-    return {"message": "Deleted"}
+    if not obj: raise HTTPException(404, "Not found")
+    db.delete(obj); db.commit(); return {"message": "Deleted"}
 
 @app.get("/stats")
 def get_stats(db: Session = Depends(get_db), _=Depends(get_current_user)):
     all_s = db.query(models.Shipment).all()
-    return {
-        "total":      len(all_s),
-        "in_transit": sum(1 for s in all_s if s.status == "In Transit"),
-        "delivered":  sum(1 for s in all_s if s.status == "Delivered"),
-        "issues":     sum(1 for s in all_s if s.status in ("Delayed", "Customs")),
-        "ocean":      sum(1 for s in all_s if s.mode == "Ocean"),
-        "road":       sum(1 for s in all_s if s.mode == "Road"),
-        "air":        sum(1 for s in all_s if s.mode == "Air"),
-    }
+    return {"total": len(all_s),
+            "in_transit": sum(1 for s in all_s if s.status == "In Transit"),
+            "delivered":  sum(1 for s in all_s if s.status == "Delivered"),
+            "issues":     sum(1 for s in all_s if s.status in ("Delayed","Customs")),
+            "ocean":      sum(1 for s in all_s if s.mode == "Ocean"),
+            "road":       sum(1 for s in all_s if s.mode == "Road"),
+            "air":        sum(1 for s in all_s if s.mode == "Air")}
 
-# â”€â”€ SHIPSGO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── SHIPSGO ───────────────────────────────────────────────────────────────
 @app.post("/shipments/{shipment_id}/refresh")
 def refresh_single(shipment_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
     s = db.query(models.Shipment).filter(models.Shipment.id == shipment_id).first()
-    if not s: raise HTTPException(status_code=404, detail="Not found")
-    if not s.ref2: raise HTTPException(status_code=400, detail="No container number")
+    if not s: raise HTTPException(404, "Not found")
+    if not s.ref2: raise HTTPException(400, "No container number")
     return tracker.track_and_update(db, s)
 
 @app.post("/tracking/refresh-all")
 def refresh_all(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    if current_user.role not in ("admin", "operator"):
-        raise HTTPException(status_code=403, detail="Not allowed")
+    if current_user.role not in ("admin","operator"): raise HTTPException(403, "Not allowed")
     return {"updated": tracker.run_auto_tracking(db)}
 
-# â”€â”€ SCHEDULER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── SCHEDULER ─────────────────────────────────────────────────────────────
 scheduler = BackgroundScheduler()
-
 def scheduled_tracking():
     db = SessionLocal()
     try:    tracker.run_auto_tracking(db)
@@ -199,9 +198,8 @@ def scheduled_tracking():
 scheduler.add_job(scheduled_tracking, "interval", hours=4, id="auto_track")
 scheduler.start()
 
-# â”€â”€ FRONTEND â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── STATIC ────────────────────────────────────────────────────────────────
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
-def serve():
-    return FileResponse("static/index.html")
+def serve(): return FileResponse("static/index.html")
