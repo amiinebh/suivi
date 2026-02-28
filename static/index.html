@@ -682,7 +682,7 @@ textarea.form-control{resize:none;min-height:72px}
     <button class="bnav-item" id="bnav-shipments" onclick="showPage('shipments',null);setBottomNav('shipments')">
       <i class="fa fa-boxes-stacked"></i><span>Shipments</span>
     </button>
-    <button class="bnav-item" id="bnav-analytics" onclick="showPage('analytics',null);setBottomNav('analytics')">
+    <button class="bnav-item admin-only" id="bnav-analytics" onclick="showPage('analytics',null);setBottomNav('analytics')">
       <i class="fa fa-chart-line"></i><span>KPIs</span>
     </button>
     <button class="bnav-item" id="bnav-sync" onclick="trackAll()">
@@ -807,6 +807,9 @@ let editId=null, currentDetailId=null, allShipments=[];
 
 /* ── Nav ── */
 function showPage(id,el){
+  // Role guards
+  if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
+  if(id==='users') setTimeout(loadUsers, 150);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1335,7 +1338,14 @@ function authFetch(url, opts={}){
   const t = getToken();
   if(t) opts.headers["Authorization"] = "Bearer " + t;
   return fetch(url, opts).then(r => {
-    if(r.status === 401){ doLogout(); }
+    if(r.status === 401){
+      doLogout();
+      const ls = document.getElementById("login-screen");
+      if(ls){ ls.style.display="flex"; }
+      // Show message
+      const err = document.getElementById("login-error");
+      if(err){ err.textContent="Your account has been deactivated. Contact admin."; err.style.display="block"; }
+    }
     return r;
   });
 }
