@@ -5,9 +5,9 @@ import models
 
 SHIPSGO_TOKEN = os.getenv("SHIPSGO_TOKEN", "f12e82f3-16c7-4d90-bae4-e63a3aee9c3a")
 
-# â”€â”€ Correct Shipsgo v2 API endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-POST_URL = "https://shipsgo.com/api/v2/container"
-GET_URL  = "https://shipsgo.com/api/v2/container"
+# â”€â”€ EXACT URLs from official Shipsgo API v1.0 documentation PDF â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+POST_URL = "https://shipsgo.com/api/ContainerService/PostContainerInfo/"
+GET_URL  = "https://shipsgo.com/api/ContainerService/GetContainerInfo/"
 
 CONTAINER_PREFIX_MAP = {
     "CMAU": "CMA CGM", "CGMU": "CMA CGM", "APHU": "CMA CGM", "APLU": "CMA CGM",
@@ -74,13 +74,14 @@ def parse_eta(val) -> str:
 def extract_eta(data: dict) -> str:
     eta_fields = ["eta","ETA","Eta","estimatedArrival","EstimatedArrival",
                   "etaFinalDestination","EtaFinalDestination","arrivalDate",
-                  "ArrivalDate","estimatedTimeArrival","etaDate","finalEta","portEta"]
+                  "ArrivalDate","estimatedTimeArrival","etaDate","finalEta","portEta",
+                  "dischargeDate","DischargeDate"]
     for field in eta_fields:
         val = data.get(field)
         if val:
             parsed = parse_eta(val)
             if parsed: return parsed
-    for key in ["routeList","RouteList","legs","Legs","containers","Containers"]:
+    for key in ["routeList","RouteList","legs","Legs","containers","Containers","movements"]:
         nested = data.get(key)
         if isinstance(nested, list) and nested:
             last = nested[-1]
@@ -104,55 +105,63 @@ def track_and_update(db: Session, shipment) -> dict:
         return {"ref": shipment.ref, "status": "skipped", "reason": "No container number"}
 
     shipping_line = get_shipping_line(shipment.carrier or "", container_no)
-    headers = {
-        "Authorization": f"Bearer {SHIPSGO_TOKEN}",
-        "Content-Type": "application/json",
-    }
 
-    # â”€â”€ STEP 1: POST to create tracking request â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â”€â”€ STEP 1: POST â€” params in QUERY STRING, content-type url-encoded â”€â”€â”€
     request_id = None
     post_debug = ""
     try:
         post_r = requests.post(
             POST_URL,
-            headers=headers,
-            json={
+            params={                        # â† query string as per docs
+                "authCode":        SHIPSGO_TOKEN,
                 "containerNumber": container_no,
                 "shippingLine":    shipping_line,
             },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
             timeout=20
         )
-        post_debug = f"POST {post_r.status_code}: {post_r.text[:200]}"
-        if post_r.status_code in (200, 201):
+        post_debug = f"POST {post_r.status_code}: {post_r.text[:300]}"
+
+        if post_r.status_code == 200:
             try:
                 pd = post_r.json()
-                if isinstance(pd, int): request_id = pd
+                if isinstance(pd, int):
+                    request_id = pd
                 elif isinstance(pd, dict):
-                    request_id = (pd.get("id") or pd.get("requestId") or
-                                  pd.get("ContainerRequestId") or pd.get("containerRequestId"))
+                    request_id = (pd.get("requestId") or pd.get("ContainerRequestId") or
+                                  pd.get("containerRequestId") or pd.get("id"))
                 elif isinstance(pd, str) and pd.strip().lstrip("-").isdigit():
                     request_id = int(pd.strip())
             except: pass
+        else:
+            return {
+                "ref": shipment.ref, "status": "error",
+                "reason": f"POST {post_r.status_code}: {post_r.text[:300]}",
+                "shipping_line": shipping_line, "post_debug": post_debug
+            }
+
     except Exception as e:
-        post_debug = f"POST exception: {str(e)}"
+        return {"ref": shipment.ref, "status": "error", "reason": f"POST exception: {str(e)}"}
 
     time.sleep(3)
 
-    # â”€â”€ STEP 2: GET tracking data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â”€â”€ STEP 2: GET â€” extended=true to get all dates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     try:
-        get_params = {}
-        if request_id:
-            get_url = f"{GET_URL}/{request_id}"
-        else:
-            get_url = GET_URL
-            get_params["containerNumber"] = container_no
-
-        get_r = requests.get(get_url, headers=headers, params=get_params, timeout=20)
+        get_r = requests.get(
+            GET_URL,
+            params={
+                "authCode":  SHIPSGO_TOKEN,
+                "requestId": request_id if request_id else container_no,
+                "extended":  "true",
+            },
+            headers={"Accept": "application/json"},
+            timeout=20
+        )
 
         if get_r.status_code != 200:
             return {
                 "ref": shipment.ref, "status": "error",
-                "reason": f"GET HTTP {get_r.status_code}: {get_r.text[:300]}",
+                "reason": f"GET {get_r.status_code}: {get_r.text[:300]}",
                 "shipping_line": shipping_line, "request_id": request_id,
                 "post_debug": post_debug,
             }
