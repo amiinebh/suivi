@@ -263,3 +263,25 @@ except ImportError:
 def debug_page():
     from fastapi.responses import FileResponse
     return FileResponse("static/debug.html")
+
+@app.post("/api/shipments/{sid}/track-debug")
+def track_debug(sid: int, db: Session = Depends(get_db)):
+    """Returns raw Shipsgo API response for debugging"""
+    import requests as req_lib
+    s = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
+    if not s: return {"error": "Shipment not found"}
+    token = os.getenv("SHIPSGO_TOKEN") or os.getenv("SHIPSGO_API_KEY","")
+    hdrs = {"X-Shipsgo-User-Token": token, "Accept": "application/json",
+            "Content-Type": "application/json"}
+    results = {"token_set": bool(token), "ref": s.ref,
+               "container": s.ref2, "shipsgo_id": s.shipsgo_id}
+    if s.shipsgo_id:
+        r = req_lib.get(f"https://api.shipsgo.com/v2/ocean/shipments/{s.shipsgo_id}",
+                        headers=hdrs, timeout=20)
+        results["shipsgo_get"] = {"status": r.status_code, "body": r.json() if r.content else {}}
+    else:
+        body = {"container_number": s.ref2 or ""}
+        r = req_lib.post("https://api.shipsgo.com/v2/ocean/shipments",
+                         headers=hdrs, json=body, timeout=20)
+        results["shipsgo_post"] = {"status": r.status_code, "body": r.json() if r.content else {}}
+    return results
