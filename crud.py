@@ -1,38 +1,63 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 import models, schemas
 
-def get_user_by_username(db, u): return db.query(models.User).filter(models.User.username==u).first()
-def get_all_users(db): return db.query(models.User).all()
-def create_user(db, user: schemas.UserCreate, hashed_password: str):
-    u = models.User(username=user.username, full_name=user.full_name,
-                    email=user.email, hashed_password=hashed_password, role=user.role)
-    db.add(u); db.commit(); db.refresh(u); return u
+def get_shipments(db: Session, search: str = "", status: str = "", mode: str = ""):
+    q = db.query(models.Shipment)
+    if search:
+        s = f"%{search}%"
+        q = q.filter(or_(
+            models.Shipment.ref.ilike(s),
+            models.Shipment.ref2.ilike(s),
+            models.Shipment.client.ilike(s),
+            models.Shipment.carrier.ilike(s),
+            models.Shipment.vessel.ilike(s),
+            models.Shipment.booking_no.ilike(s),
+        ))
+    if status: q = q.filter(models.Shipment.status == status)
+    if mode:   q = q.filter(models.Shipment.mode == mode)
+    return q.order_by(models.Shipment.id.desc()).all()
 
-def get_all_shipments(db): return db.query(models.Shipment).order_by(models.Shipment.id.desc()).all()
-def get_shipment(db, id): return db.query(models.Shipment).filter(models.Shipment.id==id).first()
-def get_shipment_by_ref(db, ref): return db.query(models.Shipment).filter(models.Shipment.ref==ref).first()
+def get_shipment(db: Session, ref: str):
+    return db.query(models.Shipment).filter(models.Shipment.ref == ref).first()
 
-def create_shipment(db, s: schemas.ShipmentCreate, user_id: int):
-    obj = models.Shipment(**s.model_dump(), created_by=user_id)
-    db.add(obj); db.commit(); db.refresh(obj); return obj
+def get_shipment_by_id(db: Session, sid: int):
+    return db.query(models.Shipment).filter(models.Shipment.id == sid).first()
 
-def update_shipment(db, id, s: schemas.ShipmentCreate):
-    obj = get_shipment(db, id)
+def create_shipment(db: Session, s: schemas.ShipmentCreate):
+    obj = models.Shipment(**s.dict())
+    db.add(obj); db.commit(); db.refresh(obj)
+    return obj
+
+def update_shipment(db: Session, sid: int, data: schemas.ShipmentUpdate):
+    obj = get_shipment_by_id(db, sid)
     if not obj: return None
-    for k, v in s.model_dump().items(): setattr(obj, k, v)
-    db.commit(); db.refresh(obj); return obj
+    for k, v in data.dict(exclude_none=True).items():
+        setattr(obj, k, v)
+    db.commit(); db.refresh(obj)
+    return obj
 
-def delete_shipment(db, id):
-    obj = get_shipment(db, id)
-    if not obj: return False
-    db.delete(obj); db.commit(); return True
+def delete_shipment(db: Session, sid: int):
+    obj = get_shipment_by_id(db, sid)
+    if obj: db.delete(obj); db.commit()
+    return obj
 
-def get_stats(db):
+def add_event(db: Session, shipment_id: int, location: str, description: str, status: str = None):
+    from datetime import datetime
+    ev = models.ShipmentEvent(
+        shipment_id=shipment_id,
+        timestamp=datetime.utcnow().isoformat(),
+        location=location, description=description, status=status
+    )
+    db.add(ev); db.commit(); db.refresh(ev)
+    return ev
+
+def get_stats(db: Session):
     all_s = db.query(models.Shipment).all()
-    return {"total": len(all_s),
-            "in_transit": sum(1 for s in all_s if s.status=="In Transit"),
-            "delivered":  sum(1 for s in all_s if s.status=="Delivered"),
-            "issues":     sum(1 for s in all_s if s.status in ("Delayed","Customs")),
-            "ocean":      sum(1 for s in all_s if s.mode=="Ocean"),
-            "road":       sum(1 for s in all_s if s.mode=="Road"),
-            "air":        sum(1 for s in all_s if s.mode=="Air")}
+    total = len(all_s)
+    by_status = {}
+    by_mode   = {}
+    for s in all_s:
+        by_status[s.status] = by_status.get(s.status, 0) + 1
+        by_mode[s.mode]     = by_mode.get(s.mode, 0) + 1
+    return {"total": total, "by_status": by_status, "by_mode": by_mode}
