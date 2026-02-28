@@ -1,11 +1,11 @@
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
+import os, logging
+
+log = logging.getLogger(__name__)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./freight.db")
-
-# Fix Railway postgres:// → postgresql://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -17,7 +17,6 @@ engine = create_engine(
     pool_pre_ping=True,
 )
 
-# Enable WAL mode for SQLite — prevents data corruption + survives restarts
 if IS_SQLITE:
     @event.listens_for(engine, "connect")
     def set_wal_mode(dbapi_conn, connection_record):
@@ -28,3 +27,27 @@ if IS_SQLITE:
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+def run_migrations():
+    """Safe column-add migrations — won't fail if column already exists."""
+    migrations = [
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS booking_no VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS client_email VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS note TEXT",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS vessel VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS shipsgo_id INTEGER",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS last_tracked VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS created_at VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS ref2 VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS etd VARCHAR",
+    ]
+    # SQLite doesn't support IF NOT EXISTS in ALTER TABLE
+    if IS_SQLITE:
+        return
+    with engine.connect() as conn:
+        for sql in migrations:
+            try:
+                conn.execute(text(sql))
+                conn.commit()
+            except Exception as e:
+                log.warning(f"Migration skipped ({sql[:50]}): {e}")

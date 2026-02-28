@@ -9,6 +9,9 @@ import os, logging
 
 logging.basicConfig(level=logging.INFO)
 models.Base.metadata.create_all(bind=engine)
+# Run safe column migrations for existing PostgreSQL tables
+from database import run_migrations
+run_migrations()
 
 app = FastAPI(title="FreightTrack Pro")
 app.mount("/static", StaticFiles(directory="static"), name="static")

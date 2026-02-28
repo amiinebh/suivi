@@ -19,7 +19,15 @@ def get_shipment(db, ref): return db.query(models.Shipment).filter(models.Shipme
 def get_shipment_by_id(db, sid): return db.query(models.Shipment).filter(models.Shipment.id==sid).first()
 
 def create_shipment(db, s: schemas.ShipmentCreate):
-    obj = models.Shipment(**s.dict()); db.add(obj); db.commit(); db.refresh(obj); return obj
+    try:
+        obj = models.Shipment(**s.dict())
+        db.add(obj)
+        db.commit()
+        db.refresh(obj)
+        return obj
+    except Exception as e:
+        db.rollback()
+        raise e
 
 def update_shipment(db, sid, data: schemas.ShipmentUpdate):
     obj = get_shipment_by_id(db, sid)
