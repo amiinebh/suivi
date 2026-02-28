@@ -17,43 +17,49 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # â”€â”€ CREATE TABLES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 models.Base.metadata.create_all(bind=engine)
 
-# â”€â”€ AUTO-SEED ADMIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â”€â”€ SEED: always ensure admin exists with correct password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 _pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "Admin1234!"
 
 def auto_seed():
     db = SessionLocal()
     try:
-        existing = db.query(models.User).filter(models.User.username == "admin").first()
-        if not existing:
+        user = db.query(models.User).filter(models.User.username == ADMIN_USERNAME).first()
+        if not user:
             u = models.User(
-                username="admin",
+                username=ADMIN_USERNAME,
                 full_name="Administrator",
                 email="admin@freighttrack.com",
-                hashed_password=_pwd.hash("Admin1234!"),
+                hashed_password=_pwd.hash(ADMIN_PASSWORD),
                 role="admin"
             )
             db.add(u)
             db.commit()
-            print("âœ… Admin created: username=admin  password=Admin1234!")
+            print(f"âœ… Admin created â€” username: {ADMIN_USERNAME}  password: {ADMIN_PASSWORD}")
         else:
-            print("â„¹ï¸  Admin already exists.")
+            # Force-reset password in case it was wrong
+            user.hashed_password = _pwd.hash(ADMIN_PASSWORD)
+            db.commit()
+            print(f"âœ… Admin password reset â€” username: {ADMIN_USERNAME}  password: {ADMIN_PASSWORD}")
     except Exception as e:
-        print(f"âš ï¸  Seed error: {e}")
+        print(f"âš ï¸ Seed error: {e}")
+        db.rollback()
     finally:
         db.close()
 
 auto_seed()
 
-# â”€â”€ APP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â”€â”€ APP SETUP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app = FastAPI(title="FreightTrack Pro")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
 
-SECRET_KEY = os.getenv("SECRET_KEY", "freighttrack-secret-2026")
-ALGORITHM  = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 480
+SECRET_KEY    = os.getenv("SECRET_KEY", "freighttrack-secret-2026")
+ALGORITHM     = "HS256"
+TOKEN_MINUTES = 480
 
-pwd_context  = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context   = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def get_db():
@@ -89,7 +95,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
-    token = create_access_token({"sub": user.username}, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    token = create_access_token({"sub": user.username}, timedelta(minutes=TOKEN_MINUTES))
     return {"access_token": token, "token_type": "bearer", "role": user.role, "name": user.full_name}
 
 @app.get("/users/me", response_model=schemas.UserOut)
@@ -127,7 +133,8 @@ def get_shipment(shipment_id: int, db: Session = Depends(get_db), _=Depends(get_
     return s
 
 @app.post("/shipments", response_model=schemas.ShipmentOut)
-def create_shipment(shipment: schemas.ShipmentCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def create_shipment(shipment: schemas.ShipmentCreate, db: Session = Depends(get_db),
+                    current_user=Depends(get_current_user)):
     if db.query(models.Shipment).filter(models.Shipment.ref == shipment.ref).first():
         raise HTTPException(status_code=400, detail="Reference already exists")
     obj = models.Shipment(**shipment.model_dump(), created_by=current_user.id)
@@ -145,7 +152,8 @@ def update_shipment(shipment_id: int, shipment: schemas.ShipmentCreate,
     return obj
 
 @app.delete("/shipments/{shipment_id}")
-def delete_shipment(shipment_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def delete_shipment(shipment_id: int, db: Session = Depends(get_db),
+                    current_user=Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin only")
     obj = db.query(models.Shipment).filter(models.Shipment.id == shipment_id).first()
@@ -191,7 +199,7 @@ def scheduled_tracking():
 scheduler.add_job(scheduled_tracking, "interval", hours=4, id="auto_track")
 scheduler.start()
 
-# â”€â”€ STATIC FRONTEND â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â”€â”€ FRONTEND â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
