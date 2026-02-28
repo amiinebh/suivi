@@ -5,8 +5,9 @@ import models
 
 SHIPSGO_TOKEN = os.getenv("SHIPSGO_TOKEN", "f12e82f3-16c7-4d90-bae4-e63a3aee9c3a")
 
-POST_URL = "https://shipsgo.com/api/v1.2/ContainerService/PostContainerInfo"
-GET_URL  = "https://shipsgo.com/api/v1.2/ContainerService/GetContainerInfo/"
+# â”€â”€ Correct Shipsgo v2 API endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+POST_URL = "https://shipsgo.com/api/v2/container"
+GET_URL  = "https://shipsgo.com/api/v2/container"
 
 CONTAINER_PREFIX_MAP = {
     "CMAU": "CMA CGM", "CGMU": "CMA CGM", "APHU": "CMA CGM", "APLU": "CMA CGM",
@@ -97,71 +98,63 @@ def extract_vessel(data: dict) -> str:
         if v and str(v).strip(): return str(v).strip()
     return ""
 
-def try_post(container_no: str, shipping_line: str) -> tuple:
-    """Try multiple param name variations for POST until one works."""
-    token = SHIPSGO_TOKEN
-    attempts = [
-        # variation 1: authorizationCode in body
-        {"data": {"authorizationCode": token, "containerNumber": container_no, "shippingLine": shipping_line}},
-        # variation 2: authCode in body
-        {"data": {"authCode": token, "containerNumber": container_no, "shippingLine": shipping_line}},
-        # variation 3: authorizationCode as query param
-        {"params": {"authorizationCode": token, "containerNumber": container_no, "shippingLine": shipping_line}},
-        # variation 4: authCode as query param
-        {"params": {"authCode": token, "containerNumber": container_no, "shippingLine": shipping_line}},
-    ]
-    for attempt in attempts:
-        try:
-            r = requests.post(POST_URL,
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-                timeout=20, **attempt)
-            if r.status_code == 200:
-                try:
-                    pd = r.json()
-                    request_id = None
-                    if isinstance(pd, int): request_id = pd
-                    elif isinstance(pd, dict):
-                        request_id = (pd.get("requestId") or pd.get("ContainerRequestId") or
-                                      pd.get("containerRequestId") or pd.get("id"))
-                    elif isinstance(pd, str) and pd.strip().lstrip("-").isdigit():
-                        request_id = int(pd.strip())
-                    return request_id, f"success with {list(attempt.keys())[0]}: {str(attempt)[:80]}"
-                except:
-                    return None, f"200 but parse failed: {r.text[:100]}"
-        except: pass
-    return None, "all POST variations failed"
-
 def track_and_update(db: Session, shipment) -> dict:
     container_no = (shipment.ref2 or "").strip()
     if not container_no:
         return {"ref": shipment.ref, "status": "skipped", "reason": "No container number"}
 
     shipping_line = get_shipping_line(shipment.carrier or "", container_no)
+    headers = {
+        "Authorization": f"Bearer {SHIPSGO_TOKEN}",
+        "Content-Type": "application/json",
+    }
 
-    request_id, post_note = try_post(container_no, shipping_line)
+    # â”€â”€ STEP 1: POST to create tracking request â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    request_id = None
+    post_debug = ""
+    try:
+        post_r = requests.post(
+            POST_URL,
+            headers=headers,
+            json={
+                "containerNumber": container_no,
+                "shippingLine":    shipping_line,
+            },
+            timeout=20
+        )
+        post_debug = f"POST {post_r.status_code}: {post_r.text[:200]}"
+        if post_r.status_code in (200, 201):
+            try:
+                pd = post_r.json()
+                if isinstance(pd, int): request_id = pd
+                elif isinstance(pd, dict):
+                    request_id = (pd.get("id") or pd.get("requestId") or
+                                  pd.get("ContainerRequestId") or pd.get("containerRequestId"))
+                elif isinstance(pd, str) and pd.strip().lstrip("-").isdigit():
+                    request_id = int(pd.strip())
+            except: pass
+    except Exception as e:
+        post_debug = f"POST exception: {str(e)}"
 
     time.sleep(3)
 
-    # â”€â”€ GET â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â”€â”€ STEP 2: GET tracking data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     try:
-        get_r = requests.get(GET_URL, params={
-            "authorizationCode": SHIPSGO_TOKEN,
-            "requestId": request_id if request_id else container_no,
-        }, timeout=20)
+        get_params = {}
+        if request_id:
+            get_url = f"{GET_URL}/{request_id}"
+        else:
+            get_url = GET_URL
+            get_params["containerNumber"] = container_no
 
-        # fallback with authCode if 401
-        if get_r.status_code == 401:
-            get_r = requests.get(GET_URL, params={
-                "authCode": SHIPSGO_TOKEN,
-                "requestId": request_id if request_id else container_no,
-            }, timeout=20)
+        get_r = requests.get(get_url, headers=headers, params=get_params, timeout=20)
 
         if get_r.status_code != 200:
             return {
                 "ref": shipment.ref, "status": "error",
                 "reason": f"GET HTTP {get_r.status_code}: {get_r.text[:300]}",
                 "shipping_line": shipping_line, "request_id": request_id,
-                "post_note": post_note
+                "post_debug": post_debug,
             }
 
         data = get_r.json()
@@ -186,7 +179,7 @@ def track_and_update(db: Session, shipment) -> dict:
         return {
             "ref": shipment.ref, "container": container_no,
             "shipping_line": shipping_line, "request_id": request_id,
-            "post_note": post_note,
+            "post_debug": post_debug,
             "raw_status": raw_status, "new_status": new_status,
             "vessel": vessel, "eta": new_eta,
             "changed": changed,
@@ -195,8 +188,8 @@ def track_and_update(db: Session, shipment) -> dict:
         }
 
     except Exception as e:
-        return {"ref": shipment.ref, "status": "error", "reason": f"GET exception: {str(e)}",
-                "post_note": post_note}
+        return {"ref": shipment.ref, "status": "error",
+                "reason": f"GET exception: {str(e)}", "post_debug": post_debug}
 
 
 def run_auto_tracking(db: Session) -> list:
