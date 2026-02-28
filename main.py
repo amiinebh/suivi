@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Response, Request
+from fastapi import Request, FastAPI, Depends, HTTPException, BackgroundTasks, Response, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
@@ -185,3 +185,76 @@ def health(db: Session = Depends(get_db)):
         return {"status": "ok", "db": "connected"}
     except Exception as e:
         return {"status": "error", "db": str(e)}
+
+import httpx
+
+SHIPSGO_BASE = "https://api.shipsgo.com/v2"
+
+@app.api_route("/proxy/shipsgo/{path:path}", methods=["GET","POST","PATCH","DELETE"])
+async def shipsgo_proxy(path: str, request: Request):
+    """Proxy all Shipsgo API calls to avoid CORS issues"""
+    api_key = request.headers.get("X-Shipsgo-User-Token","")
+    body = await request.body()
+    params = dict(request.query_params)
+    headers = {
+        "X-Shipsgo-User-Token": api_key,
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    url = f"{SHIPSGO_BASE}/{path}"
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.request(
+            method=request.method,
+            url=url,
+            headers=headers,
+            params=params,
+            content=body,
+        )
+    return JSONResponse(
+        content=resp.json() if resp.content else {},
+        status_code=resp.status_code,
+        headers={
+            "X-Shipsgo-Credits-Remaining": resp.headers.get("X-Shipsgo-Credits-Remaining",""),
+            "X-Shipsgo-Credits-Cost":      resp.headers.get("X-Shipsgo-Credits-Cost",""),
+        }
+    )
+
+
+# ── Shipsgo Proxy (avoids CORS) ─────────────────────────────────────────────
+try:
+    import httpx
+    from fastapi import Request as FastAPIRequest
+
+    SHIPSGO_BASE = "https://api.shipsgo.com/v2"
+
+    @app.api_route("/proxy/shipsgo/{path:path}", methods=["GET","POST","PATCH","DELETE"])
+    async def shipsgo_proxy(path: str, request: FastAPIRequest):
+        api_key = request.headers.get("X-Shipsgo-User-Token","")
+        body    = await request.body()
+        params  = dict(request.query_params)
+        headers = {
+            "X-Shipsgo-User-Token": api_key,
+            "Accept":               "application/json",
+            "Content-Type":         "application/json",
+        }
+        url = f"{SHIPSGO_BASE}/{path}"
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.request(
+                method  = request.method,
+                url     = url,
+                headers = headers,
+                params  = params,
+                content = body,
+            )
+        try:    data = resp.json()
+        except: data = {"raw": resp.text}
+        return JSONResponse(
+            content     = data,
+            status_code = resp.status_code,
+            headers     = {
+                "X-Shipsgo-Credits-Remaining": resp.headers.get("X-Shipsgo-Credits-Remaining",""),
+                "X-Shipsgo-Credits-Cost":      resp.headers.get("X-Shipsgo-Credits-Cost",""),
+            }
+        )
+except ImportError:
+    pass
