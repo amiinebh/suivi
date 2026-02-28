@@ -349,7 +349,7 @@ def track_debug(sid: int, db: Session = Depends(get_db), current=Depends(get_cur
 
 # ══ Shipsgo Deep Debug ════════════════════════════════════════════════
 @app.get("/api/debug/shipsgo")
-def shipsgo_debug(db: Session = Depends(get_db), current=Depends(get_current_user)):
+def shipsgo_debug(db: Session = Depends(get_db)):
     """Full Shipsgo connectivity + POST test — returns raw API responses."""
     import requests as req_lib
     token = os.getenv("SHIPSGO_TOKEN") or os.getenv("SHIPSGO_API_KEY","")
@@ -395,7 +395,7 @@ def shipsgo_debug(db: Session = Depends(get_db), current=Depends(get_current_use
     return result
 
 @app.post("/api/shipments/{sid}/force-register")
-def force_register(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+def force_register(sid: int, db: Session = Depends(get_db)):
     """Force re-register a specific shipment with Shipsgo and return full raw response."""
     import requests as req_lib
     s = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
