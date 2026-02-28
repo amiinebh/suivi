@@ -3,7 +3,9 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 import models
 
-SHIPSGO_TOKEN = os.getenv("SHIPSGO_TOKEN", "3fd0583a-9281-4c30-8d9d-ececa0fff69c")
+SHIPSGO_TOKEN = os.getenv("SHIPSGO_TOKEN", "f12e82f3-16c7-4d90-bae4-e63a3aee9c3a")
+
+# â”€â”€ Exact URLs from Shipsgo API v1.2 documentation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 POST_URL = "https://shipsgo.com/api/v1.2/ContainerService/PostContainerInfo"
 GET_URL  = "https://shipsgo.com/api/v1.2/ContainerService/GetContainerInfo"
 
@@ -80,7 +82,6 @@ def extract_eta(data: dict) -> str:
         if val:
             parsed = parse_eta(val)
             if parsed: return parsed
-    # Search inside nested lists (routeList / legs)
     for key in ["routeList","RouteList","legs","Legs","containers","Containers"]:
         nested = data.get(key)
         if isinstance(nested, list) and nested:
@@ -106,18 +107,22 @@ def track_and_update(db: Session, shipment) -> dict:
 
     shipping_line = get_shipping_line(shipment.carrier or "", container_no)
 
-    # â”€â”€ STEP 1: POST with correct param name "authCode" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â”€â”€ STEP 1: POST â€” send as query params in URL (not body) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # Shipsgo v1.2 expects params in the URL query string
     request_id = None
     try:
-        post_r = requests.post(POST_URL,
-            data={
-                "authCode":        SHIPSGO_TOKEN,   # âœ… correct param name
+        post_r = requests.post(
+            POST_URL,
+            params={
+                "authCode":        SHIPSGO_TOKEN,
                 "containerNumber": container_no,
                 "shippingLine":    shipping_line,
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             timeout=20
         )
+
+        post_raw = post_r.text
         if post_r.status_code == 200:
             try:
                 pd = post_r.json()
@@ -129,24 +134,30 @@ def track_and_update(db: Session, shipment) -> dict:
                 elif isinstance(pd, str) and pd.strip().lstrip("-").isdigit():
                     request_id = int(pd.strip())
             except: pass
+        else:
+            return {"ref": shipment.ref, "status": "error",
+                    "reason": f"POST HTTP {post_r.status_code}: {post_raw[:300]}",
+                    "shipping_line": shipping_line}
+
     except Exception as e:
         return {"ref": shipment.ref, "status": "error", "reason": f"POST failed: {str(e)}"}
 
-    # Small wait
     time.sleep(3)
 
-    # â”€â”€ STEP 2: GET with correct param name "authCode" â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â”€â”€ STEP 2: GET voyage data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     try:
-        get_params = {
-            "authCode":  SHIPSGO_TOKEN,   # âœ… correct param name
-            "requestId": request_id if request_id else container_no,
-        }
-
-        get_r = requests.get(GET_URL, params=get_params, timeout=20)
+        get_r = requests.get(
+            GET_URL,
+            params={
+                "authCode":  SHIPSGO_TOKEN,
+                "requestId": request_id if request_id else container_no,
+            },
+            timeout=20
+        )
 
         if get_r.status_code != 200:
             return {"ref": shipment.ref, "status": "error",
-                    "reason": f"GET HTTP {get_r.status_code}",
+                    "reason": f"GET HTTP {get_r.status_code}: {get_r.text[:300]}",
                     "shipping_line": shipping_line, "request_id": request_id}
 
         data = get_r.json()
