@@ -72,3 +72,27 @@ class ShipmentUpdate(BaseModel):
     eta: Optional[str] = None
     status: Optional[str] = None
     vessel: Optional[str] = None
+
+class UserCreate(BaseModel):
+    email: str
+    name:  str
+    role:  str = "cs"
+    password: str
+
+class UserOut(BaseModel):
+    id:        int
+    email:     str
+    name:      str
+    role:      str
+    is_active: bool
+    created_at: Optional[str] = None
+    class Config: from_attributes = True
+
+class LoginRequest(BaseModel):
+    email:    str
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    role:         str
+    name:         str

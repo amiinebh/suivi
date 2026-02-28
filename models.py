@@ -44,3 +44,13 @@ class ShipmentComment(Base):
     author        = Column(String, default="Agent")
     text          = Column(Text)
     shipment      = relationship("Shipment", back_populates="comments")
+
+class User(Base):
+    __tablename__ = "users"
+    id         = Column(Integer, primary_key=True, index=True)
+    email      = Column(String, unique=True, index=True, nullable=False)
+    name       = Column(String, nullable=False)
+    role       = Column(String, default="cs")        # "admin" | "cs"
+    hashed_pw  = Column(String, nullable=False)
+    is_active  = Column(Boolean, default=True)
+    created_at = Column(String, default=lambda: datetime.utcnow().isoformat())

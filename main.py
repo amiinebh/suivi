@@ -245,3 +245,86 @@ def track_debug(sid: int, db: Session = Depends(get_db)):
                          headers=hdrs, json={"container_number": s.ref2 or ""}, timeout=20)
         result["post"] = {"status": r.status_code, "body": r.json() if r.content else {}}
     return result
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# AUTH & USER MANAGEMENT
+# ══════════════════════════════════════════════════════════════════════════════
+import auth as auth_module
+from auth import get_current_user, require_admin, hash_password, verify_password, create_token
+
+# ── Auto-create admin on first run ───────────────────────────────────────────
+def ensure_admin(db):
+    from models import User
+    if not db.query(User).filter(User.role=="admin").first():
+        admin = User(
+            email     = os.getenv("ADMIN_EMAIL","admin@freighttrack.com"),
+            name      = "Admin",
+            role      = "admin",
+            hashed_pw = hash_password(os.getenv("ADMIN_PASSWORD","Admin1234!")),
+            is_active = True,
+        )
+        db.add(admin); db.commit()
+        print("✅ Default admin created:", admin.email)
+
+@app.on_event("startup")
+def on_startup():
+    from database import SessionLocal
+    db = SessionLocal()
+    try: ensure_admin(db)
+    finally: db.close()
+
+# ── Login ─────────────────────────────────────────────────────────────────────
+@app.post("/api/auth/login")
+def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
+    from models import User
+    user = db.query(User).filter(User.email == body.email, User.is_active == True).first()
+    if not user or not verify_password(body.password, user.hashed_pw):
+        raise HTTPException(401, "Invalid email or password")
+    token = create_token(user.id, user.role, user.name)
+    return {"access_token": token, "role": user.role, "name": user.name}
+
+# ── List users (admin only) ───────────────────────────────────────────────────
+@app.get("/api/users")
+def list_users(db: Session = Depends(get_db), current=Depends(require_admin)):
+    from models import User
+    users = db.query(User).order_by(User.id).all()
+    return [{"id":u.id,"email":u.email,"name":u.name,"role":u.role,
+             "is_active":u.is_active,"created_at":u.created_at} for u in users]
+
+# ── Create user (admin only) ──────────────────────────────────────────────────
+@app.post("/api/users")
+def create_user(body: schemas.UserCreate, db: Session = Depends(get_db),
+                current=Depends(require_admin)):
+    from models import User
+    if db.query(User).filter(User.email == body.email).first():
+        raise HTTPException(409, "Email already exists")
+    u = User(email=body.email, name=body.name, role=body.role,
+             hashed_pw=hash_password(body.password), is_active=True)
+    db.add(u); db.commit(); db.refresh(u)
+    return {"id":u.id,"email":u.email,"name":u.name,"role":u.role}
+
+# ── Toggle user active (admin only) ──────────────────────────────────────────
+@app.patch("/api/users/{uid}/toggle")
+def toggle_user(uid: int, db: Session = Depends(get_db), current=Depends(require_admin)):
+    from models import User
+    u = db.query(User).filter(User.id==uid).first()
+    if not u: raise HTTPException(404,"User not found")
+    if u.role == "admin": raise HTTPException(400,"Cannot deactivate admin")
+    u.is_active = not u.is_active; db.commit()
+    return {"id":u.id,"is_active":u.is_active}
+
+# ── Delete user (admin only) ──────────────────────────────────────────────────
+@app.delete("/api/users/{uid}")
+def delete_user(uid: int, db: Session = Depends(get_db), current=Depends(require_admin)):
+    from models import User
+    u = db.query(User).filter(User.id==uid).first()
+    if not u: raise HTTPException(404,"User not found")
+    if u.role == "admin": raise HTTPException(400,"Cannot delete admin")
+    db.delete(u); db.commit()
+    return {"deleted": uid}
+
+# ── Me endpoint ───────────────────────────────────────────────────────────────
+@app.get("/api/auth/me")
+def me(current=Depends(get_current_user)):
+    return current
