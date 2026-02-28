@@ -2,8 +2,8 @@ import os, bcrypt
 from datetime import datetime, timedelta
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
 
-# Use PyJWT
 try:
     import jwt
 except ImportError:
@@ -15,16 +15,12 @@ EXPIRE_H = 24
 bearer   = HTTPBearer(auto_error=False)
 
 def hash_password(pw: str) -> str:
-    """Always returns a clean utf-8 string"""
-    hashed = bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt(rounds=12))
-    return hashed.decode("utf-8")
+    return bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
 
 def verify_password(pw: str, hashed: str) -> bool:
-    """Handles both str and bytes stored hashes"""
     try:
-        pw_bytes     = pw.encode("utf-8")
-        hashed_bytes = hashed.encode("utf-8") if isinstance(hashed, str) else hashed
-        return bcrypt.checkpw(pw_bytes, hashed_bytes)
+        return bcrypt.checkpw(pw.encode("utf-8"),
+               hashed.encode("utf-8") if isinstance(hashed, str) else hashed)
     except Exception as e:
         print(f"verify_password error: {e}")
         return False
@@ -40,16 +36,25 @@ def create_token(user_id: int, role: str, name: str) -> str:
 
 def decode_token(token: str) -> dict:
     try:
-        data = jwt.decode(token, SECRET, algorithms=[ALG])
-        # PyJWT returns dict directly; python-jose also returns dict
-        return data
+        return jwt.decode(token, SECRET, algorithms=[ALG])
     except Exception as e:
         raise HTTPException(401, f"Invalid token: {e}")
 
 def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> dict:
     if not creds:
         raise HTTPException(401, "Not authenticated")
-    return decode_token(creds.credentials)
+    data = decode_token(creds.credentials)
+    # Check is_active from DB on every request
+    from database import SessionLocal
+    import models as m
+    db = SessionLocal()
+    try:
+        user = db.query(m.User).filter(m.User.id == int(data["sub"])).first()
+        if not user or not user.is_active:
+            raise HTTPException(401, "Account deactivated")
+    finally:
+        db.close()
+    return data
 
 def require_admin(user: dict = Depends(get_current_user)) -> dict:
     if user.get("role") != "admin":
