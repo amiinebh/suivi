@@ -269,9 +269,15 @@ def ensure_admin(db):
 
 @app.on_event("startup")
 def on_startup():
-    from database import SessionLocal
+    # Import ALL models so create_all knows about every table including users
+    import models as _models
+    from database import Base, engine, SessionLocal, run_migrations
+    Base.metadata.create_all(bind=engine)   # creates users table if missing
+    run_migrations()                         # adds any missing columns
     db = SessionLocal()
     try: ensure_admin(db)
+    except Exception as e:
+        print(f"⚠️ ensure_admin error: {e}")
     finally: db.close()
 
 # ── Login ─────────────────────────────────────────────────────────────────────
