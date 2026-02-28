@@ -5,16 +5,16 @@ import models
 
 SHIPSGO_TOKEN = os.getenv("SHIPSGO_TOKEN", "f12e82f3-16c7-4d90-bae4-e63a3aee9c3a")
 
-# â”€â”€ Exact URLs from Shipsgo API v1.2 documentation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â”€â”€ Correct endpoints per Shipsgo API v1.2 docs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Note trailing slash on GET URL
 POST_URL = "https://shipsgo.com/api/v1.2/ContainerService/PostContainerInfo"
-GET_URL  = "https://shipsgo.com/api/v1.2/ContainerService/GetContainerInfo"
+GET_URL  = "https://shipsgo.com/api/v1.2/ContainerService/GetContainerInfo/"
 
 CONTAINER_PREFIX_MAP = {
     "CMAU": "CMA CGM", "CGMU": "CMA CGM", "APHU": "CMA CGM", "APLU": "CMA CGM",
     "CSFU": "CMA CGM", "TCNU": "CMA CGM", "TLLU": "CMA CGM", "SEGU": "CMA CGM",
     "TTNU": "CMA CGM", "ECMU": "CMA CGM", "DVRU": "CMA CGM", "SMUU": "CMA CGM",
     "SEKU": "CMA CGM", "FSCU": "CMA CGM", "GESU": "CMA CGM", "REGU": "CMA CGM",
-    "CRXU": "CMA CGM", "GLDU": "CMA CGM", "TRHU": "CMA CGM", "LGHU": "CMA CGM",
     "HLCU": "Hapag-Lloyd", "HLXU": "Hapag-Lloyd", "UACU": "Hapag-Lloyd",
     "MAEU": "Maersk", "MSKU": "Maersk", "MCPU": "Maersk", "MRKU": "Maersk",
     "TRLU": "Maersk", "TEMU": "Maersk",
@@ -107,13 +107,12 @@ def track_and_update(db: Session, shipment) -> dict:
 
     shipping_line = get_shipping_line(shipment.carrier or "", container_no)
 
-    # â”€â”€ STEP 1: POST â€” send as query params in URL (not body) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    # Shipsgo v1.2 expects params in the URL query string
+    # â”€â”€ STEP 1: POST with form-encoded body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     request_id = None
     try:
         post_r = requests.post(
             POST_URL,
-            params={
+            data={                          # â† body, not params
                 "authCode":        SHIPSGO_TOKEN,
                 "containerNumber": container_no,
                 "shippingLine":    shipping_line,
@@ -122,7 +121,6 @@ def track_and_update(db: Session, shipment) -> dict:
             timeout=20
         )
 
-        post_raw = post_r.text
         if post_r.status_code == 200:
             try:
                 pd = post_r.json()
@@ -135,16 +133,18 @@ def track_and_update(db: Session, shipment) -> dict:
                     request_id = int(pd.strip())
             except: pass
         else:
-            return {"ref": shipment.ref, "status": "error",
-                    "reason": f"POST HTTP {post_r.status_code}: {post_raw[:300]}",
-                    "shipping_line": shipping_line}
+            return {
+                "ref": shipment.ref, "status": "error",
+                "reason": f"POST HTTP {post_r.status_code}: {post_r.text[:300]}",
+                "shipping_line": shipping_line
+            }
 
     except Exception as e:
-        return {"ref": shipment.ref, "status": "error", "reason": f"POST failed: {str(e)}"}
+        return {"ref": shipment.ref, "status": "error", "reason": f"POST exception: {str(e)}"}
 
     time.sleep(3)
 
-    # â”€â”€ STEP 2: GET voyage data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    # â”€â”€ STEP 2: GET with trailing slash â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     try:
         get_r = requests.get(
             GET_URL,
@@ -156,12 +156,13 @@ def track_and_update(db: Session, shipment) -> dict:
         )
 
         if get_r.status_code != 200:
-            return {"ref": shipment.ref, "status": "error",
-                    "reason": f"GET HTTP {get_r.status_code}: {get_r.text[:300]}",
-                    "shipping_line": shipping_line, "request_id": request_id}
+            return {
+                "ref": shipment.ref, "status": "error",
+                "reason": f"GET HTTP {get_r.status_code}: {get_r.text[:300]}",
+                "shipping_line": shipping_line, "request_id": request_id
+            }
 
         data = get_r.json()
-
         new_eta    = extract_eta(data)
         vessel     = extract_vessel(data)
         raw_status = (data.get("containerStatus") or data.get("status") or
@@ -181,21 +182,17 @@ def track_and_update(db: Session, shipment) -> dict:
         db.commit()
 
         return {
-            "ref":           shipment.ref,
-            "container":     container_no,
-            "shipping_line": shipping_line,
-            "request_id":    request_id,
-            "raw_status":    raw_status,
-            "new_status":    new_status,
-            "vessel":        vessel,
-            "eta":           new_eta,
-            "changed":       changed,
-            "status":        "updated" if changed else "no_change",
-            "debug":         data,
+            "ref": shipment.ref, "container": container_no,
+            "shipping_line": shipping_line, "request_id": request_id,
+            "raw_status": raw_status, "new_status": new_status,
+            "vessel": vessel, "eta": new_eta,
+            "changed": changed,
+            "status": "updated" if changed else "no_change",
+            "debug": data,
         }
 
     except Exception as e:
-        return {"ref": shipment.ref, "status": "error", "reason": f"GET failed: {str(e)}"}
+        return {"ref": shipment.ref, "status": "error", "reason": f"GET exception: {str(e)}"}
 
 
 def run_auto_tracking(db: Session) -> list:
