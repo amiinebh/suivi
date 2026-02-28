@@ -419,6 +419,32 @@ textarea.form-control{resize:none;min-height:72px}
 .bar-fill{height:100%;border-radius:4px;
   background:linear-gradient(90deg,var(--accent),var(--accent2));
   transition:width .6s ease}
+
+.detail-tab{flex:1;padding:7px 4px;border:none;background:none;border-radius:7px;
+  font-size:11px;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;transition:.15s}
+.detail-tab.active{background:var(--bg2);color:var(--accent);box-shadow:var(--shadow)}
+.tl-list{display:flex;flex-direction:column}
+.timeline-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.timeline-item:last-child{border-bottom:none}
+.tl-dot{width:30px;height:30px;border-radius:50%;background:var(--bg3);
+  border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-size:12px;flex-shrink:0}
+.tl-dot.latest{background:var(--accent);border-color:var(--accent);color:#fff}
+.tl-content{flex:1;padding-top:2px}
+.tl-time{font-size:10px;color:var(--text3);margin-bottom:2px}
+.tl-label{font-size:12px;font-weight:600;color:var(--text1)}
+.tl-loc{font-size:11px;color:var(--text2);margin-top:2px}
+.info-chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.info-chip{background:var(--bg3);border-radius:10px;padding:10px 12px}
+.info-chip.full{grid-column:1/-1}
+.chip-label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.chip-value{font-size:13px;font-weight:600;color:var(--text1);margin-top:3px;word-break:break-word}
+.comment-bubble{background:var(--bg3);border-radius:10px;padding:10px 12px}
+.comment-author{font-size:11px;font-weight:700;color:var(--accent)}
+.comment-time{font-size:10px;color:var(--text3);margin-left:6px}
+.comment-text{font-size:12px;color:var(--text1);margin-top:4px;line-height:1.5}
+#bulk-drop-zone:hover{border-color:var(--accent)!important;background:var(--bg3)}
+
 </style>
 </head>
 <body>
@@ -465,6 +491,9 @@ textarea.form-control{resize:none;min-height:72px}
 <button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
   <i class="fa fa-plus"></i>
 </button>
+<button class="btn btn-fab admin-only" onclick="openModal('modal-bulk-import')" title="Bulk Import" style="bottom:calc(var(--safe-bottom)+76px);background:var(--bg2);border:1px solid var(--border);color:var(--text1)">
+  <i class="fa fa-file-excel" style="color:#22c55e"></i>
+</button>
 
 <div class="app">
 <!-- ═══════ SIDEBAR (desktop) ═══════ -->
@@ -506,6 +535,7 @@ textarea.form-control{resize:none;min-height:72px}
         <div class="role" id="sidebar-user-role">CS Agent</div>
       </div>
     </div>
+    <button onclick="openModal('modal-change-pw')" style="margin:6px 12px 4px;width:calc(100% - 24px);font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px;cursor:pointer;font-family:inherit">🔐 Change Password</button>
     <button onclick="doLogout()" style="margin:6px 12px 12px;width:calc(100% - 24px);font-size:11px;color:#ef4444;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:7px;cursor:pointer;font-family:inherit;font-weight:600">⬡ Sign Out</button>
   </div>
 </nav>
@@ -634,6 +664,78 @@ textarea.form-control{resize:none;min-height:72px}
       </div>
     </div>
 
+
+    <!-- ═══ DETAIL PAGE ═══ -->
+    <div class="page" id="page-detail">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null)" style="padding:6px 10px">
+          <i class="fa fa-arrow-left"></i>
+        </button>
+        <div style="flex:1;min-width:0">
+          <div id="detail-ref" style="font-size:15px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+          <div id="detail-sub" style="font-size:11px;color:var(--text2);margin-top:1px">—</div>
+        </div>
+        <div id="detail-status-badge"></div>
+        <button class="btn btn-primary btn-sm" onclick="syncDetail()" id="detail-sync-btn" style="padding:6px 10px;flex-shrink:0">
+          <i class="fa fa-rotate"></i>
+        </button>
+      </div>
+      <div class="shipment-card" style="margin-bottom:14px;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;text-align:center">
+            <div id="detail-pol" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:2px">Origin</div>
+          </div>
+          <div style="flex:2;display:flex;align-items:center;gap:3px">
+            <div style="flex:1;height:2px;background:var(--accent);border-radius:2px"></div>
+            <i class="fa fa-ship" style="color:var(--accent);font-size:14px"></i>
+            <div style="flex:1;height:2px;background:var(--border);border-radius:2px"></div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div id="detail-pod" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:2px">Destination</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--text2)">
+          <span>ETD <strong id="detail-etd" style="color:var(--text1)">—</strong></span>
+          <span>ETA <strong id="detail-eta" style="color:var(--accent)">—</strong></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;margin-bottom:12px;background:var(--bg3);border-radius:10px;padding:4px">
+        <button class="detail-tab active" id="dtab-btn-timeline" onclick="switchDTab('timeline')">📋 Timeline</button>
+        <button class="detail-tab" id="dtab-btn-notes" onclick="switchDTab('notes')">💬 Notes</button>
+        <button class="detail-tab" id="dtab-btn-info" onclick="switchDTab('info')">📄 Details</button>
+      </div>
+      <div id="dtab-timeline">
+        <div id="detail-events-list" class="tl-list"></div>
+        <div id="detail-no-events" style="display:none;text-align:center;padding:30px;color:var(--text2);font-size:12px">
+          <div style="font-size:28px;margin-bottom:6px">📭</div>No events yet. Tap Sync to update.
+        </div>
+      </div>
+      <div id="dtab-notes" style="display:none">
+        <div id="detail-comments-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+        <div class="shipment-card" style="padding:12px">
+          <textarea id="detail-comment-text" class="form-control" rows="2"
+            style="resize:none;margin-bottom:8px" placeholder="Write an internal note…"></textarea>
+          <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="submitComment()">
+            <i class="fa fa-paper-plane"></i> Add Note
+          </button>
+        </div>
+      </div>
+      <div id="dtab-info" style="display:none">
+        <div class="info-chips" id="detail-info-chips"></div>
+      </div>
+      <div style="margin-top:12px;background:var(--bg3);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+        <i class="fa fa-link" style="color:var(--accent);font-size:13px"></i>
+        <div style="flex:1;font-size:11px;color:var(--text2)">Client tracking link</div>
+        <button class="btn btn-ghost btn-sm" onclick="copyPortalLink()" style="font-size:11px;padding:4px 10px">
+          <i class="fa fa-copy"></i> Copy
+        </button>
+        <a id="detail-portal-href" href="#" target="_blank" class="btn btn-ghost btn-sm"
+          style="font-size:11px;padding:4px 10px"><i class="fa fa-arrow-up-right-from-square"></i></a>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
@@ -649,6 +751,9 @@ textarea.form-control{resize:none;min-height:72px}
     </button>
     <button class="bnav-item admin-only" id="bnav-analytics" onclick="showPage('analytics',null);setBottomNav('analytics')">
       <i class="fa fa-chart-line"></i><span>KPIs</span>
+    </button>
+    <button class="bnav-item admin-only" id="bnav-users" onclick="showPage('users',null);setBottomNav('users')">
+      <i class="fa fa-users"></i><span>Team</span>
     </button>
     <button class="bnav-item admin-only" id="bnav-users" onclick="showPage('users',null);setBottomNav('users')">
       <i class="fa fa-users"></i><span>Team</span>
@@ -775,6 +880,8 @@ let editId=null, currentDetailId=null, allShipments=[];
 
 /* ── Nav ── */
 function showPage(id,el){
+  if((id==='analytics'||id==='users')&&!isAdmin()){id='shipments';}
+  if(id==='users') setTimeout(loadUsers,150);
   // Role guards
   if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
   if(id==='users'){ setTimeout(loadUsers, 150); setBottomNav('users'); }
@@ -1511,6 +1618,420 @@ async function deleteUser(id){
     </div>
   </div>
 </div>
+
+
+<!-- CHANGE PASSWORD -->
+<div class="overlay" id="modal-change-pw">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title">🔐 Change Password</div>
+      <button class="modal-close" onclick="closeModal('modal-change-pw')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Current Password</label>
+          <input id="cpw-old" class="form-control" type="password" placeholder="Current password"/></div>
+        <div class="form-group full"><label>New Password</label>
+          <input id="cpw-new" class="form-control" type="password" placeholder="Min 6 characters"/></div>
+        <div class="form-group full"><label>Confirm New Password</label>
+          <input id="cpw-confirm" class="form-control" type="password" placeholder="Repeat new password"/></div>
+      </div>
+      <div id="cpw-msg" style="display:none;margin-top:8px;padding:10px 12px;border-radius:8px;font-size:12px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-change-pw')">Cancel</button>
+      <button class="btn btn-primary" onclick="doChangePassword()"><i class="fa fa-check"></i> Update</button>
+    </div>
+  </div>
+</div>
+<!-- BULK IMPORT -->
+<div class="overlay" id="modal-bulk-import">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title">📥 Bulk Import</div>
+      <button class="modal-close" onclick="closeModal('modal-bulk-import')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2)">
+        <strong style="color:var(--text1)">Excel columns (row 1 = headers):</strong>
+        <code style="display:block;margin-top:4px;font-size:11px">ref · ref2 · mode · carrier · client · client_email · pol · pod · booking_no</code>
+        <div style="margin-top:6px">Only <strong>ref</strong> is required.</div>
+      </div>
+      <div id="bulk-drop-zone" onclick="document.getElementById('bulk-file').click()"
+        style="border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:.2s">
+        <i class="fa fa-file-excel" style="font-size:30px;color:#22c55e;display:block;margin-bottom:8px"></i>
+        <div style="font-size:13px;font-weight:600;color:var(--text1)">Drop .xlsx here</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">or click to browse</div>
+      </div>
+      <input id="bulk-file" type="file" accept=".xlsx" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
+      <div id="bulk-selected" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px"></div>
+      <div id="bulk-result" style="display:none;margin-top:10px;padding:12px;border-radius:8px;font-size:13px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-bulk-import')">Close</button>
+      <button class="btn btn-primary" id="bulk-upload-btn" style="display:none" onclick="doBulkUpload()">
+        <i class="fa fa-upload"></i> Import
+      </button>
+    </div>
+  </div>
+</div>
+<!-- ADD USER -->
+<div class="overlay" id="modal-add-user">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title">➕ Add Team Member</div>
+      <button class="modal-close" onclick="closeModal('modal-add-user')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Full Name <span style="color:#ef4444">*</span></label>
+          <input id="nu-name" class="form-control" type="text" placeholder="e.g. Sara Dupont"/></div>
+        <div class="form-group full"><label>Email <span style="color:#ef4444">*</span></label>
+          <input id="nu-email" class="form-control" type="email" placeholder="sara@company.com"/></div>
+        <div class="form-group full"><label>Password <span style="color:#ef4444">*</span></label>
+          <input id="nu-pw" class="form-control" type="password" placeholder="Min 6 characters"/></div>
+        <div class="form-group full"><label>Role</label>
+          <select id="nu-role" class="form-control">
+            <option value="cs">🎧 CS Agent</option>
+            <option value="admin">👑 Admin</option>
+          </select>
+        </div>
+      </div>
+      <div id="nu-error" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(239,68,68,.1);
+        border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:12px;color:#ef4444"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
+      <button class="btn btn-primary" onclick="createUser()"><i class="fa fa-check"></i> Create</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ═══ AUTH ════════════════════════════════════════════════════
+const TOKEN_KEY="ft_token", USER_KEY="ft_user";
+function getToken(){ return localStorage.getItem(TOKEN_KEY); }
+function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
+function isAdmin(){ return (getUser()||{}).role==="admin"; }
+
+async function doLogin(){
+  const email=document.getElementById("login-email").value.trim();
+  const pw=document.getElementById("login-password").value;
+  const err=document.getElementById("login-error");
+  const btn=document.getElementById("login-btn");
+  err.style.display="none";
+  if(!email||!pw){ err.textContent="Enter email and password"; err.style.display="block"; return; }
+  btn.textContent="Signing in…"; btn.disabled=true;
+  try{
+    const r=await fetch("/api/auth/login",{method:"POST",
+      headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,password:pw})});
+    const d=await r.json();
+    if(!r.ok){ err.textContent=d.detail||"Invalid credentials"; err.style.display="block"; return; }
+    localStorage.setItem(TOKEN_KEY,d.access_token);
+    localStorage.setItem(USER_KEY,JSON.stringify({role:d.role,name:d.name}));
+    showApp();
+  } catch(e){ err.textContent="Network error. Try again."; err.style.display="block"; }
+  finally{ btn.textContent="Sign In →"; btn.disabled=false; }
+}
+
+document.addEventListener("keydown",e=>{
+  const ls=document.getElementById("login-screen");
+  if(e.key==="Enter"&&ls&&ls.style.display!=="none") doLogin();
+});
+
+function showApp(){
+  const ls=document.getElementById("login-screen");
+  if(ls) ls.style.display="none";
+  const user=getUser();
+  document.querySelectorAll(".admin-only").forEach(el=>{
+    el.style.display=isAdmin()?el.dataset.display||"":"none";
+  });
+  const sn=document.getElementById("sidebar-user-name");
+  if(sn) sn.textContent=user?.name||"User";
+  const sr=document.getElementById("sidebar-user-role");
+  if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
+  const av=document.getElementById("sidebar-avatar");
+  if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
+  if(typeof loadDashboard==="function") loadDashboard();
+}
+
+function doLogout(){
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  const ls=document.getElementById("login-screen");
+  if(ls) ls.style.display="flex";
+  ["login-email","login-password"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+}
+
+window.addEventListener("DOMContentLoaded",()=>{
+  if(getToken()) showApp();
+  else{ const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
+});
+
+// ═══ CHANGE PASSWORD ═════════════════════════════════════════
+async function doChangePassword(){
+  const old_pw=document.getElementById("cpw-old").value;
+  const new_pw=document.getElementById("cpw-new").value;
+  const confirm=document.getElementById("cpw-confirm").value;
+  const msg=document.getElementById("cpw-msg");
+  function showMsg(txt,ok){
+    msg.textContent=txt; msg.style.display="block";
+    msg.style.background=ok?"rgba(34,197,94,.1)":"rgba(239,68,68,.1)";
+    msg.style.border="1px solid "+(ok?"rgba(34,197,94,.3)":"rgba(239,68,68,.3)");
+    msg.style.color=ok?"#16a34a":"#ef4444";
+  }
+  if(!old_pw||!new_pw||!confirm){ showMsg("All fields are required",false); return; }
+  if(new_pw.length<6){ showMsg("New password must be at least 6 characters",false); return; }
+  if(new_pw!==confirm){ showMsg("Passwords do not match",false); return; }
+  try{
+    await apiFetch("/api/auth/change-password",{method:"POST",
+      body:JSON.stringify({old_password:old_pw,new_password:new_pw})});
+    showMsg("✅ Password updated successfully!",true);
+    setTimeout(()=>{ closeModal("modal-change-pw");
+      ["cpw-old","cpw-new","cpw-confirm"].forEach(id=>document.getElementById(id).value="");
+      msg.style.display="none"; },1800);
+  } catch(e){ showMsg(e.message||"Error updating password",false); }
+}
+
+// ═══ BULK IMPORT ═════════════════════════════════════════════
+let _bulkFile=null;
+function bulkFileSelected(file){
+  _bulkFile=file;
+  const sel=document.getElementById("bulk-selected");
+  const btn=document.getElementById("bulk-upload-btn");
+  const res=document.getElementById("bulk-result");
+  res.style.display="none";
+  if(!file){ sel.style.display="none"; if(btn) btn.style.display="none"; return; }
+  sel.innerHTML=`<i class="fa fa-file-excel" style="color:#22c55e"></i> <strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB)`;
+  sel.style.display="block";
+  if(btn) btn.style.display="";
+}
+
+async function doBulkUpload(){
+  if(!_bulkFile) return;
+  const btn=document.getElementById("bulk-upload-btn");
+  const res=document.getElementById("bulk-result");
+  if(btn){ btn.disabled=true; btn.textContent="Importing…"; }
+  const fd=new FormData(); fd.append("file",_bulkFile);
+  try{
+    const token=getToken();
+    const r=await fetch("/api/shipments/bulk-import",{method:"POST",
+      headers:token?{"Authorization":"Bearer "+token}:{}, body:fd});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||"Import failed");
+    res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#16a34a";
+    res.innerHTML=`✅ <strong>${d.created}</strong> created, <strong>${d.skipped}</strong> skipped`
+      +(d.errors?.length?`<br>⚠️ ${d.errors.length} error(s)`:"");
+    _bulkFile=null; if(btn) btn.style.display="none";
+    if(typeof loadShipments==="function") loadShipments();
+  } catch(e){
+    res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444";
+    res.textContent="❌ "+e.message;
+  }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa fa-upload"></i> Import'; } }
+}
+
+// ═══ USER MANAGEMENT ═════════════════════════════════════════
+async function loadUsers(){
+  const list=document.getElementById("users-list");
+  if(!list) return;
+  list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text2)"><i class="fa fa-spinner fa-spin"></i> Loading…</div>';
+  try{
+    const users=await apiFetch("/api/users");
+    if(!users.length){
+      list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px">👥</div>No team members yet</div>';
+      return;
+    }
+    list.innerHTML=users.map(u=>`
+      <div class="shipment-card" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:12px 14px">
+        <div style="width:40px;height:40px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,${u.role==='admin'?'#6c63ff,#4f8ef7':'#4f8ef7,#22c55e'});display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff">
+          ${(u.name||"U")[0].toUpperCase()}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.email}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <span class="badge ${u.role==='admin'?'badge-blue':'badge-green'}" style="font-size:10px">${u.role==='admin'?'👑 Admin':'🎧 CS'}</span>
+          <span class="badge ${u.is_active?'badge-green':'badge-red'}" style="font-size:10px">${u.is_active?'Active':'Inactive'}</span>
+        </div>
+        ${u.role!=='admin'?`<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <button onclick="toggleUser(${u.id})" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px">${u.is_active?'🔒 Disable':'🔓 Enable'}</button>
+          <button onclick="deleteUser(${u.id})" class="btn btn-danger btn-sm" style="font-size:10px;padding:3px 8px">🗑 Delete</button>
+        </div>`:""}
+      </div>`).join("");
+  } catch(e){ list.innerHTML=`<div style="color:#ef4444;padding:20px;text-align:center">Error: ${e.message}</div>`; }
+}
+
+function openNewUserModal(){
+  ["nu-name","nu-email","nu-pw"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+  const r=document.getElementById("nu-role"); if(r) r.value="cs";
+  const e=document.getElementById("nu-error"); if(e) e.style.display="none";
+  openModal("modal-add-user");
+}
+
+async function createUser(){
+  const name=document.getElementById("nu-name").value.trim();
+  const email=document.getElementById("nu-email").value.trim();
+  const pw=document.getElementById("nu-pw").value;
+  const role=document.getElementById("nu-role").value;
+  const err=document.getElementById("nu-error");
+  err.style.display="none";
+  if(!name||!email||!pw){ err.textContent="All fields are required"; err.style.display="block"; return; }
+  if(pw.length<6){ err.textContent="Password must be at least 6 characters"; err.style.display="block"; return; }
+  try{
+    await apiFetch("/api/users",{method:"POST",body:JSON.stringify({name,email,password:pw,role})});
+    closeModal("modal-add-user"); loadUsers(); showToast("User created","success");
+  } catch(e){ err.textContent=e.message||"Error creating user"; err.style.display="block"; }
+}
+
+async function toggleUser(id){
+  try{ await apiFetch(`/api/users/${id}/toggle`,{method:"PATCH"}); loadUsers(); }
+  catch(e){ showToast("Error: "+e.message,"error"); }
+}
+
+async function deleteUser(id){
+  if(!confirm("Delete this user permanently?")) return;
+  try{ await apiFetch(`/api/users/${id}`,{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
+  catch(e){ showToast("Error: "+e.message,"error"); }
+}
+
+// ═══ SHIPMENT DETAIL ═════════════════════════════════════════
+let _detailId=null;
+
+async function openDetail(id){
+  _detailId=id;
+  showPage("detail",null);
+  document.getElementById("detail-ref").textContent="Loading…";
+  document.getElementById("detail-sub").textContent="";
+  document.getElementById("detail-status-badge").innerHTML="";
+  ["detail-pol","detail-pod","detail-etd","detail-eta"].forEach(i=>{
+    const el=document.getElementById(i); if(el) el.textContent="—";
+  });
+  document.getElementById("detail-events-list").innerHTML="";
+  document.getElementById("detail-comments-list").innerHTML="";
+  document.getElementById("detail-info-chips").innerHTML="";
+  document.getElementById("detail-no-events").style.display="none";
+  switchDTab("timeline");
+  try{
+    const s=await apiFetch(`/api/shipments/${id}`);
+    _renderDetail(s);
+  } catch(e){ document.getElementById("detail-ref").textContent="Error: "+e.message; }
+}
+
+function _renderDetail(s){
+  document.getElementById("detail-ref").textContent=s.ref||"—";
+  document.getElementById("detail-sub").textContent=[s.ref2,s.carrier].filter(Boolean).join(" · ")||"No container/carrier info";
+  document.getElementById("detail-status-badge").innerHTML=typeof statusBadge==="function"?statusBadge(s.status):`<span>${s.status}</span>`;
+  document.getElementById("detail-pol").textContent=s.pol||"—";
+  document.getElementById("detail-pod").textContent=s.pod||"—";
+  document.getElementById("detail-etd").textContent=s.etd||"—";
+  document.getElementById("detail-eta").textContent=s.eta||"—";
+  const ha=document.getElementById("detail-portal-href");
+  if(ha) ha.href="/track/"+(s.ref||"");
+
+  // Timeline
+  const evList=document.getElementById("detail-events-list");
+  const noEv=document.getElementById("detail-no-events");
+  const evts=(s.events||[]).slice().reverse();
+  if(!evts.length){ evList.innerHTML=""; noEv.style.display="block"; }
+  else{
+    noEv.style.display="none";
+    evList.innerHTML=evts.map((e,i)=>`
+      <div class="timeline-item">
+        <div class="tl-dot ${i===0?"latest":""}">${i===0?"🚢":"📍"}</div>
+        <div class="tl-content">
+          <div class="tl-time">${e.timestamp||""}</div>
+          <div class="tl-label">${e.description||e.status||"Update"}</div>
+          ${e.location?`<div class="tl-loc">📌 ${e.location}</div>`:""}
+        </div>
+      </div>`).join("");
+  }
+
+  // Comments
+  const cList=document.getElementById("detail-comments-list");
+  const comments=s.comments||[];
+  cList.innerHTML=!comments.length
+    ?'<div style="text-align:center;padding:20px;color:var(--text2);font-size:12px">No notes yet</div>'
+    :comments.map(c=>`
+      <div class="comment-bubble">
+        <span class="comment-author">${c.author||"Agent"}</span>
+        <span class="comment-time">${c.timestamp||""}</span>
+        <div class="comment-text">${c.text||""}</div>
+      </div>`).join("");
+
+  // Info chips
+  const chips=[
+    {l:"Reference",v:s.ref},{l:"Container/AWB",v:s.ref2||"—"},
+    {l:"Mode",v:s.mode||"—"},{l:"Carrier",v:s.carrier||"—"},
+    {l:"Vessel",v:s.vessel||"—"},{l:"Status",v:s.status||"—"},
+    {l:"ETD",v:s.etd||"—"},{l:"ETA",v:s.eta||"—"},
+    {l:"Client",v:s.client||"—",full:true},
+    {l:"Client Email",v:s.client_email||"—",full:true},
+    {l:"Booking No.",v:s.booking_no||"—"},
+    {l:"Note",v:s.note||"—",full:true},
+    {l:"Last Synced",v:s.last_tracked||"Never"},
+  ];
+  document.getElementById("detail-info-chips").innerHTML=chips.map(c=>
+    `<div class="info-chip${c.full?" full":""}"><div class="chip-label">${c.l}</div><div class="chip-value">${c.v}</div></div>`
+  ).join("");
+}
+
+function switchDTab(tab){
+  ["timeline","notes","info"].forEach(t=>{
+    const p=document.getElementById("dtab-"+t);
+    const b=document.getElementById("dtab-btn-"+t);
+    if(p) p.style.display=t===tab?"block":"none";
+    if(b) b.classList.toggle("active",t===tab);
+  });
+}
+
+async function submitComment(){
+  const txt=document.getElementById("detail-comment-text");
+  if(!txt||!txt.value.trim()) return;
+  const user=getUser();
+  try{
+    await apiFetch(`/api/shipments/${_detailId}/comments`,{method:"POST",
+      body:JSON.stringify({author:user?.name||"Agent",text:txt.value.trim()})});
+    txt.value="";
+    const s=await apiFetch(`/api/shipments/${_detailId}`);
+    _renderDetail(s); switchDTab("notes"); showToast("Note added","success");
+  } catch(e){ showToast("Error: "+e.message,"error"); }
+}
+
+async function syncDetail(){
+  if(!_detailId) return;
+  const btn=document.getElementById("detail-sync-btn");
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa fa-rotate fa-spin"></i>'; }
+  try{
+    await apiFetch(`/api/shipments/${_detailId}/track`,{method:"POST"});
+    const s=await apiFetch(`/api/shipments/${_detailId}`);
+    _renderDetail(s); showToast("Synced","success");
+  } catch(e){ showToast("Sync error: "+e.message,"error"); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa fa-rotate"></i>'; } }
+}
+
+function copyPortalLink(){
+  const a=document.getElementById("detail-portal-href");
+  if(!a) return;
+  const url=window.location.origin+a.getAttribute("href");
+  navigator.clipboard.writeText(url)
+    .then(()=>showToast("Link copied!","success"))
+    .catch(()=>{ prompt("Copy this link:",url); });
+}
+
+function showToast(msg,type){
+  let wrap=document.getElementById("toast-wrap");
+  if(!wrap){ wrap=document.createElement("div"); wrap.id="toast-wrap";
+    wrap.style.cssText="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none";
+    document.body.appendChild(wrap); }
+  const t=document.createElement("div");
+  t.style.cssText="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;color:var(--text1);box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;white-space:nowrap";
+  t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"✅":"❌"}</span>${msg}`;
+  wrap.appendChild(t); setTimeout(()=>t.remove(),2800);
+}
+</script>
 
 </body>
 </html>
