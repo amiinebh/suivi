@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Shipsgo API Debugger</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0f1e;color:#e8eaf6;min-height:100vh;padding:20px}
+h1{font-size:20px;font-weight:700;margin-bottom:4px}
+.sub{font-size:13px;color:#8892b0;margin-bottom:24px}
+.card{background:#1a2240;border:1px solid #2a3a5c;border-radius:14px;padding:20px;margin-bottom:16px}
+.card-title{font-size:13px;font-weight:700;color:#4f8ef7;margin-bottom:14px;
+  display:flex;align-items:center;gap:8px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+label{font-size:11px;font-weight:600;color:#8892b0;text-transform:uppercase;
+  letter-spacing:.5px;display:block;margin-bottom:4px}
+input,select{width:100%;background:#0f1629;border:1px solid #2a3a5c;border-radius:8px;
+  padding:10px 12px;color:#e8eaf6;font-size:13px;outline:none;font-family:inherit}
+input:focus,select:focus{border-color:#4f8ef7}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
+  border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;
+  border:none;font-family:inherit;transition:all .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,#4f8ef7,#6c63ff);color:#fff;width:100%}
+.btn-secondary{background:#151d35;border:1px solid #2a3a5c;color:#e8eaf6}
+.result{margin-top:16px}
+.result-label{font-size:11px;font-weight:600;color:#8892b0;
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+pre{background:#070c18;border:1px solid #2a3a5c;border-radius:8px;
+  padding:14px;font-size:12px;overflow-x:auto;white-space:pre-wrap;
+  word-break:break-all;max-height:320px;overflow-y:auto;line-height:1.6}
+.status-ok{color:#22c55e;font-weight:700}
+.status-err{color:#ef4444;font-weight:700}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+  border-radius:20px;font-size:11px;font-weight:600}
+.badge-get{background:rgba(34,197,94,.15);color:#22c55e}
+.badge-post{background:rgba(79,142,247,.15);color:#4f8ef7}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;
+  cursor:pointer;border:1px solid #2a3a5c;background:none;color:#8892b0;font-family:inherit}
+.tab.active{background:#4f8ef7;color:#fff;border-color:#4f8ef7}
+.section{display:none}.section.active{display:block}
+.spinner{display:inline-block;width:14px;height:14px;
+  border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
+  border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.credits{font-size:12px;color:#f59e0b;margin-top:8px}
+</style>
+</head>
+<body>
+
+<h1>🔍 Shipsgo API Debugger</h1>
+<div class="sub">Hosted on Railway — proxy auto-detected, no CORS ✅</div>
+
+<!-- API Key -->
+<div class="card">
+  <div class="card-title">🔑 API Configuration</div>
+  <div class="form-row">
+    <div>
+      <label>Your API Key (X-Shipsgo-User-Token)</label>
+      <input id="api-key" type="password" placeholder="Paste your API key here"/>
+    </div>
+    <div style="display:none"><label>Railway URL (auto)</label><input id="base-url" value=""/>
+    </div>
+  </div>
+  <button class="btn btn-secondary" style="width:auto" onclick="testConnection()">
+    ⚡ Test Connection
+  </button>
+  <div id="conn-result"></div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('ocean')">🚢 Ocean</button>
+  <button class="tab" onclick="switchTab('air')">✈️ Air</button>
+  <button class="tab" onclick="switchTab('custom')">⚙️ Custom Request</button>
+</div>
+
+<!-- OCEAN -->
+<div class="section active" id="tab-ocean">
+
+  <div class="card">
+    <div class="card-title"><span class="badge badge-post">POST</span> Create Ocean Shipment</div>
+    <div class="form-row">
+      <div><label>Container Number</label>
+        <input id="oc-container" placeholder="e.g. MSCU1234567"/></div>
+      <div><label>Booking Number</label>
+        <input id="oc-booking" placeholder="e.g. MEDUQY000000"/></div>
+      <div><label>Carrier SCAC</label>
+        <input id="oc-carrier" placeholder="e.g. MSCU, CMDU, MAEU"/></div>
+      <div><label>Reference (internal)</label>
+        <input id="oc-ref" placeholder="e.g. AQUA034"/></div>
+    </div>
+    <button class="btn btn-primary" onclick="createOcean()">
+      <span id="oc-create-icon">🚀</span> Create & Start Tracking
+    </button>
+    <div id="oc-create-result" class="result"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge badge-get">GET</span> Get Ocean Shipment Details</div>
+    <div class="form-row">
+      <div><label>Shipsgo Shipment ID</label>
+        <input id="oc-get-id" placeholder="e.g. 123456 (from create response)"/></div>
+    </div>
+    <button class="btn btn-primary" onclick="getOcean()">
+      📦 Get Details
+    </button>
+    <div id="oc-get-result" class="result"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge badge-get">GET</span> List Ocean Shipments</div>
+    <button class="btn btn-primary" onclick="listOcean()">📋 List All</button>
+    <div id="oc-list-result" class="result"></div>
+  </div>
+
+</div>
+
+<!-- AIR -->
+<div class="section" id="tab-air">
+
+  <div class="card">
+    <div class="card-title"><span class="badge badge-post">POST</span> Create Air Shipment</div>
+    <div class="form-row">
+      <div><label>AWB Number</label>
+        <input id="air-awb" placeholder="e.g. 333-88888888"/></div>
+      <div><label>Reference (internal)</label>
+        <input id="air-ref" placeholder="e.g. AQUA035"/></div>
+    </div>
+    <button class="btn btn-primary" onclick="createAir()">🚀 Create & Start Tracking</button>
+    <div id="air-create-result" class="result"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="badge badge-get">GET</span> Get Air Shipment Details</div>
+    <div class="form-row">
+      <div><label>Shipsgo Shipment ID</label>
+        <input id="air-get-id" placeholder="e.g. 123456"/></div>
+    </div>
+    <button class="btn btn-primary" onclick="getAir()">📦 Get Details</button>
+    <div id="air-get-result" class="result"></div>
+  </div>
+
+</div>
+
+<!-- CUSTOM -->
+<div class="section" id="tab-custom">
+  <div class="card">
+    <div class="card-title">⚙️ Custom API Request</div>
+    <div class="form-row">
+      <div>
+        <label>Method</label>
+        <select id="custom-method">
+          <option>GET</option><option>POST</option><option>PATCH</option><option>DELETE</option>
+        </select>
+      </div>
+      <div>
+        <label>Endpoint Path</label>
+        <input id="custom-path" placeholder="e.g. /ocean/shipments/123456"/>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label>Body (JSON) — leave empty for GET</label>
+      <textarea id="custom-body" style="width:100%;background:#0f1629;border:1px solid #2a3a5c;
+        border-radius:8px;padding:10px 12px;color:#e8eaf6;font-size:12px;
+        outline:none;font-family:monospace;min-height:100px;resize:vertical"
+        placeholder='{"containernumber":"MSCU1234567","carrier":"MSCU"}'></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="customRequest()">⚡ Send Request</button>
+    <div id="custom-result" class="result"></div>
+  </div>
+</div>
+
+<script>
+function getKey(){ return document.getElementById('api-key').value.trim(); }
+function getBase(){
+  // Always use same origin — debugger is served FROM Railway
+  return window.location.origin;
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active', ['ocean','air','custom'][i]===name);
+  });
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
+function showResult(id, status, data, credits){
+  const el = document.getElementById(id);
+  const ok = status>=200 && status<300;
+  el.innerHTML = `
+    <div class="result-label">Response <span class="${ok?'status-ok':'status-err'}">
+      ${status} ${ok?'✅':'❌'}
+    </span></div>
+    ${credits?`<div class="credits">💳 Credits remaining: ${credits}</div>`:''}
+    <pre>${JSON.stringify(data, null, 2)}</pre>`;
+}
+
+function showError(id, msg){
+  document.getElementById(id).innerHTML =
+    `<div class="result-label">Error <span class="status-err">❌</span></div>
+     <pre style="color:#ef4444">${msg}</pre>`;
+}
+
+async function apiCall(method, path, body=null){
+  const key = getKey();
+  if(!key) throw new Error('API key is required!');
+  // Route through Railway proxy to avoid CORS
+  const base = getBase();
+  const url  = base + '/proxy/shipsgo' + path;
+  const opts = {
+    method,
+    headers: {
+      'X-Shipsgo-User-Token': key,
+      'Accept': 'application/json'
+    }
+  };
+  if(body){ opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
+  const res = await fetch(url, opts);
+  const credits = res.headers.get('X-Shipsgo-Credits-Remaining');
+  let data;
+  try{ data = await res.json(); }catch{ data = {raw: await res.text()}; }
+  return { status: res.status, data, credits };
+}
+
+async function testConnection(){
+  const el = document.getElementById('conn-result');
+  el.innerHTML = '<div style="margin-top:10px;color:#8892b0;font-size:13px"><span class="spinner"></span> Testing…</div>';
+  try{
+    const r = await apiCall('GET', '/ocean/carriers?take=1');
+    el.innerHTML = r.status===200
+      ? '<div style="margin-top:10px;font-size:13px;color:#22c55e">✅ Connected! API key is valid.</div>'
+      : `<div style="margin-top:10px;font-size:13px;color:#ef4444">❌ Error ${r.status}: ${JSON.stringify(r.data)}</div>`;
+  }catch(e){
+    el.innerHTML = `<div style="margin-top:10px;font-size:13px;color:#ef4444">❌ ${e.message}</div>`;
+  }
+}
+
+async function createOcean(){
+  const btn = event.target.closest('button');
+  btn.innerHTML = '<span class="spinner"></span> Creating…'; btn.disabled=true;
+  try{
+    const body = {
+      containernumber: document.getElementById('oc-container').value.trim()||undefined,
+      bookingnumber:   document.getElementById('oc-booking').value.trim()||undefined,
+      carrier:         document.getElementById('oc-carrier').value.trim()||undefined,
+      reference:       document.getElementById('oc-ref').value.trim()||undefined,
+    };
+    Object.keys(body).forEach(k=>body[k]===undefined&&delete body[k]);
+    const r = await apiCall('POST', '/ocean/shipments', body);
+    showResult('oc-create-result', r.status, r.data, r.credits);
+    if(r.data&&r.data.shipment&&r.data.shipment.id)
+      document.getElementById('oc-get-id').value = r.data.shipment.id;
+  }catch(e){ showError('oc-create-result', e.message); }
+  btn.innerHTML = '<span>🚀</span> Create & Start Tracking'; btn.disabled=false;
+}
+
+async function getOcean(){
+  const id = document.getElementById('oc-get-id').value.trim();
+  if(!id){ showError('oc-get-result','Enter a shipment ID'); return; }
+  try{
+    const r = await apiCall('GET', `/ocean/shipments/${id}`);
+    showResult('oc-get-result', r.status, r.data, r.credits);
+  }catch(e){ showError('oc-get-result', e.message); }
+}
+
+async function listOcean(){
+  try{
+    const r = await apiCall('GET', '/ocean/shipments?take=10');
+    showResult('oc-list-result', r.status, r.data, r.credits);
+  }catch(e){ showError('oc-list-result', e.message); }
+}
+
+async function createAir(){
+  const btn = event.target.closest('button');
+  btn.innerHTML = '<span class="spinner"></span> Creating…'; btn.disabled=true;
+  try{
+    const body = {
+      awbnumber:  document.getElementById('air-awb').value.trim()||undefined,
+      reference:  document.getElementById('air-ref').value.trim()||undefined,
+    };
+    Object.keys(body).forEach(k=>body[k]===undefined&&delete body[k]);
+    const r = await apiCall('POST', '/air/shipments', body);
+    showResult('air-create-result', r.status, r.data, r.credits);
+    if(r.data&&r.data.shipment&&r.data.shipment.id)
+      document.getElementById('air-get-id').value = r.data.shipment.id;
+  }catch(e){ showError('air-create-result', e.message); }
+  btn.innerHTML = '🚀 Create & Start Tracking'; btn.disabled=false;
+}
+
+async function getAir(){
+  const id = document.getElementById('air-get-id').value.trim();
+  if(!id){ showError('air-get-result','Enter a shipment ID'); return; }
+  try{
+    const r = await apiCall('GET', `/air/shipments/${id}`);
+    showResult('air-get-result', r.status, r.data, r.credits);
+  }catch(e){ showError('air-get-result', e.message); }
+}
+
+async function customRequest(){
+  const method = document.getElementById('custom-method').value;
+  const path   = document.getElementById('custom-path').value.trim();
+  const rawBody= document.getElementById('custom-body').value.trim();
+  if(!path){ showError('custom-result','Enter an endpoint path'); return; }
+  let body = null;
+  if(rawBody){
+    try{ body = JSON.parse(rawBody); }
+    catch(e){ showError('custom-result','Invalid JSON body: '+e.message); return; }
+  }
+  try{
+    const r = await apiCall(method, path, body);
+    showResult('custom-result', r.status, r.data, r.credits);
+  }catch(e){ showError('custom-result', e.message); }
+}
+</script>
+</body>
+</html>
