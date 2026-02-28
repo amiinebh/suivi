@@ -187,55 +187,44 @@ def health(db: Session = Depends(get_db)):
     except Exception as e:
         return {"status": "error", "db": str(e)}
 
-
 # ══ Shipsgo Proxy ══════════════════════════════════════════════════════
 import httpx
-from fastapi import Request as ProxyRequest
-
 SHIPSGO_BASE = "https://api.shipsgo.com/v2"
 
 @app.api_route("/proxy/shipsgo/{path:path}", methods=["GET","POST","PATCH","DELETE"])
-async def shipsgo_proxy(path: str, request: ProxyRequest):
+async def shipsgo_proxy(path: str, request: Request):
     api_key = request.headers.get("X-Shipsgo-User-Token","")
-    body    = await request.body()
-    params  = dict(request.query_params)
+    body = await request.body()
+    params = dict(request.query_params)
     hdrs = {"X-Shipsgo-User-Token":api_key,"Accept":"application/json","Content-Type":"application/json"}
-    url = f"{SHIPSGO_BASE}/{path}"
     async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.request(method=request.method,url=url,headers=hdrs,params=params,content=body)
-    try:    data = resp.json()
+        resp = await client.request(request.method, f"{SHIPSGO_BASE}/{path}", headers=hdrs, params=params, content=body)
+    try: data = resp.json()
     except: data = {"raw": resp.text}
     return JSONResponse(content=data, status_code=resp.status_code)
 
 @app.get("/debug")
-def debug_page():
-    return FileResponse("static/debug.html")
+def debug_page(): return FileResponse("static/debug.html")
 
-# ══ Auth & User Management ══════════════════════════════════════════════
-
-# ── Auto-create admin on first run ──────────────────────────────────────────
+# ══ Auth ═══════════════════════════════════════════════════════════════
 def ensure_admin(db):
     from models import User
     if not db.query(User).filter(User.role=="admin").first():
-        admin = User(
-            email     = os.getenv("ADMIN_EMAIL","admin@freighttrack.com"),
-            name      = "Admin",
-            role      = "admin",
-            hashed_pw = hash_password(os.getenv("ADMIN_PASSWORD","Admin1234!")),
-            is_active = True,
-        )
+        admin = User(email=os.getenv("ADMIN_EMAIL","admin@freighttrack.com"),
+            name="Admin", role="admin",
+            hashed_pw=hash_password(os.getenv("ADMIN_PASSWORD","Admin1234!")),
+            is_active=True)
         db.add(admin); db.commit()
-        print("✅ Default admin created:", admin.email)
+        print("✅ Default admin created")
 
 @app.on_event("startup")
 def on_startup():
-    import models as _models
     from database import Base, engine, SessionLocal, run_migrations
     Base.metadata.create_all(bind=engine)
     run_migrations()
     db = SessionLocal()
     try: ensure_admin(db)
-    except Exception as e: print(f"⚠️ ensure_admin: {e}")
+    except Exception as e: print(f"startup: {e}")
     finally: db.close()
 
 @app.post("/api/auth/login")
@@ -248,21 +237,33 @@ def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
     return {"access_token": token, "role": user.role, "name": user.name}
 
 @app.get("/api/auth/me")
-def me(current=Depends(get_current_user)):
-    return current
+def me(current=Depends(get_current_user)): return current
 
+@app.post("/api/auth/change-password")
+def change_password(body: dict, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    from models import User
+    old_pw = body.get("old_password",""); new_pw = body.get("new_password","")
+    if not old_pw or not new_pw: raise HTTPException(400,"Both passwords required")
+    if len(new_pw)<6: raise HTTPException(400,"New password must be at least 6 characters")
+    user = db.query(User).filter(User.id==int(current["sub"])).first()
+    if not user or not verify_password(old_pw, user.hashed_pw):
+        raise HTTPException(401,"Current password is incorrect")
+    user.hashed_pw = hash_password(new_pw); db.commit()
+    return {"message":"Password changed successfully"}
+
+# ══ User Management ════════════════════════════════════════════════════
 @app.get("/api/users")
 def list_users(db: Session = Depends(get_db), current=Depends(require_admin)):
     from models import User
     users = db.query(User).order_by(User.id).all()
     return [{"id":u.id,"email":u.email,"name":u.name,"role":u.role,
-             "is_active":u.is_active,"created_at":u.created_at} for u in users]
+             "is_active":u.is_active,"created_at":str(u.created_at)} for u in users]
 
 @app.post("/api/users")
 def create_user(body: schemas.UserCreate, db: Session = Depends(get_db), current=Depends(require_admin)):
     from models import User
     if db.query(User).filter(User.email==body.email).first():
-        raise HTTPException(409, "Email already exists")
+        raise HTTPException(409,"Email already exists")
     u = User(email=body.email, name=body.name, role=body.role,
              hashed_pw=hash_password(body.password), is_active=True)
     db.add(u); db.commit(); db.refresh(u)
@@ -286,13 +287,45 @@ def delete_user(uid: int, db: Session = Depends(get_db), current=Depends(require
     db.delete(u); db.commit()
     return {"deleted": uid}
 
+# ══ Bulk Import ════════════════════════════════════════════════════════
+from fastapi import UploadFile, File
+import io
+
+@app.post("/api/shipments/bulk-import")
+async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db),
+                      current=Depends(get_current_user)):
+    import openpyxl
+    content = await file.read()
+    wb = openpyxl.load_workbook(io.BytesIO(content))
+    ws = wb.active
+    headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1,max_row=1))]
+    created, skipped, errors = [], [], []
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        row_data = {headers[i]:(str(v).strip() if v is not None else "") for i,v in enumerate(row) if i<len(headers)}
+        ref = row_data.get("ref","").strip()
+        if not ref: continue
+        if db.query(models.Shipment).filter(models.Shipment.ref==ref).first():
+            skipped.append(ref); continue
+        try:
+            from datetime import datetime
+            s = models.Shipment(ref=ref, ref2=row_data.get("ref2",""),
+                booking_no=row_data.get("booking_no",""), mode=row_data.get("mode","Ocean"),
+                carrier=row_data.get("carrier",""), client=row_data.get("client",""),
+                client_email=row_data.get("client_email",""), pol=row_data.get("pol",""),
+                pod=row_data.get("pod",""), status="Pending",
+                created_at=datetime.utcnow().isoformat())
+            db.add(s); db.commit(); created.append(ref)
+        except Exception as e: errors.append({"ref":ref,"error":str(e)})
+    return {"created":len(created),"skipped":len(skipped),"errors":errors,"refs_created":created}
+
+# ══ Debug track ════════════════════════════════════════════════════════
 @app.post("/api/shipments/{sid}/track-debug")
 def track_debug(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     import requests as req_lib
     s = db.query(models.Shipment).filter(models.Shipment.id==sid).first()
     if not s: return {"error":"Not found"}
     token = os.getenv("SHIPSGO_TOKEN") or os.getenv("SHIPSGO_API_KEY","")
-    hdrs  = {"X-Shipsgo-User-Token":token,"Accept":"application/json","Content-Type":"application/json"}
+    hdrs = {"X-Shipsgo-User-Token":token,"Accept":"application/json","Content-Type":"application/json"}
     result = {"token_set":bool(token),"ref":s.ref,"container":s.ref2,"shipsgo_id":s.shipsgo_id}
     if s.shipsgo_id:
         r = req_lib.get(f"https://api.shipsgo.com/v2/ocean/shipments/{s.shipsgo_id}",headers=hdrs,timeout=20)
