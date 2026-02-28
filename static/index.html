@@ -11,6 +11,7 @@
 <title>FreightTrack Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -372,11 +373,57 @@ textarea.form-control{resize:none;min-height:72px}
 [data-theme="light"] .version-tag{color:var(--text3)}
 [data-theme="light"] .sidebar-user{background:var(--bg3)}
 [data-theme="light"] .nav-item.active{background:rgba(79,142,247,.1)}
+
+/* ── KPI Page ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+@media(min-width:768px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
+.kpi-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 16px;display:flex;flex-direction:column;gap:6px;
+  transition:transform .2s,border-color .2s;
+}
+.kpi-card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.kpi-icon{font-size:22px;margin-bottom:2px}
+.kpi-value{font-size:28px;font-weight:800;line-height:1}
+.kpi-label{font-size:11px;color:var(--text2);font-weight:500}
+.kpi-sub{font-size:11px;margin-top:2px}
+.kpi-sub.good{color:var(--green)}.kpi-sub.bad{color:var(--red)}.kpi-sub.neutral{color:var(--text2)}
+
+.charts-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:20px}
+@media(min-width:768px){.charts-grid{grid-template-columns:1fr 1fr}}
+.chart-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 16px;
+}
+.chart-title{font-size:13px;font-weight:700;margin-bottom:16px;
+  display:flex;align-items:center;gap:8px}
+.chart-title i{color:var(--accent)}
+.chart-wrap{position:relative;height:220px}
+@media(max-width:767px){.chart-wrap{height:190px}}
+
+.overdue-list{display:flex;flex-direction:column;gap:8px}
+.overdue-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);
+  border-radius:10px;padding:10px 14px;
+}
+.overdue-ref{font-size:13px;font-weight:700;color:var(--red)}
+.overdue-days{font-size:11px;background:rgba(239,68,68,.15);color:var(--red);
+  padding:2px 8px;border-radius:20px;font-weight:700}
+
+.bar-list{display:flex;flex-direction:column;gap:8px}
+.bar-item{display:flex;flex-direction:column;gap:4px}
+.bar-label{display:flex;justify-content:space-between;font-size:12px}
+.bar-label span:last-child{color:var(--text2)}
+.bar-track{background:var(--bg3);border-radius:4px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  transition:width .6s ease}
 </style>
 </head>
 <body>
 <div id="toast-wrap"></div>
-<div class="version-tag">v26</div>
+<div class="version-tag">v27</div>
 
 <!-- FAB for mobile -->
 <button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
@@ -398,6 +445,10 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="nav-item" onclick="showPage('shipments',this)">
       <i class="fa fa-boxes-stacked"></i> Shipments
       <span class="nav-badge" id="nav-count">0</span>
+    </div>
+    <div class="nav-section">Analytics</div>
+    <div class="nav-item" onclick="showPage('analytics',this)">
+      <i class="fa fa-chart-line"></i> KPI & Charts
     </div>
     <div class="nav-section">Tools</div>
     <div class="nav-item" onclick="exportXLSX()">
@@ -495,6 +546,9 @@ textarea.form-control{resize:none;min-height:72px}
     </button>
     <button class="bnav-item" id="bnav-shipments" onclick="showPage('shipments',null);setBottomNav('shipments')">
       <i class="fa fa-boxes-stacked"></i><span>Shipments</span>
+    </button>
+    <button class="bnav-item" id="bnav-analytics" onclick="showPage('analytics',null);setBottomNav('analytics')">
+      <i class="fa fa-chart-line"></i><span>KPIs</span>
     </button>
     <button class="bnav-item" id="bnav-sync" onclick="trackAll()">
       <i class="fa fa-rotate"></i><span>Sync</span>
@@ -625,6 +679,7 @@ function showPage(id,el){
   const titles={dashboard:'Overview',shipments:'Shipments'};
   document.getElementById('page-title').textContent=titles[id]||id;
   if(id==='shipments') loadShipments();
+  if(id==='analytics') loadAnalytics();
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -950,6 +1005,156 @@ async function trackAll(){
   catch(e){ toast(e.message,'error'); }
 }
 function exportXLSX(){ window.open('/api/export/xlsx','_blank'); }
+
+
+/* ── Charts registry ── */
+const chartRegistry = {};
+function destroyChart(id){ if(chartRegistry[id]){ chartRegistry[id].destroy(); delete chartRegistry[id]; } }
+
+function getChartColors(n){
+  const palette=['#4f8ef7','#6c63ff','#22c55e','#f59e0b','#ef4444','#06b6d4','#f97316','#a855f7'];
+  return Array.from({length:n},(_,i)=>palette[i%palette.length]);
+}
+
+function isDark(){ return document.documentElement.getAttribute('data-theme')==='dark'; }
+function chartTextColor(){ return isDark()?'#8892b0':'#5a6a8a'; }
+function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)'; }
+
+/* ── KPI Page ── */
+async function loadAnalytics(){
+  try{
+    const k = await apiFetch('/api/kpis');
+
+    // ── KPI Cards ──
+    document.getElementById('kpi-cards').innerHTML = `
+      <div class="kpi-card">
+        <div class="kpi-icon">📦</div>
+        <div class="kpi-value">${k.total}</div>
+        <div class="kpi-label">Total Shipments</div>
+        <div class="kpi-sub neutral">All time</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-value" style="color:var(--green)">${k.on_time_rate}%</div>
+        <div class="kpi-label">On-Time Rate</div>
+        <div class="kpi-sub ${k.on_time_rate>=80?'good':'bad'}">${k.on_time_rate>=80?'🟢 Good':'🔴 Needs attention'}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">⚠️</div>
+        <div class="kpi-value" style="color:${k.delay_rate>20?'var(--red)':'var(--yellow)'}">
+          ${k.delay_rate}%
+        </div>
+        <div class="kpi-label">Delay Rate</div>
+        <div class="kpi-sub ${k.delay_rate<10?'good':'bad'}">${k.delay_rate<10?'🟢 Low':'🔴 High'}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🕒</div>
+        <div class="kpi-value">${k.avg_transit||'—'}</div>
+        <div class="kpi-label">Avg Transit Days</div>
+        <div class="kpi-sub neutral">${k.avg_transit?'ETD → ETA':'No data yet'}</div>
+      </div>
+    `;
+
+    // ── Status Donut ──
+    destroyChart('chart-status');
+    const statusLabels = Object.keys(k.by_status);
+    const statusData   = Object.values(k.by_status);
+    if(statusLabels.length){
+      chartRegistry['chart-status'] = new Chart(
+        document.getElementById('chart-status'),{
+          type:'doughnut',
+          data:{
+            labels:statusLabels,
+            datasets:[{data:statusData,backgroundColor:getChartColors(statusLabels.length),
+              borderWidth:0,hoverOffset:6}]
+          },
+          options:{
+            responsive:true,maintainAspectRatio:false,
+            plugins:{
+              legend:{position:'right',labels:{color:chartTextColor(),font:{size:11},boxWidth:12,padding:10}},
+              tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} shipments`}}
+            },
+            cutout:'65%'
+          }
+        }
+      );
+    }
+
+    // ── Monthly Bar ──
+    destroyChart('chart-monthly');
+    if(k.monthly&&k.monthly.length){
+      chartRegistry['chart-monthly'] = new Chart(
+        document.getElementById('chart-monthly'),{
+          type:'bar',
+          data:{
+            labels:k.monthly.map(m=>m.month),
+            datasets:[{
+              label:'Shipments',
+              data:k.monthly.map(m=>m.count),
+              backgroundColor:'rgba(79,142,247,.7)',
+              borderColor:'#4f8ef7',
+              borderWidth:1,
+              borderRadius:6,
+            }]
+          },
+          options:{
+            responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{display:false}},
+            scales:{
+              x:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10}}},
+              y:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10},stepSize:1},beginAtZero:true}
+            }
+          }
+        }
+      );
+    } else {
+      document.getElementById('chart-monthly').parentElement.innerHTML =
+        '<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px">No monthly data yet</div>';
+    }
+
+    // ── Carriers bar list ──
+    const cWrap = document.getElementById('bar-carriers');
+    if(k.by_carrier&&k.by_carrier.length){
+      const max = k.by_carrier[0].count;
+      cWrap.innerHTML = k.by_carrier.map(c=>`
+        <div class="bar-item">
+          <div class="bar-label"><span>${c.name}</span><span>${c.count}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.count/max*100)}%"></div></div>
+        </div>`).join('');
+    } else {
+      cWrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No carrier data yet</div>';
+    }
+
+    // ── Clients bar list ──
+    const clWrap = document.getElementById('bar-clients');
+    if(k.by_client&&k.by_client.length){
+      const max = k.by_client[0].count;
+      clWrap.innerHTML = k.by_client.map(c=>`
+        <div class="bar-item">
+          <div class="bar-label"><span>${c.name}</span><span>${c.count}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.count/max*100)}%"></div></div>
+        </div>`).join('');
+    } else {
+      clWrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No client data yet</div>';
+    }
+
+    // ── Overdue ──
+    const oWrap = document.getElementById('overdue-list');
+    if(k.overdue&&k.overdue.length){
+      oWrap.innerHTML = k.overdue.map(o=>`
+        <div class="overdue-item">
+          <div>
+            <div class="overdue-ref">${o.ref}</div>
+            <div style="font-size:11px;color:var(--text2)">${o.client||'—'} · ETA ${o.eta?o.eta.split('T')[0]:'—'}</div>
+          </div>
+          <div class="overdue-days">${o.days_late}d late</div>
+        </div>`).join('');
+    } else {
+      oWrap.innerHTML='<div style="text-align:center;padding:16px;color:var(--green);font-size:13px">🎉 No overdue shipments!</div>';
+    }
+
+  } catch(e){ toast('KPI error: '+e.message,'error'); console.error(e); }
+}
 
 /* ── Theme ── */
 function toggleTheme(){
