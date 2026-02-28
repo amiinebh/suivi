@@ -491,9 +491,6 @@ textarea.form-control{resize:none;min-height:72px}
 <button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
   <i class="fa fa-plus"></i>
 </button>
-<button class="btn btn-fab admin-only" onclick="openModal('modal-bulk-import')" title="Bulk Import" style="bottom:calc(var(--safe-bottom)+76px);background:var(--bg2);border:1px solid var(--border);color:var(--text1)">
-  <i class="fa fa-file-excel" style="color:#22c55e"></i>
-</button>
 
 <div class="app">
 <!-- ═══════ SIDEBAR (desktop) ═══════ -->
@@ -522,6 +519,12 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="nav-section">Tools</div>
     <div class="nav-item" onclick="exportXLSX()">
       <i class="fa fa-file-excel"></i> Export XLSX
+    </div>
+    <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')" style="display:none">
+      <i class="fa fa-upload" style="color:#22c55e"></i> Import XLSX
+    </div>
+    <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')" style="display:none">
+      <i class="fa fa-file-import"></i> Bulk Import
     </div>
     <div class="nav-item" onclick="trackAll()">
       <i class="fa fa-rotate"></i> Sync All
@@ -755,9 +758,7 @@ textarea.form-control{resize:none;min-height:72px}
     <button class="bnav-item admin-only" id="bnav-users" onclick="showPage('users',null);setBottomNav('users')">
       <i class="fa fa-users"></i><span>Team</span>
     </button>
-    <button class="bnav-item admin-only" id="bnav-users" onclick="showPage('users',null);setBottomNav('users')">
-      <i class="fa fa-users"></i><span>Team</span>
-    </button>
+    
     <button class="bnav-item" id="bnav-sync" onclick="trackAll()">
       <i class="fa fa-rotate"></i><span>Sync</span>
     </button>
