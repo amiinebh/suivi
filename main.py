@@ -6,9 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from typing import Optional, List
-import os
+import hashlib, hmac, os
 
 import models, schemas, tracker
 from database import SessionLocal, engine
@@ -16,13 +15,20 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 models.Base.metadata.create_all(bind=engine)
 
-_pwd           = CryptContext(schemes=["bcrypt"], deprecated="auto")
-ADMIN_USER     = "admin"
-ADMIN_PASS     = "Admin1234!"
-SECRET_KEY     = os.getenv("SECRET_KEY", "freighttrack-secret-2026")
-ALGORITHM      = "HS256"
-TOKEN_MINUTES  = 480
-oauth2_scheme  = OAuth2PasswordBearer(tokenUrl="token")
+# â”€â”€ Use sha256 hashing â€” avoids bcrypt version issues entirely â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+SECRET_KEY    = os.getenv("SECRET_KEY", "freighttrack-secret-2026")
+ALGORITHM     = "HS256"
+TOKEN_MINUTES = 480
+ADMIN_USER    = "admin"
+ADMIN_PASS    = "Admin1234"
+
+def hash_password(password: str) -> str:
+    """Simple SHA256 hash with salt â€” no bcrypt dependency issues."""
+    salt = "freighttrack_salt_2026"
+    return hashlib.sha256((salt + password).encode()).hexdigest()
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return hash_password(plain) == hashed
 
 # â”€â”€ SEED â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def seed():
@@ -30,7 +36,7 @@ def seed():
     try:
         u = db.query(models.User).filter(models.User.username == ADMIN_USER).first()
         if u:
-            u.hashed_password = _pwd.hash(ADMIN_PASS)
+            u.hashed_password = hash_password(ADMIN_PASS)
             u.role = "admin"
             db.commit()
             print(f"âœ… Admin password RESET â†’ {ADMIN_USER} / {ADMIN_PASS}")
@@ -38,7 +44,7 @@ def seed():
             db.add(models.User(
                 username=ADMIN_USER, full_name="Administrator",
                 email="admin@freighttrack.com",
-                hashed_password=_pwd.hash(ADMIN_PASS), role="admin"
+                hashed_password=hash_password(ADMIN_PASS), role="admin"
             ))
             db.commit()
             print(f"âœ… Admin CREATED â†’ {ADMIN_USER} / {ADMIN_PASS}")
@@ -54,6 +60,8 @@ seed()
 app = FastAPI(title="FreightTrack Pro")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True,
                    allow_methods=["*"], allow_headers=["*"])
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def get_db():
     db = SessionLocal()
@@ -77,26 +85,25 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if not user: raise HTTPException(status_code=401, detail="User not found")
     return user
 
-# â”€â”€ EMERGENCY RESET ENDPOINT (no auth needed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# â”€â”€ EMERGENCY RESET (no auth) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 @app.get("/reset-admin")
 def reset_admin():
-    """Emergency: resets admin password to Admin1234! â€” remove after first login."""
     db = SessionLocal()
     try:
         u = db.query(models.User).filter(models.User.username == ADMIN_USER).first()
         if u:
-            u.hashed_password = _pwd.hash(ADMIN_PASS)
+            u.hashed_password = hash_password(ADMIN_PASS)
             u.role = "admin"
             db.commit()
-            return {"message": f"âœ… Admin password reset to: {ADMIN_PASS}", "username": ADMIN_USER}
         else:
             db.add(models.User(
                 username=ADMIN_USER, full_name="Administrator",
                 email="admin@freighttrack.com",
-                hashed_password=_pwd.hash(ADMIN_PASS), role="admin"
+                hashed_password=hash_password(ADMIN_PASS), role="admin"
             ))
             db.commit()
-            return {"message": f"âœ… Admin created. Username: {ADMIN_USER}  Password: {ADMIN_PASS}"}
+        return {"success": True, "username": ADMIN_USER, "password": ADMIN_PASS,
+                "message": "Login now at your platform URL"}
     except Exception as e:
         db.rollback()
         return {"error": str(e)}
@@ -107,7 +114,7 @@ def reset_admin():
 @app.post("/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
-    if not user or not _pwd.verify(form_data.password, user.hashed_password):
+    if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     token = create_access_token({"sub": user.username}, timedelta(minutes=TOKEN_MINUTES))
     return {"access_token": token, "token_type": "bearer", "role": user.role, "name": user.full_name}
@@ -121,12 +128,13 @@ def list_users(current_user=Depends(get_current_user), db: Session = Depends(get
     return db.query(models.User).all()
 
 @app.post("/users/register", response_model=schemas.UserOut)
-def register(user: schemas.UserCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def register(user: schemas.UserCreate, db: Session = Depends(get_db),
+             current_user=Depends(get_current_user)):
     if current_user.role != "admin": raise HTTPException(403, "Admin only")
     if db.query(models.User).filter(models.User.username == user.username).first():
         raise HTTPException(400, "Username exists")
     u = models.User(username=user.username, full_name=user.full_name,
-                    email=user.email, hashed_password=_pwd.hash(user.password), role=user.role)
+                    email=user.email, hashed_password=hash_password(user.password), role=user.role)
     db.add(u); db.commit(); db.refresh(u); return u
 
 # â”€â”€ SHIPMENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -194,7 +202,6 @@ def scheduled_tracking():
     db = SessionLocal()
     try:    tracker.run_auto_tracking(db)
     finally: db.close()
-
 scheduler.add_job(scheduled_tracking, "interval", hours=4, id="auto_track")
 scheduler.start()
 
