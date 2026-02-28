@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreightTrack Pro</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+.sidebar{position:fixed;left:0;top:0;width:240px;height:100vh;background:linear-gradient(180deg,#1a237e,#283593);color:#fff;display:flex;flex-direction:column;z-index:100}
+.logo{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+.logo h2{font-size:20px;font-weight:700}.logo span{font-size:11px;opacity:.7}
+.user-badge{padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.1);font-size:12px}
+.user-badge strong{display:block;font-size:13px}.user-badge span{opacity:.7}
+.nav{padding:20px 0;flex:1}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;transition:all .2s;font-size:14px;opacity:.8}
+.nav-item:hover,.nav-item.active{background:rgba(255,255,255,.15);opacity:1}
+.nav-item .icon{font-size:18px;width:24px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1);font-size:11px;opacity:.6}
+.main{margin-left:240px;min-height:100vh}
+.topbar{background:#fff;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.08);position:sticky;top:0;z-index:50;gap:12px;flex-wrap:wrap}
+.topbar h1{font-size:19px;font-weight:600;color:#1a237e}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s}
+.btn-primary{background:#1a237e;color:#fff}.btn-primary:hover{background:#283593}
+.btn-secondary{background:#e8eaf6;color:#1a237e}.btn-secondary:hover{background:#c5cae9}
+.btn-danger{background:#ffebee;color:#c62828}.btn-danger:hover{background:#ffcdd2}
+.btn-success{background:#e8f5e9;color:#2e7d32}.btn-success:hover{background:#c8e6c9}
+.btn-teal{background:#e0f7fa;color:#00695c}.btn-teal:hover{background:#b2ebf2}
+.btn-sm{padding:5px 11px;font-size:12px}
+.content{padding:24px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:24px}
+.stat-card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px}
+.stat-icon{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.stat-icon.blue{background:#e8eaf6}.stat-icon.green{background:#e8f5e9}.stat-icon.orange{background:#fff3e0}.stat-icon.red{background:#ffebee}
+.stat-label{font-size:11px;color:#888;margin-bottom:3px}.stat-value{font-size:24px;font-weight:700;color:#1a237e}
+.section{display:none}.section.active{display:block}
+.table-card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden}
+.table-header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f0f0f0;flex-wrap:wrap;gap:10px}
+.table-header h3{font-size:15px;font-weight:600}
+.search-wrap{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.search-box{padding:8px 14px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;width:220px;outline:none}
+.search-box:focus{border-color:#1a237e}
+table{width:100%;border-collapse:collapse}
+th{background:#f8f9ff;padding:11px 14px;text-align:left;font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid #f5f5f5;font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}tr:hover td{background:#fafbff}
+.badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;display:inline-block;white-space:nowrap}
+.badge-transit{background:#e3f2fd;color:#1565c0}.badge-delivered{background:#e8f5e9;color:#2e7d32}
+.badge-pending{background:#fff3e0;color:#e65100}.badge-customs{background:#f3e5f5;color:#6a1b9a}
+.badge-delayed{background:#ffebee;color:#c62828}.badge-ocean{background:#e0f7fa;color:#00695c}
+.badge-road{background:#fce4ec;color:#880e4f}.badge-air{background:#e8eaf6;color:#283593}
+.badge-synced{background:#e8f5e9;color:#2e7d32;font-size:10px}
+.badge-notrack{background:#f5f5f5;color:#999;font-size:10px}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:28px;width:640px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h2{font-size:19px;font-weight:700;color:#1a237e;margin-bottom:20px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}.form-group.full{grid-column:1/-1}
+.form-group label{font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.3px}
+.form-group input,.form-group select,.form-group textarea{padding:9px 11px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;outline:none;transition:border .2s;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#1a237e}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.detail-panel{display:none;position:fixed;right:0;top:0;width:420px;height:100vh;background:#fff;z-index:200;box-shadow:-4px 0 20px rgba(0,0,0,.12);overflow-y:auto;padding:24px}
+.detail-panel.open{display:block}
+.detail-close{float:right;cursor:pointer;background:#f5f5f5;border:none;border-radius:50%;width:30px;height:30px;font-size:16px;font-weight:700;color:#888;display:flex;align-items:center;justify-content:center}
+.detail-title{font-size:17px;font-weight:700;color:#1a237e;margin:8px 0 4px}
+.detail-subtitle{font-size:13px;color:#888;margin-bottom:20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.detail-section{margin-bottom:20px}
+.detail-section h4{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:10px;letter-spacing:.5px}
+.detail-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f5f5f5;font-size:13px;gap:10px}
+.detail-row:last-child{border-bottom:none}.detail-row span:first-child{color:#888;flex-shrink:0}.detail-row span:last-child{font-weight:600;text-align:right}
+.timeline{position:relative}
+.timeline-item{display:flex;gap:14px;padding-bottom:18px;position:relative}
+.timeline-item:last-child{padding-bottom:0}
+.timeline-dot{width:11px;height:11px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.timeline-dot.done{background:#43a047}.timeline-dot.active{background:#1a237e;box-shadow:0 0 0 4px #e8eaf6}.timeline-dot.pending{background:#e0e0e0}
+.timeline-item::before{content:'';position:absolute;left:4px;top:15px;width:2px;height:calc(100% - 11px);background:#e0e0e0}
+.timeline-item:last-child::before{display:none}
+.timeline-text{font-size:13px}.timeline-text strong{display:block;margin-bottom:1px}.timeline-text span{color:#888;font-size:12px}
+.filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.filter-btn{padding:6px 14px;border:1px solid #e0e0e0;border-radius:20px;background:#fff;cursor:pointer;font-size:13px;transition:all .2s}
+.filter-btn.active,.filter-btn:hover{background:#1a237e;color:#fff;border-color:#1a237e}
+.alert-banner{border-radius:10px;padding:13px 16px;margin-bottom:12px;font-size:13px;display:flex;align-items:flex-start;gap:10px;line-height:1.5}
+.alert-danger{background:#ffebee;border:1px solid #ffcdd2}.alert-info{background:#e8f5e9;border:1px solid #a5d6a7}.alert-warning{background:#fff3e0;border:1px solid #ffcc80}
+.table-wrap{overflow-x:auto}
+.empty-state{text-align:center;padding:44px;color:#aaa;font-size:14px}
+.empty-icon{font-size:44px;margin-bottom:10px}
+.sync-bar{background:#e8f5e9;border-bottom:1px solid #a5d6a7;padding:8px 24px;font-size:12px;color:#2e7d32;display:none}
+.sync-bar.show{display:flex;align-items:center;gap:8px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #a5d6a7;border-top-color:#2e7d32;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#login-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a237e,#283593);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:#fff;border-radius:20px;padding:36px;width:370px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-box h2{color:#1a237e;font-size:22px;margin-bottom:4px}.login-box p{color:#888;font-size:13px;margin-bottom:24px}
+.login-field{margin-bottom:14px}
+.login-field label{display:block;font-size:11px;font-weight:600;color:#555;text-transform:uppercase;margin-bottom:5px}
+.login-field input{width:100%;padding:10px 13px;border:1px solid #e0e0e0;border-radius:8px;font-size:14px;outline:none}
+.login-field input:focus{border-color:#1a237e}
+.login-error{background:#ffebee;color:#c62828;border-radius:8px;padding:9px 13px;font-size:13px;margin-bottom:14px;display:none}
+.login-btn{width:100%;padding:12px;background:#1a237e;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer}
+.login-btn:hover{background:#283593}
+.tracking-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600}
+.chip-ok{background:#e8f5e9;color:#2e7d32}.chip-none{background:#f5f5f5;color:#999}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h2>🚢 FreightTrack Pro</h2>
+    <p>Powered by Shipsgo auto-tracking</p>
+    <div id="login-error" class="login-error"></div>
+    <div class="login-field"><label>Username</label><input type="text" id="lu" placeholder="Username" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="login-field"><label>Password</label><input type="password" id="lp" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="login-btn" onclick="doLogin()">Sign In →</button>
+  </div>
+</div>
+
+<!-- SYNC BAR -->
+<div class="sync-bar" id="sync-bar"><div class="spinner"></div><span id="sync-msg">Syncing with Shipsgo...</span></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="app-sidebar" style="display:none">
+  <div class="logo"><h2>🚢 FreightTrack</h2><span>Shipsgo Auto-Tracking</span></div>
+  <div class="user-badge"><strong id="sb-name">—</strong><span id="sb-role">—</span></div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="showSection('dashboard',this)"><span class="icon">📊</span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="showSection('shipments',this)"><span class="icon">📦</span><span>Shipments</span></div>
+    <div class="nav-item" onclick="showSection('ocean',this)"><span class="icon">🌊</span><span>Ocean Freight</span></div>
+    <div class="nav-item" onclick="showSection('road',this)"><span class="icon">🚛</span><span>Road Freight</span></div>
+    <div class="nav-item" onclick="showSection('air',this)"><span class="icon">✈️</span><span>Air Freight</span></div>
+    <div class="nav-item" onclick="showSection('alerts',this)"><span class="icon">🔔</span><span>Alerts</span></div>
+  </nav>
+  <div style="padding:10px 16px"><button class="btn btn-danger btn-sm" onclick="logout()" style="width:100%">🚪 Sign Out</button></div>
+  <div class="sidebar-footer">FreightTrack Pro v3.0 · Shipsgo</div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="app-main" style="display:none">
+  <div class="topbar">
+    <h1 id="page-title">Dashboard</h1>
+    <div class="topbar-right">
+      <button class="btn btn-teal" onclick="refreshAll()" title="Sync all containers with Shipsgo now">🔄 Sync Shipsgo</button>
+      <button class="btn btn-secondary" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-primary" onclick="openModal()">+ New Shipment</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="section-dashboard" class="section active">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon blue">📦</div><div><div class="stat-label">Total Shipments</div><div class="stat-value" id="stat-total">—</div></div></div>
+        <div class="stat-card"><div class="stat-icon orange">🚚</div><div><div class="stat-label">In Transit</div><div class="stat-value" id="stat-transit">—</div></div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-label">Delivered</div><div class="stat-value" id="stat-delivered">—</div></div></div>
+        <div class="stat-card"><div class="stat-icon red">⚠️</div><div><div class="stat-label">Delayed / Issues</div><div class="stat-value" id="stat-issues">—</div></div></div>
+      </div>
+      <div class="table-card">
+        <div class="table-header"><h3>Recent Shipments</h3><span style="font-size:12px;color:#888">Auto-updated via Shipsgo every 4h</span></div>
+        <div class="table-wrap"><table><thead><tr><th>Reference</th><th>Shipper</th><th>Client</th><th>Route</th><th>Mode</th><th>Status</th><th>ETA</th><th>Tracking</th><th></th></tr></thead>
+        <tbody id="dashboard-table"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ALL SHIPMENTS -->
+    <div id="section-shipments" class="section">
+      <div class="filters">
+        <button class="filter-btn active" onclick="filterShipments('all',this)">All</button>
+        <button class="filter-btn" onclick="filterShipments('In Transit',this)">In Transit</button>
+        <button class="filter-btn" onclick="filterShipments('Delivered',this)">Delivered</button>
+        <button class="filter-btn" onclick="filterShipments('Pending',this)">Pending</button>
+        <button class="filter-btn" onclick="filterShipments('Customs',this)">Customs Hold</button>
+        <button class="filter-btn" onclick="filterShipments('Delayed',this)">Delayed</button>
+      </div>
+      <div class="table-card">
+        <div class="table-header">
+          <h3>All Shipments</h3>
+          <div class="search-wrap">
+            <input type="text" class="search-box" id="main-search" placeholder="🔍 Search ref, shipper, client, container..." oninput="searchShipments(this.value)">
+          </div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Reference</th><th>Shipper</th><th>Client</th><th>Origin</th><th>Destination</th><th>Mode</th><th>Carrier</th><th>Status</th><th>ETA</th><th>Last Synced</th><th>Actions</th></tr></thead>
+        <tbody id="shipments-table"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- OCEAN -->
+    <div id="section-ocean" class="section">
+      <div class="table-card">
+        <div class="table-header"><h3>🌊 Ocean Freight</h3>
+          <div class="search-wrap">
+            <input type="text" class="search-box" placeholder="🔍 Search..." oninput="searchMode(this.value,'ocean-table','Ocean')">
+          </div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Reference</th><th>Shipper</th><th>Client</th><th>Origin</th><th>Dest</th><th>Container #</th><th>Vessel</th><th>Carrier</th><th>Status</th><th>ETA</th><th>Synced</th><th>Actions</th></tr></thead>
+        <tbody id="ocean-table"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ROAD -->
+    <div id="section-road" class="section">
+      <div class="table-card">
+        <div class="table-header"><h3>🚛 Road Freight</h3>
+          <div class="search-wrap">
+            <input type="text" class="search-box" placeholder="🔍 Search..." oninput="searchMode(this.value,'road-table','Road')">
+          </div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Reference</th><th>Shipper</th><th>Client</th><th>Origin</th><th>Dest</th><th>Truck/Plate</th><th>Driver</th><th>Carrier</th><th>Status</th><th>ETA</th><th>Actions</th></tr></thead>
+        <tbody id="road-table"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- AIR -->
+    <div id="section-air" class="section">
+      <div class="table-card">
+        <div class="table-header"><h3>✈️ Air Freight</h3>
+          <div class="search-wrap">
+            <input type="text" class="search-box" placeholder="🔍 Search..." oninput="searchMode(this.value,'air-table','Air')">
+          </div>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Reference</th><th>Shipper</th><th>Client</th><th>Origin</th><th>Dest</th><th>AWB #</th><th>Flight</th><th>Carrier</th><th>Status</th><th>ETA</th><th>Actions</th></tr></thead>
+        <tbody id="air-table"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ALERTS -->
+    <div id="section-alerts" class="section"><div id="alerts-list"></div></div>
+
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modal-title">➕ Add New Shipment</h2>
+    <div class="form-grid">
+      <div class="form-group"><label>Reference *</label><input type="text" id="f-ref" placeholder="FT-2026-001"></div>
+      <div class="form-group"><label>Shipper *</label><input type="text" id="f-shipper" placeholder="Exporter / Sender"></div>
+      <div class="form-group"><label>Client (Consignee) *</label><input type="text" id="f-client" placeholder="Importer / Receiver"></div>
+      <div class="form-group"><label>Transport Mode</label><select id="f-mode"><option>Ocean</option><option>Road</option><option>Air</option></select></div>
+      <div class="form-group"><label>Status</label><select id="f-status"><option>Pending</option><option>In Transit</option><option>Customs</option><option>Delivered</option><option>Delayed</option></select></div>
+      <div class="form-group"><label>Origin</label><input type="text" id="f-origin" placeholder="Shanghai, CN"></div>
+      <div class="form-group"><label>Destination</label><input type="text" id="f-dest" placeholder="Lisbon, PT"></div>
+      <div class="form-group"><label>Carrier</label><input type="text" id="f-carrier" placeholder="CMA CGM, Hapag-Lloyd..."></div>
+      <div class="form-group"><label>ETD</label><input type="date" id="f-etd"></div>
+      <div class="form-group"><label>ETA</label><input type="date" id="f-eta"></div>
+      <div class="form-group"><label>Container / AWB / Truck # 🔍</label><input type="text" id="f-ref2" placeholder="CMAU1122334 (auto-tracked)"></div>
+      <div class="form-group"><label>Vessel / Flight / Driver</label><input type="text" id="f-vessel" placeholder="Auto-filled by Shipsgo"></div>
+      <div class="form-group"><label>Goods Description</label><input type="text" id="f-goods" placeholder="Electronics, 20ft FCL"></div>
+      <div class="form-group"><label>Weight (kg)</label><input type="number" id="f-weight" placeholder="5000"></div>
+      <div class="form-group full"><label>Notes</label><textarea id="f-notes" rows="2" placeholder="Remarks, pending docs..."></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveShipment()">💾 Save Shipment</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-panel" id="detail-panel">
+  <button class="detail-close" onclick="closeDetail()">✕</button>
+  <div id="detail-content"></div>
+</div>
+
+<script>
+const API="";
+let token=localStorage.getItem("ft_token")||null;
+let currentUser=JSON.parse(localStorage.getItem("ft_user")||"null");
+let allShipments=[];
+let editId=null;
+
+async function doLogin(){
+  const u=document.getElementById("lu").value.trim(),p=document.getElementById("lp").value;
+  const errEl=document.getElementById("login-error");errEl.style.display="none";
+  try{
+    const fd=new FormData();fd.append("username",u);fd.append("password",p);
+    const res=await fetch("/token",{method:"POST",body:fd});
+    if(!res.ok){errEl.textContent="Invalid username or password.";errEl.style.display="block";return}
+    const d=await res.json();
+    token=d.access_token;currentUser={name:d.name,role:d.role,username:u};
+    localStorage.setItem("ft_token",token);localStorage.setItem("ft_user",JSON.stringify(currentUser));
+    showApp();
+  }catch(e){errEl.textContent="Cannot connect to server.";errEl.style.display="block"}
+}
+function logout(){token=null;currentUser=null;localStorage.removeItem("ft_token");localStorage.removeItem("ft_user");location.reload()}
+function showApp(){
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("app-sidebar").style.display="flex";
+  document.getElementById("app-main").style.display="block";
+  document.getElementById("sb-name").textContent=currentUser.name;
+  document.getElementById("sb-role").textContent=currentUser.role.toUpperCase();
+  loadAll();
+}
+
+async function apiFetch(path,method="GET",body=null){
+  const opts={method,headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"}};
+  if(body)opts.body=JSON.stringify(body);
+  const res=await fetch(API+path,opts);
+  if(res.status===401){logout();return null}
+  return res.ok?res.json():null;
+}
+
+async function loadAll(){
+  const[stats,shipments]=await Promise.all([apiFetch("/stats"),apiFetch("/shipments")]);
+  if(stats){document.getElementById("stat-total").textContent=stats.total;document.getElementById("stat-transit").textContent=stats.in_transit;document.getElementById("stat-delivered").textContent=stats.delivered;document.getElementById("stat-issues").textContent=stats.issues}
+  if(shipments){allShipments=shipments;renderAll()}
+}
+
+function sb(s){const m={"In Transit":"transit","Delivered":"delivered","Pending":"pending","Customs":"customs","Delayed":"delayed"};return`<span class="badge badge-${m[s]||"pending"}">${s}</span>`}
+function mb(m){const x={"Ocean":"ocean","Road":"road","Air":"air"};return`<span class="badge badge-${x[m]||"road"}">${m}</span>`}
+function fd(d){if(!d)return"—";return new Date(d+"T00:00:00").toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}
+function fdt(d){if(!d)return"—";const dt=new Date(d);return dt.toLocaleDateString("en-GB",{day:"2-digit",month:"short"})+" "+dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}
+function daysUntil(d){if(!d)return null;return Math.ceil((new Date(d+"T00:00:00")-new Date())/86400000)}
+function syncChip(s){if(s&&s.last_tracked)return`<span class="tracking-chip chip-ok" title="${fdt(s.last_tracked)}">🟢 ${fdt(s.last_tracked)}</span>`;return`<span class="tracking-chip chip-none">⚪ Not synced</span>`}
+
+function renderAll(){
+  renderDashboard();renderTable("shipments-table",allShipments,"all");
+  renderModeTable("ocean-table","Ocean");renderModeTable("road-table","Road");renderModeTable("air-table","Air");
+  renderAlerts();
+}
+
+function renderDashboard(){
+  const rows=allShipments.slice(0,8);
+  document.getElementById("dashboard-table").innerHTML=rows.length?rows.map(s=>`<tr><td><strong>${s.ref}</strong></td><td>${s.shipper||"—"}</td><td>${s.client||"—"}</td><td style="white-space:nowrap">${s.origin||"—"}→${s.dest||"—"}</td><td>${mb(s.mode)}</td><td>${sb(s.status)}</td><td>${fd(s.eta)}</td><td>${syncChip(s)}</td><td><button class="btn btn-secondary btn-sm" onclick="openDetail(${s.id})">View</button></td></tr>`).join(""):`<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">📭</div>No shipments yet.</div></td></tr>`;
+}
+
+function renderTable(id,data,filter){
+  let rows=filter==="all"?data:data.filter(s=>s.status===filter);
+  document.getElementById(id).innerHTML=rows.length?rows.map(s=>`<tr><td><strong>${s.ref}</strong></td><td>${s.shipper||"—"}</td><td>${s.client||"—"}</td><td>${s.origin||"—"}</td><td>${s.dest||"—"}</td><td>${mb(s.mode)}</td><td>${s.carrier||"—"}</td><td>${sb(s.status)}</td><td>${fd(s.eta)}</td><td>${syncChip(s)}</td><td style="display:flex;gap:4px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" onclick="openDetail(${s.id})">View</button><button class="btn btn-primary btn-sm" onclick="editShipment(${s.id})">Edit</button>${s.mode==="Ocean"&&s.ref2?`<button class="btn btn-teal btn-sm" onclick="refreshOne(${s.id})" title="Sync with Shipsgo">🔄</button>`:""} ${currentUser.role==="admin"?`<button class="btn btn-danger btn-sm" onclick="deleteShipment(${s.id})">Del</button>`:""}</td></tr>`).join(""):`<tr><td colspan="11"><div class="empty-state"><div class="empty-icon">🔍</div>No shipments found.</div></td></tr>`;
+}
+
+function renderModeTable(id,mode){
+  const data=allShipments.filter(s=>s.mode===mode);
+  document.getElementById(id).innerHTML=data.length?data.map(s=>`<tr><td><strong>${s.ref}</strong></td><td>${s.shipper||"—"}</td><td>${s.client||"—"}</td><td>${s.origin||"—"}</td><td>${s.dest||"—"}</td><td>${s.ref2||"—"}</td><td>${s.vessel||"—"}</td><td>${s.carrier||"—"}</td><td>${sb(s.status)}</td><td>${fd(s.eta)}</td>${mode==="Ocean"?`<td>${syncChip(s)}</td>`:""}<td style="display:flex;gap:4px"><button class="btn btn-secondary btn-sm" onclick="openDetail(${s.id})">View</button><button class="btn btn-primary btn-sm" onclick="editShipment(${s.id})">Edit</button>${mode==="Ocean"&&s.ref2?`<button class="btn btn-teal btn-sm" onclick="refreshOne(${s.id})">🔄</button>`:""}</td></tr>`).join(""):`<tr><td colspan="${mode==="Ocean"?12:11}"><div class="empty-state"><div class="empty-icon">📭</div>No ${mode} shipments.</div></td></tr>`;
+}
+
+function renderAlerts(){
+  const issues=allShipments.filter(s=>s.status==="Delayed"||s.status==="Customs");
+  const soon=allShipments.filter(s=>{const d=daysUntil(s.eta);return d!==null&&d>=0&&d<=5&&s.status!=="Delivered"});
+  let html="";
+  if(issues.length){html+=`<h3 style="margin-bottom:14px;color:#c62828">🚨 Requires Attention (${issues.length})</h3>`;issues.forEach(s=>{html+=`<div class="alert-banner alert-danger">⚠️ <strong>${s.ref}</strong> — ${s.shipper||"—"} → ${s.client||"—"}<br><span style="color:#c62828;font-weight:600">${s.status==="Delayed"?"DELAYED":"CUSTOMS HOLD"}</span> · ${s.notes||"No notes"} · ETA: ${fd(s.eta)}<br><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-danger btn-sm" onclick="editShipment(${s.id})">Update Status</button>${s.mode==="Ocean"&&s.ref2?`<button class="btn btn-teal btn-sm" onclick="refreshOne(${s.id})">🔄 Sync Shipsgo</button>`:""}</div></div>`})}
+  if(soon.length){html+=`<h3 style="margin:20px 0 14px;color:#e65100">📅 Arriving Soon</h3>`;soon.forEach(s=>{const d=daysUntil(s.eta);html+=`<div class="alert-banner alert-info">📦 <strong>${s.ref}</strong> — ${s.client||"—"} | ${mb(s.mode)} | ETA: <strong>${fd(s.eta)}</strong> (${d===0?"Today!":d+" day(s)"}) ${syncChip(s)}</div>`})}
+  if(!html)html=`<div class="empty-state"><div class="empty-icon">✅</div>No active alerts. All shipments on track.</div>`;
+  document.getElementById("alerts-list").innerHTML=html;
+}
+
+function filterShipments(f,btn){document.querySelectorAll("#section-shipments .filter-btn").forEach(b=>b.classList.remove("active"));btn.classList.add("active");renderTable("shipments-table",allShipments,f)}
+function searchShipments(q){const lq=q.toLowerCase();const f=allShipments.filter(s=>[s.ref,s.shipper,s.client,s.origin,s.dest,s.carrier,s.ref2,s.vessel].some(v=>v&&v.toLowerCase().includes(lq)));renderTable("shipments-table",f,"all")}
+function searchMode(q,tableId,mode){const lq=q.toLowerCase();const f=allShipments.filter(s=>s.mode===mode&&[s.ref,s.shipper,s.client,s.origin,s.dest,s.ref2,s.vessel,s.carrier].some(v=>v&&v.toLowerCase().includes(lq)));document.getElementById(tableId).innerHTML=f.length?f.map(s=>`<tr><td><strong>${s.ref}</strong></td><td>${s.shipper||"—"}</td><td>${s.client||"—"}</td><td>${s.origin||"—"}</td><td>${s.dest||"—"}</td><td>${s.ref2||"—"}</td><td>${s.vessel||"—"}</td><td>${s.carrier||"—"}</td><td>${sb(s.status)}</td><td>${fd(s.eta)}</td>${mode==="Ocean"?`<td>${syncChip(s)}</td>`:""}<td style="display:flex;gap:4px"><button class="btn btn-secondary btn-sm" onclick="openDetail(${s.id})">View</button><button class="btn btn-primary btn-sm" onclick="editShipment(${s.id})">Edit</button>${mode==="Ocean"&&s.ref2?`<button class="btn btn-teal btn-sm" onclick="refreshOne(${s.id})">🔄</button>`:""}</td></tr>`).join(""):`<tr><td colspan="11"><div class="empty-state"><div class="empty-icon">🔍</div>No results.</div></td></tr>`}
+
+function showSection(name,el){document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));document.getElementById("section-"+name).classList.add("active");el.classList.add("active");const t={dashboard:"Dashboard",shipments:"All Shipments",ocean:"Ocean Freight",road:"Road Freight",air:"Air Freight",alerts:"Alerts"};document.getElementById("page-title").textContent=t[name]||name}
+
+function openModal(id=null){
+  editId=id;document.getElementById("modal-title").textContent=id?"✏️ Edit Shipment":"➕ Add New Shipment";
+  const flds=["ref","shipper","client","origin","dest","carrier","etd","eta","ref2","vessel","goods","weight","notes"];
+  if(id){const s=allShipments.find(x=>x.id===id);flds.forEach(f=>{const el=document.getElementById("f-"+f);if(el)el.value=s[f]||""});document.getElementById("f-mode").value=s.mode;document.getElementById("f-status").value=s.status}
+  else{flds.forEach(f=>{const el=document.getElementById("f-"+f);if(el)el.value=""});document.getElementById("f-mode").value="Ocean";document.getElementById("f-status").value="Pending"}
+  document.getElementById("modal").classList.add("open");
+}
+function closeModal(){document.getElementById("modal").classList.remove("open")}
+
+async function saveShipment(){
+  const ref=document.getElementById("f-ref").value.trim(),shipper=document.getElementById("f-shipper").value.trim(),client=document.getElementById("f-client").value.trim();
+  if(!ref||!shipper||!client){alert("Reference, Shipper and Client are required.");return}
+  const body={ref,shipper,client,mode:document.getElementById("f-mode").value,status:document.getElementById("f-status").value,origin:document.getElementById("f-origin").value,dest:document.getElementById("f-dest").value,carrier:document.getElementById("f-carrier").value,etd:document.getElementById("f-etd").value,eta:document.getElementById("f-eta").value,ref2:document.getElementById("f-ref2").value,vessel:document.getElementById("f-vessel").value,goods:document.getElementById("f-goods").value,weight:document.getElementById("f-weight").value,notes:document.getElementById("f-notes").value};
+  const result=await apiFetch(editId?`/shipments/${editId}`:"/shipments",editId?"PUT":"POST",body);
+  if(result){closeModal();await loadAll()}else{alert("Error saving. Reference may already exist.")}
+}
+async function editShipment(id){openModal(id)}
+async function deleteShipment(id){const s=allShipments.find(x=>x.id===id);if(confirm(`Delete ${s.ref}?`)){await apiFetch(`/shipments/${id}`,"DELETE");await loadAll();closeDetail()}}
+
+// ── SHIPSGO SYNC ──────────────────────────────────────────
+function showSync(msg){const b=document.getElementById("sync-bar");b.classList.add("show");document.getElementById("sync-msg").textContent=msg}
+function hideSync(){document.getElementById("sync-bar").classList.remove("show")}
+
+async function refreshOne(id){
+  const s=allShipments.find(x=>x.id===id);
+  showSync(`Syncing ${s.ref} (${s.ref2}) with Shipsgo...`);
+  const result=await apiFetch(`/shipments/${id}/refresh`,"POST");
+  hideSync();
+  if(result){
+    await loadAll();
+    const msg=result.changed&&result.changed.length?`✅ Updated: ${result.changed.join(", ")}`:`ℹ️ No changes for ${s.ref}`;
+    alert(msg);
+  }else{alert("Sync failed. Check container number.")}
+}
+
+async function refreshAll(){
+  showSync("Syncing all Ocean containers with Shipsgo...");
+  const result=await apiFetch("/tracking/refresh-all","POST");
+  hideSync();
+  if(result){
+    await loadAll();
+    const updated=result.updated.filter(r=>r.changed&&r.changed.length);
+    alert(`✅ Sync complete!\n${updated.length} shipment(s) updated out of ${result.updated.length} checked.`);
+  }else{alert("Sync failed.")}
+}
+
+// ── DETAIL PANEL ──────────────────────────────────────────
+function openDetail(id){
+  const s=allShipments.find(x=>x.id===id);
+  document.getElementById("detail-content").innerHTML=`
+    <div class="detail-title">${s.ref}</div>
+    <div class="detail-subtitle">${mb(s.mode)} ${sb(s.status)} ${syncChip(s)}</div>
+    <div class="detail-section"><h4>Parties</h4>
+      <div class="detail-row"><span>Shipper</span><span>${s.shipper||"—"}</span></div>
+      <div class="detail-row"><span>Client</span><span>${s.client||"—"}</span></div>
+    </div>
+    <div class="detail-section"><h4>Route & Carrier</h4>
+      <div class="detail-row"><span>Origin</span><span>${s.origin||"—"}</span></div>
+      <div class="detail-row"><span>Destination</span><span>${s.dest||"—"}</span></div>
+      <div class="detail-row"><span>Carrier</span><span>${s.carrier||"—"}</span></div>
+      <div class="detail-row"><span>ETD</span><span>${fd(s.etd)}</span></div>
+      <div class="detail-row"><span>ETA</span><span>${fd(s.eta)}</span></div>
+    </div>
+    <div class="detail-section"><h4>Transport Details</h4>
+      <div class="detail-row"><span>${s.mode==="Ocean"?"Container #":s.mode==="Air"?"AWB #":"Truck/Plate"}</span><span>${s.ref2||"—"}</span></div>
+      <div class="detail-row"><span>${s.mode==="Ocean"?"Vessel":s.mode==="Air"?"Flight":"Driver"}</span><span>${s.vessel||"—"}</span></div>
+    </div>
+    <div class="detail-section"><h4>Cargo</h4>
+      <div class="detail-row"><span>Goods</span><span>${s.goods||"—"}</span></div>
+      <div class="detail-row"><span>Weight</span><span>${s.weight?s.weight+" kg":"—"}</span></div>
+      <div class="detail-row"><span>Notes</span><span>${s.notes||"—"}</span></div>
+    </div>
+    <div class="detail-section"><h4>Shipsgo Tracking</h4>
+      <div class="detail-row"><span>Last Synced</span><span>${fdt(s.last_tracked)}</span></div>
+      <div class="detail-row"><span>Container #</span><span>${s.ref2||"Not set"}</span></div>
+    </div>
+    <div class="detail-section"><h4>Timeline</h4><div class="timeline">${getMilestones(s.status,s.mode)}</div></div>
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="editShipment(${s.id})">✏️ Edit</button>
+      ${s.mode==="Ocean"&&s.ref2?`<button class="btn btn-teal btn-sm" onclick="refreshOne(${s.id})">🔄 Sync Now</button>`:""}
+      ${currentUser.role==="admin"?`<button class="btn btn-danger btn-sm" onclick="deleteShipment(${s.id})">🗑 Delete</button>`:""}
+    </div>`;
+  document.getElementById("detail-panel").classList.add("open");
+}
+function closeDetail(){document.getElementById("detail-panel").classList.remove("open")}
+
+function getMilestones(status,mode){
+  const steps=mode==="Ocean"?["Booking Confirmed","Container Loaded","Vessel Departed","In Transit","Port of Arrival","Customs Clearance","Delivered"]:mode==="Road"?["Booking Confirmed","Cargo Picked Up","In Transit","Border Crossing","Final Delivery"]:["Booking Confirmed","Cargo Received","Flight Departed","Arrived at Hub","Customs Clearance","Delivered"];
+  const pm={"Pending":1,"In Transit":3,"Customs":5,"Delayed":3,"Delivered":steps.length};
+  const p=pm[status]||1;
+  return steps.map((s,i)=>{const dot=i<p?"done":i===p?"active":"pending";const lbl=i<p?"✓ Completed":i===p?"⏳ In progress":"Upcoming";return`<div class="timeline-item"><div class="timeline-dot ${dot}"></div><div class="timeline-text"><strong>${s}</strong><span>${lbl}</span></div></div>`}).join("");
+}
+
+function exportCSV(){
+  if(!allShipments.length){alert("No shipments.");return}
+  const hdr=["Reference","Shipper","Client","Mode","Status","Origin","Destination","Carrier","ETD","ETA","Container/AWB/Truck","Vessel/Flight/Driver","Goods","Weight(kg)","Notes","LastSynced"];
+  const rows=allShipments.map(s=>[s.ref,s.shipper,s.client,s.mode,s.status,s.origin,s.dest,s.carrier,s.etd,s.eta,s.ref2,s.vessel,s.goods,s.weight,s.notes,s.last_tracked].map(v=>`"${(v||"").replace(/"/g,'""')}"`));
+  const csv=[hdr.map(h=>`"${h}"`), ...rows].map(r=>r.join(",")).join("\n");
+  const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,\uFEFF"+encodeURIComponent(csv);
+  a.download="FreightTrack_"+new Date().toISOString().slice(0,10)+".csv";a.click();
+}
+
+if(token&&currentUser){showApp()}
+</script>
+</body>
+</html>
