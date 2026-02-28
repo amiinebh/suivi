@@ -479,8 +479,12 @@ textarea.form-control{resize:none;min-height:72px}
       <span class="nav-badge" id="nav-count">0</span>
     </div>
     <div class="nav-section">Analytics</div>
-    <div class="nav-item" onclick="showPage('analytics',this)">
+    <div class="nav-item admin-only" onclick="showPage('analytics',this)">
       <i class="fa fa-chart-line"></i> KPI & Charts
+    </div>
+    <div class="nav-section admin-only">Team</div>
+    <div class="nav-item admin-only" onclick="showPage('users',this)">
+      <i class="fa fa-users"></i> Team Members
     </div>
     <div class="nav-section">Tools</div>
     <div class="nav-item" onclick="exportXLSX()">
@@ -492,19 +496,20 @@ textarea.form-control{resize:none;min-height:72px}
   </div>
   <div class="sidebar-bottom">
     <div class="sidebar-user">
-      <div class="avatar">A</div>
-      <div class="user-info"><div class="name">Admin</div><div class="role">Freight Agent</div></div>
+      <div class="avatar" id="sidebar-avatar">A</div>
+      <div class="user-info">
+        <div class="name" id="sidebar-user-name">User</div>
+        <div class="role" id="sidebar-user-role">CS Agent</div>
+      </div>
     </div>
+    <button onclick="doLogout()" style="margin:8px 12px;width:calc(100% - 24px);
+      font-size:11px;color:#ef4444;background:none;border:1px solid rgba(239,68,68,.3);
+      border-radius:6px;padding:5px 10px;cursor:pointer;font-family:inherit">
+      ⬡ Sign Out
+    </button>
   </div>
 </nav>
-        <div style="padding:12px 16px;border-top:1px solid var(--border);margin-top:auto">
-          <div style="font-size:12px;font-weight:600;color:var(--text1)" id="sidebar-user-name">User</div>
-          <div style="font-size:11px;color:var(--text2);margin-bottom:8px" id="sidebar-user-role">CS Agent</div>
-          <button onclick="doLogout()" style="font-size:11px;color:#ef4444;background:none;
-            border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:4px 10px;cursor:pointer">
-            Sign Out
-          </button>
-        </div>
+
 
 <!-- ═══════ MAIN ═══════ -->
 <div class="main">
@@ -1369,6 +1374,8 @@ function showApp(){
   if(nameEl) nameEl.textContent = user?.name || "User";
   const roleEl = document.getElementById("sidebar-user-role");
   if(roleEl) roleEl.textContent = isAdmin() ? "Admin" : "CS Agent";
+  const avatarEl = document.getElementById("sidebar-avatar");
+  if(avatarEl) avatarEl.textContent = (user?.name||"U")[0].toUpperCase();
   navigate("overview");
 }
 
