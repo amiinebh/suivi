@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Track Your Shipment</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
+.header{background:#1a365d;padding:20px 0;text-align:center;color:#fff}
+.header h1{font-size:22px;font-weight:700}
+.header p{font-size:14px;opacity:.7;margin-top:4px}
+.container{max-width:680px;margin:32px auto;padding:0 16px}
+.card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;margin-bottom:20px}
+.card-header{padding:18px 24px;border-bottom:1px solid #f1f5f9}
+.card-header h2{font-size:16px;font-weight:600;color:#2d3748}
+.card-body{padding:24px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.info-item .label{font-size:11px;color:#a0aec0;text-transform:uppercase;letter-spacing:.5px}
+.info-item .value{font-size:15px;color:#2d3748;font-weight:600;margin-top:3px}
+.badge{padding:5px 14px;border-radius:99px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.badge-pending{background:#fef9c3;color:#854d0e}
+.badge-in-transit{background:#dbeafe;color:#1e40af}
+.badge-delivered{background:#dcfce7;color:#166534}
+.badge-delayed{background:#fee2e2;color:#991b1b}
+.badge-customs{background:#ede9fe;color:#5b21b6}
+.progress-bar{height:8px;background:#e2e8f0;border-radius:99px;margin:20px 0 8px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#2b6cb0,#63b3ed);transition:width .5s}
+.progress-labels{display:flex;justify-content:space-between;font-size:11px;color:#a0aec0}
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:12px;padding-bottom:16px;position:relative}
+.tl-item:not(:last-child)::before{content:'';position:absolute;left:8px;top:18px;bottom:0;width:2px;background:#e2e8f0}
+.tl-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;margin-top:2px}
+.tl-desc{font-size:14px;color:#2d3748;font-weight:500}
+.tl-meta{font-size:12px;color:#a0aec0;margin-top:2px}
+.footer{text-align:center;padding:32px 16px;color:#a0aec0;font-size:13px}
+.not-found{text-align:center;padding:60px 24px;color:#a0aec0}
+.not-found .icon{font-size:56px;margin-bottom:16px}
+.spinner-wrap{text-align:center;padding:60px;color:#a0aec0;font-size:15px}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🚢 Shipment Tracker</h1>
+  <p>Real-time tracking for your cargo</p>
+</div>
+<div class="container" id="app">
+  <div class="spinner-wrap">Loading…</div>
+</div>
+<div class="footer">Powered by FreightTrack Pro · Updates every 6 hours</div>
+<script>
+const ref = window.location.pathname.split('/track/')[1];
+const STATUS_PROGRESS = {'Pending':10,'In Transit':55,'Customs':75,'Delayed':55,'Delivered':100};
+const STATUS_ICONS = {'Pending':'⏳','In Transit':'🚢','Customs':'🛃','Delayed':'⚠️','Delivered':'✅'};
+const STATUS_CLASS = {'In Transit':'badge-in-transit','Delivered':'badge-delivered','Delayed':'badge-delayed','Customs':'badge-customs','Pending':'badge-pending'};
+
+async function load(){
+  try{
+    const r = await fetch(`/api/portal/${encodeURIComponent(ref)}`);
+    if(!r.ok){ document.getElementById('app').innerHTML=`
+      <div class="card"><div class="card-body"><div class="not-found">
+        <div class="icon">🔍</div>
+        <div style="font-size:18px;font-weight:600;color:#2d3748;margin-bottom:8px">Shipment not found</div>
+        <div>Reference <strong>${ref}</strong> was not found. Please contact your freight agent.</div>
+      </div></div></div>`; return;
+    }
+    const s = await r.json();
+    const pct = STATUS_PROGRESS[s.status]||10;
+    const icon = STATUS_ICONS[s.status]||'📦';
+    const bc = STATUS_CLASS[s.status]||'badge-default';
+    document.getElementById('app').innerHTML=`
+      <div class="card">
+        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+          <h2>📦 ${s.ref}</h2>
+          <span class="badge ${bc}">${icon} ${s.status}</span>
+        </div>
+        <div class="card-body">
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <div class="progress-labels"><span>Booking</span><span>In Transit</span><span>Customs</span><span>Delivered</span></div>
+          <div class="info-grid" style="margin-top:24px">
+            <div class="info-item"><div class="label">Container / AWB</div><div class="value">${s.ref2||'—'}</div></div>
+            <div class="info-item"><div class="label">Mode</div><div class="value">${s.mode==='Air'?'✈️ Air':'🚢 Ocean'}</div></div>
+            <div class="info-item"><div class="label">Carrier</div><div class="value">${s.carrier||'—'}</div></div>
+            <div class="info-item"><div class="label">Vessel</div><div class="value">${s.vessel||'—'}</div></div>
+            <div class="info-item"><div class="label">Port of Loading</div><div class="value">${s.pol||'—'}</div></div>
+            <div class="info-item"><div class="label">Port of Discharge</div><div class="value">${s.pod||'—'}</div></div>
+            <div class="info-item"><div class="label">Departure (ETD)</div><div class="value">${s.etd||'—'}</div></div>
+            <div class="info-item"><div class="label">Arrival (ETA)</div><div class="value" style="color:${s.status==='Delayed'?'#c53030':'#2b6cb0'}">${s.eta||'—'}</div></div>
+          </div>
+          ${s.last_tracked?`<p style="font-size:12px;color:#a0aec0;margin-top:16px;text-align:right">Last updated: ${s.last_tracked.slice(0,19).replace('T',' ')} UTC</p>`:''}
+        </div>
+      </div>
+      ${s.events&&s.events.length?`
+      <div class="card">
+        <div class="card-header"><h2>📋 Tracking History</h2></div>
+        <div class="card-body">
+          <div class="timeline">
+            ${s.events.slice(0,20).map(e=>`
+              <div class="tl-item">
+                <div class="tl-dot" style="background:${e.status==='Delivered'?'#276749':e.status==='Delayed'?'#c53030':e.status==='Customs'?'#6b46c1':'#2b6cb0'}"></div>
+                <div>
+                  <div class="tl-desc">${e.description||'Status update'}</div>
+                  <div class="tl-meta">${e.location?e.location+' · ':''}${(e.timestamp||'').slice(0,16).replace('T',' ')} UTC</div>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>`:''}`;
+  }catch(e){
+    document.getElementById('app').innerHTML=`<div class="card"><div class="card-body"><div class="not-found"><div class="icon">⚠️</div><div>Unable to load shipment data.</div></div></div></div>`;
+  }
+}
+load();
+</script>
+</body>
+</html>
