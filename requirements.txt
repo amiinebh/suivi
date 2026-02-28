@@ -10,3 +10,4 @@ sendgrid
 httpx
 bcrypt
 PyJWT
+python-jose[cryptography]

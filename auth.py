@@ -1,7 +1,13 @@
-import os, jwt, bcrypt
+import os, bcrypt
 from datetime import datetime, timedelta
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+# Use PyJWT
+try:
+    import jwt
+except ImportError:
+    from jose import jwt
 
 SECRET   = os.getenv("JWT_SECRET", "freighttrack_secret_2026")
 ALG      = "HS256"
@@ -9,10 +15,19 @@ EXPIRE_H = 24
 bearer   = HTTPBearer(auto_error=False)
 
 def hash_password(pw: str) -> str:
-    return bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
+    """Always returns a clean utf-8 string"""
+    hashed = bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt(rounds=12))
+    return hashed.decode("utf-8")
 
 def verify_password(pw: str, hashed: str) -> bool:
-    return bcrypt.checkpw(pw.encode(), hashed.encode())
+    """Handles both str and bytes stored hashes"""
+    try:
+        pw_bytes     = pw.encode("utf-8")
+        hashed_bytes = hashed.encode("utf-8") if isinstance(hashed, str) else hashed
+        return bcrypt.checkpw(pw_bytes, hashed_bytes)
+    except Exception as e:
+        print(f"verify_password error: {e}")
+        return False
 
 def create_token(user_id: int, role: str, name: str) -> str:
     payload = {
@@ -25,11 +40,11 @@ def create_token(user_id: int, role: str, name: str) -> str:
 
 def decode_token(token: str) -> dict:
     try:
-        return jwt.decode(token, SECRET, algorithms=[ALG])
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(401, "Token expired")
-    except Exception:
-        raise HTTPException(401, "Invalid token")
+        data = jwt.decode(token, SECRET, algorithms=[ALG])
+        # PyJWT returns dict directly; python-jose also returns dict
+        return data
+    except Exception as e:
+        raise HTTPException(401, f"Invalid token: {e}")
 
 def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> dict:
     if not creds:
