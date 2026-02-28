@@ -33,16 +33,20 @@ scheduler.start()
 # ── Pages ────────────────────────────────────────────────────────────────────
 @app.get("/")
 def root():
-    from fastapi.responses import Response
-    with open("static/index.html", "rb") as f:
-        content = f.read()
-    return Response(
+    from fastapi.responses import HTMLResponse
+    import os, pathlib
+    html_path = pathlib.Path("static/index.html")
+    if html_path.exists():
+        content = html_path.read_text(encoding="utf-8")
+    else:
+        content = "<h1>Loading...</h1>"
+    return HTMLResponse(
         content=content,
-        media_type="text/html",
         headers={
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "Pragma": "no-cache",
             "Expires": "0",
+            "X-Version": "v25"
         }
     )
 
