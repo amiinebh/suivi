@@ -422,6 +422,38 @@ textarea.form-control{resize:none;min-height:72px}
 </style>
 </head>
 <body>
+  <!-- ─── LOGIN SCREEN ─── -->
+  <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;
+    background:#0a0f1e;display:flex;align-items:center;justify-content:center">
+    <div style="background:#1a2240;border:1px solid #2a3a5c;border-radius:20px;
+      padding:36px 28px;width:320px;max-width:90vw">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:32px;margin-bottom:8px">🚢</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text1)">FreightTrack Pro</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">Sign in to your account</div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;font-weight:600;color:var(--text2);
+          text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Email</label>
+        <input id="login-email" type="email" placeholder="admin@freighttrack.com"
+          style="width:100%;background:#0f1629;border:1px solid #2a3a5c;border-radius:8px;
+          padding:10px 12px;color:var(--text1);font-size:13px;outline:none;font-family:inherit"/>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:11px;font-weight:600;color:var(--text2);
+          text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Password</label>
+        <input id="login-password" type="password" placeholder="••••••••"
+          style="width:100%;background:#0f1629;border:1px solid #2a3a5c;border-radius:8px;
+          padding:10px 12px;color:var(--text1);font-size:13px;outline:none;font-family:inherit"/>
+      </div>
+      <div id="login-error" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+        border-radius:8px;padding:10px;font-size:12px;color:#ef4444;margin-bottom:12px"></div>
+      <button onclick="doLogin()" id="login-btn"
+        style="width:100%;background:linear-gradient(135deg,#4f8ef7,#6c63ff);color:#fff;
+        border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:600;
+        cursor:pointer;font-family:inherit">Sign In</button>
+    </div>
+  </div>
 <div id="toast-wrap"></div>
 <div class="version-tag">v27</div>
 
@@ -465,6 +497,14 @@ textarea.form-control{resize:none;min-height:72px}
     </div>
   </div>
 </nav>
+        <div style="padding:12px 16px;border-top:1px solid var(--border);margin-top:auto">
+          <div style="font-size:12px;font-weight:600;color:var(--text1)" id="sidebar-user-name">User</div>
+          <div style="font-size:11px;color:var(--text2);margin-bottom:8px" id="sidebar-user-role">CS Agent</div>
+          <button onclick="doLogout()" style="font-size:11px;color:#ef4444;background:none;
+            border:1px solid rgba(239,68,68,.3);border-radius:6px;padding:4px 10px;cursor:pointer">
+            Sign Out
+          </button>
+        </div>
 
 <!-- ═══════ MAIN ═══════ -->
 <div class="main">
@@ -571,6 +611,55 @@ textarea.form-control{resize:none;min-height:72px}
       </div>
     </div>
 
+
+    <!-- ─── USERS PAGE (admin only) ─── -->
+    <div class="page" id="page-users">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:700">👥 Team Members</div>
+        <button class="btn-new" onclick="openNewUserModal()">+ Add User</button>
+      </div>
+      <div id="users-list">
+        <div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">Loading…</div>
+      </div>
+    </div>
+
+    <!-- New User Modal -->
+    <div id="modal-new-user" class="modal-overlay" style="display:none">
+      <div class="modal-box" style="max-width:380px">
+        <div class="modal-header">
+          <span>➕ Add Team Member</span>
+          <button class="modal-close" onclick="closeModal('modal-new-user')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row-2">
+            <div class="field-group">
+              <label>Full Name</label>
+              <input id="nu-name" placeholder="e.g. Sara Dupont"/>
+            </div>
+            <div class="field-group">
+              <label>Email</label>
+              <input id="nu-email" type="email" placeholder="sara@company.com"/>
+            </div>
+            <div class="field-group">
+              <label>Password</label>
+              <input id="nu-pw" type="password" placeholder="Min 6 chars"/>
+            </div>
+            <div class="field-group">
+              <label>Role</label>
+              <select id="nu-role">
+                <option value="cs">CS Agent</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div id="nu-error" style="display:none;color:#ef4444;font-size:12px;margin-top:8px"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="closeModal('modal-new-user')">Cancel</button>
+          <button class="btn-save" onclick="createUser()">Create User</button>
+        </div>
+      </div>
+    </div>
   </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
@@ -1217,6 +1306,164 @@ function initTheme(){
 /* ── Init ── */
 initTheme();
 loadDashboard();
+</script>
+<script>
+// ══════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════
+const TOKEN_KEY = "ft_token";
+const USER_KEY  = "ft_user";
+
+function getToken(){ return localStorage.getItem(TOKEN_KEY); }
+function getUser(){
+  try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
+}
+function isAdmin(){ return (getUser()||{}).role === "admin"; }
+
+async function doLogin(){
+  const btn   = document.getElementById("login-btn");
+  const email = document.getElementById("login-email").value.trim();
+  const pw    = document.getElementById("login-password").value;
+  const err   = document.getElementById("login-error");
+  err.style.display = "none";
+  if(!email||!pw){ err.textContent="Enter email and password"; err.style.display="block"; return; }
+  btn.textContent = "Signing in…"; btn.disabled = true;
+  try{
+    const r = await fetch("/api/auth/login",{
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({email,password:pw})
+    });
+    const d = await r.json();
+    if(!r.ok){ err.textContent = d.detail||"Login failed"; err.style.display="block"; return; }
+    localStorage.setItem(TOKEN_KEY, d.access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify({role:d.role,name:d.name}));
+    showApp();
+  }catch(e){ err.textContent="Network error"; err.style.display="block"; }
+  finally{ btn.textContent="Sign In"; btn.disabled=false; }
+}
+
+document.addEventListener("keydown", e => {
+  if(e.key==="Enter" && document.getElementById("login-screen").style.display!=="none")
+    doLogin();
+});
+
+function authFetch(url, opts={}){
+  const token = getToken();
+  opts.headers = opts.headers||{};
+  if(token) opts.headers["Authorization"] = "Bearer "+token;
+  return fetch(url, opts).then(r=>{
+    if(r.status===401){ doLogout(); }
+    return r;
+  });
+}
+
+function showApp(){
+  document.getElementById("login-screen").style.display = "none";
+  const user = getUser();
+  // Show/hide admin-only elements
+  document.querySelectorAll(".admin-only").forEach(el=>{
+    el.style.display = isAdmin() ? "" : "none";
+  });
+  // Show user name in sidebar
+  const nameEl = document.getElementById("sidebar-user-name");
+  if(nameEl) nameEl.textContent = user?.name || "User";
+  const roleEl = document.getElementById("sidebar-user-role");
+  if(roleEl) roleEl.textContent = isAdmin() ? "Admin" : "CS Agent";
+  navigate("overview");
+}
+
+function doLogout(){
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  document.getElementById("login-screen").style.display = "flex";
+}
+
+// Check auth on load
+window.addEventListener("DOMContentLoaded", ()=>{
+  if(getToken()){
+    showApp();
+  } else {
+    document.getElementById("login-screen").style.display = "flex";
+  }
+});
+
+// ══════════════════════════════════════════════════════
+// USER MANAGEMENT (admin)
+// ══════════════════════════════════════════════════════
+async function loadUsers(){
+  const r = await authFetch("/api/users");
+  if(!r.ok){ document.getElementById("users-list").innerHTML="<div style='color:#ef4444;font-size:13px'>Access denied</div>"; return; }
+  const users = await r.json();
+  const html = users.map(u=>`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;
+      padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4f8ef7,#6c63ff);
+        display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">
+        ${u.role==="admin"?"👑":"👤"}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text1)">${u.name}</div>
+        <div style="font-size:11px;color:var(--text2)">${u.email}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;
+          background:${u.role==="admin"?"rgba(108,99,255,.2)":"rgba(79,142,247,.2)"};
+          color:${u.role==="admin"?"#6c63ff":"#4f8ef7"}">
+          ${u.role==="admin"?"Admin":"CS Agent"}
+        </span>
+        <span style="font-size:11px;padding:3px 10px;border-radius:20px;
+          background:${u.is_active?"rgba(34,197,94,.15)":"rgba(239,68,68,.15)"};
+          color:${u.is_active?"#22c55e":"#ef4444"}">
+          ${u.is_active?"Active":"Inactive"}
+        </span>
+        ${u.role!=="admin"?`
+        <button onclick="toggleUser(${u.id},this)" style="background:none;border:1px solid var(--border);
+          border-radius:8px;padding:4px 10px;font-size:11px;color:var(--text2);cursor:pointer">
+          ${u.is_active?"Disable":"Enable"}
+        </button>
+        <button onclick="deleteUser(${u.id})" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+          border-radius:8px;padding:4px 10px;font-size:11px;color:#ef4444;cursor:pointer">
+          Delete
+        </button>`:""}
+      </div>
+    </div>`).join("");
+  document.getElementById("users-list").innerHTML = html || "<div style='color:var(--text2);text-align:center;padding:20px'>No users yet</div>";
+}
+
+function openNewUserModal(){
+  ["nu-name","nu-email","nu-pw"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("nu-error").style.display="none";
+  document.getElementById("modal-new-user").style.display="flex";
+}
+
+async function createUser(){
+  const name  = document.getElementById("nu-name").value.trim();
+  const email = document.getElementById("nu-email").value.trim();
+  const pw    = document.getElementById("nu-pw").value;
+  const role  = document.getElementById("nu-role").value;
+  const err   = document.getElementById("nu-error");
+  if(!name||!email||!pw){ err.textContent="All fields required"; err.style.display="block"; return; }
+  if(pw.length<6){ err.textContent="Password min 6 chars"; err.style.display="block"; return; }
+  const r = await authFetch("/api/users",{
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({name,email,password:pw,role})
+  });
+  const d = await r.json();
+  if(!r.ok){ err.textContent=d.detail||"Error"; err.style.display="block"; return; }
+  closeModal("modal-new-user");
+  loadUsers();
+}
+
+async function toggleUser(id, btn){
+  const r = await authFetch(`/api/users/${id}/toggle`,{method:"PATCH"});
+  if(r.ok) loadUsers();
+}
+
+async function deleteUser(id){
+  if(!confirm("Delete this user?")) return;
+  const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
+  if(r.ok) loadUsers();
+}
 </script>
 </body>
 </html>
