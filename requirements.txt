@@ -5,3 +5,5 @@ requests
 psycopg2-binary
 apscheduler
 python-multipart
+openpyxl
+sendgrid

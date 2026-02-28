@@ -9,6 +9,17 @@ class EventOut(BaseModel):
     status: Optional[str]
     class Config: from_attributes = True
 
+class CommentOut(BaseModel):
+    id: int
+    timestamp: str
+    author: str
+    text: str
+    class Config: from_attributes = True
+
+class CommentCreate(BaseModel):
+    author: Optional[str] = "Agent"
+    text: str
+
 class ShipmentCreate(BaseModel):
     ref: str
     ref2: Optional[str] = None
@@ -16,6 +27,7 @@ class ShipmentCreate(BaseModel):
     mode: Optional[str] = "Ocean"
     carrier: Optional[str] = None
     client: Optional[str] = None
+    client_email: Optional[str] = None
     note: Optional[str] = None
     pol: Optional[str] = None
     pod: Optional[str] = None
@@ -37,11 +49,13 @@ class ShipmentOut(BaseModel):
     etd: Optional[str]
     status: str
     client: Optional[str]
+    client_email: Optional[str]
     note: Optional[str]
     shipsgo_id: Optional[int]
     last_tracked: Optional[str]
     created_at: Optional[str]
     events: List[EventOut] = []
+    comments: List[CommentOut] = []
     class Config: from_attributes = True
 
 class ShipmentUpdate(BaseModel):
@@ -50,6 +64,7 @@ class ShipmentUpdate(BaseModel):
     mode: Optional[str] = None
     carrier: Optional[str] = None
     client: Optional[str] = None
+    client_email: Optional[str] = None
     note: Optional[str] = None
     pol: Optional[str] = None
     pod: Optional[str] = None
