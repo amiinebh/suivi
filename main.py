@@ -71,11 +71,11 @@ def portal_data(ref: str, db: Session = Depends(get_db)):
 
 # ── Shipments ────────────────────────────────────────────────────────────────
 @app.get("/api/shipments", response_model=list[schemas.ShipmentOut])
-def list_shipments(search:str="", status:str="", mode:str="", db:Session=Depends(get_db)):
+def list_shipments(search:str="", status:str="", mode:str="", db:Session=Depends(get_db), current=Depends(get_current_user)):
     return crud.get_shipments(db, search, status, mode)
 
 @app.post("/api/shipments", response_model=schemas.ShipmentOut)
-async def create_shipment(request: Request, db: Session = Depends(get_db)):
+async def create_shipment(request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
     """Accept both JSON body and handle all optional fields gracefully."""
     try:
         body = await request.json()
@@ -104,7 +104,7 @@ async def create_shipment(request: Request, db: Session = Depends(get_db)):
     return crud.create_shipment(db, s)
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
-def get_shipment(sid: int, db: Session = Depends(get_db)):
+def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     s = crud.get_shipment_by_id(db, sid)
     if not s: raise HTTPException(404, "Not found")
     return s
@@ -118,31 +118,31 @@ async def update_shipment(sid: int, request: Request, db: Session = Depends(get_
     return s
 
 @app.delete("/api/shipments/{sid}")
-def delete_shipment(sid: int, db: Session = Depends(get_db)):
+def delete_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     crud.delete_shipment(db, sid); return {"ok": True}
 
 # ── Tracking ─────────────────────────────────────────────────────────────────
 @app.post("/api/shipments/{sid}/track")
-def track_one(sid: int, db: Session = Depends(get_db)):
+def track_one(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     s = crud.get_shipment_by_id(db, sid)
     if not s: raise HTTPException(404, "Not found")
     return tracker.track_and_update(db, s)
 
 @app.post("/api/track-all")
-def track_all(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+def track_all(background_tasks: BackgroundTasks, db: Session = Depends(get_db), current=Depends(get_current_user)):
     background_tasks.add_task(tracker.run_auto_tracking, db)
     return {"message": "Tracking started"}
 
 # ── Comments ──────────────────────────────────────────────────────────────────
 @app.post("/api/shipments/{sid}/comments", response_model=schemas.CommentOut)
-def add_comment(sid: int, data: schemas.CommentCreate, db: Session = Depends(get_db)):
+def add_comment(sid: int, data: schemas.CommentCreate, db: Session = Depends(get_db), current=Depends(get_current_user)):
     s = crud.get_shipment_by_id(db, sid)
     if not s: raise HTTPException(404, "Not found")
     return crud.add_comment(db, sid, data)
 
 # ── Export ────────────────────────────────────────────────────────────────────
 @app.get("/api/export/xlsx")
-def export_xlsx(search:str="", status:str="", mode:str="", db:Session=Depends(get_db)):
+def export_xlsx(search:str="", status:str="", mode:str="", db:Session=Depends(get_db), current=Depends(get_current_user)):
     ships = crud.get_shipments(db, search, status, mode)
     data  = export.export_shipments_xlsx(ships)
     return Response(content=data,
@@ -151,7 +151,7 @@ def export_xlsx(search:str="", status:str="", mode:str="", db:Session=Depends(ge
 
 # ── GeoJSON ───────────────────────────────────────────────────────────────────
 @app.get("/api/shipments/{sid}/geojson")
-def geojson(sid: int, db: Session = Depends(get_db)):
+def geojson(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     s = crud.get_shipment_by_id(db, sid)
     if not s: raise HTTPException(404, "Not found")
     gj = tracker.get_geojson(s, db)
@@ -160,12 +160,12 @@ def geojson(sid: int, db: Session = Depends(get_db)):
 
 
 @app.get("/api/kpis")
-def get_kpis(db: Session = Depends(get_db)):
+def get_kpis(db: Session = Depends(get_db), current=Depends(get_current_user)):
     return crud.get_kpis(db)
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
 @app.get("/api/stats")
-def stats(db: Session = Depends(get_db)):
+def stats(db: Session = Depends(get_db), current=Depends(get_current_user)):
     return crud.get_stats(db)
 
 # ── Webhook ───────────────────────────────────────────────────────────────────
@@ -227,7 +227,7 @@ def debug_page():
 
 # ── Track debug endpoint ─────────────────────────────────────────────────────
 @app.post("/api/shipments/{sid}/track-debug")
-def track_debug(sid: int, db: Session = Depends(get_db)):
+def track_debug(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     import requests as req_lib
     s = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
     if not s: return {"error": "Shipment not found"}
@@ -333,4 +333,4 @@ def delete_user(uid: int, db: Session = Depends(get_db), current=Depends(require
 # ── Me endpoint ───────────────────────────────────────────────────────────────
 @app.get("/api/auth/me")
 def me(current=Depends(get_current_user)):
-    return current
+    return current, current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user), current=Depends(get_current_user)
