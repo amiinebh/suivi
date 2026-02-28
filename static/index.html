@@ -534,6 +534,43 @@ textarea.form-control{resize:none;min-height:72px}
       </div>
     </div>
 
+
+    <!-- ─── ANALYTICS / KPI PAGE ─── -->
+    <div class="page" id="page-analytics">
+      <div class="kpi-grid" id="kpi-cards">
+        <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-value">—</div><div class="kpi-label">Total Shipments</div></div>
+        <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-value">—</div><div class="kpi-label">On-Time Rate</div></div>
+        <div class="kpi-card"><div class="kpi-icon">⚠️</div><div class="kpi-value">—</div><div class="kpi-label">Delay Rate</div></div>
+        <div class="kpi-card"><div class="kpi-icon">🕒</div><div class="kpi-value">—</div><div class="kpi-label">Avg Transit Days</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title"><i class="fa fa-chart-pie"></i> Status Distribution</div>
+          <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><i class="fa fa-chart-bar"></i> Monthly Volume</div>
+          <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
+        </div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title"><i class="fa fa-ship"></i> Top Carriers</div>
+          <div class="bar-list" id="bar-carriers"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><i class="fa fa-user"></i> Top Clients</div>
+          <div class="bar-list" id="bar-clients"></div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:16px">
+        <div class="chart-title"><i class="fa fa-triangle-exclamation" style="color:var(--red)"></i> Overdue Shipments</div>
+        <div class="overdue-list" id="overdue-list">
+          <div style="color:var(--text2);font-size:13px;text-align:center;padding:16px">Loading…</div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
