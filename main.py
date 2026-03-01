@@ -20,15 +20,6 @@ def get_db():
     db = SessionLocal()
     try: yield db
     finally: db.close()
-    # Start daily email alert scheduler (non-blocking, lazy import)
-    def _start_sched():
-        try:
-            import scheduler as _sched
-            _sched.start_scheduler()
-        except Exception as e:
-            print(f"scheduler start error: {e}")
-    import threading
-    threading.Thread(target=_start_sched, daemon=True).start()
 
 
 # ── Pages ────────────────────────────────────────────────────────────────────
@@ -56,31 +47,15 @@ def client_portal(ref: str): return FileResponse("static/portal/index.html")
 
 # ── Portal API ───────────────────────────────────────────────────────────────
 @app.get("/api/portal/{ref}")
-@app.get("/api/track/{ref}")
 def portal_data(ref: str, db: Session = Depends(get_db)):
-    from sqlalchemy import or_
-    # Search by ref, booking_no, container number (ref2), or quotation number — case-insensitive
-    s = db.query(models.Shipment).filter(
-        or_(
-            models.Shipment.ref.ilike(ref),
-            models.Shipment.booking_no.ilike(ref),
-            models.Shipment.ref2.ilike(ref),
-            models.Shipment.quotation_number.ilike(ref),
-        )
-    ).first()
+    s = crud.get_shipment(db, ref)
     if not s: raise HTTPException(404, "Shipment not found")
     return {
         "ref": s.ref, "ref2": s.ref2, "mode": s.mode,
-        "booking_no": s.booking_no, "quotation_number": s.quotation_number,
         "carrier": s.carrier, "vessel": s.vessel,
         "pol": s.pol, "pod": s.pod, "etd": s.etd,
         "eta": s.eta, "status": s.status,
         "client": s.client, "last_tracked": s.last_tracked,
-        "containers": [
-            {"id": c.id, "container_no": c.container_no, "size_type": c.size_type,
-             "seal_no": c.seal_no, "weight": c.weight}
-            for c in s.containers
-        ],
         "events": [{"timestamp": e.timestamp, "location": e.location,
                     "description": e.description, "status": e.status}
                    for e in sorted(s.events, key=lambda x: x.timestamp, reverse=True)]
@@ -119,31 +94,8 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         quotation_number=body.get("quotation_number") or None,
         status=body.get("status") or "Pending",
         vessel=body.get("vessel") or None,
-        direction=body.get("direction") or None,
-        incoterm=body.get("incoterm") or None,
-        stuffing_date=body.get("stuffing_date") or None,
-        agent=body.get("agent") or None,
     )
     ship = crud.create_shipment(db, s)
-
-    # Auto-create containers if equipment type + qty provided
-    eq_type = (body.get("eq_type") or "").strip()
-    eq_qty  = int(body.get("eq_qty") or 0)
-    if eq_type and eq_qty > 0:
-        for i in range(eq_qty):
-            cont = models.Container(
-                shipment_id=ship.id,
-                size_type=eq_type,
-                container_no=f"TBD-{eq_type}-{i+1}",
-            )
-            db.add(cont)
-        try:
-            db.commit()
-        except Exception:
-            db.rollback()
-        db.expire(ship)
-
-    db.refresh(ship)
     return ship
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
@@ -153,46 +105,22 @@ def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_cu
     return s
 
 @app.put("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
-@app.patch("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
-async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
+async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db)):
     body = await request.json()
-    body.pop("eq_type", None); body.pop("eq_qty", None)
     data = schemas.ShipmentUpdate(**{k: v or None for k, v in body.items() if v is not None})
-    # Only fetch old status if status field is being updated (perf optimization)
-    old_status_val = None
-    if "status" in body and body["status"]:
-        existing = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
-        old_status_val = existing.status if existing else None
     s = crud.update_shipment(db, sid, data)
     if not s: raise HTTPException(404, "Not found")
-    db.refresh(s)
-    # Auto-email client only when status actually changed
-    if old_status_val and old_status_val != s.status and s.client_email:
-        def _notify(ship, old_s, new_s):
-            try:
-                import email_alerts
-                email_alerts.send_status_change_email(ship, old_s, new_s)
-            except Exception as ex:
-                print(f"[email] status change email error: {ex}")
-        import threading
-        threading.Thread(target=_notify, args=(s, old_status_val, s.status), daemon=True).start()
     return s
 
 
-@app.post("/api/shipments/{sid}/send-email")
-async def send_client_email(sid: int, request: Request, db: Session = Depends(get_db),
-                            current=Depends(get_current_user)):
-    """Manually send a custom email to the shipment client."""
-    body = await request.json()
-    subject = body.get("subject", "").strip()
-    msg_body = body.get("body", "").strip()
-    s = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
-    if not s: raise HTTPException(404, "Shipment not found")
-    if not s.client_email: raise HTTPException(400, "No client email on this shipment")
-    if not subject or not msg_body: raise HTTPException(400, "Subject and body required")
-    import email_alerts
-    email_alerts.send_custom_client_email(s, subject, msg_body)
-    return {"ok": True, "sent_to": s.client_email}
+@app.get("/api/shipments/{sid}/email-log")
+def get_email_log(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    """Return all emails sent for this shipment, newest first."""
+    logs = db.query(models.EmailLog).filter(
+        models.EmailLog.shipment_id == sid
+    ).order_by(models.EmailLog.id.desc()).all()
+    return [{"id": l.id, "sent_to": l.sent_to, "sent_by": l.sent_by,
+             "subject": l.subject, "sent_at": l.sent_at} for l in logs]
 
 @app.delete("/api/shipments/{sid}")
 def delete_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -280,19 +208,6 @@ def dashboard_pdf(db: Session = Depends(get_db), current=Depends(get_current_use
     )
 
 # ══ CONTAINERS (Multi-container per shipment) ═════════════════════════════
-@app.get("/api/kpi/report/pdf")
-def kpi_report_pdf(db: Session = Depends(get_db), current=Depends(get_current_user)):
-    """Generate comprehensive KPI analytics report PDF."""
-    import pdf_export
-    stats = crud.get_stats(db)
-    ships = crud.get_shipments(db, "", "", "")
-    pdf_bytes = pdf_export.generate_kpi_report_pdf(stats, ships)
-    return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
-        headers={"Content-Disposition": 'attachment; filename="kpi_report.pdf"'}
-    )
-
 @app.get("/api/shipments/{sid}/containers")
 def get_containers(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     """Get all containers for a shipment."""
