@@ -110,6 +110,10 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         quotation_number=body.get("quotation_number") or None,
         status=body.get("status") or "Pending",
         vessel=body.get("vessel") or None,
+        direction=body.get("direction") or None,
+        incoterm=body.get("incoterm") or None,
+        stuffing_date=body.get("stuffing_date") or None,
+        agent=body.get("agent") or None,
     )
     ship = crud.create_shipment(db, s)
 

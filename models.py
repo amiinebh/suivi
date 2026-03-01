@@ -24,6 +24,10 @@ class Shipment(Base):
     quotation_number = Column(String, nullable=True)
     last_tracked  = Column(String, nullable=True)
     created_at    = Column(String, default=lambda: datetime.utcnow().isoformat())
+    direction     = Column(String, nullable=True)   # Export | Import
+    incoterm      = Column(String, nullable=True)   # EXW, FOB, CIF…
+    stuffing_date = Column(String, nullable=True)   # only for EXW
+    agent         = Column(String, nullable=True)   # Import agent
     events        = relationship("ShipmentEvent", back_populates="shipment", cascade="all, delete")
     comments      = relationship("ShipmentComment", back_populates="shipment", cascade="all, delete")
     containers    = relationship("Container", back_populates="shipment", cascade="all, delete")

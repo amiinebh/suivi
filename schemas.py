@@ -50,6 +50,10 @@ class ShipmentCreate(BaseModel):
     status: Optional[str] = "Pending"
     vessel: Optional[str] = None
     quotation_number: Optional[str] = None
+    direction: Optional[str] = None
+    incoterm: Optional[str] = None
+    stuffing_date: Optional[str] = None
+    agent: Optional[str] = None
 
 class ShipmentOut(BaseModel):
     id: int
@@ -71,6 +75,10 @@ class ShipmentOut(BaseModel):
     last_tracked: Optional[str]
     created_at: Optional[str]
     quotation_number: Optional[str] = None
+    direction: Optional[str] = None
+    incoterm: Optional[str] = None
+    stuffing_date: Optional[str] = None
+    agent: Optional[str] = None
     events: List[EventOut] = []
     comments: List[CommentOut] = []
     containers: List[ContainerOut] = []
@@ -91,6 +99,10 @@ class ShipmentUpdate(BaseModel):
     status: Optional[str] = None
     vessel: Optional[str] = None
     quotation_number: Optional[str] = None
+    direction: Optional[str] = None
+    incoterm: Optional[str] = None
+    stuffing_date: Optional[str] = None
+    agent: Optional[str] = None
 
 class UserCreate(BaseModel):
     email: str

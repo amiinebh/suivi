@@ -42,6 +42,10 @@ def run_migrations():
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS ref2 VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS etd VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS quotation_number VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS direction VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS incoterm VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS stuffing_date VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS agent VARCHAR",
     ]
     try:
         with engine.connect() as conn:
