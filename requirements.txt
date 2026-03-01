@@ -11,3 +11,5 @@ bcrypt
 PyJWT
 python-jose[cryptography]
 reportlab==4.0.7
+resend
+apscheduler

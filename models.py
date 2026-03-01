@@ -72,3 +72,12 @@ class User(Base):
     hashed_pw  = Column(String, nullable=False)
     is_active  = Column(Boolean, default=True)
     created_at = Column(String, default=lambda: datetime.utcnow().isoformat())
+
+class AlertLog(Base):
+    """Tracks which alert emails have been sent to avoid duplicates."""
+    __tablename__ = "alert_logs"
+    id        = Column(Integer, primary_key=True, index=True)
+    key       = Column(String, nullable=False)    # e.g. "eta_reached_team:42:2026-03-05"
+    sent_date = Column(String, nullable=False)    # ISO date "2026-03-01"
+    created_at = Column(String, default=lambda: datetime.utcnow().isoformat())
+

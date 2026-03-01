@@ -46,6 +46,7 @@ def run_migrations():
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS incoterm VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS stuffing_date VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS agent VARCHAR",
+        "CREATE TABLE IF NOT EXISTS alert_logs (id SERIAL PRIMARY KEY, key VARCHAR NOT NULL, sent_date VARCHAR NOT NULL, created_at VARCHAR)",
     ]
     try:
         with engine.connect() as conn:
