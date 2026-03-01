@@ -4,194 +4,275 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>FreightTrack Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a202c}
-header{background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;padding:16px 24px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-header h1{font-size:1.4rem;font-weight:700;letter-spacing:.5px}
-header span{font-size:.85rem;opacity:.75;margin-left:auto}
-.toolbar{display:flex;gap:10px;padding:16px 24px;background:#fff;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;align-items:center}
-.toolbar input{flex:1;min-width:200px;padding:9px 14px;border:1px solid #cbd5e0;border-radius:8px;font-size:.9rem;outline:none;transition:.2s}
-.toolbar input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-.btn{padding:9px 18px;border:none;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:600;transition:.15s}
-.btn-primary{background:#2563eb;color:#fff}.btn-primary:hover{background:#1d4ed8}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#0a0f1e;color:#e8eaf6;min-height:100vh}
+
+/* ── Header ── */
+.header{background:#111827;border-bottom:1px solid #1e2d4a;padding:14px 20px;
+  display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.header-logo{font-size:1.2rem;font-weight:700;color:#4f8ef7;display:flex;align-items:center;gap:8px}
+.header-count{margin-left:auto;font-size:12px;color:#8892b0;background:#1a2240;
+  padding:4px 12px;border-radius:20px;border:1px solid #2a3a5c}
+
+/* ── Toolbar ── */
+.toolbar{padding:14px 20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  background:#0d1322;border-bottom:1px solid #1e2d4a}
+.toolbar input{flex:1;min-width:200px;background:#0f1629;border:1px solid #2a3a5c;
+  border-radius:10px;padding:10px 14px;color:#e8eaf6;font-size:13px;outline:none;font-family:inherit}
+.toolbar input:focus{border-color:#4f8ef7;box-shadow:0 0 0 3px rgba(79,142,247,.15)}
+.toolbar input::placeholder{color:#4a5568}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:9px;
+  font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:.15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,#4f8ef7,#6c63ff);color:#fff}
+.btn-primary:hover{opacity:.9}
 .btn-success{background:#16a34a;color:#fff}.btn-success:hover{background:#15803d}
-.btn-warn{background:#f59e0b;color:#fff}.btn-warn:hover{background:#d97706}
+.btn-warn{background:#d97706;color:#fff}.btn-warn:hover{background:#b45309}
 .btn-danger{background:#dc2626;color:#fff}.btn-danger:hover{background:#b91c1c}
-.btn-sm{padding:5px 11px;font-size:.8rem}
-.container{padding:20px 24px}
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08)}
-thead{background:#1e3a5f;color:#fff}
-th{padding:11px 14px;text-align:left;font-size:.82rem;font-weight:600;letter-spacing:.3px;white-space:nowrap}
-td{padding:10px 14px;font-size:.85rem;border-bottom:1px solid #f1f5f9;vertical-align:middle}
-tr:last-child td{border:none}
-tr:hover td{background:#f8fafc}
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700;letter-spacing:.3px}
-.badge-sailing{background:#dbeafe;color:#1d4ed8}
-.badge-arrived{background:#d1fae5;color:#065f46}
-.badge-pending{background:#fef3c7;color:#92400e}
-.badge-delivered{background:#e9d5ff;color:#6b21a8}
-.badge-discharged{background:#fee2e2;color:#991b1b}
-.badge-default{background:#e2e8f0;color:#475569}
-.actions{display:flex;gap:6px;flex-wrap:wrap}
-.empty{text-align:center;padding:48px;color:#94a3b8;font-size:.95rem}
-/* Modal */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.btn-outline{background:transparent;border:1px solid #2a3a5c;color:#8892b0}
+.btn-outline:hover{border-color:#4f8ef7;color:#4f8ef7}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+/* ── Stats bar ── */
+.stats-bar{display:flex;gap:10px;padding:14px 20px;flex-wrap:wrap;overflow-x:auto}
+.stat-card{background:#1a2240;border:1px solid #2a3a5c;border-radius:10px;
+  padding:10px 16px;min-width:100px;text-align:center;flex-shrink:0}
+.stat-num{font-size:1.4rem;font-weight:700;color:#4f8ef7}
+.stat-lbl{font-size:11px;color:#8892b0;margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
+
+/* ── Table (desktop) ── */
+.table-wrap{padding:0 20px 20px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:900px}
+thead tr{background:#1a2240;border-bottom:2px solid #2a3a5c}
+th{padding:11px 13px;font-size:11px;font-weight:700;color:#8892b0;
+  text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;text-align:left}
+tbody tr{border-bottom:1px solid #151d35;transition:.15s}
+tbody tr:hover{background:#111827}
+td{padding:11px 13px;font-size:13px;color:#c8d0e4;vertical-align:middle}
+td b{color:#e8eaf6}
+
+/* ── Mobile cards ── */
+.card-list{display:none;padding:0 14px 20px;flex-direction:column;gap:10px}
+.ship-card{background:#1a2240;border:1px solid #2a3a5c;border-radius:12px;padding:14px}
+.ship-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.ship-card-ref{font-size:14px;font-weight:700;color:#e8eaf6}
+.ship-card-body{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.ship-card-field{font-size:12px}
+.ship-card-field span{color:#8892b0;display:block;font-size:10px;text-transform:uppercase;letter-spacing:.4px}
+.ship-card-actions{display:flex;gap:8px;justify-content:flex-end}
+
+@media(max-width:768px){
+  .table-wrap{display:none}
+  .card-list{display:flex}
+  .stats-bar{gap:8px;padding:10px 14px}
+  .stat-num{font-size:1.1rem}
+  .toolbar{padding:10px 14px}
+}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.badge-sailing{background:rgba(37,99,235,.2);color:#60a5fa;border:1px solid rgba(37,99,235,.3)}
+.badge-arrived{background:rgba(22,163,74,.2);color:#4ade80;border:1px solid rgba(22,163,74,.3)}
+.badge-pending{background:rgba(245,158,11,.2);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+.badge-delivered{background:rgba(139,92,246,.2);color:#c4b5fd;border:1px solid rgba(139,92,246,.3)}
+.badge-discharged{background:rgba(220,38,38,.2);color:#f87171;border:1px solid rgba(220,38,38,.3)}
+.badge-onhold{background:rgba(107,114,128,.2);color:#9ca3af;border:1px solid rgba(107,114,128,.3)}
+.badge-default{background:rgba(148,163,184,.1);color:#94a3b8}
+
+.tag-quot{background:rgba(79,142,247,.15);color:#4f8ef7;border:1px solid rgba(79,142,247,.3);
+  font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600;white-space:nowrap}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:60px 20px;color:#4a5568}
+.empty-icon{font-size:3rem;margin-bottom:12px}
+
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;
+  align-items:flex-end;justify-content:center}
 .overlay.show{display:flex}
-.modal{background:#fff;border-radius:16px;padding:28px;width:min(640px,95vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
-.modal h2{font-size:1.15rem;font-weight:700;color:#1e3a5f;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid #e2e8f0}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:500px){.form-grid{grid-template-columns:1fr}}
+@media(min-width:600px){.overlay{align-items:center}}
+.modal{background:#111827;border:1px solid #2a3a5c;border-radius:16px 16px 0 0;
+  width:100%;max-height:92vh;overflow-y:auto;padding:20px}
+@media(min-width:600px){.modal{border-radius:16px;width:min(600px,95vw);max-height:88vh}}
+.modal-handle{width:40px;height:4px;background:#2a3a5c;border-radius:2px;margin:0 auto 16px}
+@media(min-width:600px){.modal-handle{display:none}}
+.modal h2{font-size:1rem;font-weight:700;color:#e8eaf6;margin-bottom:16px;
+  padding-bottom:12px;border-bottom:1px solid #1e2d4a;display:flex;align-items:center;gap:8px}
+.section-title{font-size:10px;font-weight:700;color:#4f8ef7;text-transform:uppercase;
+  letter-spacing:.6px;margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid #1e2d4a}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr}}
 .form-group{display:flex;flex-direction:column;gap:5px}
 .form-group.full{grid-column:1/-1}
-label{font-size:.8rem;font-weight:600;color:#4a5568;text-transform:uppercase;letter-spacing:.4px}
-input,select,textarea{padding:9px 12px;border:1px solid #cbd5e0;border-radius:8px;font-size:.88rem;outline:none;transition:.2s;width:100%}
-input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0}
-.status-section{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px}
-.status-section h3{font-size:.8rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
-.highlight{background:#fffbeb;border:2px solid #f59e0b;border-radius:8px;padding:9px 12px}
-.tag-quotation{background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;font-size:.75rem;padding:2px 8px;border-radius:12px;font-weight:600}
-.stat-bar{display:flex;gap:12px;padding:0 24px 16px;flex-wrap:wrap}
-.stat{background:#fff;border-radius:10px;padding:12px 18px;flex:1;min-width:120px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07)}
-.stat-num{font-size:1.5rem;font-weight:800;color:#1e3a5f}
-.stat-lbl{font-size:.75rem;color:#64748b;margin-top:2px}
-#toast{position:fixed;bottom:24px;right:24px;background:#1e3a5f;color:#fff;padding:12px 20px;border-radius:10px;font-size:.88rem;display:none;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+label{font-size:11px;font-weight:600;color:#8892b0;text-transform:uppercase;letter-spacing:.4px}
+input,select,textarea{background:#0f1629;border:1px solid #2a3a5c;border-radius:8px;
+  padding:9px 12px;color:#e8eaf6;font-size:13px;outline:none;font-family:inherit;width:100%;transition:.2s}
+input:focus,select:focus,textarea:focus{border-color:#4f8ef7;box-shadow:0 0 0 3px rgba(79,142,247,.12)}
+input.highlight-field{border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.05)}
+input.highlight-field:focus{border-color:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.12)}
+select option{background:#111827}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;
+  padding-top:14px;border-top:1px solid #1e2d4a}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:#1a2240;color:#e8eaf6;padding:10px 20px;border-radius:10px;
+  font-size:13px;display:none;z-index:999;border:1px solid #2a3a5c;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);white-space:nowrap}
 </style>
 </head>
 <body>
-<header>
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-  <h1>FreightTrack Pro</h1>
-  <span id="hdr-count">Loading…</span>
-</header>
 
-<div class="toolbar">
-  <input id="search" type="text" placeholder="🔍  Search by REF, Container, Quotation No., Shipper…" oninput="loadShipments()"/>
-  <button class="btn btn-primary" onclick="openCreate()">+ New Shipment</button>
-  <button class="btn btn-success" onclick="exportExcel()">⬇ Export</button>
+<!-- Header -->
+<div class="header">
+  <div class="header-logo">
+    🚢 FreightTrack Pro
+  </div>
+  <div class="header-count" id="hdr-count">Loading…</div>
 </div>
 
-<div class="stat-bar" id="stats"></div>
+<!-- Toolbar -->
+<div class="toolbar">
+  <input id="search" type="text" placeholder="🔍  Search REF, Container, Quotation #, Shipper…" oninput="loadShipments()"/>
+  <button class="btn btn-primary" onclick="openCreate()">＋ New Shipment</button>
+  <button class="btn btn-outline" onclick="exportExcel()">↓ Export</button>
+</div>
 
-<div class="container">
-  <table id="tbl">
+<!-- Stats -->
+<div class="stats-bar" id="stats"></div>
+
+<!-- Desktop Table -->
+<div class="table-wrap">
+  <table>
     <thead>
       <tr>
-        <th>REF</th><th>Quotation #</th><th>Container / AWB</th><th>Shipper</th>
-        <th>POL</th><th>POD</th><th>ETA</th><th>Vessel</th>
-        <th>Status</th><th>Mode</th><th>Actions</th>
+        <th>REF</th>
+        <th>Quotation #</th>
+        <th>Container / AWB</th>
+        <th>Shipper</th>
+        <th>POL → POD</th>
+        <th>ETA</th>
+        <th>Vessel</th>
+        <th>Status</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
   </table>
-  <div id="empty" class="empty" style="display:none">No shipments found. Click <b>+ New Shipment</b> to add one.</div>
+  <div id="empty-desk" class="empty" style="display:none">
+    <div class="empty-icon">📦</div>
+    No shipments found. Click <b>+ New Shipment</b> to add one.
+  </div>
 </div>
 
-<!-- Create / Edit Modal -->
-<div class="overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+<!-- Mobile Cards -->
+<div class="card-list" id="card-list"></div>
+<div id="empty-mob" class="empty" style="display:none;padding:40px 14px">
+  <div class="empty-icon">📦</div>
+  No shipments found.
+</div>
+
+<!-- Modal -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
 <div class="modal">
-  <h2 id="modal-title">New Shipment</h2>
+  <div class="modal-handle"></div>
+  <h2 id="modal-title">➕ New Shipment</h2>
 
-  <div class="status-section">
-    <h3>📦 Shipment Identity</h3>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Reference *</label>
-        <input id="f-ref" placeholder="e.g. RO240594" required/>
-      </div>
-      <div class="form-group">
-        <label>🏷 Quotation Number</label>
-        <input id="f-quot" placeholder="e.g. QT-2024-0123" class="highlight"/>
-      </div>
-      <div class="form-group">
-        <label>Container / AWB No.</label>
-        <input id="f-ref2" placeholder="e.g. SEKU6272191"/>
-      </div>
-      <div class="form-group">
-        <label>Booking No.</label>
-        <input id="f-booking" placeholder="e.g. BK12345678"/>
-      </div>
+  <div class="section-title">📋 Identity</div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Reference *</label>
+      <input id="f-ref" placeholder="e.g. RO240594"/>
+    </div>
+    <div class="form-group">
+      <label>⭐ Quotation Number</label>
+      <input id="f-quot" placeholder="e.g. QT-2024-0123" class="highlight-field"/>
+    </div>
+    <div class="form-group">
+      <label>Container / AWB</label>
+      <input id="f-ref2" placeholder="e.g. SEKU6272191"/>
+    </div>
+    <div class="form-group">
+      <label>Booking No.</label>
+      <input id="f-booking" placeholder="e.g. BK12345678"/>
     </div>
   </div>
 
-  <div class="status-section">
-    <h3>🏢 Parties</h3>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Shipper</label>
-        <input id="f-shipper" placeholder="Shipper name"/>
-      </div>
-      <div class="form-group">
-        <label>Consignee</label>
-        <input id="f-consignee" placeholder="Consignee name"/>
-      </div>
-      <div class="form-group">
-        <label>Carrier</label>
-        <input id="f-carrier" placeholder="e.g. CMA CGM, MSC"/>
-      </div>
-      <div class="form-group">
-        <label>Mode</label>
-        <select id="f-mode">
-          <option value="ocean">🚢 Ocean</option>
-          <option value="air">✈️ Air</option>
-          <option value="road">🚛 Road</option>
-          <option value="rail">🚂 Rail</option>
-        </select>
-      </div>
+  <div class="section-title">🏢 Parties</div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Shipper</label>
+      <input id="f-shipper" placeholder="Shipper name"/>
+    </div>
+    <div class="form-group">
+      <label>Consignee</label>
+      <input id="f-consignee" placeholder="Consignee name"/>
+    </div>
+    <div class="form-group">
+      <label>Carrier</label>
+      <input id="f-carrier" placeholder="e.g. CMA CGM"/>
+    </div>
+    <div class="form-group">
+      <label>Mode</label>
+      <select id="f-mode">
+        <option value="ocean">🚢 Ocean</option>
+        <option value="air">✈️ Air</option>
+        <option value="road">🚛 Road</option>
+        <option value="rail">🚂 Rail</option>
+      </select>
     </div>
   </div>
 
-  <div class="status-section">
-    <h3>📍 Route & Tracking</h3>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>POL (Port of Loading)</label>
-        <input id="f-pol" placeholder="e.g. CNSHA – Shanghai"/>
-      </div>
-      <div class="form-group">
-        <label>POD (Port of Discharge)</label>
-        <input id="f-pod" placeholder="e.g. MACAS – Casablanca"/>
-      </div>
-      <div class="form-group">
-        <label>Vessel Name</label>
-        <input id="f-vessel" placeholder="e.g. CMA CGM TITUS"/>
-      </div>
-      <div class="form-group">
-        <label>ETA</label>
-        <input id="f-eta" type="date"/>
-      </div>
-      <div class="form-group">
-        <label>ETD</label>
-        <input id="f-etd" type="date"/>
-      </div>
-      <div class="form-group">
-        <label>Status</label>
-        <select id="f-status">
-          <option value="Pending">Pending</option>
-          <option value="Sailing">Sailing</option>
-          <option value="Arrived">Arrived</option>
-          <option value="Discharged">Discharged</option>
-          <option value="Delivered">Delivered</option>
-          <option value="On Hold">On Hold</option>
-        </select>
-      </div>
+  <div class="section-title">📍 Route & Status</div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>POL</label>
+      <input id="f-pol" placeholder="e.g. CNSHA – Shanghai"/>
+    </div>
+    <div class="form-group">
+      <label>POD</label>
+      <input id="f-pod" placeholder="e.g. MACAS – Casablanca"/>
+    </div>
+    <div class="form-group">
+      <label>ETD</label>
+      <input id="f-etd" type="date"/>
+    </div>
+    <div class="form-group">
+      <label>ETA</label>
+      <input id="f-eta" type="date"/>
+    </div>
+    <div class="form-group">
+      <label>Vessel</label>
+      <input id="f-vessel" placeholder="e.g. CMA CGM TITUS"/>
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="f-status">
+        <option value="Pending">Pending</option>
+        <option value="Sailing">Sailing</option>
+        <option value="Arrived">Arrived</option>
+        <option value="Discharged">Discharged</option>
+        <option value="Delivered">Delivered</option>
+        <option value="On Hold">On Hold</option>
+      </select>
     </div>
   </div>
 
-  <div class="status-section">
-    <h3>📝 Notes</h3>
-    <div class="form-grid">
-      <div class="form-group full">
-        <label>Notes</label>
-        <textarea id="f-notes" rows="2" placeholder="Internal notes…"></textarea>
-      </div>
+  <div class="section-title">📝 Notes</div>
+  <div class="form-grid">
+    <div class="form-group full">
+      <label>Notes</label>
+      <textarea id="f-notes" rows="2" placeholder="Internal notes…"></textarea>
     </div>
   </div>
 
   <div class="modal-actions">
-    <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
-    <button class="btn btn-success" onclick="saveShipment()">💾 Save</button>
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveShipment()">💾 Save</button>
   </div>
 </div>
 </div>
@@ -202,135 +283,148 @@ input:focus,select:focus,textarea:focus{border-color:#2563eb;box-shadow:0 0 0 3p
 let editId = null;
 const API = '/api';
 
-function badge(status){
-  const map = {Sailing:'sailing',Arrived:'arrived',Delivered:'delivered',
-                Discharged:'discharged',Pending:'pending','On Hold':'pending'};
-  const cls = map[status]||'default';
-  return `<span class="badge badge-${cls}">${status||'—'}</span>`;
+function badge(s){
+  const m={Sailing:'sailing',Arrived:'arrived',Delivered:'delivered',
+           Discharged:'discharged',Pending:'pending','On Hold':'onhold'};
+  return `<span class="badge badge-${m[s]||'default'}">${s||'—'}</span>`;
 }
 
 async function loadShipments(){
-  const q = document.getElementById('search').value;
-  const url = `${API}/shipments?limit=200${q?'&q='+encodeURIComponent(q):''}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  const list = Array.isArray(data) ? data : (data.items||data.data||[]);
+  const q = document.getElementById('search').value.trim();
+  try{
+    const res = await fetch(`${API}/shipments?limit=500${q?'&q='+encodeURIComponent(q):''}`);
+    const data = await res.json();
+    const list = Array.isArray(data)?data:(data.items||data.data||[]);
 
-  const tbody = document.getElementById('tbody');
-  const empty = document.getElementById('empty');
-  const stats = document.getElementById('stats');
-  document.getElementById('hdr-count').textContent = `${list.length} shipment${list.length!==1?'s':''}`;
+    document.getElementById('hdr-count').textContent = `${list.length} shipment${list.length!==1?'s':''}`;
 
-  // Stats
-  const counts = {};
-  list.forEach(s=>{ counts[s.status||'Unknown']=(counts[s.status||'Unknown']||0)+1; });
-  stats.innerHTML = Object.entries(counts).map(([k,v])=>
-    `<div class="stat"><div class="stat-num">${v}</div><div class="stat-lbl">${k}</div></div>`
-  ).join('');
+    // Stats
+    const counts={};
+    list.forEach(s=>{counts[s.status||'Unknown']=(counts[s.status||'Unknown']||0)+1;});
+    document.getElementById('stats').innerHTML = Object.entries(counts)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([k,v])=>`<div class="stat-card"><div class="stat-num">${v}</div><div class="stat-lbl">${k}</div></div>`)
+      .join('');
 
-  if(!list.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
-  empty.style.display='none';
+    const empty = !list.length;
 
-  tbody.innerHTML = list.map(s=>`
-    <tr>
-      <td><b>${s.ref||'—'}</b></td>
-      <td>${s.quotation_number?`<span class="tag-quotation">${s.quotation_number}</span>`:'—'}</td>
-      <td>${s.ref2||'—'}</td>
-      <td>${s.shipper||'—'}</td>
-      <td>${s.pol||'—'}</td>
-      <td>${s.pod||'—'}</td>
-      <td>${s.eta||'—'}</td>
-      <td>${s.vessel||'—'}</td>
-      <td>${badge(s.status)}</td>
-      <td>${s.mode||'ocean'}</td>
-      <td><div class="actions">
-        <button class="btn btn-warn btn-sm" onclick="openEdit(${s.id})">✏️ Edit</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteShipment(${s.id})">🗑</button>
-      </div></td>
-    </tr>`).join('');
+    // Desktop table
+    document.getElementById('empty-desk').style.display = empty?'block':'none';
+    document.getElementById('tbody').innerHTML = list.map(s=>`
+      <tr>
+        <td><b>${s.ref||'—'}</b></td>
+        <td>${s.quotation_number?`<span class="tag-quot">${s.quotation_number}</span>`:'—'}</td>
+        <td>${s.ref2||'—'}</td>
+        <td>${s.shipper||'—'}</td>
+        <td>${s.pol||'—'} ${s.pol&&s.pod?'→':''} ${s.pod||''}</td>
+        <td>${s.eta||'—'}</td>
+        <td style="font-size:12px">${s.vessel||'—'}</td>
+        <td>${badge(s.status)}</td>
+        <td><div style="display:flex;gap:6px">
+          <button class="btn btn-warn btn-sm" onclick="openEdit(${s.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="del(${s.id})">🗑</button>
+        </div></td>
+      </tr>`).join('');
+
+    // Mobile cards
+    document.getElementById('empty-mob').style.display = empty?'block':'none';
+    document.getElementById('card-list').innerHTML = list.map(s=>`
+      <div class="ship-card">
+        <div class="ship-card-top">
+          <div>
+            <div class="ship-card-ref">${s.ref||'—'}</div>
+            ${s.quotation_number?`<span class="tag-quot" style="margin-top:4px;display:inline-block">${s.quotation_number}</span>`:''}
+          </div>
+          ${badge(s.status)}
+        </div>
+        <div class="ship-card-body">
+          <div class="ship-card-field"><span>Container</span>${s.ref2||'—'}</div>
+          <div class="ship-card-field"><span>Carrier</span>${s.carrier||'—'}</div>
+          <div class="ship-card-field"><span>POL</span>${s.pol||'—'}</div>
+          <div class="ship-card-field"><span>POD</span>${s.pod||'—'}</div>
+          <div class="ship-card-field"><span>ETA</span>${s.eta||'—'}</div>
+          <div class="ship-card-field"><span>Vessel</span>${s.vessel||'—'}</div>
+        </div>
+        <div class="ship-card-actions">
+          <button class="btn btn-warn btn-sm" onclick="openEdit(${s.id})">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="del(${s.id})">🗑 Delete</button>
+        </div>
+      </div>`).join('');
+  }catch(e){toast('❌ Failed to load: '+e.message,'#dc2626');}
 }
 
 function openCreate(){
-  editId = null;
-  document.getElementById('modal-title').textContent = '➕ New Shipment';
-  ['ref','ref2','booking','shipper','consignee','carrier','pol','pod','vessel','eta','etd','notes','quot'].forEach(f=>{
-    const el = document.getElementById('f-'+f);
-    if(el) el.value='';
-  });
+  editId=null;
+  document.getElementById('modal-title').textContent='➕ New Shipment';
+  ['ref','ref2','booking','shipper','consignee','carrier','pol','pod','vessel','eta','etd','notes','quot']
+    .forEach(f=>{const el=document.getElementById('f-'+f);if(el)el.value='';});
   document.getElementById('f-status').value='Pending';
   document.getElementById('f-mode').value='ocean';
-  document.getElementById('modal-overlay').classList.add('show');
+  document.getElementById('overlay').classList.add('show');
 }
 
 async function openEdit(id){
-  editId = id;
-  document.getElementById('modal-title').textContent = '✏️ Edit Shipment';
-  const res = await fetch(`${API}/shipments/${id}`);
-  const s = await res.json();
-  const map = {ref:'ref',ref2:'ref2',booking:'booking_no',shipper:'shipper',
-               consignee:'consignee',carrier:'carrier',pol:'pol',pod:'pod',
-               vessel:'vessel',eta:'eta',etd:'etd',notes:'notes',quot:'quotation_number'};
+  editId=id;
+  document.getElementById('modal-title').textContent='✏️ Edit Shipment';
+  const res=await fetch(`${API}/shipments/${id}`);
+  const s=await res.json();
+  const map={ref:'ref',ref2:'ref2',booking:'booking_no',shipper:'shipper',consignee:'consignee',
+             carrier:'carrier',pol:'pol',pod:'pod',vessel:'vessel',eta:'eta',
+             etd:'etd',notes:'notes',quot:'quotation_number'};
   Object.entries(map).forEach(([fid,key])=>{
-    const el = document.getElementById('f-'+fid);
-    if(el) el.value = s[key]||'';
+    const el=document.getElementById('f-'+fid);
+    if(el) el.value=s[key]||'';
   });
-  document.getElementById('f-status').value = s.status||'Pending';
-  document.getElementById('f-mode').value = s.mode||'ocean';
-  document.getElementById('modal-overlay').classList.add('show');
+  document.getElementById('f-status').value=s.status||'Pending';
+  document.getElementById('f-mode').value=s.mode||'ocean';
+  document.getElementById('overlay').classList.add('show');
 }
 
-function closeModal(){ document.getElementById('modal-overlay').classList.remove('show'); }
+function closeModal(){document.getElementById('overlay').classList.remove('show');}
 
 async function saveShipment(){
-  const body = {
-    ref: document.getElementById('f-ref').value.trim(),
-    quotation_number: document.getElementById('f-quot').value.trim()||null,
-    ref2: document.getElementById('f-ref2').value.trim()||null,
-    booking_no: document.getElementById('f-booking').value.trim()||null,
-    shipper: document.getElementById('f-shipper').value.trim()||null,
-    consignee: document.getElementById('f-consignee').value.trim()||null,
-    carrier: document.getElementById('f-carrier').value.trim()||null,
-    mode: document.getElementById('f-mode').value,
-    pol: document.getElementById('f-pol').value.trim()||null,
-    pod: document.getElementById('f-pod').value.trim()||null,
-    vessel: document.getElementById('f-vessel').value.trim()||null,
-    eta: document.getElementById('f-eta').value||null,
-    etd: document.getElementById('f-etd').value||null,
-    status: document.getElementById('f-status').value,
-    notes: document.getElementById('f-notes').value.trim()||null,
+  const ref=document.getElementById('f-ref').value.trim();
+  if(!ref){toast('❌ Reference is required','#dc2626');return;}
+  const body={
+    ref, quotation_number:document.getElementById('f-quot').value.trim()||null,
+    ref2:document.getElementById('f-ref2').value.trim()||null,
+    booking_no:document.getElementById('f-booking').value.trim()||null,
+    shipper:document.getElementById('f-shipper').value.trim()||null,
+    consignee:document.getElementById('f-consignee').value.trim()||null,
+    carrier:document.getElementById('f-carrier').value.trim()||null,
+    mode:document.getElementById('f-mode').value,
+    pol:document.getElementById('f-pol').value.trim()||null,
+    pod:document.getElementById('f-pod').value.trim()||null,
+    vessel:document.getElementById('f-vessel').value.trim()||null,
+    eta:document.getElementById('f-eta').value||null,
+    etd:document.getElementById('f-etd').value||null,
+    status:document.getElementById('f-status').value,
+    notes:document.getElementById('f-notes').value.trim()||null,
   };
-  if(!body.ref){ toast('❌ Reference is required','#dc2626'); return; }
-  const method = editId ? 'PUT' : 'POST';
-  const url = editId ? `${API}/shipments/${editId}` : `${API}/shipments`;
-  const res = await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(res.ok){
-    toast(editId?'✅ Shipment updated':'✅ Shipment created');
-    closeModal(); loadShipments();
-  } else {
-    const err = await res.json().catch(()=>({}));
-    toast('❌ Error: '+(err.detail||res.status),'#dc2626');
-  }
+  const method=editId?'PUT':'POST';
+  const url=editId?`${API}/shipments/${editId}`:`${API}/shipments`;
+  const res=await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(res.ok){toast(editId?'✅ Updated':'✅ Created');closeModal();loadShipments();}
+  else{const e=await res.json().catch(()=>({}));toast('❌ '+(e.detail||res.status),'#dc2626');}
 }
 
-async function deleteShipment(id){
-  if(!confirm('Delete this shipment?')) return;
-  const res = await fetch(`${API}/shipments/${id}`,{method:'DELETE'});
-  if(res.ok){ toast('🗑️ Deleted'); loadShipments(); }
+async function del(id){
+  if(!confirm('Delete this shipment?'))return;
+  const res=await fetch(`${API}/shipments/${id}`,{method:'DELETE'});
+  if(res.ok){toast('🗑️ Deleted');loadShipments();}
   else toast('❌ Delete failed','#dc2626');
 }
 
-async function exportExcel(){
-  window.open(`${API}/shipments/export`,'_blank');
-}
+function exportExcel(){window.open(`${API}/shipments/export`,'_blank');}
 
-function toast(msg, bg='#16a34a'){
+function toast(msg,bg='#16a34a'){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.style.background=bg; t.style.display='block';
+  t.textContent=msg;t.style.borderColor=bg;t.style.display='block';
   setTimeout(()=>t.style.display='none',3000);
 }
 
 loadShipments();
-setInterval(loadShipments, 60000);
+setInterval(loadShipments,60000);
 </script>
 </body>
 </html>
