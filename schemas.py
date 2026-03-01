@@ -20,21 +20,11 @@ class CommentCreate(BaseModel):
     author: Optional[str] = "Agent"
     text: str
 
-class ContainerOut(BaseModel):
-    id: int
-    container_no: str
-    seal_no: Optional[str]
-    size_type: Optional[str]
-    weight: Optional[str]
-    class Config: from_attributes = True
-
-class ContainerCreate(BaseModel):
-    container_no: str
-    seal_no: Optional[str] = None
-    size_type: Optional[str] = None
-    weight: Optional[str] = None
-
 class ShipmentCreate(BaseModel):
+    notes: Optional[str] = None
+    consignee: Optional[str] = None
+    shipper: Optional[str] = None
+    quotation_number: Optional[str] = None
     ref: str
     ref2: Optional[str] = None
     booking_no: Optional[str] = None
@@ -48,12 +38,21 @@ class ShipmentCreate(BaseModel):
     etd: Optional[str] = None
     eta: Optional[str] = None
     status: Optional[str] = "Pending"
-    vessel: Optional[str] = None
-    quotation_number: Optional[str] = None
-    direction: Optional[str] = None
-    incoterm: Optional[str] = None
-    stuffing_date: Optional[str] = None
-    agent: Optional[str] = None
+    teu: Optional[int] = None
+
+class ContainerOut(BaseModel):
+    id: int
+    container_no: str
+    seal_no: Optional[str]
+    size_type: Optional[str]
+    weight: Optional[str]
+    class Config: from_attributes = True
+
+class ContainerCreate(BaseModel):
+    container_no: str
+    seal_no: Optional[str] = None
+    size_type: Optional[str] = None
+    weight: Optional[str] = None
 
 class ShipmentOut(BaseModel):
     id: int
@@ -74,17 +73,17 @@ class ShipmentOut(BaseModel):
     shipsgo_id: Optional[int]
     last_tracked: Optional[str]
     created_at: Optional[str]
-    quotation_number: Optional[str] = None
-    direction: Optional[str] = None
-    incoterm: Optional[str] = None
-    stuffing_date: Optional[str] = None
-    agent: Optional[str] = None
+    teu: Optional[int] = None
     events: List[EventOut] = []
     comments: List[CommentOut] = []
     containers: List[ContainerOut] = []
     class Config: from_attributes = True
 
 class ShipmentUpdate(BaseModel):
+    notes: Optional[str] = None
+    consignee: Optional[str] = None
+    shipper: Optional[str] = None
+    quotation_number: Optional[str] = None
     ref2: Optional[str] = None
     booking_no: Optional[str] = None
     mode: Optional[str] = None
@@ -98,32 +97,28 @@ class ShipmentUpdate(BaseModel):
     eta: Optional[str] = None
     status: Optional[str] = None
     vessel: Optional[str] = None
-    quotation_number: Optional[str] = None
-    direction: Optional[str] = None
-    incoterm: Optional[str] = None
-    stuffing_date: Optional[str] = None
-    agent: Optional[str] = None
+    teu: Optional[int] = None
 
 class UserCreate(BaseModel):
     email: str
-    name:  str
-    role:  str = "cs"
+    name: str
+    role: str = "cs"
     password: str
 
 class UserOut(BaseModel):
-    id:        int
-    email:     str
-    name:      str
-    role:      str
+    id: int
+    email: str
+    name: str
+    role: str
     is_active: bool
     created_at: Optional[str] = None
     class Config: from_attributes = True
 
 class LoginRequest(BaseModel):
-    email:    str
+    email: str
     password: str
 
 class TokenResponse(BaseModel):
     access_token: str
-    role:         str
-    name:         str
+    role: str
+    name: str
