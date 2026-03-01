@@ -173,6 +173,200 @@ def generate_shipment_pdf(shipment):
     return buffer.read()
 
 
+def generate_kpi_report_pdf(stats, shipments):
+    """Generate comprehensive KPI analytics report with charts and insights."""
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch,
+                           leftMargin=0.75*inch, rightMargin=0.75*inch)
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Custom styles
+    title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], 
+                                  fontSize=26, textColor=colors.HexColor('#0a0f1e'), 
+                                  spaceAfter=8, alignment=TA_CENTER, fontName='Helvetica-Bold')
+    subtitle_style = ParagraphStyle('Subtitle', parent=styles['Normal'], 
+                                    fontSize=11, textColor=colors.HexColor('#64748b'), 
+                                    spaceAfter=20, alignment=TA_CENTER)
+    heading_style = ParagraphStyle('CustomHeading', parent=styles['Heading2'],
+                                   fontSize=16, textColor=colors.HexColor('#0a0f1e'),
+                                   spaceAfter=12, spaceBefore=16, fontName='Helvetica-Bold')
+
+    # Header
+    story.append(Paragraph("📊 FreightTrack Pro", title_style))
+    story.append(Paragraph(f"KPI Analytics Report · {datetime.utcnow().strftime('%B %d, %Y')}", subtitle_style))
+    story.append(Spacer(1, 0.1*inch))
+
+    # Executive Summary Box
+    exec_data = [
+        ['EXECUTIVE SUMMARY'],
+        [f"Total Active Shipments: {stats.get('total', 0)} | On-Time Rate: {_calc_ontime_rate(stats)}% | Average Transit: {_calc_avg_transit(shipments)} days"]
+    ]
+    exec_table = Table(exec_data, colWidths=[6.5*inch])
+    exec_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (0, 0), colors.HexColor('#0a0f1e')),
+        ('TEXTCOLOR', (0, 0), (0, 0), colors.white),
+        ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (0, 0), 10),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('BACKGROUND', (0, 1), (0, 1), colors.HexColor('#f1f5f9')),
+        ('FONTSIZE', (0, 1), (0, 1), 9),
+        ('TOPPADDING', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#0a0f1e')),
+    ]))
+    story.append(exec_table)
+    story.append(Spacer(1, 0.25*inch))
+
+    # 1. Operational KPIs
+    story.append(Paragraph("1. Operational Performance Metrics", heading_style))
+
+    by_status = stats.get('by_status', {})
+    ops_data = [
+        ['Metric', 'Current', 'Target', 'Status'],
+        ['Total Shipments', str(stats.get('total', 0)), '—', '✓'],
+        ['In Transit', str(by_status.get('Sailing', 0) + by_status.get('Transit', 0)), '—', '✓'],
+        ['Delivered', str(by_status.get('Delivered', 0)), '—', '✓'],
+        ['Delayed', str(stats.get('delayed_count', 0)), '< 5%', '⚠️' if stats.get('delayed_count', 0) > stats.get('total', 1) * 0.05 else '✓'],
+        ['Pending', str(by_status.get('Pending', 0)), '—', '✓'],
+    ]
+    ops_table = Table(ops_data, colWidths=[2.5*inch, 1.3*inch, 1.3*inch, 1.4*inch])
+    ops_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('GRID', (0, 0), (-1, -1), 0.75, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    story.append(ops_table)
+    story.append(Spacer(1, 0.2*inch))
+
+    # 2. Mode Distribution
+    story.append(Paragraph("2. Shipment Mode Distribution", heading_style))
+    by_mode = stats.get('by_mode', {})
+    mode_data = [['Mode', 'Count', 'Percentage']]
+    total = stats.get('total', 1)
+    for mode, count in by_mode.items():
+        pct = round((count / total * 100), 1) if total > 0 else 0
+        mode_data.append([mode, str(count), f"{pct}%"])
+
+    mode_table = Table(mode_data, colWidths=[2.2*inch, 2.2*inch, 2.1*inch])
+    mode_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('GRID', (0, 0), (-1, -1), 0.75, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    story.append(mode_table)
+    story.append(Spacer(1, 0.2*inch))
+
+    # 3. Top Clients
+    story.append(Paragraph("3. Top Clients by Shipment Volume", heading_style))
+    client_counts = {}
+    for s in shipments:
+        if s.client:
+            client_counts[s.client] = client_counts.get(s.client, 0) + 1
+
+    top_clients = sorted(client_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    client_data = [['Rank', 'Client', 'Shipments', 'Share']]
+    for i, (client, count) in enumerate(top_clients, 1):
+        share = round((count / total * 100), 1) if total > 0 else 0
+        client_data.append([str(i), client[:30], str(count), f"{share}%"])
+
+    client_table = Table(client_data, colWidths=[0.6*inch, 3*inch, 1.5*inch, 1.4*inch])
+    client_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (1, 1), (1, -1), 'LEFT'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('GRID', (0, 0), (-1, -1), 0.75, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0, 0), (-1, -1), 7),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+    ]))
+    story.append(client_table)
+    story.append(Spacer(1, 0.2*inch))
+
+    # 4. Route Analysis
+    story.append(Paragraph("4. Top Trade Routes", heading_style))
+    routes = {}
+    for s in shipments:
+        if s.pol and s.pod:
+            route = f"{s.pol} → {s.pod}"
+            routes[route] = routes.get(route, 0) + 1
+
+    top_routes = sorted(routes.items(), key=lambda x: x[1], reverse=True)[:8]
+    route_data = [['Rank', 'Route', 'Shipments']]
+    for i, (route, count) in enumerate(top_routes, 1):
+        route_data.append([str(i), route[:35], str(count)])
+
+    route_table = Table(route_data, colWidths=[0.7*inch, 4*inch, 1.8*inch])
+    route_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('ALIGN', (1, 1), (1, -1), 'LEFT'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('GRID', (0, 0), (-1, -1), 0.75, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0, 0), (-1, -1), 7),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+    ]))
+    story.append(route_table)
+
+    # Footer
+    story.append(Spacer(1, 0.3*inch))
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], 
+                                  fontSize=8, textColor=colors.HexColor('#94a3b8'), 
+                                  alignment=TA_CENTER)
+    story.append(Paragraph(f"Report generated on {datetime.utcnow().strftime('%Y-%m-%d at %H:%M UTC')} | FreightTrack Pro v4", footer_style))
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.read()
+
+def _calc_ontime_rate(stats):
+    """Calculate on-time delivery rate."""
+    delivered = stats.get('by_status', {}).get('Delivered', 0)
+    delayed = stats.get('delayed_count', 0)
+    total_completed = delivered + delayed
+    if total_completed == 0:
+        return 100
+    return round((delivered / total_completed * 100), 1)
+
+def _calc_avg_transit(shipments):
+    """Calculate average transit time in days."""
+    transit_days = []
+    for s in shipments:
+        if s.etd and s.eta:
+            try:
+                from datetime import datetime
+                etd = datetime.fromisoformat(s.etd.replace('Z', '+00:00'))
+                eta = datetime.fromisoformat(s.eta.replace('Z', '+00:00'))
+                days = (eta - etd).days
+                if 0 < days < 365:  # sanity check
+                    transit_days.append(days)
+            except:
+                pass
+    return round(sum(transit_days) / len(transit_days), 1) if transit_days else 0
+
 def generate_dashboard_pdf(stats, shipments):
     """Generate dashboard summary PDF with KPIs and shipment list."""
     buffer = BytesIO()

@@ -198,6 +198,19 @@ def dashboard_pdf(db: Session = Depends(get_db), current=Depends(get_current_use
     )
 
 # ══ CONTAINERS (Multi-container per shipment) ═════════════════════════════
+@app.get("/api/kpi/report/pdf")
+def kpi_report_pdf(db: Session = Depends(get_db), current=Depends(get_current_user)):
+    """Generate comprehensive KPI analytics report PDF."""
+    import pdf_export
+    stats = crud.get_stats(db)
+    ships = crud.get_shipments(db, "", "", "")
+    pdf_bytes = pdf_export.generate_kpi_report_pdf(stats, ships)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="kpi_report.pdf"'}
+    )
+
 @app.get("/api/shipments/{sid}/containers")
 def get_containers(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     """Get all containers for a shipment."""
