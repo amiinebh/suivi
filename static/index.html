@@ -843,6 +843,33 @@ textarea.form-control{resize:none;min-height:72px}
             <option>Arrived</option><option>Discharged</option><option>Delivered</option><option>Delayed</option>
           </select>
         </div>
+        <div class="form-group full" style="margin-top:4px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);margin-bottom:10px;padding-top:4px;border-top:1px solid var(--border)">Equipment</div>
+        </div>
+        <div class="form-group">
+          <label>Equipment Type</label>
+          <select id="f-eq-type" class="form-control" onchange="calcTEU()">
+            <option value="">— Select —</option>
+            <option value="20DRY">20DRY — 20&#39; Dry (1 TEU)</option>
+            <option value="40HC">40HC — 40&#39; High Cube (2 TEU)</option>
+            <option value="40DRY">40DRY — 40&#39; Dry (2 TEU)</option>
+            <option value="40RF">40RF — 40&#39; Reefer (2 TEU)</option>
+            <option value="FLEXI">FLEXI — Flexitank (1 TEU)</option>
+            <option value="TRUCK">TRUCK — Road Truck (2 TEU)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Number of Units</label>
+          <input id="f-eq-qty" class="form-control" type="number" min="1" placeholder="e.g. 3" oninput="calcTEU()"/>
+        </div>
+        <div class="form-group">
+          <label>Total TEU</label>
+          <div style="position:relative">
+            <input id="f-eq-teu" class="form-control" readonly placeholder="Auto-calculated"
+              style="background:rgba(79,142,247,.07);border-color:rgba(79,142,247,.35);font-weight:700;color:#4f8ef7;cursor:default"/>
+            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text2)">TEU</span>
+          </div>
+        </div>
         <div class="form-group full">
           <label>Notes</label>
           <textarea id="f-note" class="form-control" placeholder="Internal notes…"></textarea>
@@ -955,6 +982,7 @@ function resetForm(){
   const fs=document.getElementById('f-status'); if(fs) fs.value='Pending';
   document.getElementById('modal-add-title').textContent='New Shipment';
     const fq=document.getElementById('f-quot'); if(fq) fq.value='';
+    ['f-eq-type','f-eq-qty','f-eq-teu'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   editId=null;
 }
 function statusBadge(s){
@@ -1202,7 +1230,10 @@ async function editShipment(sid){
     set('f-carrier',s.carrier); set('f-client',s.client);
     set('f-client-email',s.client_email); set('f-pol',s.pol); set('f-pod',s.pod);
     set('f-etd',s.etd?s.etd.split('T')[0]:''); set('f-eta',s.eta?s.eta.split('T')[0]:'');
-    set('f-note',s.note); set('f-quot',s.quotation_number);
+    set('f-note',s.note);
+  const eqt=document.getElementById('f-eq-type'); if(eqt) eqt.value='';
+  const eqq=document.getElementById('f-eq-qty'); if(eqq) eqq.value='';
+  const eqteu=document.getElementById('f-eq-teu'); if(eqteu) eqteu.value=''; set('f-quot',s.quotation_number);
     const fm=document.getElementById('f-mode'); if(fm) fm.value=s.mode||'Ocean';
     const fs=document.getElementById('f-status'); if(fs) fs.value=s.status||'Pending';
     openModal('modal-add');
@@ -2165,8 +2196,8 @@ async function showAddContainer(){
             <option value="40HC">40HC (40' High Cube — 2 TEU)</option>
             <option value="40DRY">40DRY (40' Dry — 2 TEU)</option>
             <option value="40RF">40RF (40' Reefer — 2 TEU)</option>
-            <option value="FLEXI">FLEXI (Flexitank — 2 TEU)</option>
-            <option value="TRUCK">TRUCK (Road Truck — 0 TEU)</option>
+            <option value="FLEXI">FLEXI (Flexitank — 1 TEU)</option>
+            <option value="TRUCK">TRUCK (Road Truck — 2 TEU)</option>
           </select>
         </div>
         <div>
@@ -2204,7 +2235,7 @@ async function submitAddContainer(){
   }catch(e){ toast('Failed: '+e.message,'error'); }
 }
 
-const TEU_MAP={'20DRY':1,'40HC':2,'40DRY':2,'40RF':2,'FLEXI':2,'TRUCK':0};
+const TEU_MAP={'20DRY':1,'40HC':2,'40DRY':2,'40RF':2,'FLEXI':1,'TRUCK':2};
 function getTypeColor(t){const m={'20DRY':'#3b82f6','40HC':'#8b5cf6','40DRY':'#6366f1','40RF':'#06b6d4','FLEXI':'#22c55e','TRUCK':'#f59e0b'};return m[t]||'#64748b';}
 
 async function loadContainers(sid){
@@ -2287,6 +2318,16 @@ async function downloadKPIReport(){
     console.error('KPI report error:', e);
     toast('Report generation failed', 'error'); 
   }
+}
+
+
+function calcTEU(){
+  const TEU_MAP={'20DRY':1,'40HC':2,'40DRY':2,'40RF':2,'FLEXI':1,'TRUCK':2};
+  const type = document.getElementById('f-eq-type')?.value;
+  const qty  = parseInt(document.getElementById('f-eq-qty')?.value) || 0;
+  const teu  = type && qty ? (TEU_MAP[type] || 0) * qty : 0;
+  const teuEl = document.getElementById('f-eq-teu');
+  if(teuEl) teuEl.value = teu > 0 ? teu : '';
 }
 
 </script>
