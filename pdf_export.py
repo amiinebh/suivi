@@ -11,6 +11,14 @@ from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 from io import BytesIO
 from datetime import datetime
 
+# TEU values per container type
+_TEU = {'20DRY': 1, '40HC': 2, '40DRY': 2, '40RF': 2, 'FLEXI': 2, 'TRUCK': 0}
+
+def _calc_teu(containers):
+    """Sum TEU for a list of Container ORM objects."""
+    return sum(_TEU.get(c.size_type or '', 0) for c in (containers or []))
+
+
 def generate_shipment_pdf(shipment):
     """Generate PDF report for a single shipment."""
     buffer = BytesIO()
@@ -247,7 +255,42 @@ def generate_kpi_report_pdf(stats, shipments):
     story.append(ops_table)
     story.append(Spacer(1, 0.2*inch))
 
+    # 1b. TEU Summary
+    story.append(Paragraph("1b. TEU Summary by Shipment", heading_style))
+    total_teu = sum(_calc_teu(s.containers) for s in shipments)
+    teu_by_mode = {}
+    for s in shipments:
+        mode = s.mode or 'Other'
+        teu_by_mode[mode] = teu_by_mode.get(mode, 0) + _calc_teu(s.containers)
+
+    teu_data = [['Mode', 'Shipments', 'Total TEU', 'Avg TEU/Shipment']]
+    for mode, teu in teu_by_mode.items():
+        count = len([s for s in shipments if (s.mode or 'Other') == mode])
+        avg = round(teu / count, 1) if count else 0
+        teu_data.append([mode, str(count), str(teu), str(avg)])
+    teu_data.append(['ALL MODES', str(len(shipments)), str(total_teu), 
+                     str(round(total_teu/len(shipments),1)) if shipments else '0'])
+
+    teu_table = Table(teu_data, colWidths=[1.8*inch, 1.5*inch, 1.5*inch, 1.7*inch])
+    teu_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#e2e8f0')),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f8fafc')]),
+        ('GRID', (0, 0), (-1, -1), 0.75, colors.HexColor('#cbd5e1')),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    story.append(teu_table)
+    story.append(Spacer(1, 0.2*inch))
+
     # 2. Mode Distribution
+
     story.append(Paragraph("2. Shipment Mode Distribution", heading_style))
     by_mode = stats.get('by_mode', {})
     mode_data = [['Mode', 'Count', 'Percentage']]
@@ -411,17 +454,18 @@ def generate_dashboard_pdf(stats, shipments):
 
     # Recent Shipments
     story.append(Paragraph("<b>Recent Shipments</b>", styles['Heading3']))
-    ship_data = [['Reference', 'Client', 'POL → POD', 'ETA', 'Status']]
+    ship_data = [['Reference', 'Client', 'POL → POD', 'ETA', 'Status', 'TEU']]
     for s in shipments[:15]:  # Top 15
         ship_data.append([
             s.ref[:15] if s.ref else '—',
             (s.client or '—')[:15],
             f"{(s.pol or '—')[:8]} → {(s.pod or '—')[:8]}",
             (s.eta or '—')[:10],
-            s.status or '—'
+            s.status or '—',
+            str(_calc_teu(s.containers))
         ])
 
-    ship_table = Table(ship_data, colWidths=[1.3*inch, 1.3*inch, 1.8*inch, 1*inch, 1*inch])
+    ship_table = Table(ship_data, colWidths=[1.2*inch, 1.2*inch, 1.6*inch, 0.9*inch, 0.9*inch, 0.6*inch])
     ship_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0a0f1e')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
