@@ -21,6 +21,10 @@ class CommentCreate(BaseModel):
     text: str
 
 class ShipmentCreate(BaseModel):
+    notes: Optional[str] = None
+    consignee: Optional[str] = None
+    shipper: Optional[str] = None
+    quotation_number: Optional[str] = None
     ref: str
     ref2: Optional[str] = None
     booking_no: Optional[str] = None
@@ -59,6 +63,10 @@ class ShipmentOut(BaseModel):
     class Config: from_attributes = True
 
 class ShipmentUpdate(BaseModel):
+    notes: Optional[str] = None
+    consignee: Optional[str] = None
+    shipper: Optional[str] = None
+    quotation_number: Optional[str] = None
     ref2: Optional[str] = None
     booking_no: Optional[str] = None
     mode: Optional[str] = None

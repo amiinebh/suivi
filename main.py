@@ -91,23 +91,11 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         pod=body.get("pod") or None,
         etd=body.get("etd") or None,
         eta=body.get("eta") or None,
+        quotation_number=body.get("quotation_number") or None,
         status=body.get("status") or "Pending",
+        vessel=body.get("vessel") or None,
     )
     ship = crud.create_shipment(db, s)
-    # Auto-register with Shipsgo if container/AWB provided
-    if ship.ref2:
-        try:
-            import tracker as _t
-            from database import SessionLocal
-            bg_db = SessionLocal()
-            import threading
-            def _bg():
-                try: _t.track_and_update(bg_db, bg_db.query(models.Shipment).filter(models.Shipment.id==ship.id).first())
-                except Exception as e: logger.warning(f"Auto-track: {e}")
-                finally: bg_db.close()
-            threading.Thread(target=_bg, daemon=True).start()
-        except Exception as e:
-            logger.warning(f"Auto-track start: {e}")
     return ship
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
@@ -116,7 +104,7 @@ def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_cu
     if not s: raise HTTPException(404, "Not found")
     return s
 
-@app.patch("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
+@app.put("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
 async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db)):
     body = await request.json()
     data = schemas.ShipmentUpdate(**{k: v or None for k, v in body.items() if v is not None})
@@ -392,8 +380,6 @@ def force_register(sid: int, db: Session = Depends(get_db)):
             "Content-Type": "application/json"}
     ref = (s.ref or "").strip()
     if len(ref) < 5: ref = ref + "-FTP"
-
-    import tracker as _t
     scac = _t.resolve_scac(s.ref2 or "", s.carrier or "")
     body = {"container_number": s.ref2, "reference": ref[:128]}
     if scac: body["carrier"] = scac
