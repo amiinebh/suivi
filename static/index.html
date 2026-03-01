@@ -520,6 +520,9 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="nav-item" onclick="exportXLSX()">
       <i class="fa fa-file-excel"></i> Export XLSX
     </div>
+    <div class="nav-item" onclick="downloadDashboardPDF()">
+      <i class="fa fa-file-pdf"></i> Dashboard PDF
+    </div>
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')" style="display:none">
       <i class="fa fa-upload" style="color:#22c55e"></i> Import XLSX
     </div>
@@ -1007,6 +1010,9 @@ function renderCards(ships,containerId='ship-cards'){
           ${s.last_tracked?'Updated '+fmt(s.last_tracked):'Not tracked yet'}
         </div>
         <div class="ship-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="downloadPDF(${s.id})" title="Download PDF">
+            <i class="fa fa-file-pdf"></i>
+          </button>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="editShipment(${s.id})" title="Edit">
             <i class="fa fa-pen"></i>
           </button>
@@ -1224,7 +1230,19 @@ async function trackAll(){
   try{ await apiFetch('/api/track-all',{method:'POST'}); toast('Sync started!','success'); }
   catch(e){ toast(e.message,'error'); }
 }
-function exportXLSX(){ window.open('/api/export/xlsx','_blank'); }
+async function exportXLSX(){
+  try{
+    const token=localStorage.getItem('ft_token');
+    const res=await fetch('/api/export/xlsx',{headers:{Authorization:'Bearer '+token}});
+    if(!res.ok){ const e=await res.json(); throw new Error(e.detail||'Export failed'); }
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='shipments_export.xlsx'; a.click();
+    URL.revokeObjectURL(url);
+    toast('Export downloaded','success');
+  }catch(e){ toast(e.message,'error'); }
+}
 
 
 /* ── Charts registry ── */
@@ -2088,6 +2106,86 @@ function openFilesSheet(){
   if(importBtn) importBtn.style.display = isAdmin() ? "flex" : "none";
   openModal("sheet-files");
 }
+
+async function downloadPDF(sid){
+  try{
+    const token=localStorage.getItem('ft_token');
+    const res=await fetch(`/api/shipments/${sid}/pdf`,{headers:{Authorization:'Bearer '+token}});
+    if(!res.ok){ const e=await res.json(); throw new Error(e.detail||'PDF failed'); }
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=`shipment_${sid}.pdf`; a.click();
+    URL.revokeObjectURL(url);
+  }catch(e){ toast(e.message,'error'); }
+}
+async function downloadDashboardPDF(){
+  try{
+    const token=localStorage.getItem('ft_token');
+    const res=await fetch('/api/dashboard/pdf',{headers:{Authorization:'Bearer '+token}});
+    if(!res.ok){ const e=await res.json(); throw new Error(e.detail||'PDF failed'); }
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=`dashboard_report.pdf`; a.click();
+    URL.revokeObjectURL(url);
+    toast('Dashboard PDF downloaded','success');
+  }catch(e){ toast(e.message,'error'); }
+}
+
+async function showAddContainer(){
+  const no=prompt('Container Number (e.g. MSCU1234567):');
+  if(!no) return;
+  const seal=prompt('Seal Number (optional):') || null;
+  const type=prompt('Size/Type (e.g. 40HC, 20GP):') || null;
+  const weight=prompt('Weight (optional):') || null;
+  try{
+    await apiFetch(`/api/shipments/${currentDetailId}/containers`,{
+      method:'POST',body:JSON.stringify({container_no:no,seal_no:seal,size_type:type,weight})
+    });
+    toast('Container added');loadContainers(currentDetailId);
+  }catch(e){toast('Failed: '+e.message,'error');}
+}
+
+async function loadContainers(sid){
+  try{
+    const conts=await apiFetch(`/api/shipments/${sid}/containers`);
+    const el=document.getElementById('containers-list');
+    if(!el) return;
+    if(!conts.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-secondary)">No containers yet. Click Add Container.</div>';return;}
+    el.innerHTML=conts.map(c=>`
+      <div style="background:var(--bg-secondary);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:600;font-size:14px">${c.container_no}</div>
+          <div style="font-size:12px;color:var(--text-secondary)">${c.size_type||'—'} · Seal: ${c.seal_no||'—'} · Weight: ${c.weight||'—'}</div>
+        </div>
+        <button class="btn-icon" onclick="deleteContainer(${c.id})" title="Delete"><i class="fa fa-trash"></i></button>
+      </div>`).join('');
+  }catch(e){console.error(e);}
+}
+
+async function deleteContainer(cid){
+  if(!confirm('Delete this container?')) return;
+  try{
+    await apiFetch(`/api/containers/${cid}`,{method:'DELETE'});
+    toast('Container deleted');loadContainers(currentDetailId);
+  }catch(e){toast('Failed: '+e.message,'error');}
+}
+
+
+async function downloadDashboardPDF(){
+  try {
+    const t = localStorage.getItem('ft_token');
+    const res = await fetch('/api/dashboard/pdf', {headers:{Authorization:'Bearer '+t}});
+    if(!res.ok) throw new Error(await res.text());
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'dashboard.pdf'; a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) { toast('Dashboard PDF failed','error'); }
+}
+
 </script>
 
 </body>
