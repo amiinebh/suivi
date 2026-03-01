@@ -517,7 +517,10 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-users"></i> Team Members
     </div>
     <div class="nav-section">Tools</div>
-    <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts"><i class="fa fa-bell"></i> Alerts <span class="nav-badge" id="alerts-badge" style="display:none">0</span></div>
+    <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts">
+      <i class="fa fa-bell"></i> Alerts
+      <span class="nav-badge" id="alerts-badge" style="display:none">0</span>
+    </div>
     <div class="nav-item" onclick="exportXLSX()">
       <i class="fa fa-file-excel"></i> Export XLSX
     </div>
@@ -526,9 +529,6 @@ textarea.form-control{resize:none;min-height:72px}
     </div>
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')" style="display:none">
       <i class="fa fa-file-import"></i> Bulk Import
-    </div>
-    <div class="nav-item" onclick="trackAll()">
-      <i class="fa fa-rotate"></i> Sync All
     </div>
   </div>
   <div class="sidebar-bottom">
@@ -669,6 +669,25 @@ textarea.form-control{resize:none;min-height:72px}
     </div>
 
 
+    <!-- ─── ALERTS PAGE ─── -->
+    <div class="page" id="page-alerts">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)">🔔 Alerts</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments requiring your attention</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadAlerts()">
+          <i class="fa fa-rotate"></i> Refresh
+        </button>
+      </div>
+      <div id="alerts-list">
+        <div style="text-align:center;padding:40px;color:var(--text2);font-size:13px">
+          <div style="font-size:32px;margin-bottom:8px">🔔</div>
+          Loading alerts...
+        </div>
+      </div>
+    </div>
+
     <!-- ═══ DETAIL PAGE ═══ -->
     <div class="page" id="page-detail">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
@@ -712,9 +731,7 @@ textarea.form-control{resize:none;min-height:72px}
       </div>
       <div id="dtab-timeline">
         <div id="detail-events-list" class="tl-list"></div>
-        <div id="detail-no-events" style="display:none;text-align:center;padding:30px;color:var(--text2);font-size:12px">
-          <div style="font-size:28px;margin-bottom:6px">📭</div>No events yet. Tap Sync to update.
-        </div>
+        
       </div>
       <div id="dtab-notes" style="display:none">
         <div id="detail-comments-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
@@ -760,9 +777,7 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-users"></i><span>Team</span>
     </button>
     
-    <button class="bnav-item" id="bnav-sync" onclick="trackAll()">
-      <i class="fa fa-rotate"></i><span>Sync</span>
-    </button>
+    
     <button class="bnav-item" id="bnav-alerts" onclick="showPage('alerts',null);setBottomNav('alerts')">
       <i class="fa fa-bell"></i><span>Alerts</span>
     </button>
@@ -811,7 +826,8 @@ textarea.form-control{resize:none;min-height:72px}
         </div>
         <div class="form-group full">
           <label>Client Email</label>
-          <input id="f-client-email" class="form-control" type="email" placeholder="client@example.com"/>
+          <input id="f-client-email" class="form-control" type="email" placeholder="client@example.com" oninput="validateEmailField(this)"/>
+          <div id="f-client-email-msg" style="font-size:11px;margin-top:4px;display:none"></div>
         </div>
         <div class="form-group">
           <label>POL</label>
@@ -861,9 +877,6 @@ textarea.form-control{resize:none;min-height:72px}
         <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn btn-secondary btn-sm" id="detail-track-btn" onclick="trackOne()">
-          <i class="fa fa-rotate"></i> Track
-        </button>
         <button class="modal-close" onclick="closeModal('modal-detail')"><i class="fa fa-xmark"></i></button>
       </div>
     </div>
@@ -871,6 +884,9 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="modal-foot" id="detail-foot">
       <button class="btn btn-secondary" style="flex:1" onclick="editFromDetail()">
         <i class="fa fa-pen"></i> Edit
+      </button>
+      <button class="btn btn-primary" style="flex:1" onclick="openEmailPreview()" id="btn-send-email">
+        <i class="fa fa-envelope"></i> Email
       </button>
       <button class="btn btn-danger" style="flex:1" onclick="deleteFromDetail()">
         <i class="fa fa-trash"></i> Delete
@@ -1019,7 +1035,6 @@ function renderCards(ships,containerId='ship-cards'){
       </div>
     </div>`).join('');
 }
-}
 
 /* ── Render table (desktop) ── */
 function renderTable(ships){
@@ -1103,17 +1118,71 @@ async function loadShipments(){
 }
 
 /* ── Detail ── */
-
+async function openDetail(sid){
+  currentDetailId=sid;
+  openModal('modal-detail');
+  document.getElementById('detail-body').innerHTML=`<div style="text-align:center;padding:40px"><div class="spinner" style="width:28px;height:28px;border-width:3px"></div></div>`;
+  try{
+    const s=await apiFetch(`/api/shipments/${sid}`);
+    document.getElementById('detail-title').textContent=s.ref;
+    document.getElementById('detail-sub').textContent=`${s.client||''}${s.carrier?' · '+s.carrier:''}`;
+    const trackLink=`${location.origin}/track/${s.ref}`;
+    document.getElementById('detail-body').innerHTML=`
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${statusBadge(s.status)}</div></div>
+        <div class="detail-item"><div class="detail-label">Mode</div><div class="detail-value">${modeBadge(s.mode)}</div></div>
+        <div class="detail-item"><div class="detail-label">Container / AWB</div><div class="detail-value">${s.ref2||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">Booking No</div><div class="detail-value">${s.booking_no||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">Carrier</div><div class="detail-value">${s.carrier||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">Vessel</div><div class="detail-value">${s.vessel||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">POL → POD</div><div class="detail-value">${s.pol||'—'} → ${s.pod||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">ETD / ETA</div><div class="detail-value">${fmt(s.etd)} → ${fmt(s.eta)}</div></div>
+        <div class="detail-item" style="grid-column:1/-1">
+          <div class="detail-label">Client Tracking Link</div>
+          <div class="detail-value">
+            <span class="copy-link" onclick="copyLink('${trackLink}')">
+              <i class="fa fa-link"></i> Copy link
+            </span>
+          </div>
+        </div>
+        ${s.note?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Note</div><div class="detail-value" style="color:var(--text2)">${s.note}</div></div>`:''}
+      </div>
+      ${s.events&&s.events.length?`
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">
+          <i class="fa fa-timeline" style="color:var(--accent);margin-right:6px"></i>Events
+        </div>
+        <div class="events-list">
+          ${s.events.slice(0,6).map(e=>`
+            <div class="event-item">
+              <div class="event-dot"></div>
+              <div><div style="font-size:13px;font-weight:500">${e.description||'—'}</div>
+              <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
+            </div>`).join('')}
+        </div>`:``}
+    `;
+  }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
+}
 
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
 function editFromDetail(){ closeModal('modal-detail'); editShipment(currentDetailId); }
 async function deleteFromDetail(){ if(await confirmDelete()) deleteShipment(currentDetailId); }
-function confirmDelete(){ return _confirm('Delete this shipment?'); }
+function confirmDelete(){ return Promise.resolve(confirm('Delete this shipment?')); }
 
 /* ── Save ── */
 async function saveShipment(){
   const ref=(document.getElementById('f-ref')?.value||'').trim();
   if(!ref){ toast('Reference is required','error'); return; }
+  const _emailEl=document.getElementById('f-client-email');
+  const _emailVal=(_emailEl?.value||'').trim();
+  if(_emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_emailVal)){
+    if(_emailEl) _emailEl.style.border='2px solid var(--red)';
+    if(_emailEl) _emailEl.focus();
+    toast('Invalid client email address','error'); return;
+  }
+  if(_emailEl) _emailEl.style.border='';
+  if(!_emailVal){
+    if(!confirm('No client email entered. Email alerts will not be sent.\n\nContinue anyway?')) return;
+  }
   const btn=document.getElementById('btn-save');
   btn.innerHTML='<span class="spinner"></span> Saving…'; btn.disabled=true;
   const g=id=>{ const el=document.getElementById(id); return el?el.value.trim()||null:null; };
@@ -1155,7 +1224,7 @@ async function editShipment(sid){
 
 /* ── Delete ── */
 async function deleteShipment(sid){
-  if(!await _confirm('Delete this shipment?')) return;
+  if(!confirm('Delete this shipment?')) return;
   try{
     await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
     toast('Deleted','success'); closeModal('modal-detail');
@@ -1356,10 +1425,182 @@ function initTheme(){
 /* ── Init ── */
 initTheme();
 loadDashboard();
-}
 </script>
 
+<script>
+// ══════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════
+const TOKEN_KEY = "ft_token";
+const USER_KEY  = "ft_user";
 
+function getToken(){ return localStorage.getItem(TOKEN_KEY); }
+function getUser(){
+  try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
+}
+function isAdmin(){ return (getUser()||{}).role === "admin"; }
+
+function authFetch(url, opts={}){
+  opts.headers = opts.headers || {};
+  const t = getToken();
+  if(t) opts.headers["Authorization"] = "Bearer " + t;
+  return fetch(url, opts).then(r => {
+    if(r.status === 401){
+      doLogout();
+      const ls = document.getElementById("login-screen");
+      if(ls){ ls.style.display="flex"; }
+      // Show message
+      const err = document.getElementById("login-error");
+      if(err){ err.textContent="Your account has been deactivated. Contact admin."; err.style.display="block"; }
+    }
+    return r;
+  });
+}
+
+async function doLogin(){
+  const email = document.getElementById("login-email").value.trim();
+  const pw    = document.getElementById("login-password").value;
+  const err   = document.getElementById("login-error");
+  const btn   = document.getElementById("login-btn");
+  err.style.display = "none";
+  if(!email || !pw){
+    err.textContent = "Please enter email and password";
+    err.style.display = "block"; return;
+  }
+  btn.textContent = "Signing in…"; btn.disabled = true;
+  try {
+    const r = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email, password: pw})
+    });
+    const d = await r.json();
+    if(!r.ok){
+      err.textContent = d.detail || "Invalid email or password";
+      err.style.display = "block"; return;
+    }
+    localStorage.setItem(TOKEN_KEY, d.access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify({role:d.role, name:d.name}));
+    showApp();
+  } catch(e){
+    err.textContent = "Network error — please try again";
+    err.style.display = "block";
+  } finally {
+    btn.textContent = "Sign In →"; btn.disabled = false;
+  }
+}
+
+document.addEventListener("keydown", e => {
+  const ls = document.getElementById("login-screen");
+  if(e.key === "Enter" && ls && ls.style.display !== "none") doLogin();
+});
+
+function showApp(){
+  const ls = document.getElementById("login-screen");
+  if(ls) ls.style.display = "none";
+  const user = getUser();
+  document.querySelectorAll(".admin-only").forEach(el => {
+    el.style.display = isAdmin() ? "" : "none";
+  });
+  const n = document.getElementById("sidebar-user-name");
+  if(n) n.textContent = user?.name || "User";
+  const r = document.getElementById("sidebar-user-role");
+  if(r) r.textContent = isAdmin() ? "Admin" : "CS Agent";
+  const a = document.getElementById("sidebar-avatar");
+  if(a) a.textContent = (user?.name||"U")[0].toUpperCase();
+}
+
+function doLogout(){
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  const ls = document.getElementById("login-screen");
+  if(ls){ ls.style.display = "flex"; }
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  if(getToken()){ showApp(); }
+  else {
+    const ls = document.getElementById("login-screen");
+    if(ls) ls.style.display = "flex";
+  }
+});
+
+// ══════════════════════════════════════════════════
+// USER MANAGEMENT
+// ══════════════════════════════════════════════════
+async function loadUsers(){
+  const r = await authFetch("/api/users");
+  if(!r.ok){ document.getElementById("users-list").innerHTML="<div style='color:#ef4444;padding:20px;text-align:center'>Access denied</div>"; return; }
+  const users = await r.json();
+  if(!users.length){
+    document.getElementById("users-list").innerHTML="<div style='color:var(--text2);text-align:center;padding:40px'><div style='font-size:28px;margin-bottom:8px'>👥</div>No team members yet</div>";
+    return;
+  }
+  document.getElementById("users-list").innerHTML = users.map(u => `
+    <div class="shipment-card" style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
+      <div style="width:42px;height:42px;border-radius:50%;flex-shrink:0;
+        background:linear-gradient(135deg,${u.role==='admin'?'#6c63ff,#4f8ef7':'#4f8ef7,#22c55e'});
+        display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff">
+        ${u.name[0].toUpperCase()}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text1)">${u.name}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">${u.email}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+        <span class="badge ${u.role==='admin'?'badge-blue':'badge-green'}" style="font-size:10px">
+          ${u.role==='admin'?'👑 Admin':'🎧 CS'}
+        </span>
+        <span class="badge ${u.is_active?'badge-green':'badge-red'}" style="font-size:10px">
+          ${u.is_active?'Active':'Inactive'}
+        </span>
+        ${u.role!=='admin'?`
+          <button onclick="toggleUser(${u.id})" class="icon-btn" style="font-size:11px;padding:4px 10px">
+            ${u.is_active?'🔒':'🔓'}
+          </button>
+          <button onclick="deleteUser(${u.id})" class="icon-btn danger" style="font-size:11px;padding:4px 10px">
+            🗑
+          </button>`:''}
+      </div>
+    </div>`).join("");
+}
+
+function openNewUserModal(){ openModal('modal-add-user'); } function _openNewUserModal_orig(){
+  ["nu-name","nu-email","nu-pw"].forEach(id => document.getElementById(id).value = "");
+  document.getElementById("nu-role").value = "cs";
+  document.getElementById("nu-error").style.display = "none";
+  document.getElementById("modal-new-user").style.display = "flex";
+}
+
+async function createUser(){
+  const name  = document.getElementById("nu-name").value.trim();
+  const email = document.getElementById("nu-email").value.trim();
+  const pw    = document.getElementById("nu-pw").value;
+  const role  = document.getElementById("nu-role").value;
+  const err   = document.getElementById("nu-error");
+  if(!name||!email||!pw){ err.textContent="All fields are required"; err.style.display="block"; return; }
+  if(pw.length<6){ err.textContent="Password must be at least 6 characters"; err.style.display="block"; return; }
+  const r = await authFetch("/api/users",{
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({name, email, password:pw, role})
+  });
+  const d = await r.json();
+  if(!r.ok){ err.textContent = d.detail||"Error creating user"; err.style.display="block"; return; }
+  closeModal("modal-new-user");
+  loadUsers();
+}
+
+async function toggleUser(id){
+  const r = await authFetch(`/api/users/${id}/toggle`,{method:"PATCH"});
+  if(r.ok) loadUsers();
+}
+
+async function deleteUser(id){
+  if(!confirm("Delete this user permanently?")) return;
+  const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
+  if(r.ok) loadUsers();
+}
+</script>
 
 
 <!-- ═══════ ADD USER MODAL ═══════ -->
@@ -1496,8 +1737,6 @@ loadDashboard();
 </div>
 
 
-
-
 <script>
 // ═══ AUTH ════════════════════════════════════════════════════
 const TOKEN_KEY="ft_token", USER_KEY="ft_user";
@@ -1563,7 +1802,7 @@ window.addEventListener("DOMContentLoaded",()=>{
 async function doChangePassword(){
   const old_pw=document.getElementById("cpw-old").value;
   const new_pw=document.getElementById("cpw-new").value;
-  const confirm_pw=document.getElementById("cpw-confirm").value;
+  const confirm=document.getElementById("cpw-confirm").value;
   const msg=document.getElementById("cpw-msg");
   function showMsg(txt,ok){
     msg.textContent=txt; msg.style.display="block";
@@ -1571,9 +1810,9 @@ async function doChangePassword(){
     msg.style.border="1px solid "+(ok?"rgba(34,197,94,.3)":"rgba(239,68,68,.3)");
     msg.style.color=ok?"#16a34a":"#ef4444";
   }
-  if(!old_pw||!new_pw||!confirm_pw){ showMsg("All fields are required",false); return; }
+  if(!old_pw||!new_pw||!confirm){ showMsg("All fields are required",false); return; }
   if(new_pw.length<6){ showMsg("New password must be at least 6 characters",false); return; }
-  if(new_pw!==confirm_pw){ showMsg("Passwords do not match",false); return; }
+  if(new_pw!==confirm){ showMsg("Passwords do not match",false); return; }
   try{
     await apiFetch("/api/auth/change-password",{method:"POST",
       body:JSON.stringify({old_password:old_pw,new_password:new_pw})});
@@ -1682,7 +1921,7 @@ async function toggleUser(id){
 }
 
 async function deleteUser(id){
-  if(!await _confirm("Delete this user permanently?")) return;
+  if(!confirm("Delete this user permanently?")) return;
   try{ await apiFetch(`/api/users/${id}`,{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
   catch(e){ showToast("Error: "+e.message,"error"); }
 }
@@ -1721,6 +1960,7 @@ function _renderDetail(s){
   const ha=document.getElementById("detail-portal-href");
   if(ha) ha.href="/track/"+(s.ref||"");
 
+  // Timeline
   const evList=document.getElementById("detail-events-list");
   const noEv=document.getElementById("detail-no-events");
   const evts=(s.events||[]).slice().reverse();
@@ -1738,6 +1978,7 @@ function _renderDetail(s){
       </div>`).join("");
   }
 
+  // Comments
   const cList=document.getElementById("detail-comments-list");
   const comments=s.comments||[];
   cList.innerHTML=!comments.length
@@ -1749,6 +1990,7 @@ function _renderDetail(s){
         <div class="comment-text">${c.text||""}</div>
       </div>`).join("");
 
+  // Info chips
   const chips=[
     {l:"Reference",v:s.ref},{l:"Container/AWB",v:s.ref2||"—"},
     {l:"Mode",v:s.mode||"—"},{l:"Carrier",v:s.carrier||"—"},
@@ -1821,8 +2063,6 @@ function showToast(msg,type){
 </script>
 
 
-
-
 <!-- FILES BOTTOM SHEET -->
 <div class="overlay" id="sheet-files" onclick="if(event.target===this)closeModal('sheet-files')" style="align-items:flex-end">
   <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:18px 18px 0 0;
@@ -1865,8 +2105,6 @@ function showToast(msg,type){
 </div>
 
 
-
-
 <script>
 function openFilesSheet(){
   // Show import button only for admins
@@ -1877,75 +2115,209 @@ function openFilesSheet(){
 </script>
 
 
-  <!-- ── Alerts Page ── -->
-  <div class="page" id="page-alerts">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div>
-        <div style="font-size:16px;font-weight:700">🔔 Alerts</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments needing attention</div>
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="loadAlerts()"><i class="fa fa-rotate"></i> Refresh</button>
+<!-- ═══ EMAIL PREVIEW MODAL ═══ -->
+<div class="overlay" id="modal-email-preview" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center">
+  <div class="modal" style="max-width:520px;width:94%;background:var(--card);border-radius:20px;padding:0;overflow:hidden">
+    <div style="background:var(--card);padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="fa fa-envelope" style="color:var(--accent);margin-right:8px"></i>Send Email to Client</div>
+      <button onclick="closeEmailModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer"><i class="fa fa-xmark"></i></button>
     </div>
-    <div id="alerts-list"><div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:32px;margin-bottom:8px">🔔</div>Loading...</div></div>
-  </div>
-
-  <!-- ── Confirm Modal ── -->
-  <div class="overlay" id="modal-confirm">
-    <div class="modal" style="max-width:340px">
-      <div class="modal-handle"></div>
-      <div class="modal-head" style="border-bottom:none">
-        <div class="modal-title" id="confirm-msg">Confirm</div>
-        <button class="modal-close" onclick="_confirmReject()"><i class="fa fa-xmark"></i></button>
+    <div style="padding:16px 20px">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px">
+        <i class="fa fa-circle-info" style="color:var(--accent)"></i>
+        Sending to: <strong id="ep-to-email" style="color:var(--text)">-</strong>
       </div>
-      <div class="modal-foot">
-        <button class="btn btn-ghost" style="flex:1" onclick="_confirmReject()">Cancel</button>
-        <button class="btn btn-danger" style="flex:2" id="confirm-ok-btn">Delete</button>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Subject</label>
+        <input id="ep-subject" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box" placeholder="Email subject"/>
       </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Message</label>
+        <textarea id="ep-body" rows="9" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;line-height:1.7;resize:vertical;box-sizing:border-box" placeholder="Email body..."></textarea>
+      </div>
+      <div style="font-size:11px;color:var(--text3)"><i class="fa fa-circle-info"></i> Shipment details and tracking link are automatically included.</div>
+    </div>
+    <div style="padding:12px 20px 20px;display:flex;gap:10px">
+      <button onclick="closeEmailModal()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+      <button id="btn-confirm-send" onclick="confirmSendEmail()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer"><i class="fa fa-paper-plane"></i> Confirm & Send</button>
     </div>
   </div>
-
+</div>
 
 <script>
-/* ── Custom Confirm ── */
-let _confirmRes=null;
-function _confirm(msg){
-  return new Promise(resolve=>{
-    _confirmRes=resolve;
-    document.getElementById('confirm-msg').textContent=msg;
-    document.getElementById('confirm-ok-btn').onclick=()=>{ closeModal('modal-confirm'); _confirmRes=null; resolve(true); };
-    openModal('modal-confirm');
-  });
-}
-function _confirmReject(){ closeModal('modal-confirm'); if(_confirmRes){ _confirmRes(false); _confirmRes=null; } }
+var STATUS_TEMPLATES = {
+  Pending:    { subject: "Your shipment {ref} has been registered",     body: "Dear {client},\n\nYour shipment {ref} has been registered in our system.\n\nRoute: {pol} to {pod}\nCarrier: {carrier}\nETD: {etd}   ETA: {eta}\n\nYou can track your shipment at any time using the link below.\n\nBest regards,\nFreightTrack Team" },
+  Booked:     { subject: "Your shipment {ref} is confirmed and booked", body: "Dear {client},\n\nGreat news! Your shipment {ref} has been confirmed and booked with {carrier}.\n\nBooking: {booking_no}\nETD: {etd}   ETA: {eta}\n\nBest regards,\nFreightTrack Team" },
+  Sailing:    { subject: "Your shipment {ref} has departed",            body: "Dear {client},\n\nYour shipment {ref} has departed from {pol} and is now sailing to {pod}.\n\nCarrier: {carrier}\nVessel: {vessel}\nETA: {eta}\n\nTrack your cargo using the link below.\n\nBest regards,\nFreightTrack Team" },
+  Transit:    { subject: "Your shipment {ref} is in transit",           body: "Dear {client},\n\nYour shipment {ref} is currently in transit to {pod}.\n\nETA: {eta}   Carrier: {carrier}\n\nBest regards,\nFreightTrack Team" },
+  Arrived:    { subject: "Your shipment {ref} has arrived at {pod}",    body: "Dear {client},\n\nYour shipment {ref} has arrived at {pod}.\n\nPlease coordinate with your local agent for customs clearance.\n\nBooking: {booking_no}\n\nBest regards,\nFreightTrack Team" },
+  Discharged: { subject: "Your shipment {ref} has been discharged",     body: "Dear {client},\n\nYour shipment {ref} has been discharged at {pod} and is awaiting customs clearance.\n\nBooking: {booking_no}\n\nBest regards,\nFreightTrack Team" },
+  Delivered:  { subject: "Your shipment {ref} has been delivered",      body: "Dear {client},\n\nYour shipment {ref} has been successfully delivered.\n\nThank you for trusting us with your cargo. We look forward to serving you again.\n\nBest regards,\nFreightTrack Team" },
+  Delayed:    { subject: "Important: Your shipment {ref} is delayed",   body: "Dear {client},\n\nYour shipment {ref} is experiencing a delay.\n\nRevised ETA: {eta}   Carrier: {carrier}\nRoute: {pol} to {pod}\n\nWe apologize for the inconvenience and will keep you updated.\n\nBest regards,\nFreightTrack Team" }
+};
 
-/* ── Alerts ── */
-async function loadAlerts(){
-  const c=document.getElementById('alerts-list'), badge=document.getElementById('alerts-badge');
-  if(!c) return;
-  c.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px">⏳</div></div>';
-  try{
-    const ships=await apiFetch('/api/shipments');
-    const today=new Date(); today.setHours(0,0,0,0);
-    const out=[];
-    ships.forEach(s=>{
-      if(['Delivered','Discharged'].includes(s.status)) return;
-      if(s.eta){ const eta=new Date(s.eta); eta.setHours(0,0,0,0);
-        const d=Math.round((eta-today)/86400000);
-        if(d<0) out.push({id:s.id,ref:s.ref,type:'danger',label:'ETA Passed',msg:'ETA was '+s.eta.slice(0,10)});
-        else if(d<=3) out.push({id:s.id,ref:s.ref,type:'warning',label:'Arriving Soon',msg:'In '+d+' day'+(d===1?'':'s')+' → '+(s.pod||'—')}); }
-      if(s.status==='Delayed') out.push({id:s.id,ref:s.ref,type:'danger',label:'Delayed',msg:(s.pol||'—')+' → '+(s.pod||'—')});
-    });
-    if(badge){ badge.textContent=out.length; badge.style.display=out.length?'':'none'; }
-    if(!out.length){ c.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700">All clear!</div></div>'; return; }
-    c.innerHTML=out.map(a=>{ const col=a.type==='danger'?'var(--red)':'var(--yellow)';
-      return `<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${col};border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer" onclick="openDetail(${a.id})">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-          <span style="font-size:14px;font-weight:700">${a.ref}</span>
-          <span style="font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;background:${col}22;color:${col}">${a.label}</span>
-        </div><div style="font-size:12px;color:var(--text2)">${a.msg}</div></div>`;}).join('');
-  } catch(e){ c.innerHTML='<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">'+e.message+'</div>'; }
+function fillTpl(tpl, s) {
+  return tpl
+    .replace(/{ref}/g,        s.ref         || '-')
+    .replace(/{client}/g,     s.client      || 'Customer')
+    .replace(/{carrier}/g,    s.carrier     || '-')
+    .replace(/{vessel}/g,     s.vessel      || '-')
+    .replace(/{pol}/g,        s.pol         || '-')
+    .replace(/{pod}/g,        s.pod         || '-')
+    .replace(/{etd}/g,        (s.etd        || '-').substring(0, 10))
+    .replace(/{eta}/g,        (s.eta        || '-').substring(0, 10))
+    .replace(/{booking_no}/g, s.booking_no  || '-');
+}
+
+function closeEmailModal() {
+  var m = document.getElementById('modal-email-preview');
+  m.style.display = 'none';
+}
+
+var _emailShipment = null;
+
+async function openEmailPreview() {
+  if (!currentDetailId) { alert('No shipment selected'); return; }
+  try {
+    var s = await apiFetch('/api/shipments/' + currentDetailId);
+    _emailShipment = s;
+    if (!s.client_email) { alert('This shipment has no client email address.'); return; }
+    var tpl = STATUS_TEMPLATES[s.status] || STATUS_TEMPLATES['Pending'];
+    document.getElementById('ep-to-email').textContent = s.client_email;
+    document.getElementById('ep-subject').value = fillTpl(tpl.subject, s);
+    document.getElementById('ep-body').value    = fillTpl(tpl.body,    s);
+    // Force show the modal
+    var modal = document.getElementById('modal-email-preview');
+    modal.style.display = 'flex';
+  } catch(e) {
+    alert('Error loading shipment: ' + e.message);
+  }
+}
+
+async function confirmSendEmail() {
+  if (!_emailShipment) return;
+  var btn = document.getElementById('btn-confirm-send');
+  btn.disabled = true;
+  btn.innerHTML = 'Sending...';
+  try {
+    var subject = document.getElementById('ep-subject').value.trim();
+    var body    = document.getElementById('ep-body').value.trim();
+    if (!subject || !body) { alert('Subject and message cannot be empty.'); return; }
+    await apiFetch('/api/shipments/' + _emailShipment.id + '/send-email',
+      { method: 'POST', body: JSON.stringify({ subject: subject, body: body }) });
+    alert('Email sent successfully to ' + _emailShipment.client_email);
+    closeEmailModal();
+  } catch(e) {
+    alert('Failed to send email: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa fa-paper-plane"></i> Confirm & Send';
+  }
 }
 </script>
 
+<script>
+/* ═══ ALERTS PAGE ═══ */
+async function loadAlerts() {
+  var container = document.getElementById('alerts-list');
+  var badge     = document.getElementById('alerts-badge');
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><div style="font-size:32px;margin-bottom:8px">⏳</div>Loading...</div>';
+  try {
+    var ships = await apiFetch('/api/shipments');
+    var alerts = buildAlerts(ships);
+    if (badge) {
+      badge.textContent = alerts.length;
+      badge.style.display = alerts.length ? '' : 'none';
+    }
+    if (!alerts.length) {
+      container.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention right now.</div></div>';
+      return;
+    }
+    container.innerHTML = alerts.map(function(a) {
+      var color = a.type === 'danger' ? 'var(--red)' : a.type === 'warning' ? 'var(--yellow)' : 'var(--accent)';
+      return '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ' + color + ';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer" onclick="openDetail(' + a.id + ')">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+        + '<span style="font-size:14px;font-weight:700;color:var(--text)">' + a.ref + '</span>'
+        + '<span style="font-size:11px;background:' + color + '22;color:' + color + ';padding:3px 10px;border-radius:20px;font-weight:600">' + a.label + '</span>'
+        + '</div>'
+        + '<div style="font-size:12px;color:var(--text2)">' + a.message + '</div>'
+        + '</div>';
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">Error: ' + e.message + '</div>';
+  }
+}
+
+function buildAlerts(ships) {
+  var today = new Date(); today.setHours(0,0,0,0);
+  var alerts = [];
+  ships.forEach(function(s) {
+    if (['Delivered','Discharged'].includes(s.status)) return;
+    if (s.eta) {
+      var eta = new Date(s.eta); eta.setHours(0,0,0,0);
+      var diff = Math.round((eta - today) / 86400000);
+      if (diff < 0) {
+        alerts.push({ id: s.id, ref: s.ref, type: 'danger', label: 'ETA Passed', message: 'ETA was ' + s.eta.substring(0,10) + ' — ' + s.pod });
+      } else if (diff <= 3) {
+        alerts.push({ id: s.id, ref: s.ref, type: 'warning', label: 'Arriving Soon', message: 'Arriving in ' + diff + ' day' + (diff===1?'':'s') + ' at ' + (s.pod||'—') });
+      }
+    }
+    if (s.etd) {
+      var etd = new Date(s.etd); etd.setHours(0,0,0,0);
+      if (etd < today && ['Pending','Booked'].includes(s.status)) {
+        alerts.push({ id: s.id, ref: s.ref, type: 'warning', label: 'ETD Passed', message: 'ETD was ' + s.etd.substring(0,10) + ' — still ' + s.status });
+      }
+    }
+    if (s.stuffing_date && ['Pending','Booked'].includes(s.status)) {
+      var sf = new Date(s.stuffing_date); sf.setHours(0,0,0,0);
+      if (sf <= today) {
+        alerts.push({ id: s.id, ref: s.ref, type: 'info', label: 'Stuffing Date', message: 'EXW stuffing date reached — confirm loading' });
+      }
+    }
+    if (s.status === 'Delayed') {
+      alerts.push({ id: s.id, ref: s.ref, type: 'danger', label: 'Delayed', message: (s.pol||'—') + ' → ' + (s.pod||'—') + ' · ETA: ' + (s.eta?s.eta.substring(0,10):'—') });
+    }
+  });
+  return alerts;
+}
+
+/* ═══ EMAIL LOG ═══ */
+async function loadEmailLog(sid) {
+  var container = document.getElementById('email-log-list');
+  var countEl   = document.getElementById('email-log-count');
+  if (!container) return;
+  try {
+    var logs = await apiFetch('/api/shipments/' + sid + '/email-log');
+    if (!logs || !logs.length) {
+      container.innerHTML = '<div style="text-align:center;padding:10px;font-size:12px;color:var(--text2);opacity:.6"><i class="fa fa-inbox"></i> No emails sent yet</div>';
+      if (countEl) countEl.textContent = '';
+      return;
+    }
+    if (countEl) countEl.textContent = '(' + logs.length + ' sent)';
+    container.innerHTML = logs.map(function(l) {
+      return '<div style="padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;border-left:3px solid var(--accent)">'
+        + '<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">' + (l.subject||'—') + '</div>'
+        + '<div style="font-size:11px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap">'
+        + '<span><i class="fa fa-paper-plane" style="color:var(--accent)"></i> ' + (l.sent_to||'—') + '</span>'
+        + '<span><i class="fa fa-user" style="color:var(--text3)"></i> ' + (l.sent_by||'System') + '</span>'
+        + '<span><i class="fa fa-clock" style="color:var(--text3)"></i> ' + (l.sent_at?(l.sent_at.substring(0,16).replace('T',' ')):'—') + '</span>'
+        + '</div></div>';
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--text2);padding:8px;opacity:.6">Could not load email log</div>';
+  }
+}
+
+/* ═══ EMAIL FIELD VALIDATION ═══ */
+function validateEmailField(el) {
+  var val = (el.value||'').trim();
+  var msg = document.getElementById('f-client-email-msg');
+  if (!val) { el.style.border=''; if(msg){msg.style.display='none';} return; }
+  var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+  el.style.border = ok ? '2px solid var(--green)' : '2px solid var(--red)';
+  if (msg) { msg.style.display='block'; msg.style.color=ok?'var(--green)':'var(--red)'; msg.textContent=ok?'Valid email':'Invalid format'; }
+}
+</script>
 </body>
-</html>
+  </html>
