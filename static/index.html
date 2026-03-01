@@ -517,6 +517,7 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-users"></i> Team Members
     </div>
     <div class="nav-section">Tools</div>
+    <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts"><i class="fa fa-bell"></i> Alerts <span class="nav-badge" id="alerts-badge" style="display:none">0</span></div>
     <div class="nav-item" onclick="exportXLSX()">
       <i class="fa fa-file-excel"></i> Export XLSX
     </div>
@@ -762,6 +763,9 @@ textarea.form-control{resize:none;min-height:72px}
     <button class="bnav-item" id="bnav-sync" onclick="trackAll()">
       <i class="fa fa-rotate"></i><span>Sync</span>
     </button>
+    <button class="bnav-item" id="bnav-alerts" onclick="showPage('alerts',null);setBottomNav('alerts')">
+      <i class="fa fa-bell"></i><span>Alerts</span>
+    </button>
     <button class="bnav-item" id="bnav-export" onclick="openFilesSheet()">
       <i class="fa fa-file-arrow-down"></i><span>Files</span>
     </button>
@@ -894,6 +898,7 @@ function showPage(id,el){
   document.getElementById('page-title').textContent=titles[id]||id;
   if(id==='shipments') loadShipments();
   if(id==='analytics') loadAnalytics();
+  if(id==='alerts') loadAlerts();
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -1150,7 +1155,7 @@ async function openDetail(sid){
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
 function editFromDetail(){ closeModal('modal-detail'); editShipment(currentDetailId); }
 async function deleteFromDetail(){ if(await confirmDelete()) deleteShipment(currentDetailId); }
-function confirmDelete(){ return Promise.resolve(confirm('Delete this shipment?')); }
+function confirmDelete(){ return Promise.resolve(window.confirm('Delete this shipment?')); }
 
 /* ── Save ── */
 async function saveShipment(){
@@ -1393,6 +1398,28 @@ function initTheme(){
   if(btn) btn.textContent = saved === 'dark' ? '🌙' : '☀️';
   const bnav = document.getElementById('bnav-theme');
   if(bnav) bnav.querySelector('span').textContent = saved === 'dark' ? 'Light' : 'Dark';
+}
+
+
+/* ── Alerts ── */
+async function loadAlerts(){
+  const c=document.getElementById('alerts-list'),badge=document.getElementById('alerts-badge');
+  if(!c)return;
+  try{
+    const ships=await apiFetch('/api/shipments');
+    const today=new Date();today.setHours(0,0,0,0);
+    const out=[];
+    ships.forEach(s=>{
+      if(['Delivered','Discharged'].includes(s.status))return;
+      if(s.eta){const eta=new Date(s.eta);eta.setHours(0,0,0,0);const d=Math.round((eta-today)/86400000);
+        if(d<0)out.push({id:s.id,ref:s.ref,type:'danger',label:'ETA Passed',msg:'ETA was '+s.eta.slice(0,10)});
+        else if(d<=3)out.push({id:s.id,ref:s.ref,type:'warning',label:'Arriving Soon',msg:'In '+d+' day'+(d===1?'':'s')+' → '+(s.pod||'—')});}
+      if(s.status==='Delayed')out.push({id:s.id,ref:s.ref,type:'danger',label:'Delayed',msg:(s.pol||'—')+' → '+(s.pod||'—')});
+    });
+    if(badge){badge.textContent=out.length;badge.style.display=out.length?'':'none';}
+    if(!out.length){c.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700">All clear!</div><div style="font-size:13px;margin-top:6px">No shipments need attention.</div></div>';return;}
+    c.innerHTML=out.map(a=>{const col=a.type==='danger'?'var(--red)':'var(--yellow)';return `<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${col};border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer" onclick="openDetail(${a.id})"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:14px;font-weight:700">${a.ref}</span><span style="font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;background:${col}22;color:${col}">${a.label}</span></div><div style="font-size:12px;color:var(--text2)">${a.msg}</div></div>`;}).join('');
+  }catch(e){c.innerHTML='<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">'+e.message+'</div>';}
 }
 
 /* ── Init ── */
@@ -2087,6 +2114,19 @@ function openFilesSheet(){
   openModal("sheet-files");
 }
 </script>
+
+
+    <!-- ALERTS PAGE -->
+    <div class="page" id="page-alerts">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:16px;font-weight:700">🔔 Alerts</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments needing attention</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadAlerts()"><i class="fa fa-rotate"></i> Refresh</button>
+      </div>
+      <div id="alerts-list"><div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:32px;margin-bottom:8px">🔔</div>Loading...</div></div>
+    </div>
 
 </body>
 </html>
