@@ -2090,158 +2090,100 @@ function openFilesSheet(){
 </script>
 
 
-<!-- EMAIL PREVIEW MODAL -->
-<div class="overlay" id="modal-email-preview">
-  <div class="modal" style="max-width:520px">
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title"><i class="fa fa-envelope" style="color:var(--accent)"></i> Send Email to Client</div>
-      <button class="modal-close" onclick="closeModal('modal-email-preview')"><i class="fa fa-xmark"></i></button>
+<!-- ═══ EMAIL PREVIEW MODAL ═══ -->
+<div class="overlay" id="modal-email-preview" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center">
+  <div class="modal" style="max-width:520px;width:94%;background:var(--card);border-radius:20px;padding:0;overflow:hidden">
+    <div style="background:var(--card);padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="fa fa-envelope" style="color:var(--accent);margin-right:8px"></i>Send Email to Client</div>
+      <button onclick="closeEmailModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer"><i class="fa fa-xmark"></i></button>
     </div>
-    <div class="modal-body">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
+    <div style="padding:16px 20px">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px">
         <i class="fa fa-circle-info" style="color:var(--accent)"></i>
         Sending to: <strong id="ep-to-email" style="color:var(--text)">-</strong>
       </div>
-      <div class="form-group">
-        <label>Subject</label>
-        <input id="ep-subject" class="form-control" placeholder="Email subject"/>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Subject</label>
+        <input id="ep-subject" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box" placeholder="Email subject"/>
       </div>
-      <div class="form-group">
-        <label>Message</label>
-        <textarea id="ep-body" class="form-control" rows="9"
-          style="font-size:13px;line-height:1.7;resize:vertical;min-height:200px"
-          placeholder="Email body..."></textarea>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Message</label>
+        <textarea id="ep-body" rows="9" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;line-height:1.7;resize:vertical;box-sizing:border-box" placeholder="Email body..."></textarea>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-top:-6px">
-        <i class="fa fa-circle-info"></i> Shipment details and tracking link are automatically included.
-      </div>
+      <div style="font-size:11px;color:var(--text3)"><i class="fa fa-circle-info"></i> Shipment details and tracking link are automatically included.</div>
     </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-email-preview')">Cancel</button>
-      <button class="btn btn-primary" style="flex:2" id="btn-confirm-send" onclick="confirmSendEmail()">
-        <i class="fa fa-paper-plane"></i> Confirm &amp; Send
-      </button>
+    <div style="padding:12px 20px 20px;display:flex;gap:10px">
+      <button onclick="closeEmailModal()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+      <button id="btn-confirm-send" onclick="confirmSendEmail()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer"><i class="fa fa-paper-plane"></i> Confirm &amp; Send</button>
     </div>
   </div>
 </div>
 
 <script>
 var STATUS_TEMPLATES = {
-  Pending:    { subject: "Your shipment {ref} has been registered", body: "Dear {client},
-
-Your shipment {ref} has been registered.
-
-Route: {pol} to {pod}
-Carrier: {carrier}
-ETD: {etd} - ETA: {eta}
-
-Best regards,
-FreightTrack Team" },
-  Booked:     { subject: "Your shipment {ref} is confirmed and booked", body: "Dear {client},
-
-Your shipment {ref} has been confirmed with {carrier}.
-
-Booking: {booking_no}
-ETD: {etd} - ETA: {eta}
-
-Best regards,
-FreightTrack Team" },
-  Sailing:    { subject: "Your shipment {ref} has departed", body: "Dear {client},
-
-Your shipment {ref} has departed from {pol} and is sailing to {pod}.
-
-Carrier: {carrier} - Vessel: {vessel}
-ETA: {eta}
-
-Best regards,
-FreightTrack Team" },
-  Transit:    { subject: "Your shipment {ref} is in transit", body: "Dear {client},
-
-Your shipment {ref} is in transit to {pod}.
-
-ETA: {eta} - Carrier: {carrier}
-
-Best regards,
-FreightTrack Team" },
-  Arrived:    { subject: "Your shipment {ref} has arrived at {pod}", body: "Dear {client},
-
-Your shipment {ref} has arrived at {pod}. Please arrange customs clearance.
-
-Booking: {booking_no}
-
-Best regards,
-FreightTrack Team" },
-  Discharged: { subject: "Your shipment {ref} has been discharged", body: "Dear {client},
-
-Your shipment {ref} has been discharged at {pod} and is awaiting customs clearance.
-
-Booking: {booking_no}
-
-Best regards,
-FreightTrack Team" },
-  Delivered:  { subject: "Your shipment {ref} has been delivered", body: "Dear {client},
-
-Your shipment {ref} has been successfully delivered. Thank you for your trust.
-
-Best regards,
-FreightTrack Team" },
-  Delayed:    { subject: "Important: Your shipment {ref} is delayed", body: "Dear {client},
-
-Your shipment {ref} is experiencing a delay.
-
-Revised ETA: {eta} - Carrier: {carrier}
-Route: {pol} to {pod}
-
-We apologize for the inconvenience.
-
-Best regards,
-FreightTrack Team" }
+  Pending:    { subject: "Your shipment {ref} has been registered",     body: "Dear {client},\n\nYour shipment {ref} has been registered in our system.\n\nRoute: {pol} to {pod}\nCarrier: {carrier}\nETD: {etd}   ETA: {eta}\n\nYou can track your shipment at any time using the link below.\n\nBest regards,\nFreightTrack Team" },
+  Booked:     { subject: "Your shipment {ref} is confirmed and booked", body: "Dear {client},\n\nGreat news! Your shipment {ref} has been confirmed and booked with {carrier}.\n\nBooking: {booking_no}\nETD: {etd}   ETA: {eta}\n\nBest regards,\nFreightTrack Team" },
+  Sailing:    { subject: "Your shipment {ref} has departed",            body: "Dear {client},\n\nYour shipment {ref} has departed from {pol} and is now sailing to {pod}.\n\nCarrier: {carrier}\nVessel: {vessel}\nETA: {eta}\n\nTrack your cargo using the link below.\n\nBest regards,\nFreightTrack Team" },
+  Transit:    { subject: "Your shipment {ref} is in transit",           body: "Dear {client},\n\nYour shipment {ref} is currently in transit to {pod}.\n\nETA: {eta}   Carrier: {carrier}\n\nBest regards,\nFreightTrack Team" },
+  Arrived:    { subject: "Your shipment {ref} has arrived at {pod}",    body: "Dear {client},\n\nYour shipment {ref} has arrived at {pod}.\n\nPlease coordinate with your local agent for customs clearance.\n\nBooking: {booking_no}\n\nBest regards,\nFreightTrack Team" },
+  Discharged: { subject: "Your shipment {ref} has been discharged",     body: "Dear {client},\n\nYour shipment {ref} has been discharged at {pod} and is awaiting customs clearance.\n\nBooking: {booking_no}\n\nBest regards,\nFreightTrack Team" },
+  Delivered:  { subject: "Your shipment {ref} has been delivered",      body: "Dear {client},\n\nYour shipment {ref} has been successfully delivered.\n\nThank you for trusting us with your cargo. We look forward to serving you again.\n\nBest regards,\nFreightTrack Team" },
+  Delayed:    { subject: "Important: Your shipment {ref} is delayed",   body: "Dear {client},\n\nYour shipment {ref} is experiencing a delay.\n\nRevised ETA: {eta}   Carrier: {carrier}\nRoute: {pol} to {pod}\n\nWe apologize for the inconvenience and will keep you updated.\n\nBest regards,\nFreightTrack Team" }
 };
 
-function fillTpl(tpl, s){
+function fillTpl(tpl, s) {
   return tpl
-    .replace(/{ref}/g, s.ref || '-')
-    .replace(/{client}/g, s.client || 'Customer')
-    .replace(/{carrier}/g, s.carrier || '-')
-    .replace(/{vessel}/g, s.vessel || '-')
-    .replace(/{pol}/g, s.pol || '-')
-    .replace(/{pod}/g, s.pod || '-')
-    .replace(/{etd}/g, (s.etd || '-').substring(0, 10))
-    .replace(/{eta}/g, (s.eta || '-').substring(0, 10))
-    .replace(/{booking_no}/g, s.booking_no || '-');
+    .replace(/{ref}/g,        s.ref         || '-')
+    .replace(/{client}/g,     s.client      || 'Customer')
+    .replace(/{carrier}/g,    s.carrier     || '-')
+    .replace(/{vessel}/g,     s.vessel      || '-')
+    .replace(/{pol}/g,        s.pol         || '-')
+    .replace(/{pod}/g,        s.pod         || '-')
+    .replace(/{etd}/g,        (s.etd        || '-').substring(0, 10))
+    .replace(/{eta}/g,        (s.eta        || '-').substring(0, 10))
+    .replace(/{booking_no}/g, s.booking_no  || '-');
+}
+
+function closeEmailModal() {
+  var m = document.getElementById('modal-email-preview');
+  m.style.display = 'none';
 }
 
 var _emailShipment = null;
 
-async function openEmailPreview(){
-  if(!currentDetailId) return;
+async function openEmailPreview() {
+  if (!currentDetailId) { alert('No shipment selected'); return; }
   try {
     var s = await apiFetch('/api/shipments/' + currentDetailId);
     _emailShipment = s;
-    if(!s.client_email){ toast('No client email on this shipment', 'error'); return; }
+    if (!s.client_email) { alert('This shipment has no client email address.'); return; }
     var tpl = STATUS_TEMPLATES[s.status] || STATUS_TEMPLATES['Pending'];
     document.getElementById('ep-to-email').textContent = s.client_email;
     document.getElementById('ep-subject').value = fillTpl(tpl.subject, s);
-    document.getElementById('ep-body').value    = fillTpl(tpl.body, s);
-    openModal('modal-email-preview');
-  } catch(e) { toast(e.message, 'error'); }
+    document.getElementById('ep-body').value    = fillTpl(tpl.body,    s);
+    // Force show the modal
+    var modal = document.getElementById('modal-email-preview');
+    modal.style.display = 'flex';
+  } catch(e) {
+    alert('Error loading shipment: ' + e.message);
+  }
 }
 
-async function confirmSendEmail(){
-  if(!_emailShipment) return;
+async function confirmSendEmail() {
+  if (!_emailShipment) return;
   var btn = document.getElementById('btn-confirm-send');
   btn.disabled = true;
   btn.innerHTML = 'Sending...';
   try {
     var subject = document.getElementById('ep-subject').value.trim();
     var body    = document.getElementById('ep-body').value.trim();
+    if (!subject || !body) { alert('Subject and message cannot be empty.'); return; }
     await apiFetch('/api/shipments/' + _emailShipment.id + '/send-email',
       { method: 'POST', body: JSON.stringify({ subject: subject, body: body }) });
-    toast('Email sent to ' + _emailShipment.client_email, 'success');
-    closeModal('modal-email-preview');
+    alert('Email sent successfully to ' + _emailShipment.client_email);
+    closeEmailModal();
   } catch(e) {
-    toast(e.message, 'error');
+    alert('Failed to send email: ' + e.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="fa fa-paper-plane"></i> Confirm & Send';
