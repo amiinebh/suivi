@@ -12,7 +12,7 @@ from io import BytesIO
 from datetime import datetime
 
 # TEU values per container type
-_TEU = {'20DRY': 1, '40HC': 2, '40DRY': 2, '40RF': 2, 'FLEXI': 2, 'TRUCK': 0}
+_TEU = {'20DRY': 1, '40HC': 2, '40DRY': 2, '40RF': 2, 'FLEXI': 1, 'TRUCK': 2}
 
 def _calc_teu(containers):
     """Sum TEU for a list of Container ORM objects."""
@@ -354,11 +354,18 @@ def generate_kpi_report_pdf(stats, shipments):
             routes[route] = routes.get(route, 0) + 1
 
     top_routes = sorted(routes.items(), key=lambda x: x[1], reverse=True)[:8]
-    route_data = [['Rank', 'Route', 'Shipments']]
-    for i, (route, count) in enumerate(top_routes, 1):
-        route_data.append([str(i), route[:35], str(count)])
+    # Compute TEU per route
+    route_teu = {}
+    for s in shipments:
+        if s.pol and s.pod:
+            rk = f"{s.pol} → {s.pod}"
+            route_teu[rk] = route_teu.get(rk, 0) + _calc_teu(s.containers)
 
-    route_table = Table(route_data, colWidths=[0.7*inch, 4*inch, 1.8*inch])
+    route_data = [['Rank', 'Route', 'Shipments', 'TEU']]
+    for i, (route, count) in enumerate(top_routes, 1):
+        route_data.append([str(i), route[:35], str(count), str(route_teu.get(route, 0))])
+
+    route_table = Table(route_data, colWidths=[0.6*inch, 3.2*inch, 1.4*inch, 1.3*inch])
     route_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
