@@ -1103,59 +1103,12 @@ async function loadShipments(){
 }
 
 /* ── Detail ── */
-async function openDetail(sid){
-  currentDetailId=sid;
-  openModal('modal-detail');
-  document.getElementById('detail-body').innerHTML=`<div style="text-align:center;padding:40px"><div class="spinner" style="width:28px;height:28px;border-width:3px"></div></div>`;
-  try{
-    const s=await apiFetch(`/api/shipments/${sid}`);
-    document.getElementById('detail-title').textContent=s.ref;
-    document.getElementById('detail-sub').textContent=`${s.client||''}${s.carrier?' · '+s.carrier:''}`;
-    const trackLink=`${location.origin}/track/${s.ref}`;
-    document.getElementById('detail-body').innerHTML=`
-      <div class="detail-grid">
-        <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${statusBadge(s.status)}</div></div>
-        <div class="detail-item"><div class="detail-label">Mode</div><div class="detail-value">${modeBadge(s.mode)}</div></div>
-        <div class="detail-item"><div class="detail-label">Container / AWB</div><div class="detail-value">${s.ref2||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Booking No</div><div class="detail-value">${s.booking_no||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Carrier</div><div class="detail-value">${s.carrier||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Vessel</div><div class="detail-value">${s.vessel||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">POL → POD</div><div class="detail-value">${s.pol||'—'} → ${s.pod||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">ETD / ETA</div><div class="detail-value">${fmt(s.etd)} → ${fmt(s.eta)}</div></div>
-        <div class="detail-item" style="grid-column:1/-1">
-          <div class="detail-label">Client Tracking Link</div>
-          <div class="detail-value">
-            <span class="copy-link" onclick="copyLink('${trackLink}')">
-              <i class="fa fa-link"></i> Copy link
-            </span>
-          </div>
-        </div>
-        ${s.note?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Note</div><div class="detail-value" style="color:var(--text2)">${s.note}</div></div>`:''}
-      </div>
-      ${s.events&&s.events.length?`
-        <div style="font-size:13px;font-weight:700;margin-bottom:10px">
-          <i class="fa fa-timeline" style="color:var(--accent);margin-right:6px"></i>Events
-        </div>
-        <div class="events-list">
-          ${s.events.slice(0,6).map(e=>`
-            <div class="event-item">
-              <div class="event-dot"></div>
-              <div><div style="font-size:13px;font-weight:500">${e.description||'—'}</div>
-              <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
-            </div>`).join('')}
-        </div>`:`
-        <div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">
-          <i class="fa fa-satellite-dish" style="font-size:22px;margin-bottom:8px;display:block;opacity:.3"></i>
-          No events yet — tap Track
-        </div>`}
-    `;
-  }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
-}
+
 
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
 function editFromDetail(){ closeModal('modal-detail'); editShipment(currentDetailId); }
 async function deleteFromDetail(){ if(await confirmDelete()) deleteShipment(currentDetailId); }
-function confirmDelete(){ return Promise.resolve(confirm('Delete this shipment?')); }
+function confirmDelete(){ return _confirm('Delete this shipment?'); }
 
 /* ── Save ── */
 async function saveShipment(){
@@ -1202,7 +1155,7 @@ async function editShipment(sid){
 
 /* ── Delete ── */
 async function deleteShipment(sid){
-  if(!confirm('Delete this shipment?')) return;
+  if(!await _confirm('Delete this shipment?')) return;
   try{
     await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
     toast('Deleted','success'); closeModal('modal-detail');
