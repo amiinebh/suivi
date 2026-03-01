@@ -3,7 +3,7 @@ from auth import get_current_user, require_admin, hash_password, verify_password
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
-import models, schemas, crud, tracker, export
+import models, schemas, crud, export
 from database import SessionLocal, engine
 import os, logging
 
@@ -21,14 +21,6 @@ def get_db():
     try: yield db
     finally: db.close()
 
-# ── Auto-scheduler ──────────────────────────────────────────────────────────
-scheduler = BackgroundScheduler()
-def scheduled_track():
-    db = SessionLocal()
-    try: tracker.run_auto_tracking(db)
-    finally: db.close()
-scheduler.add_job(scheduled_track, "interval", hours=6)
-scheduler.start()
 
 # ── Pages ────────────────────────────────────────────────────────────────────
 @app.get("/")
@@ -71,8 +63,8 @@ def portal_data(ref: str, db: Session = Depends(get_db)):
 
 # ── Shipments ────────────────────────────────────────────────────────────────
 @app.get("/api/shipments", response_model=list[schemas.ShipmentOut])
-def list_shipments(search:str="", status:str="", mode:str="", db:Session=Depends(get_db), current=Depends(get_current_user)):
-    return crud.get_shipments(db, search, status, mode)
+def list_shipments(q:str="", search:str="", status:str="", mode:str="", db:Session=Depends(get_db), current=Depends(get_current_user)):
+    return crud.get_shipments(db, q or search, status, mode)
 
 @app.post("/api/shipments", response_model=schemas.ShipmentOut)
 async def create_shipment(request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
