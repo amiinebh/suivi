@@ -101,10 +101,11 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
     eq_type = (body.get("eq_type") or "").strip()
     eq_qty  = int(body.get("eq_qty") or 0)
     if eq_type and eq_qty > 0:
-        for _ in range(eq_qty):
+        for i in range(eq_qty):
             cont = models.Container(
                 shipment_id=ship.id,
                 size_type=eq_type,
+                container_no=f"TBD-{eq_type}-{i+1}",
             )
             db.add(cont)
         try:
