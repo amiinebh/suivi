@@ -526,9 +526,6 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')" style="display:none">
       <i class="fa fa-file-import"></i> Bulk Import
     </div>
-    <div class="nav-item" onclick="trackAll()">
-      <i class="fa fa-rotate"></i> Sync All
-    </div>
   </div>
   <div class="sidebar-bottom">
     <div class="sidebar-user">
@@ -679,9 +676,6 @@ textarea.form-control{resize:none;min-height:72px}
           <div id="detail-sub" style="font-size:11px;color:var(--text2);margin-top:1px">—</div>
         </div>
         <div id="detail-status-badge"></div>
-        <button class="btn btn-primary btn-sm" onclick="syncDetail()" id="detail-sync-btn" style="padding:6px 10px;flex-shrink:0">
-          <i class="fa fa-rotate"></i>
-        </button>
       </div>
       <div class="shipment-card" style="margin-bottom:14px;padding:12px 14px">
         <div style="display:flex;align-items:center;gap:6px">
@@ -711,9 +705,6 @@ textarea.form-control{resize:none;min-height:72px}
       </div>
       <div id="dtab-timeline">
         <div id="detail-events-list" class="tl-list"></div>
-        <div id="detail-no-events" style="display:none;text-align:center;padding:30px;color:var(--text2);font-size:12px">
-          <div style="font-size:28px;margin-bottom:6px">📭</div>No events yet. Tap Sync to update.
-        </div>
       </div>
       <div id="dtab-notes" style="display:none">
         <div id="detail-comments-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
@@ -757,10 +748,6 @@ textarea.form-control{resize:none;min-height:72px}
     </button>
     <button class="bnav-item admin-only" id="bnav-users" onclick="showPage('users',null);setBottomNav('users')">
       <i class="fa fa-users"></i><span>Team</span>
-    </button>
-    
-    <button class="bnav-item" id="bnav-sync" onclick="trackAll()">
-      <i class="fa fa-rotate"></i><span>Sync</span>
     </button>
     <button class="bnav-item" id="bnav-export" onclick="openFilesSheet()">
       <i class="fa fa-file-arrow-down"></i><span>Files</span>
@@ -858,9 +845,6 @@ textarea.form-control{resize:none;min-height:72px}
         <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn btn-secondary btn-sm" id="detail-track-btn" onclick="trackOne()">
-          <i class="fa fa-rotate"></i> Track
-        </button>
         <button class="modal-close" onclick="closeModal('modal-detail')"><i class="fa fa-xmark"></i></button>
       </div>
     </div>
@@ -1127,22 +1111,7 @@ async function openDetail(sid){
         </div>
         ${s.note?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Note</div><div class="detail-value" style="color:var(--text2)">${s.note}</div></div>`:''}
       </div>
-      ${s.events&&s.events.length?`
-        <div style="font-size:13px;font-weight:700;margin-bottom:10px">
-          <i class="fa fa-timeline" style="color:var(--accent);margin-right:6px"></i>Events
-        </div>
-        <div class="events-list">
-          ${s.events.slice(0,6).map(e=>`
-            <div class="event-item">
-              <div class="event-dot"></div>
-              <div><div style="font-size:13px;font-weight:500">${e.description||'—'}</div>
-              <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
-            </div>`).join('')}
-        </div>`:`
-        <div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">
-          <i class="fa fa-satellite-dish" style="font-size:22px;margin-bottom:8px;display:block;opacity:.3"></i>
-          No events yet — tap Track
-        </div>`}
+
       <div id="email-log-section" style="margin-top:20px">
         <div style="font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
           <span><i class="fa fa-envelope" style="color:var(--accent);margin-right:6px"></i>Email Log</span>
