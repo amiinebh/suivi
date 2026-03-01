@@ -963,6 +963,9 @@ textarea.form-control{resize:none;min-height:72px}
       <button class="btn btn-secondary" style="flex:1" onclick="editFromDetail()">
         <i class="fa fa-pen"></i> Edit
       </button>
+      <button class="btn btn-primary" style="flex:1" onclick="openEmailPreview()" id="btn-send-email">
+        <i class="fa fa-envelope"></i> Email
+      </button>
       <button class="btn btn-danger" style="flex:1" onclick="deleteFromDetail()">
         <i class="fa fa-trash"></i> Delete
       </button>
@@ -1248,11 +1251,7 @@ async function openDetail(sid){
               <div><div style="font-size:13px;font-weight:500">${e.description||'—'}</div>
               <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
             </div>`).join('')}
-        </div>`:`
-        <div style="text-align:center;padding:20px;color:var(--text2);font-size:13px;opacity:.5">
-          <i class="fa fa-satellite-dish" style="font-size:22px;margin-bottom:8px;display:block"></i>
-          No tracking events yet
-        </div>`}
+        </div>`:`}
     `;
   }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
 }
@@ -2658,6 +2657,42 @@ function toggleDirectionFields(){
 }
 
 </script>
+
+<!-- ═══════ EMAIL PREVIEW MODAL ═══════ -->
+<div class="overlay" id="modal-email-preview">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title"><i class="fa fa-envelope" style="color:var(--accent)"></i> Send Email to Client</div>
+      <button class="modal-close" onclick="closeModal('modal-email-preview')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
+        <i class="fa fa-circle-info" style="color:var(--accent)"></i>
+        Sending to: <strong id="ep-to-email" style="color:var(--text)">—</strong>
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <input id="ep-subject" class="form-control" placeholder="Email subject"/>
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea id="ep-body" class="form-control" rows="8"
+          style="font-size:13px;line-height:1.7;resize:vertical;min-height:180px"
+          placeholder="Email body…"></textarea>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:-6px">
+        <i class="fa fa-circle-info"></i> The shipment details and tracking link are automatically included in the email.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-email-preview')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" id="btn-confirm-send" onclick="confirmSendEmail()">
+        <i class="fa fa-paper-plane"></i> Confirm & Send
+      </button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
