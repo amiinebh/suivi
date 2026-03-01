@@ -20,26 +20,6 @@ class CommentCreate(BaseModel):
     author: Optional[str] = "Agent"
     text: str
 
-class ShipmentCreate(BaseModel):
-    notes: Optional[str] = None
-    consignee: Optional[str] = None
-    shipper: Optional[str] = None
-    quotation_number: Optional[str] = None
-    ref: str
-    ref2: Optional[str] = None
-    booking_no: Optional[str] = None
-    mode: Optional[str] = "Ocean"
-    carrier: Optional[str] = None
-    client: Optional[str] = None
-    client_email: Optional[str] = None
-    note: Optional[str] = None
-    pol: Optional[str] = None
-    pod: Optional[str] = None
-    etd: Optional[str] = None
-    eta: Optional[str] = None
-    status: Optional[str] = "Pending"
-
-
 class ContainerOut(BaseModel):
     id: int
     container_no: str
@@ -53,6 +33,23 @@ class ContainerCreate(BaseModel):
     seal_no: Optional[str] = None
     size_type: Optional[str] = None
     weight: Optional[str] = None
+
+class ShipmentCreate(BaseModel):
+    ref: str
+    ref2: Optional[str] = None
+    booking_no: Optional[str] = None
+    mode: Optional[str] = "Ocean"
+    carrier: Optional[str] = None
+    client: Optional[str] = None
+    client_email: Optional[str] = None
+    note: Optional[str] = None
+    pol: Optional[str] = None
+    pod: Optional[str] = None
+    etd: Optional[str] = None
+    eta: Optional[str] = None
+    status: Optional[str] = "Pending"
+    vessel: Optional[str] = None
+    quotation_number: Optional[str] = None
 
 class ShipmentOut(BaseModel):
     id: int
@@ -73,16 +70,13 @@ class ShipmentOut(BaseModel):
     shipsgo_id: Optional[int]
     last_tracked: Optional[str]
     created_at: Optional[str]
+    quotation_number: Optional[str] = None
     events: List[EventOut] = []
     comments: List[CommentOut] = []
     containers: List[ContainerOut] = []
     class Config: from_attributes = True
 
 class ShipmentUpdate(BaseModel):
-    notes: Optional[str] = None
-    consignee: Optional[str] = None
-    shipper: Optional[str] = None
-    quotation_number: Optional[str] = None
     ref2: Optional[str] = None
     booking_no: Optional[str] = None
     mode: Optional[str] = None
@@ -96,6 +90,7 @@ class ShipmentUpdate(BaseModel):
     eta: Optional[str] = None
     status: Optional[str] = None
     vessel: Optional[str] = None
+    quotation_number: Optional[str] = None
 
 class UserCreate(BaseModel):
     email: str
