@@ -919,11 +919,8 @@ let editId=null, currentDetailId=null, allShipments=[];
 
 /* ── Nav ── */
 function showPage(id,el){
-  if((id==='analytics'||id==='users')&&!isAdmin()){id='shipments';}
-  if(id==='users') setTimeout(loadUsers,150);
-  // Role guards
-  if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
-  if(id==='users'){ setTimeout(loadUsers, 150); setBottomNav('users'); }
+  if((id==='analytics'||id==='users')&&!isAdmin()) id='shipments';
+  if(id==='users'){ loadUsers(); setBottomNav('users'); }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1085,8 +1082,11 @@ function renderTable(ships){
 
 /* ── Dashboard ── */
 async function loadDashboard(){
+  // Parallel fetch: stats + shipments in one round-trip
   try{
-    const stats=await apiFetch('/api/stats');
+    const [stats,ships]=await Promise.all([apiFetch('/api/stats'), apiFetch('/api/shipments')]);
+    allShipments=ships;
+    document.getElementById('nav-count').textContent=stats.total||0;
     const bs=stats.by_status||{};
     const transit=(bs.Sailing||0)+(bs.Transit||0);
     const done=(bs.Delivered||0)+(bs.Arrived||0)+(bs.Discharged||0);
@@ -1098,11 +1098,6 @@ async function loadDashboard(){
       <div class="stat-card"><div class="stat-icon cyan"><i class="fa fa-clock"></i></div><div class="stat-value">${bs.Pending||0}</div><div class="stat-label">Pending</div></div>
       <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value">${(stats.by_mode||{}).Ocean||0}</div><div class="stat-label">Ocean</div></div>
     `;
-    document.getElementById('nav-count').textContent=stats.total||0;
-  }catch(e){ console.error(e); }
-  try{
-    const ships=await apiFetch('/api/shipments');
-    allShipments=ships;
     const recent=ships.slice(0,6);
     renderCards(recent,'recent-cards');
     // Desktop recent table
@@ -1211,10 +1206,27 @@ async function saveShipment(){
     if(editId) r=await apiFetch(`/api/shipments/${editId}`,{method:'PATCH',body:JSON.stringify(data)});
     else r=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
     if(r&&r.id){
+      // If editing, sync containers: delete all then re-create with new eq
+      if(editId){
+        const eqType = (document.getElementById('f-eq-type')?.value||'').trim();
+        const eqQty  = parseInt(document.getElementById('f-eq-qty')?.value||'0');
+        if(eqType && eqQty > 0){
+          // Delete existing containers
+          const existing = r.containers || [];
+          await Promise.all(existing.map(c=>
+            apiFetch(`/api/containers/${c.id}`,{method:'DELETE'}).catch(()=>{})
+          ));
+          // Create new ones
+          for(let i=0;i<eqQty;i++){
+            await apiFetch(`/api/shipments/${editId}/containers`,{
+              method:'POST', body:JSON.stringify({size_type:eqType,container_no:''})
+            }).catch(()=>{});
+          }
+        }
+      }
       toast(editId?'Updated ✅':'Added ✅','success');
       closeModal('modal-add');
       await Promise.all([loadDashboard(), loadShipments()]);
-      initTheme();
     } else toast('Unexpected response','error');
   }catch(e){ toast('❌ '+e.message,'error'); console.error(e); }
   btn.innerHTML='<i class="fa fa-floppy-disk"></i> Save Shipment'; btn.disabled=false;
@@ -1226,24 +1238,26 @@ async function editShipment(sid){
     const s=await apiFetch(`/api/shipments/${sid}`);
     editId=sid;
     document.getElementById('modal-add-title').textContent='Edit Shipment';
-    const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
-    set('f-ref',s.ref); set('f-ref2',s.ref2); set('f-booking',s.booking_no);
-    set('f-carrier',s.carrier); set('f-client',s.client);
-    set('f-client-email',s.client_email); set('f-pol',s.pol); set('f-pod',s.pod);
-    set('f-etd',s.etd?s.etd.split('T')[0]:''); set('f-eta',s.eta?s.eta.split('T')[0]:'');
-    set('f-note',s.note);
-  const eqt=document.getElementById('f-eq-type'); if(eqt) eqt.value='';
-  const eqq=document.getElementById('f-eq-qty'); if(eqq) eqq.value='';
-  const eqteu=document.getElementById('f-eq-teu'); if(eqteu) eqteu.value=''; set('f-quot',s.quotation_number);
-  // Populate equipment fields from existing containers
-  const conts = s.containers || [];
-  const eqTypeEl = document.getElementById('f-eq-type');
-  const eqQtyEl  = document.getElementById('f-eq-qty');
-  if(eqTypeEl) eqTypeEl.value = conts.length > 0 ? (conts[0].size_type || '') : '';
-  if(eqQtyEl)  eqQtyEl.value  = conts.length > 0 ? conts.length : '';
+    const setV=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
+    setV('f-ref',s.ref); setV('f-ref2',s.ref2); setV('f-booking',s.booking_no);
+    setV('f-carrier',s.carrier); setV('f-client',s.client);
+    setV('f-client-email',s.client_email); setV('f-pol',s.pol); setV('f-pod',s.pod);
+    setV('f-etd',s.etd?s.etd.split('T')[0]:''); setV('f-eta',s.eta?s.eta.split('T')[0]:'');
+    setV('f-note',s.note); setV('f-quot',s.quotation_number);
     const fm=document.getElementById('f-mode'); if(fm) fm.value=s.mode||'Ocean';
     const fs=document.getElementById('f-status'); if(fs) fs.value=s.status||'Pending';
+    // ── Equipment: read from containers ──
+    const conts = s.containers || [];
+    const eqTypeEl = document.getElementById('f-eq-type');
+    const eqQtyEl  = document.getElementById('f-eq-qty');
+    const eqTeuEl  = document.getElementById('f-eq-teu');
     openModal('modal-add');
+    // Set equipment AFTER modal is open so <select> is rendered
+    requestAnimationFrame(()=>{
+      if(eqTypeEl) eqTypeEl.value = conts.length > 0 ? (conts[0].size_type || '') : '';
+      if(eqQtyEl)  eqQtyEl.value  = conts.length > 0 ? String(conts.length) : '';
+      calcTEU();
+    });
   }catch(e){ toast(e.message,'error'); }
 }
 
