@@ -491,100 +491,111 @@ def track_now(sid: int, db: Session = Depends(get_db)):
     if not key:
         return {"error": "TERMINAL49_API_KEY not set in Railway"}
 
+    # Terminal49 requires Token auth (NOT Bearer)
     hdrs = {
         "Authorization": f"Token {key}",
-        "Content-Type": "application/vnd.api+json",
         "Accept": "application/json"
     }
+    hdrs_json = {**hdrs, "Content-Type": "application/vnd.api+json"}
 
     container = (s.ref2 or "").strip()
     import tracker as _t
     scac = _t.resolve_scac(container, s.carrier or "")
 
-    # ── Strategy: search shipments by container number directly ──────
-    r_search = req_lib.get(
-        f"https://api.terminal49.com/v2/shipments?include=containers"
-        f"&filter[container_number]={container}",
-        headers=hdrs, timeout=20
-    )
     shipment_uuid = None
     attrs = {}
     incl  = []
 
-    if r_search.status_code == 200:
+    # ── Strategy 1: list all tracking requests, find matching container ─
+    r_list = req_lib.get(
+        "https://api.terminal49.com/v2/tracking_requests?page[size]=50",
+        headers=hdrs, timeout=20
+    )
+    if r_list.status_code == 200:
         try:
-            sd = r_search.json()
-            items = sd.get("data") or []
-            if isinstance(items, list) and items:
-                shipment_uuid = items[0].get("id")
-                attrs = items[0].get("attributes") or {}
-                incl  = sd.get("included") or []
+            items = r_list.json().get("data") or []
+            for item in items:
+                a = item.get("attributes") or {}
+                if str(a.get("request_number","")).upper() == container.upper():
+                    shipment_uuid = ((item.get("relationships") or {})
+                                    .get("tracked_object",{})
+                                    .get("data") or {}).get("id")
+                    break
         except: pass
 
-    # ── Fallback: use tracking request UUID saved in note ────────────
+    # ── Strategy 2: use saved t49_id from note ──────────────────────
     if not shipment_uuid:
         note = s.note or ""
         m = _re.search(r"t49_id:([a-f0-9-]{36})", note)
-        t49_id = m.group(1) if m else None
-
-        # Also try POST to get/refresh tracking request
-        if not t49_id:
-            body = {"data": {"type": "tracking_request", "attributes": {
-                "request_type": "container",
-                "request_number": container,
-                "scac": scac
-            }}}
-            rp = req_lib.post("https://api.terminal49.com/v2/tracking_requests",
-                              headers=hdrs, json=body, timeout=20)
-            try: rresp = rp.json()
-            except: rresp = {}
-            if rp.status_code in (200,201):
-                t49_id = (rresp.get("data") or {}).get("id")
-            elif rp.status_code == 422:
-                for err in (rresp.get("errors") or []):
-                    t49_id = (err.get("meta") or {}).get("tracking_request_id")
-                    if t49_id: break
-
-        if t49_id:
+        if m:
+            t49_id = m.group(1)
             r2 = req_lib.get(
-                f"https://api.terminal49.com/v2/tracking_requests/{t49_id}"
-                f"?include=tracked_object.containers",
+                f"https://api.terminal49.com/v2/tracking_requests/{t49_id}",
                 headers=hdrs, timeout=20
             )
-            try:
-                tr = r2.json()
-                tracked = ((tr.get("data") or {}).get("relationships") or {}) \
-                            .get("tracked_object",{}).get("data") or {}
-                shipment_uuid = tracked.get("id")
-                incl = tr.get("included") or []
-                # Find shipment attrs in included
-                for item in incl:
-                    if item.get("type") == "shipment" and item.get("id") == shipment_uuid:
-                        attrs = item.get("attributes") or {}
-                        break
-            except: pass
+            if r2.status_code == 200:
+                try:
+                    tr = r2.json()
+                    tracked = ((tr.get("data") or {}).get("relationships") or {}) \
+                                .get("tracked_object",{}).get("data") or {}
+                    shipment_uuid = tracked.get("id")
+                except: pass
+
+    # ── Strategy 3: POST to get/create tracking request ─────────────
+    if not shipment_uuid:
+        body = {"data": {"type": "tracking_request", "attributes": {
+            "request_type": "container",
+            "request_number": container,
+            "scac": scac
+        }}}
+        rp = req_lib.post("https://api.terminal49.com/v2/tracking_requests",
+                          headers=hdrs_json, json=body, timeout=20)
+        try: rresp = rp.json()
+        except: rresp = {}
+        t49_id = None
+        if rp.status_code in (200,201):
+            t49_id = (rresp.get("data") or {}).get("id")
+            shipment_uuid = ((rresp.get("data") or {}).get("relationships") or {}) \
+                              .get("tracked_object",{}).get("data",{}).get("id")
+        elif rp.status_code == 422:
+            for err in (rresp.get("errors") or []):
+                t49_id = (err.get("meta") or {}).get("tracking_request_id")
+                if t49_id: break
+        if t49_id and not shipment_uuid:
+            r2b = req_lib.get(
+                f"https://api.terminal49.com/v2/tracking_requests/{t49_id}",
+                headers=hdrs, timeout=20
+            )
+            if r2b.status_code == 200:
+                try:
+                    tracked = ((r2b.json().get("data") or {}).get("relationships") or {}) \
+                                .get("tracked_object",{}).get("data") or {}
+                    shipment_uuid = tracked.get("id")
+                except: pass
 
     if not shipment_uuid:
         return {
-            "note": "Shipment UUID not found yet — T49 may still be processing",
-            "tip": "Your container IS on T49 dashboard. Try fetching all shipments.",
-            "debug_search_status": r_search.status_code,
-            "debug_search_body": r_search.text[:500] if r_search else ""
+            "error": "Could not resolve shipment UUID from Terminal49",
+            "strategy1_list_status": r_list.status_code,
+            "strategy1_items_found": len((r_list.json().get("data") or []) if r_list.status_code==200 else []),
+            "container": container,
+            "tip": "Check that TERMINAL49_API_KEY is correct in Railway"
         }
 
-    # ── Fetch full shipment if we don't have attrs yet ────────────────
-    if not attrs:
-        r3 = req_lib.get(
-            f"https://api.terminal49.com/v2/shipments/{shipment_uuid}?include=containers",
-            headers=hdrs, timeout=20
-        )
-        try:
-            sd2 = r3.json()
-            attrs = (sd2.get("data") or {}).get("attributes") or {}
-            incl  = sd2.get("included") or []
-        except: pass
+    # ── Fetch full shipment details ──────────────────────────────────
+    r3 = req_lib.get(
+        f"https://api.terminal49.com/v2/shipments/{shipment_uuid}?include=containers",
+        headers=hdrs, timeout=20
+    )
+    if r3.status_code != 200:
+        return {"error": f"GET shipment {r3.status_code}: {r3.text[:300]}",
+                "shipment_uuid": shipment_uuid}
+    try:
+        sd = r3.json()
+        attrs = (sd.get("data") or {}).get("attributes") or {}
+        incl  = sd.get("included") or []
+    except: return {"error": f"Bad JSON: {r3.text[:200]}"}
 
-    # Extract vessel
     vessel = ""
     for item in incl:
         if item.get("type") == "container":
@@ -596,8 +607,7 @@ def track_now(sid: int, db: Session = Depends(get_db)):
     import datetime as _dt
 
     new_status  = map_status(str(attrs.get("status") or ""))
-    new_eta     = parse_date(attrs.get("pod_eta_at") or attrs.get("destination_eta_at")
-                             or attrs.get("eta"))
+    new_eta     = parse_date(attrs.get("pod_eta_at") or attrs.get("destination_eta_at") or attrs.get("eta"))
     new_etd     = parse_date(attrs.get("pol_etd_at") or attrs.get("origin_etd_at"))
     new_pol     = attrs.get("pol") or attrs.get("port_of_lading_name") or ""
     new_pod     = attrs.get("pod") or attrs.get("port_of_discharge_name") or ""
@@ -616,7 +626,7 @@ def track_now(sid: int, db: Session = Depends(get_db)):
     return {
         "success": True,
         "shipment_uuid": shipment_uuid,
-        "status_saved": new_status,
+        "status": new_status,
         "eta": new_eta, "etd": new_etd,
         "vessel": vessel,
         "pol": new_pol, "pod": new_pod,
