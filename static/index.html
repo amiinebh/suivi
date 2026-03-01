@@ -516,6 +516,11 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="nav-item admin-only" onclick="showPage('users',this)">
       <i class="fa fa-users"></i> Team Members
     </div>
+    <div class="nav-section">Alerts</div>
+    <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts">
+      <i class="fa fa-bell"></i> Alerts
+      <span class="nav-badge" id="alerts-badge" style="display:none;background:#ef4444">0</span>
+    </div>
     <div class="nav-section">Tools</div>
     <div class="nav-item" onclick="exportXLSX()">
       <i class="fa fa-file-excel"></i> Export XLSX
@@ -766,8 +771,9 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-users"></i><span>Team</span>
     </button>
     
-    <button class="bnav-item" id="bnav-sync" onclick="trackAll()">
-      <i class="fa fa-rotate"></i><span>Sync</span>
+
+    <button class="bnav-item" id="bnav-alerts" onclick="showPage('alerts',null);setBottomNav('alerts')">
+      <i class="fa fa-bell"></i><span>Alerts</span>
     </button>
     <button class="bnav-item" id="bnav-export" onclick="openFilesSheet()">
       <i class="fa fa-file-arrow-down"></i><span>Files</span>
@@ -895,9 +901,7 @@ textarea.form-control{resize:none;min-height:72px}
         <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn btn-secondary btn-sm" id="detail-track-btn" onclick="trackOne()">
-          <i class="fa fa-rotate"></i> Track
-        </button>
+
         <button class="modal-close" onclick="closeModal('modal-detail')"><i class="fa fa-xmark"></i></button>
       </div>
     </div>
@@ -920,6 +924,7 @@ let editId=null, currentDetailId=null, allShipments=[];
 /* ── Nav ── */
 function showPage(id,el){
   if((id==='analytics'||id==='users')&&!isAdmin()) id='shipments';
+  if(id==='alerts') loadAlerts();
   if(id==='users'){ loadUsers(); setBottomNav('users'); }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
@@ -955,7 +960,7 @@ async function apiFetch(url,options={}){
 
 /* ── Toast ── */
 function toast(msg,type='info'){
-  const icons={success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info'};
+  const icons={success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info',warning:'fa-triangle-exclamation'};
   const t=document.createElement('div');
   t.className=`toast ${type}`;
   t.innerHTML=`<i class="fa ${icons[type]}"></i><span>${msg}</span>`;
@@ -1131,6 +1136,7 @@ async function loadShipments(){
     if(lbl) lbl.textContent=`${ships.length} shipment${ships.length!==1?'s':''}`;
     renderCards(ships,'ship-cards');
     renderTable(ships);
+    checkDeparturAlerts(ships);
   }catch(e){ toast(e.message,'error'); }
 }
 
@@ -2349,6 +2355,194 @@ function calcTEU(){
   const teu  = type && qty ? (TEU_MAP[type] || 0) * qty : 0;
   const teuEl = document.getElementById('f-eq-teu');
   if(teuEl) teuEl.value = teu > 0 ? teu : '';
+}
+
+/* ══════════════════════════════════════════════
+   ALERTS SYSTEM
+══════════════════════════════════════════════ */
+const DISMISSED_KEY = 'ft_dismissed_alerts';
+
+function getDismissed(){
+  try{ return JSON.parse(localStorage.getItem(DISMISSED_KEY)||'[]'); }
+  catch{ return []; }
+}
+function dismiss(key){
+  const d = getDismissed();
+  if(!d.includes(key)){ d.push(key); localStorage.setItem(DISMISSED_KEY, JSON.stringify(d)); }
+  loadAlerts();
+}
+
+function buildAlerts(ships){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in7 = new Date(today); in7.setDate(today.getDate()+7);
+  const dismissed = getDismissed();
+  const alerts = [];
+
+  ships.forEach(s => {
+    const activeStatuses = ['pending','booked','sailing','transit','in transit'];
+    const isActive = activeStatuses.includes((s.status||'').toLowerCase());
+
+    // ── ETD passed but shipment still Pending/Booked → needs retrack
+    if(s.etd && isActive && ['pending','booked'].includes((s.status||'').toLowerCase())){
+      const etd = new Date(s.etd); etd.setHours(0,0,0,0);
+      if(etd <= today){
+        alerts.push({
+          key: `etd-${s.id}-${s.etd}`,
+          type: 'warning',
+          icon: '🚨',
+          title: `${s.ref} — ETD reached, confirm departure`,
+          sub: `ETD was ${s.etd.substring(0,10)} · Status: ${s.status} · ${s.pol||'?'} → ${s.pod||'?'}`,
+          shipId: s.id, ref: s.ref
+        });
+      }
+    }
+
+    // ── ETA today or past → arriving/arrived, check shipment
+    if(s.eta && isActive){
+      const eta = new Date(s.eta); eta.setHours(0,0,0,0);
+      if(eta <= today){
+        alerts.push({
+          key: `eta-${s.id}-${s.eta}`,
+          type: 'danger',
+          icon: '🛬',
+          title: `${s.ref} — ETA reached, check arrival`,
+          sub: `ETA was ${s.eta.substring(0,10)} · ${s.pol||'?'} → ${s.pod||'?'} · Carrier: ${s.carrier||'?'}`,
+          shipId: s.id, ref: s.ref
+        });
+      }
+    }
+
+    // ── Arriving in next 7 days
+    if(s.eta && isActive){
+      const eta = new Date(s.eta); eta.setHours(0,0,0,0);
+      const daysLeft = Math.round((eta - today) / 86400000);
+      if(daysLeft > 0 && daysLeft <= 7){
+        alerts.push({
+          key: `eta-soon-${s.id}-${s.eta}`,
+          type: 'info',
+          icon: '📅',
+          title: `${s.ref} — Arriving in ${daysLeft} day${daysLeft>1?'s':''}`,
+          sub: `ETA ${s.eta.substring(0,10)} · ${s.pol||'?'} → ${s.pod||'?'} · ${s.carrier||''}`,
+          shipId: s.id, ref: s.ref
+        });
+      }
+    }
+  });
+
+  return alerts.filter(a => !dismissed.includes(a.key));
+}
+
+function alertColor(type){
+  return {warning:'#f59e0b', danger:'#ef4444', info:'#4f8ef7'}[type]||'#4f8ef7';
+}
+function alertBg(type){
+  return {warning:'rgba(245,158,11,.1)', danger:'rgba(239,68,68,.1)', info:'rgba(79,142,247,.08)'}[type]||'rgba(79,142,247,.08)';
+}
+
+async function loadAlerts(){
+  const el = document.getElementById('alerts-container');
+  if(!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:32px"><div class="spinner"></div></div>';
+  try{
+    const ships = await apiFetch('/api/shipments?search=&status=&mode=');
+    const alerts = buildAlerts(ships);
+
+    // Update badge
+    const badge = document.getElementById('alerts-badge');
+    if(badge){
+      badge.textContent = alerts.length;
+      badge.style.display = alerts.length > 0 ? 'inline-flex' : 'none';
+    }
+
+    if(alerts.length === 0){
+      el.innerHTML = `<div style="text-align:center;padding:64px 20px">
+        <div style="font-size:48px;margin-bottom:16px">✅</div>
+        <div style="font-size:17px;font-weight:700;margin-bottom:8px">All clear!</div>
+        <div style="font-size:13px;color:var(--text2)">No shipments require attention right now.</div>
+      </div>`;
+      return;
+    }
+
+    // Group by type
+    const groups = {danger:[], warning:[], info:[]};
+    alerts.forEach(a => (groups[a.type]||groups.info).push(a));
+    const groupLabels = {danger:'🛬 Arriving / Overdue ETA', warning:'🚨 ETD Passed — Retrack Required', info:'📅 Arriving This Week'};
+
+    let out = '';
+    ['danger','warning','info'].forEach(type => {
+      if(!groups[type].length) return;
+      out += `<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;
+        letter-spacing:.8px;margin:20px 0 10px">${groupLabels[type]} (${groups[type].length})</div>`;
+      groups[type].forEach(a => {
+        out += `<div style="background:${alertBg(a.type)};border:1px solid ${alertColor(a.type)}40;
+          border-left:4px solid ${alertColor(a.type)};border-radius:12px;padding:14px 16px;
+          margin-bottom:10px;display:flex;align-items:flex-start;gap:12px">
+          <div style="font-size:22px;flex-shrink:0;margin-top:2px">${a.icon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">${a.title}</div>
+            <div style="font-size:11px;color:var(--text2)">${a.sub}</div>
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+              <button onclick="openDetail(${a.shipId})" style="font-size:11px;font-weight:600;
+                padding:4px 12px;border-radius:6px;border:1px solid ${alertColor(a.type)};
+                color:${alertColor(a.type)};background:transparent;cursor:pointer">
+                View Shipment
+              </button>
+              <button onclick="dismiss('${a.key}')" style="font-size:11px;font-weight:600;
+                padding:4px 12px;border-radius:6px;border:1px solid var(--border);
+                color:var(--text2);background:transparent;cursor:pointer">
+                ✓ Dismiss
+              </button>
+            </div>
+          </div>
+        </div>`;
+      });
+    });
+
+    // Reset dismissed button
+    const dismissed = getDismissed();
+    if(dismissed.length > 0){
+      out += `<div style="text-align:center;margin-top:20px">
+        <button onclick="localStorage.removeItem('${DISMISSED_KEY}');loadAlerts()" 
+          style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline">
+          Reset ${dismissed.length} dismissed alert${dismissed.length>1?'s':''}
+        </button>
+      </div>`;
+    }
+
+    el.innerHTML = out;
+  }catch(e){ el.innerHTML = `<div style="color:var(--red);padding:20px">${e.message}</div>`; }
+}
+
+function checkDeparturAlerts(ships){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dismissed = getDismissed();
+
+  // Only show popup toasts for urgent ones (ETA today or past, not dismissed)
+  ships.forEach(s => {
+    if(!s.eta) return;
+    const isActive = ['pending','booked','sailing','transit','in transit'].includes((s.status||'').toLowerCase());
+    if(!isActive) return;
+    const eta = new Date(s.eta); eta.setHours(0,0,0,0);
+    const etaKey = `eta-${s.id}-${s.eta}`;
+    if(eta <= today && !dismissed.includes(etaKey)){
+      toast(`🛬 ${s.ref} — ETA reached! Check arrival status.`, 'warning');
+    }
+    if(s.etd){
+      const etd = new Date(s.etd); etd.setHours(0,0,0,0);
+      const etdKey = `etd-${s.id}-${s.etd}`;
+      if(etd <= today && ['pending','booked'].includes((s.status||'').toLowerCase()) && !dismissed.includes(etdKey)){
+        toast(`🚨 ${s.ref} — ETD passed, retrack to confirm departure!`, 'warning');
+      }
+    }
+  });
+
+  // Update badge count
+  const alerts = buildAlerts(ships);
+  const badge = document.getElementById('alerts-badge');
+  if(badge){
+    badge.textContent = alerts.length;
+    badge.style.display = alerts.length > 0 ? 'inline-flex' : 'none';
+  }
 }
 
 </script>
