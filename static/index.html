@@ -1212,8 +1212,9 @@ async function saveShipment(){
     else r=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
     if(r&&r.id){
       toast(editId?'Updated ✅':'Added ✅','success');
-      closeModal('modal-add'); initTheme();
-loadDashboard(); loadShipments();
+      closeModal('modal-add');
+      await Promise.all([loadDashboard(), loadShipments()]);
+      initTheme();
     } else toast('Unexpected response','error');
   }catch(e){ toast('❌ '+e.message,'error'); console.error(e); }
   btn.innerHTML='<i class="fa fa-floppy-disk"></i> Save Shipment'; btn.disabled=false;
@@ -1234,6 +1235,12 @@ async function editShipment(sid){
   const eqt=document.getElementById('f-eq-type'); if(eqt) eqt.value='';
   const eqq=document.getElementById('f-eq-qty'); if(eqq) eqq.value='';
   const eqteu=document.getElementById('f-eq-teu'); if(eqteu) eqteu.value=''; set('f-quot',s.quotation_number);
+  // Populate equipment fields from existing containers
+  const conts = s.containers || [];
+  const eqTypeEl = document.getElementById('f-eq-type');
+  const eqQtyEl  = document.getElementById('f-eq-qty');
+  if(eqTypeEl) eqTypeEl.value = conts.length > 0 ? (conts[0].size_type || '') : '';
+  if(eqQtyEl)  eqQtyEl.value  = conts.length > 0 ? conts.length : '';
     const fm=document.getElementById('f-mode'); if(fm) fm.value=s.mode||'Ocean';
     const fs=document.getElementById('f-status'); if(fs) fs.value=s.status||'Pending';
     openModal('modal-add');
