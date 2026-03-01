@@ -1103,59 +1103,12 @@ async function loadShipments(){
 }
 
 /* ── Detail ── */
-async function openDetail(sid){
-  currentDetailId=sid;
-  openModal('modal-detail');
-  document.getElementById('detail-body').innerHTML=`<div style="text-align:center;padding:40px"><div class="spinner" style="width:28px;height:28px;border-width:3px"></div></div>`;
-  try{
-    const s=await apiFetch(`/api/shipments/${sid}`);
-    document.getElementById('detail-title').textContent=s.ref;
-    document.getElementById('detail-sub').textContent=`${s.client||''}${s.carrier?' · '+s.carrier:''}`;
-    const trackLink=`${location.origin}/track/${s.ref}`;
-    document.getElementById('detail-body').innerHTML=`
-      <div class="detail-grid">
-        <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${statusBadge(s.status)}</div></div>
-        <div class="detail-item"><div class="detail-label">Mode</div><div class="detail-value">${modeBadge(s.mode)}</div></div>
-        <div class="detail-item"><div class="detail-label">Container / AWB</div><div class="detail-value">${s.ref2||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Booking No</div><div class="detail-value">${s.booking_no||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Carrier</div><div class="detail-value">${s.carrier||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Vessel</div><div class="detail-value">${s.vessel||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">POL → POD</div><div class="detail-value">${s.pol||'—'} → ${s.pod||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">ETD / ETA</div><div class="detail-value">${fmt(s.etd)} → ${fmt(s.eta)}</div></div>
-        <div class="detail-item" style="grid-column:1/-1">
-          <div class="detail-label">Client Tracking Link</div>
-          <div class="detail-value">
-            <span class="copy-link" onclick="copyLink('${trackLink}')">
-              <i class="fa fa-link"></i> Copy link
-            </span>
-          </div>
-        </div>
-        ${s.note?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Note</div><div class="detail-value" style="color:var(--text2)">${s.note}</div></div>`:''}
-      </div>
-      ${s.events&&s.events.length?`
-        <div style="font-size:13px;font-weight:700;margin-bottom:10px">
-          <i class="fa fa-timeline" style="color:var(--accent);margin-right:6px"></i>Events
-        </div>
-        <div class="events-list">
-          ${s.events.slice(0,6).map(e=>`
-            <div class="event-item">
-              <div class="event-dot"></div>
-              <div><div style="font-size:13px;font-weight:500">${e.description||'—'}</div>
-              <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
-            </div>`).join('')}
-        </div>`:`
-        <div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">
-          <i class="fa fa-satellite-dish" style="font-size:22px;margin-bottom:8px;display:block;opacity:.3"></i>
-          No events yet — tap Track
-        </div>`}
-    `;
-  }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
-}
+
 
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
 function editFromDetail(){ closeModal('modal-detail'); editShipment(currentDetailId); }
 async function deleteFromDetail(){ if(await confirmDelete()) deleteShipment(currentDetailId); }
-function confirmDelete(){ return Promise.resolve(window.confirm('Delete this shipment?')); }
+function confirmDelete(){ return _confirm('Delete this shipment?'); }
 
 /* ── Save ── */
 async function saveShipment(){
@@ -1202,7 +1155,7 @@ async function editShipment(sid){
 
 /* ── Delete ── */
 async function deleteShipment(sid){
-  if(!confirm('Delete this shipment?')) return;
+  if(!await _confirm('Delete this shipment?')) return;
   try{
     await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
     toast('Deleted','success'); closeModal('modal-detail');
@@ -1400,208 +1353,13 @@ function initTheme(){
   if(bnav) bnav.querySelector('span').textContent = saved === 'dark' ? 'Light' : 'Dark';
 }
 
-
-/* ── Alerts ── */
-async function loadAlerts(){
-  const c=document.getElementById('alerts-list'),badge=document.getElementById('alerts-badge');
-  if(!c)return;
-  try{
-    const ships=await apiFetch('/api/shipments');
-    const today=new Date();today.setHours(0,0,0,0);
-    const out=[];
-    ships.forEach(s=>{
-      if(['Delivered','Discharged'].includes(s.status))return;
-      if(s.eta){const eta=new Date(s.eta);eta.setHours(0,0,0,0);const d=Math.round((eta-today)/86400000);
-        if(d<0)out.push({id:s.id,ref:s.ref,type:'danger',label:'ETA Passed',msg:'ETA was '+s.eta.slice(0,10)});
-        else if(d<=3)out.push({id:s.id,ref:s.ref,type:'warning',label:'Arriving Soon',msg:'In '+d+' day'+(d===1?'':'s')+' → '+(s.pod||'—')});}
-      if(s.status==='Delayed')out.push({id:s.id,ref:s.ref,type:'danger',label:'Delayed',msg:(s.pol||'—')+' → '+(s.pod||'—')});
-    });
-    if(badge){badge.textContent=out.length;badge.style.display=out.length?'':'none';}
-    if(!out.length){c.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700">All clear!</div><div style="font-size:13px;margin-top:6px">No shipments need attention.</div></div>';return;}
-    c.innerHTML=out.map(a=>{const col=a.type==='danger'?'var(--red)':'var(--yellow)';return `<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${col};border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer" onclick="openDetail(${a.id})"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:14px;font-weight:700">${a.ref}</span><span style="font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;background:${col}22;color:${col}">${a.label}</span></div><div style="font-size:12px;color:var(--text2)">${a.msg}</div></div>`;}).join('');
-  }catch(e){c.innerHTML='<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">'+e.message+'</div>';}
-}
-
 /* ── Init ── */
 initTheme();
 loadDashboard();
 }
 </script>
 
-<script>
-// ══════════════════════════════════════════════════
-// AUTH
-// ══════════════════════════════════════════════════
-const TOKEN_KEY = "ft_token";
-const USER_KEY  = "ft_user";
 
-function getToken(){ return localStorage.getItem(TOKEN_KEY); }
-function getUser(){
-  try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
-}
-function isAdmin(){ return (getUser()||{}).role === "admin"; }
-
-function authFetch(url, opts={}){
-  opts.headers = opts.headers || {};
-  const t = getToken();
-  if(t) opts.headers["Authorization"] = "Bearer " + t;
-  return fetch(url, opts).then(r => {
-    if(r.status === 401){
-      doLogout();
-      const ls = document.getElementById("login-screen");
-      if(ls){ ls.style.display="flex"; }
-      // Show message
-      const err = document.getElementById("login-error");
-      if(err){ err.textContent="Your account has been deactivated. Contact admin."; err.style.display="block"; }
-    }
-    return r;
-  });
-}
-
-async function doLogin(){
-  const email = document.getElementById("login-email").value.trim();
-  const pw    = document.getElementById("login-password").value;
-  const err   = document.getElementById("login-error");
-  const btn   = document.getElementById("login-btn");
-  err.style.display = "none";
-  if(!email || !pw){
-    err.textContent = "Please enter email and password";
-    err.style.display = "block"; return;
-  }
-  btn.textContent = "Signing in…"; btn.disabled = true;
-  try {
-    const r = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({email, password: pw})
-    });
-    const d = await r.json();
-    if(!r.ok){
-      err.textContent = d.detail || "Invalid email or password";
-      err.style.display = "block"; return;
-    }
-    localStorage.setItem(TOKEN_KEY, d.access_token);
-    localStorage.setItem(USER_KEY, JSON.stringify({role:d.role, name:d.name}));
-    showApp();
-  } catch(e){
-    err.textContent = "Network error — please try again";
-    err.style.display = "block";
-  } finally {
-    btn.textContent = "Sign In →"; btn.disabled = false;
-  }
-}
-
-document.addEventListener("keydown", e => {
-  const ls = document.getElementById("login-screen");
-  if(e.key === "Enter" && ls && ls.style.display !== "none") doLogin();
-});
-
-function showApp(){
-  const ls = document.getElementById("login-screen");
-  if(ls) ls.style.display = "none";
-  const user = getUser();
-  document.querySelectorAll(".admin-only").forEach(el => {
-    el.style.display = isAdmin() ? "" : "none";
-  });
-  const n = document.getElementById("sidebar-user-name");
-  if(n) n.textContent = user?.name || "User";
-  const r = document.getElementById("sidebar-user-role");
-  if(r) r.textContent = isAdmin() ? "Admin" : "CS Agent";
-  const a = document.getElementById("sidebar-avatar");
-  if(a) a.textContent = (user?.name||"U")[0].toUpperCase();
-}
-
-function doLogout(){
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
-  const ls = document.getElementById("login-screen");
-  if(ls){ ls.style.display = "flex"; }
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  if(getToken()){ showApp(); }
-  else {
-    const ls = document.getElementById("login-screen");
-    if(ls) ls.style.display = "flex";
-  }
-});
-
-// ══════════════════════════════════════════════════
-// USER MANAGEMENT
-// ══════════════════════════════════════════════════
-async function loadUsers(){
-  const r = await authFetch("/api/users");
-  if(!r.ok){ document.getElementById("users-list").innerHTML="<div style='color:#ef4444;padding:20px;text-align:center'>Access denied</div>"; return; }
-  const users = await r.json();
-  if(!users.length){
-    document.getElementById("users-list").innerHTML="<div style='color:var(--text2);text-align:center;padding:40px'><div style='font-size:28px;margin-bottom:8px'>👥</div>No team members yet</div>";
-    return;
-  }
-  document.getElementById("users-list").innerHTML = users.map(u => `
-    <div class="shipment-card" style="display:flex;align-items:center;gap:14px;margin-bottom:10px">
-      <div style="width:42px;height:42px;border-radius:50%;flex-shrink:0;
-        background:linear-gradient(135deg,${u.role==='admin'?'#6c63ff,#4f8ef7':'#4f8ef7,#22c55e'});
-        display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff">
-        ${u.name[0].toUpperCase()}
-      </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;color:var(--text1)">${u.name}</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px">${u.email}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-        <span class="badge ${u.role==='admin'?'badge-blue':'badge-green'}" style="font-size:10px">
-          ${u.role==='admin'?'👑 Admin':'🎧 CS'}
-        </span>
-        <span class="badge ${u.is_active?'badge-green':'badge-red'}" style="font-size:10px">
-          ${u.is_active?'Active':'Inactive'}
-        </span>
-        ${u.role!=='admin'?`
-          <button onclick="toggleUser(${u.id})" class="icon-btn" style="font-size:11px;padding:4px 10px">
-            ${u.is_active?'🔒':'🔓'}
-          </button>
-          <button onclick="deleteUser(${u.id})" class="icon-btn danger" style="font-size:11px;padding:4px 10px">
-            🗑
-          </button>`:''}
-      </div>
-    </div>`).join("");
-}
-
-function openNewUserModal(){ openModal('modal-add-user'); } function _openNewUserModal_orig(){
-  ["nu-name","nu-email","nu-pw"].forEach(id => document.getElementById(id).value = "");
-  document.getElementById("nu-role").value = "cs";
-  document.getElementById("nu-error").style.display = "none";
-  document.getElementById("modal-new-user").style.display = "flex";
-}
-
-async function createUser(){
-  const name  = document.getElementById("nu-name").value.trim();
-  const email = document.getElementById("nu-email").value.trim();
-  const pw    = document.getElementById("nu-pw").value;
-  const role  = document.getElementById("nu-role").value;
-  const err   = document.getElementById("nu-error");
-  if(!name||!email||!pw){ err.textContent="All fields are required"; err.style.display="block"; return; }
-  if(pw.length<6){ err.textContent="Password must be at least 6 characters"; err.style.display="block"; return; }
-  const r = await authFetch("/api/users",{
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({name, email, password:pw, role})
-  });
-  const d = await r.json();
-  if(!r.ok){ err.textContent = d.detail||"Error creating user"; err.style.display="block"; return; }
-  closeModal("modal-new-user");
-  loadUsers();
-}
-
-async function toggleUser(id){
-  const r = await authFetch(`/api/users/${id}/toggle`,{method:"PATCH"});
-  if(r.ok) loadUsers();
-}
-
-async function deleteUser(id){
-  if(!confirm("Delete this user permanently?")) return;
-  const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
-  if(r.ok) loadUsers();
-}
-</script>
 
 
 <!-- ═══════ ADD USER MODAL ═══════ -->
@@ -1922,7 +1680,7 @@ async function toggleUser(id){
 }
 
 async function deleteUser(id){
-  if(!confirm("Delete this user permanently?")) return;
+  if(!await _confirm("Delete this user permanently?")) return;
   try{ await apiFetch(`/api/users/${id}`,{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
   catch(e){ showToast("Error: "+e.message,"error"); }
 }
@@ -2116,17 +1874,93 @@ function openFilesSheet(){
 </script>
 
 
-    <!-- ALERTS PAGE -->
-    <div class="page" id="page-alerts">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div>
-          <div style="font-size:16px;font-weight:700">🔔 Alerts</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments needing attention</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="loadAlerts()"><i class="fa fa-rotate"></i> Refresh</button>
+  <!-- ── Alerts Page ── -->
+  <div class="page" id="page-alerts">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:16px;font-weight:700">🔔 Alerts</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments needing attention</div>
       </div>
-      <div id="alerts-list"><div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:32px;margin-bottom:8px">🔔</div>Loading...</div></div>
+      <button class="btn btn-ghost btn-sm" onclick="loadAlerts()"><i class="fa fa-rotate"></i> Refresh</button>
     </div>
+    <div id="alerts-list"><div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:32px;margin-bottom:8px">🔔</div>Loading...</div></div>
+  </div>
+
+  <!-- ── Confirm Modal ── -->
+  <div class="overlay" id="modal-confirm">
+    <div class="modal" style="max-width:340px">
+      <div class="modal-handle"></div>
+      <div class="modal-head" style="border-bottom:none">
+        <div class="modal-title" id="confirm-msg">Confirm</div>
+        <button class="modal-close" onclick="_confirmReject()"><i class="fa fa-xmark"></i></button>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" style="flex:1" onclick="_confirmReject()">Cancel</button>
+        <button class="btn btn-danger" style="flex:2" id="confirm-ok-btn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ── Custom Confirm ── */
+let _confirmRes = null;
+function _confirm(msg) {
+  return new Promise(resolve => {
+    _confirmRes = resolve;
+    document.getElementById('confirm-msg').textContent = msg;
+    document.getElementById('confirm-ok-btn').onclick = () => { closeModal('modal-confirm'); _confirmRes = null; resolve(true); };
+    openModal('modal-confirm');
+  });
+}
+function _confirmReject() {
+  closeModal('modal-confirm');
+  if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
+}
+
+/* ── Alerts ── */
+async function loadAlerts() {
+  const c = document.getElementById('alerts-list');
+  const badge = document.getElementById('alerts-badge');
+  if (!c) return;
+  c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px">⏳</div></div>';
+  try {
+    const ships = await apiFetch('/api/shipments');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const out = [];
+    ships.forEach(s => {
+      if (['Delivered','Discharged'].includes(s.status)) return;
+      if (s.eta) {
+        const eta = new Date(s.eta); eta.setHours(0,0,0,0);
+        const d = Math.round((eta - today) / 86400000);
+        if (d < 0) out.push({id:s.id, ref:s.ref, type:'danger', label:'ETA Passed', msg:'ETA was ' + s.eta.slice(0,10)});
+        else if (d <= 3) out.push({id:s.id, ref:s.ref, type:'warning', label:'Arriving Soon', msg:'In ' + d + ' day' + (d===1?'':'s') + ' → ' + (s.pod||'—')});
+      }
+      if (s.status === 'Delayed') out.push({id:s.id, ref:s.ref, type:'danger', label:'Delayed', msg:(s.pol||'—') + ' → ' + (s.pod||'—')});
+      if (s.etd && s.status === 'Pending') {
+        const etd = new Date(s.etd); etd.setHours(0,0,0,0);
+        if (etd < today) out.push({id:s.id, ref:s.ref, type:'warning', label:'ETD Passed', msg:'ETD was ' + s.etd.slice(0,10)});
+      }
+    });
+    if (badge) { badge.textContent = out.length; badge.style.display = out.length ? '' : 'none'; }
+    if (!out.length) {
+      c.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700">All clear!</div><div style="font-size:13px;margin-top:6px">No shipments need attention.</div></div>';
+      return;
+    }
+    c.innerHTML = out.map(a => {
+      const col = a.type === 'danger' ? 'var(--red)' : 'var(--yellow)';
+      return `<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${col};border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer" onclick="openDetail(${a.id})">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:14px;font-weight:700">${a.ref}</span>
+          <span style="font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;background:${col}22;color:${col}">${a.label}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2)">${a.msg}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">' + e.message + '</div>';
+  }
+}
+</script>
 
 </body>
 </html>
