@@ -81,13 +81,3 @@ class AlertLog(Base):
     sent_date = Column(String, nullable=False)    # ISO date "2026-03-01"
     created_at = Column(String, default=lambda: datetime.utcnow().isoformat())
 
-class EmailLog(Base):
-    """Tracks every email sent to a client for a shipment."""
-    __tablename__ = "email_logs"
-    id          = Column(Integer, primary_key=True, index=True)
-    shipment_id = Column(Integer, nullable=False, index=True)
-    sent_to     = Column(String, nullable=False)
-    sent_by     = Column(String, nullable=True)
-    subject     = Column(String, nullable=True)
-    sent_at     = Column(String, default=lambda: datetime.utcnow().isoformat())
-

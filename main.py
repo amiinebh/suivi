@@ -112,15 +112,6 @@ async def update_shipment(sid: int, request: Request, db: Session = Depends(get_
     if not s: raise HTTPException(404, "Not found")
     return s
 
-
-@app.get("/api/shipments/{sid}/email-log")
-def get_email_log(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
-    logs = db.query(models.EmailLog).filter(
-        models.EmailLog.shipment_id == sid
-    ).order_by(models.EmailLog.id.desc()).all()
-    return [{"id": l.id, "sent_to": l.sent_to, "sent_by": l.sent_by,
-             "subject": l.subject, "sent_at": l.sent_at} for l in logs]
-
 @app.delete("/api/shipments/{sid}")
 def delete_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     crud.delete_shipment(db, sid); return {"ok": True}

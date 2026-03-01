@@ -81,7 +81,7 @@ def _shipment_body(s, extra_rows="") -> str:
     <div style="font-size:11px;color:#94a3b8;margin-top:8px">{track_url}</div>
     """
 
-def _send(to: list, subject: str, html: str, shipment_id: int = None, sent_by: str = "System"):
+def _send(to: list, subject: str, html: str):
     api_key = os.getenv("RESEND_API_KEY", "")
     if not api_key or not to:
         print(f"[email] skipped — no API key or recipients. subject={subject}")
@@ -91,16 +91,6 @@ def _send(to: list, subject: str, html: str, shipment_id: int = None, sent_by: s
         resend.api_key = api_key
         resend.Emails.send({"from": FROM_EMAIL, "to": to, "subject": subject, "html": html})
         print(f"[email] sent: {subject} → {to}")
-        if shipment_id:
-            try:
-                from database import SessionLocal
-                import models as _m
-                _db = SessionLocal()
-                for addr in to:
-                    _db.add(_m.EmailLog(shipment_id=shipment_id, sent_to=addr, sent_by=sent_by, subject=subject))
-                _db.commit(); _db.close()
-            except Exception as _le:
-                print(f"[email] log error: {_le}")
     except Exception as e:
         print(f"[email] error: {e}")
 
@@ -184,7 +174,7 @@ def send_stuffing_date_reached(s):
     )
     _send(TEAM_EMAILS, subject, html)
 
-def send_custom_client_email(s, subject: str, body_text: str, sent_by: str = "Manual"):
+def send_custom_client_email(s, subject: str, body_text: str):
     """Send a manually composed email to the shipment client."""
     if not s.client_email: return
     track_url = f"{APP_URL}/track/{s.ref}"
@@ -199,7 +189,7 @@ def send_custom_client_email(s, subject: str, body_text: str, sent_by: str = "Ma
         </a>
         <div style="font-size:11px;color:#94a3b8;margin-top:8px">{track_url}</div>"""
     )
-    _send([s.client_email], subject, html, shipment_id=s.id, sent_by=sent_by)
+    _send([s.client_email], subject, html)
 
 
 STATUS_ICONS = {
@@ -235,5 +225,5 @@ def send_status_change_email(s, old_status: str, new_status: str):
         f"{s.ref} — Status updated to {new_status}",
         color, icon, body
     )
-    _send([s.client_email], f"{icon} [{s.ref}] Status update: {new_status}", html, shipment_id=s.id, sent_by="System")
+    _send([s.client_email], f"{icon} [{s.ref}] Status update: {new_status}", html)
 
