@@ -87,6 +87,7 @@ class EmailLog(Base):
     id          = Column(Integer, primary_key=True, index=True)
     shipment_id = Column(Integer, nullable=False, index=True)
     sent_to     = Column(String, nullable=False)
-    sent_by     = Column(String, nullable=True)   # username or "System"
+    sent_by     = Column(String, nullable=True)
     subject     = Column(String, nullable=True)
     sent_at     = Column(String, default=lambda: datetime.utcnow().isoformat())
+

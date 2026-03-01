@@ -97,8 +97,7 @@ def _send(to: list, subject: str, html: str, shipment_id: int = None, sent_by: s
                 import models as _m
                 _db = SessionLocal()
                 for addr in to:
-                    _db.add(_m.EmailLog(shipment_id=shipment_id, sent_to=addr,
-                                        sent_by=sent_by, subject=subject))
+                    _db.add(_m.EmailLog(shipment_id=shipment_id, sent_to=addr, sent_by=sent_by, subject=subject))
                 _db.commit(); _db.close()
             except Exception as _le:
                 print(f"[email] log error: {_le}")
@@ -142,7 +141,7 @@ def send_eta_reached_client(s):
         f"Your shipment {s.ref} has arrived at {s.pod or 'destination'}",
         COLORS["success"], "🛬", client_body
     )
-    _send([s.client_email], f"Your shipment {s.ref} has arrived", html, shipment_id=s.id, sent_by="System")
+    _send([s.client_email], f"Your shipment {s.ref} has arrived", html)
 
 def send_arriving_soon_team(s, days: int):
     subject = f"📅 [{s.ref}] Arriving in {days} day{'s' if days>1 else ''} at {s.pod or 'destination'}"
@@ -170,7 +169,7 @@ def send_arriving_soon_client(s, days: int):
         f"Your shipment {s.ref} arrives in {days} day{'s' if days>1 else ''}",
         COLORS["info"], "📅", client_body
     )
-    _send([s.client_email], f"Your shipment {s.ref} arrives in {days} day{'s' if days>1 else ''}", html, shipment_id=s.id, sent_by="System")
+    _send([s.client_email], f"Your shipment {s.ref} arrives in {days} day{'s' if days>1 else ''}", html)
 
 def send_stuffing_date_reached(s):
     extra = '''<tr>

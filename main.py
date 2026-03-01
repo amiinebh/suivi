@@ -115,7 +115,6 @@ async def update_shipment(sid: int, request: Request, db: Session = Depends(get_
 
 @app.get("/api/shipments/{sid}/email-log")
 def get_email_log(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
-    """Return all emails sent for this shipment, newest first."""
     logs = db.query(models.EmailLog).filter(
         models.EmailLog.shipment_id == sid
     ).order_by(models.EmailLog.id.desc()).all()
