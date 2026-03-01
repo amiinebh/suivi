@@ -807,7 +807,8 @@ textarea.form-control{resize:none;min-height:72px}
         </div>
         <div class="form-group full">
           <label>Client Email</label>
-          <input id="f-client-email" class="form-control" type="email" placeholder="client@example.com"/>
+          <input id="f-client-email" class="form-control" type="email" placeholder="client@example.com" oninput="validateEmailField(this)"/>
+          <div id="f-client-email-msg" style="font-size:11px;margin-top:4px;display:none"></div>
         </div>
         <div class="form-group">
           <label>POL</label>
@@ -867,9 +868,6 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="modal-foot" id="detail-foot">
       <button class="btn btn-secondary" style="flex:1" onclick="editFromDetail()">
         <i class="fa fa-pen"></i> Edit
-      </button>
-      <button class="btn btn-primary" style="flex:1" onclick="openEmailPreview()" id="btn-send-email">
-        <i class="fa fa-envelope"></i> Email
       </button>
       <button class="btn btn-danger" style="flex:1" onclick="deleteFromDetail()">
         <i class="fa fa-trash"></i> Delete
@@ -1145,7 +1143,15 @@ async function openDetail(sid){
           <i class="fa fa-satellite-dish" style="font-size:22px;margin-bottom:8px;display:block;opacity:.3"></i>
           No events yet — tap Track
         </div>`}
+      <div id="email-log-section" style="margin-top:20px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+          <span><i class="fa fa-envelope" style="color:var(--accent);margin-right:6px"></i>Email Log</span>
+          <span id="email-log-count" style="font-size:11px;color:var(--text2)"></span>
+        </div>
+        <div id="email-log-list"><div style="text-align:center;padding:12px;color:var(--text2);font-size:12px;opacity:.6"><span class="spinner" style="width:14px;height:14px;border-width:2px;margin-right:6px"></span>Loading...</div></div>
+      </div>
     `;
+    loadEmailLog(sid);
   }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
 }
 
@@ -1158,6 +1164,19 @@ function confirmDelete(){ return Promise.resolve(confirm('Delete this shipment?'
 async function saveShipment(){
   const ref=(document.getElementById('f-ref')?.value||'').trim();
   if(!ref){ toast('Reference is required','error'); return; }
+  const emailEl=document.getElementById('f-client-email');
+  const emailVal=(emailEl?.value||'').trim();
+  if(emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){
+    emailEl.style.border='2px solid var(--red)';
+    emailEl.focus();
+    toast('Invalid client email address','error');
+    return;
+  }
+  if(emailEl) emailEl.style.border='';
+  if(!emailVal){
+    const confirmed=confirm('No client email entered. Email alerts will not be sent to the client.\n\nContinue without email?');
+    if(!confirmed) return;
+  }
   const btn=document.getElementById('btn-save');
   btn.innerHTML='<span class="spinner"></span> Saving…'; btn.disabled=true;
   const g=id=>{ const el=document.getElementById(id); return el?el.value.trim()||null:null; };
@@ -2087,108 +2106,52 @@ function openFilesSheet(){
   if(importBtn) importBtn.style.display = isAdmin() ? "flex" : "none";
   openModal("sheet-files");
 }
-</script>
-
-
-<!-- ═══ EMAIL PREVIEW MODAL ═══ -->
-<div class="overlay" id="modal-email-preview" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center">
-  <div class="modal" style="max-width:520px;width:94%;background:var(--card);border-radius:20px;padding:0;overflow:hidden">
-    <div style="background:var(--card);padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="fa fa-envelope" style="color:var(--accent);margin-right:8px"></i>Send Email to Client</div>
-      <button onclick="closeEmailModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div style="padding:16px 20px">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px">
-        <i class="fa fa-circle-info" style="color:var(--accent)"></i>
-        Sending to: <strong id="ep-to-email" style="color:var(--text)">-</strong>
-      </div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Subject</label>
-        <input id="ep-subject" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box" placeholder="Email subject"/>
-      </div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Message</label>
-        <textarea id="ep-body" rows="9" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;line-height:1.7;resize:vertical;box-sizing:border-box" placeholder="Email body..."></textarea>
-      </div>
-      <div style="font-size:11px;color:var(--text3)"><i class="fa fa-circle-info"></i> Shipment details and tracking link are automatically included.</div>
-    </div>
-    <div style="padding:12px 20px 20px;display:flex;gap:10px">
-      <button onclick="closeEmailModal()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
-      <button id="btn-confirm-send" onclick="confirmSendEmail()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer"><i class="fa fa-paper-plane"></i> Confirm &amp; Send</button>
-    </div>
-  </div>
-</div>
-
-<script>
-var STATUS_TEMPLATES = {
-  Pending:    { subject: "Your shipment {ref} has been registered",     body: "Dear {client},\n\nYour shipment {ref} has been registered in our system.\n\nRoute: {pol} to {pod}\nCarrier: {carrier}\nETD: {etd}   ETA: {eta}\n\nYou can track your shipment at any time using the link below.\n\nBest regards,\nFreightTrack Team" },
-  Booked:     { subject: "Your shipment {ref} is confirmed and booked", body: "Dear {client},\n\nGreat news! Your shipment {ref} has been confirmed and booked with {carrier}.\n\nBooking: {booking_no}\nETD: {etd}   ETA: {eta}\n\nBest regards,\nFreightTrack Team" },
-  Sailing:    { subject: "Your shipment {ref} has departed",            body: "Dear {client},\n\nYour shipment {ref} has departed from {pol} and is now sailing to {pod}.\n\nCarrier: {carrier}\nVessel: {vessel}\nETA: {eta}\n\nTrack your cargo using the link below.\n\nBest regards,\nFreightTrack Team" },
-  Transit:    { subject: "Your shipment {ref} is in transit",           body: "Dear {client},\n\nYour shipment {ref} is currently in transit to {pod}.\n\nETA: {eta}   Carrier: {carrier}\n\nBest regards,\nFreightTrack Team" },
-  Arrived:    { subject: "Your shipment {ref} has arrived at {pod}",    body: "Dear {client},\n\nYour shipment {ref} has arrived at {pod}.\n\nPlease coordinate with your local agent for customs clearance.\n\nBooking: {booking_no}\n\nBest regards,\nFreightTrack Team" },
-  Discharged: { subject: "Your shipment {ref} has been discharged",     body: "Dear {client},\n\nYour shipment {ref} has been discharged at {pod} and is awaiting customs clearance.\n\nBooking: {booking_no}\n\nBest regards,\nFreightTrack Team" },
-  Delivered:  { subject: "Your shipment {ref} has been delivered",      body: "Dear {client},\n\nYour shipment {ref} has been successfully delivered.\n\nThank you for trusting us with your cargo. We look forward to serving you again.\n\nBest regards,\nFreightTrack Team" },
-  Delayed:    { subject: "Important: Your shipment {ref} is delayed",   body: "Dear {client},\n\nYour shipment {ref} is experiencing a delay.\n\nRevised ETA: {eta}   Carrier: {carrier}\nRoute: {pol} to {pod}\n\nWe apologize for the inconvenience and will keep you updated.\n\nBest regards,\nFreightTrack Team" }
-};
-
-function fillTpl(tpl, s) {
-  return tpl
-    .replace(/{ref}/g,        s.ref         || '-')
-    .replace(/{client}/g,     s.client      || 'Customer')
-    .replace(/{carrier}/g,    s.carrier     || '-')
-    .replace(/{vessel}/g,     s.vessel      || '-')
-    .replace(/{pol}/g,        s.pol         || '-')
-    .replace(/{pod}/g,        s.pod         || '-')
-    .replace(/{etd}/g,        (s.etd        || '-').substring(0, 10))
-    .replace(/{eta}/g,        (s.eta        || '-').substring(0, 10))
-    .replace(/{booking_no}/g, s.booking_no  || '-');
-}
-
-function closeEmailModal() {
-  var m = document.getElementById('modal-email-preview');
-  m.style.display = 'none';
-}
-
-var _emailShipment = null;
-
-async function openEmailPreview() {
-  if (!currentDetailId) { alert('No shipment selected'); return; }
-  try {
-    var s = await apiFetch('/api/shipments/' + currentDetailId);
-    _emailShipment = s;
-    if (!s.client_email) { alert('This shipment has no client email address.'); return; }
-    var tpl = STATUS_TEMPLATES[s.status] || STATUS_TEMPLATES['Pending'];
-    document.getElementById('ep-to-email').textContent = s.client_email;
-    document.getElementById('ep-subject').value = fillTpl(tpl.subject, s);
-    document.getElementById('ep-body').value    = fillTpl(tpl.body,    s);
-    // Force show the modal
-    var modal = document.getElementById('modal-email-preview');
-    modal.style.display = 'flex';
-  } catch(e) {
-    alert('Error loading shipment: ' + e.message);
+function validateEmailField(el) {
+  var val = el.value.trim();
+  var msg = document.getElementById('f-client-email-msg');
+  if (!val) {
+    el.style.border = '';
+    if(msg){ msg.style.display='none'; msg.textContent=''; }
+    return;
+  }
+  var valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+  if (valid) {
+    el.style.border = '2px solid var(--green)';
+    if(msg){ msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='Valid email address'; }
+  } else {
+    el.style.border = '2px solid var(--red)';
+    if(msg){ msg.style.display='block'; msg.style.color='var(--red)'; msg.textContent='Invalid email format'; }
   }
 }
 
-async function confirmSendEmail() {
-  if (!_emailShipment) return;
-  var btn = document.getElementById('btn-confirm-send');
-  btn.disabled = true;
-  btn.innerHTML = 'Sending...';
+async function loadEmailLog(sid) {
+  var container = document.getElementById('email-log-list');
+  var countEl   = document.getElementById('email-log-count');
+  if (!container) return;
   try {
-    var subject = document.getElementById('ep-subject').value.trim();
-    var body    = document.getElementById('ep-body').value.trim();
-    if (!subject || !body) { alert('Subject and message cannot be empty.'); return; }
-    await apiFetch('/api/shipments/' + _emailShipment.id + '/send-email',
-      { method: 'POST', body: JSON.stringify({ subject: subject, body: body }) });
-    alert('Email sent successfully to ' + _emailShipment.client_email);
-    closeEmailModal();
+    var logs = await apiFetch('/api/shipments/' + sid + '/email-log');
+    if (!logs || logs.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:12px;color:var(--text2);font-size:12px;opacity:.6"><i class="fa fa-inbox"></i> No emails sent yet</div>';
+      if(countEl) countEl.textContent = '';
+      return;
+    }
+    if(countEl) countEl.textContent = logs.length + ' sent';
+    container.innerHTML = logs.map(function(log) {
+      return '<div style="display:flex;flex-direction:column;gap:3px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;border-left:3px solid var(--accent)">'
+        + '<div style="font-size:12px;font-weight:700;color:var(--text)">' + (log.subject || '—') + '</div>'
+        + '<div style="font-size:11px;color:var(--text2);display:flex;gap:10px;flex-wrap:wrap;margin-top:2px">'
+        + '<span><i class="fa fa-paper-plane" style="color:var(--accent)"></i> ' + (log.sent_to || '—') + '</span>'
+        + '<span><i class="fa fa-user" style="color:var(--text3)"></i> ' + (log.sent_by || 'System') + '</span>'
+        + '<span><i class="fa fa-clock" style="color:var(--text3)"></i> ' + (log.sent_at ? log.sent_at.substring(0,16).replace('T',' ') : '—') + '</span>'
+        + '</div>'
+        + '</div>';
+    }).join('');
   } catch(e) {
-    alert('Failed to send email: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa fa-paper-plane"></i> Confirm & Send';
+    container.innerHTML = '<div style="font-size:12px;color:var(--text2);padding:8px;opacity:.6">Could not load email log</div>';
   }
 }
+
 </script>
+
 </body>
 </html>
