@@ -516,17 +516,9 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="nav-item admin-only" onclick="showPage('users',this)">
       <i class="fa fa-users"></i> Team Members
     </div>
-    <div class="nav-section">Alerts</div>
-    <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts">
-      <i class="fa fa-bell"></i> Alerts
-      <span class="nav-badge" id="alerts-badge" style="display:none;background:#ef4444">0</span>
-    </div>
     <div class="nav-section">Tools</div>
     <div class="nav-item" onclick="exportXLSX()">
       <i class="fa fa-file-excel"></i> Export XLSX
-    </div>
-    <div class="nav-item" onclick="downloadDashboardPDF()">
-      <i class="fa fa-file-pdf"></i> Dashboard PDF
     </div>
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')" style="display:none">
       <i class="fa fa-upload" style="color:#22c55e"></i> Import XLSX
@@ -534,7 +526,9 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')" style="display:none">
       <i class="fa fa-file-import"></i> Bulk Import
     </div>
-
+    <div class="nav-item" onclick="trackAll()">
+      <i class="fa fa-rotate"></i> Sync All
+    </div>
   </div>
   <div class="sidebar-bottom">
     <div class="sidebar-user">
@@ -620,12 +614,6 @@ textarea.form-control{resize:none;min-height:72px}
 
     <!-- ─── ANALYTICS / KPI PAGE ─── -->
     <div class="page" id="page-analytics">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h2 style="margin:0;font-size:20px;font-weight:700;color:var(--text1)">KPI & Analytics</h2>
-        <button class="btn btn-primary btn-sm" onclick="downloadKPIReport()" style="gap:6px">
-          <i class="fa fa-file-pdf"></i> Generate Report
-        </button>
-      </div>
       <div class="kpi-grid" id="kpi-cards">
         <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-value">—</div><div class="kpi-label">Total Shipments</div></div>
         <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-value">—</div><div class="kpi-label">On-Time Rate</div></div>
@@ -662,19 +650,7 @@ textarea.form-control{resize:none;min-height:72px}
 
 
     <!-- ─── USERS PAGE (admin only) ─── -->
-    <div class="page" id="page-alerts">
-      <div class="topbar">
-        <div class="topbar-title"><i class="fa fa-bell" style="color:var(--yellow)"></i> Alerts</div>
-        <div style="font-size:12px;color:var(--text2)" id="alerts-last-refresh"></div>
-      </div>
-      <div class="content" id="alerts-container">
-        <div style="text-align:center;padding:48px 0">
-          <div class="spinner"></div>
-        </div>
-      </div>
-    </div>
-
-        <div class="page" id="page-users">
+    <div class="page" id="page-users">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <div>
           <div style="font-size:16px;font-weight:700;color:var(--text1)">👥 Team Members</div>
@@ -736,7 +712,7 @@ textarea.form-control{resize:none;min-height:72px}
       <div id="dtab-timeline">
         <div id="detail-events-list" class="tl-list"></div>
         <div id="detail-no-events" style="display:none;text-align:center;padding:30px;color:var(--text2);font-size:12px">
-          <div style="font-size:28px;margin-bottom:6px">📭</div>No tracking events recorded yet.
+          <div style="font-size:28px;margin-bottom:6px">📭</div>No events yet. Tap Sync to update.
         </div>
       </div>
       <div id="dtab-notes" style="display:none">
@@ -783,9 +759,8 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-users"></i><span>Team</span>
     </button>
     
-
-    <button class="bnav-item" id="bnav-alerts" onclick="showPage('alerts',null);setBottomNav('alerts')">
-      <i class="fa fa-bell"></i><span>Alerts</span>
+    <button class="bnav-item" id="bnav-sync" onclick="trackAll()">
+      <i class="fa fa-rotate"></i><span>Sync</span>
     </button>
     <button class="bnav-item" id="bnav-export" onclick="openFilesSheet()">
       <i class="fa fa-file-arrow-down"></i><span>Files</span>
@@ -809,10 +784,6 @@ textarea.form-control{resize:none;min-height:72px}
         <div class="form-group">
           <label>Reference *</label>
           <input id="f-ref" class="form-control" placeholder="e.g. AQUA034"/>
-        </div>
-        <div class="form-group">
-          <label>Quotation #</label>
-          <input id="f-quot" class="form-control" placeholder="e.g. QT-2024-0123" style="border-color:rgba(245,158,11,.35)"/>
         </div>
         <div class="form-group">
           <label>Mode</label>
@@ -861,74 +832,6 @@ textarea.form-control{resize:none;min-height:72px}
             <option>Arrived</option><option>Discharged</option><option>Delivered</option><option>Delayed</option>
           </select>
         </div>
-        <div class="form-group full" style="margin-top:4px">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);margin-bottom:10px;padding-top:4px;border-top:1px solid var(--border)">Equipment</div>
-        </div>
-        <div class="form-group">
-          <label>Equipment Type</label>
-          <select id="f-eq-type" class="form-control" onchange="calcTEU()">
-            <option value="">— Select —</option>
-            <option value="20DRY">20DRY — 20&#39; Dry (1 TEU)</option>
-            <option value="40HC">40HC — 40&#39; High Cube (2 TEU)</option>
-            <option value="40DRY">40DRY — 40&#39; Dry (2 TEU)</option>
-            <option value="40RF">40RF — 40&#39; Reefer (2 TEU)</option>
-            <option value="FLEXI">FLEXI — Flexitank (1 TEU)</option>
-            <option value="TRUCK">TRUCK — Road Truck (2 TEU)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Number of Units</label>
-          <input id="f-eq-qty" class="form-control" type="number" min="1" placeholder="e.g. 3" oninput="calcTEU()"/>
-        </div>
-        <div class="form-group">
-          <label>Total TEU</label>
-          <div style="position:relative">
-            <input id="f-eq-teu" class="form-control" readonly placeholder="Auto-calculated"
-              style="background:rgba(79,142,247,.07);border-color:rgba(79,142,247,.35);font-weight:700;color:#4f8ef7;cursor:default"/>
-            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text2)">TEU</span>
-          </div>
-        </div>
-        <!-- ── Direction + Incoterm ── -->
-        <div class="form-group" style="grid-column:1/-1">
-          <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;
-            letter-spacing:.8px;margin-bottom:10px;padding-top:4px;border-top:1px solid var(--border)">Trade Info</div>
-        </div>
-        <div class="form-group">
-          <label>Direction</label>
-          <select id="f-direction" class="form-control" onchange="toggleDirectionFields()">
-            <option value="">— Select —</option>
-            <option value="Export">🚀 Export</option>
-            <option value="Import">📥 Import</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Incoterm</label>
-          <select id="f-incoterm" class="form-control" onchange="toggleIncotermFields()">
-            <option value="">— Select —</option>
-            <option value="EXW">EXW — Ex Works</option>
-            <option value="FCA">FCA — Free Carrier</option>
-            <option value="FAS">FAS — Free Alongside Ship</option>
-            <option value="FOB">FOB — Free On Board</option>
-            <option value="CFR">CFR — Cost &amp; Freight</option>
-            <option value="CIF">CIF — Cost, Insurance &amp; Freight</option>
-            <option value="CPT">CPT — Carriage Paid To</option>
-            <option value="CIP">CIP — Carriage &amp; Insurance Paid</option>
-            <option value="DAP">DAP — Delivered At Place</option>
-            <option value="DPU">DPU — Delivered at Place Unloaded</option>
-            <option value="DDP">DDP — Delivered Duty Paid</option>
-          </select>
-        </div>
-        <!-- Stuffing Date (EXW only) -->
-        <div class="form-group" id="f-stuffing-wrap" style="display:none">
-          <label>Stuffing Date</label>
-          <input id="f-stuffing-date" class="form-control" type="date"
-            style="border-color:rgba(245,158,11,.35)"/>
-        </div>
-        <!-- Agent (Import only) -->
-        <div class="form-group" id="f-agent-wrap" style="display:none">
-          <label>Agent</label>
-          <input id="f-agent" class="form-control" placeholder="Agent name or company"/>
-        </div>
         <div class="form-group full">
           <label>Notes</label>
           <textarea id="f-note" class="form-control" placeholder="Internal notes…"></textarea>
@@ -954,7 +857,9 @@ textarea.form-control{resize:none;min-height:72px}
         <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-
+        <button class="btn btn-secondary btn-sm" id="detail-track-btn" onclick="trackOne()">
+          <i class="fa fa-rotate"></i> Track
+        </button>
         <button class="modal-close" onclick="closeModal('modal-detail')"><i class="fa fa-xmark"></i></button>
       </div>
     </div>
@@ -962,9 +867,6 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="modal-foot" id="detail-foot">
       <button class="btn btn-secondary" style="flex:1" onclick="editFromDetail()">
         <i class="fa fa-pen"></i> Edit
-      </button>
-      <button class="btn btn-primary" style="flex:1" onclick="openEmailPreview()" id="btn-send-email">
-        <i class="fa fa-envelope"></i> Email
       </button>
       <button class="btn btn-danger" style="flex:1" onclick="deleteFromDetail()">
         <i class="fa fa-trash"></i> Delete
@@ -975,13 +877,16 @@ textarea.form-control{resize:none;min-height:72px}
 
 <!-- ═══════ JS ═══════ -->
 <script>
+
 let editId=null, currentDetailId=null, allShipments=[];
 
 /* ── Nav ── */
 function showPage(id,el){
-  if((id==='analytics'||id==='users')&&!isAdmin()) id='shipments';
-  if(id==='alerts') loadAlerts();
-  if(id==='users'){ loadUsers(); setBottomNav('users'); }
+  if((id==='analytics'||id==='users')&&!isAdmin()){id='shipments';}
+  if(id==='users') setTimeout(loadUsers,150);
+  // Role guards
+  if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
+  if(id==='users'){ setTimeout(loadUsers, 150); setBottomNav('users'); }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -1016,7 +921,7 @@ async function apiFetch(url,options={}){
 
 /* ── Toast ── */
 function toast(msg,type='info'){
-  const icons={success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info',warning:'fa-triangle-exclamation'};
+  const icons={success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info'};
   const t=document.createElement('div');
   t.className=`toast ${type}`;
   t.innerHTML=`<i class="fa ${icons[type]}"></i><span>${msg}</span>`;
@@ -1039,13 +944,7 @@ function resetForm(){
   const fm=document.getElementById('f-mode'); if(fm) fm.value='Ocean';
   const fs=document.getElementById('f-status'); if(fs) fs.value='Pending';
   document.getElementById('modal-add-title').textContent='New Shipment';
-    const fq=document.getElementById('f-quot'); if(fq) fq.value='';
-    ['f-eq-type','f-eq-qty','f-eq-teu'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   editId=null;
-  ['f-direction','f-incoterm'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['f-stuffing-date','f-agent'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  const sw=document.getElementById('f-stuffing-wrap'); if(sw) sw.style.display='none';
-  const aw=document.getElementById('f-agent-wrap');    if(aw) aw.style.display='none';
 }
 function statusBadge(s){
   const m={Pending:'pending',Sailing:'sailing',Transit:'transit',Arrived:'arrived',
@@ -1099,21 +998,13 @@ function renderCards(ships,containerId='ship-cards'){
           <div class="ship-field-label">ETA</div>
           <div class="ship-field-value">${fmt(s.eta)}</div>
         </div>
-        ${s.incoterm?`<div class="ship-field">
-          <div class="ship-field-label">Incoterm</div>
-          <div class="ship-field-value" style="font-weight:700;color:var(--accent)">${s.incoterm}</div>
-        </div>`:''}
-        ${(()=>{const TEU_MAP={'20DRY':1,'40HC':2,'40DRY':2,'40RF':2,'FLEXI':1,'TRUCK':2};const teu=s.containers?s.containers.reduce((a,c)=>a+(TEU_MAP[c.size_type]||0),0):0;return teu>0?`<div class="ship-field"><div class="ship-field-label">Total TEU</div><div class="ship-field-value" style="font-weight:700;color:var(--accent)">${teu} TEU</div></div>`:''})()}
       </div>
       <div class="ship-card-foot">
         <div style="font-size:11px;color:var(--text2)">
           <i class="fa fa-clock" style="margin-right:4px"></i>
-          ${s.last_tracked?'Updated '+fmt(s.last_tracked):''}
+          ${s.last_tracked?'Updated '+fmt(s.last_tracked):'Not tracked yet'}
         </div>
         <div class="ship-actions" onclick="event.stopPropagation()">
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="downloadPDF(${s.id})" title="Download PDF">
-            <i class="fa fa-file-pdf"></i>
-          </button>
           <button class="btn btn-secondary btn-sm btn-icon" onclick="editShipment(${s.id})" title="Edit">
             <i class="fa fa-pen"></i>
           </button>
@@ -1152,11 +1043,8 @@ function renderTable(ships){
 
 /* ── Dashboard ── */
 async function loadDashboard(){
-  // Parallel fetch: stats + shipments in one round-trip
   try{
-    const [stats,ships]=await Promise.all([apiFetch('/api/stats'), apiFetch('/api/shipments')]);
-    allShipments=ships;
-    document.getElementById('nav-count').textContent=stats.total||0;
+    const stats=await apiFetch('/api/stats');
     const bs=stats.by_status||{};
     const transit=(bs.Sailing||0)+(bs.Transit||0);
     const done=(bs.Delivered||0)+(bs.Arrived||0)+(bs.Discharged||0);
@@ -1168,6 +1056,11 @@ async function loadDashboard(){
       <div class="stat-card"><div class="stat-icon cyan"><i class="fa fa-clock"></i></div><div class="stat-value">${bs.Pending||0}</div><div class="stat-label">Pending</div></div>
       <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value">${(stats.by_mode||{}).Ocean||0}</div><div class="stat-label">Ocean</div></div>
     `;
+    document.getElementById('nav-count').textContent=stats.total||0;
+  }catch(e){ console.error(e); }
+  try{
+    const ships=await apiFetch('/api/shipments');
+    allShipments=ships;
     const recent=ships.slice(0,6);
     renderCards(recent,'recent-cards');
     // Desktop recent table
@@ -1201,7 +1094,6 @@ async function loadShipments(){
     if(lbl) lbl.textContent=`${ships.length} shipment${ships.length!==1?'s':''}`;
     renderCards(ships,'ship-cards');
     renderTable(ships);
-    checkDeparturAlerts(ships);
   }catch(e){ toast(e.message,'error'); }
 }
 
@@ -1233,11 +1125,6 @@ async function openDetail(sid){
             </span>
           </div>
         </div>
-        ${s.incoterm?`<div class="detail-item"><div class="detail-label">Incoterm</div><div class="detail-value" style="font-weight:700;color:var(--accent)">${s.incoterm}</div></div>`:''}
-        ${s.direction?`<div class="detail-item"><div class="detail-label">Direction</div><div class="detail-value">${s.direction}</div></div>`:''}
-        ${s.stuffing_date?`<div class="detail-item"><div class="detail-label">Stuffing Date</div><div class="detail-value" style="color:var(--yellow)">${s.stuffing_date}</div></div>`:''}
-        ${s.agent?`<div class="detail-item"><div class="detail-label">Agent</div><div class="detail-value">${s.agent}</div></div>`:''}
-        ${(()=>{const TEU_MAP={'20DRY':1,'40HC':2,'40DRY':2,'40RF':2,'FLEXI':1,'TRUCK':2};const teu=s.containers?s.containers.reduce((a,c)=>a+(TEU_MAP[c.size_type]||0),0):0;return teu>0?`<div class="detail-item"><div class="detail-label">Total TEU</div><div class="detail-value" style="font-weight:700;color:var(--accent)">${teu} TEU</div></div>`:''})()}
         ${s.note?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Note</div><div class="detail-value" style="color:var(--text2)">${s.note}</div></div>`:''}
       </div>
       ${s.events&&s.events.length?`
@@ -1251,7 +1138,11 @@ async function openDetail(sid){
               <div><div style="font-size:13px;font-weight:500">${e.description||'—'}</div>
               <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
             </div>`).join('')}
-        </div>`:`}
+        </div>`:`
+        <div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">
+          <i class="fa fa-satellite-dish" style="font-size:22px;margin-bottom:8px;display:block;opacity:.3"></i>
+          No events yet — tap Track
+        </div>`}
     `;
   }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
 }
@@ -1272,33 +1163,15 @@ async function saveShipment(){
     mode:document.getElementById('f-mode')?.value||'Ocean',
     carrier:g('f-carrier'),client:g('f-client'),client_email:g('f-client-email'),
     pol:g('f-pol'),pod:g('f-pod'),etd:g('f-etd'),eta:g('f-eta'),
-    status:document.getElementById('f-status')?.value||'Pending',note:g('f-note'),quotation_number:g('f-quot'),eq_type:g('f-eq-type'),eq_qty:g('f-eq-qty'),direction:document.getElementById('f-direction')?.value||null,incoterm:document.getElementById('f-incoterm')?.value||null,stuffing_date:g('f-stuffing-date'),agent:g('f-agent')};
+    status:document.getElementById('f-status')?.value||'Pending',note:g('f-note')};
   try{
     let r;
     if(editId) r=await apiFetch(`/api/shipments/${editId}`,{method:'PATCH',body:JSON.stringify(data)});
     else r=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
     if(r&&r.id){
-      // If editing, sync containers: delete all then re-create with new eq
-      if(editId){
-        const eqType = (document.getElementById('f-eq-type')?.value||'').trim();
-        const eqQty  = parseInt(document.getElementById('f-eq-qty')?.value||'0');
-        if(eqType && eqQty > 0){
-          // Delete existing containers
-          const existing = r.containers || [];
-          await Promise.all(existing.map(c=>
-            apiFetch(`/api/containers/${c.id}`,{method:'DELETE'}).catch(()=>{})
-          ));
-          // Create new ones
-          for(let i=0;i<eqQty;i++){
-            await apiFetch(`/api/shipments/${editId}/containers`,{
-              method:'POST', body:JSON.stringify({size_type:eqType,container_no:''})
-            }).catch(()=>{});
-          }
-        }
-      }
       toast(editId?'Updated ✅':'Added ✅','success');
-      closeModal('modal-add');
-      await Promise.all([loadDashboard(), loadShipments()]);
+      closeModal('modal-add'); initTheme();
+loadDashboard(); loadShipments();
     } else toast('Unexpected response','error');
   }catch(e){ toast('❌ '+e.message,'error'); console.error(e); }
   btn.innerHTML='<i class="fa fa-floppy-disk"></i> Save Shipment'; btn.disabled=false;
@@ -1310,32 +1183,15 @@ async function editShipment(sid){
     const s=await apiFetch(`/api/shipments/${sid}`);
     editId=sid;
     document.getElementById('modal-add-title').textContent='Edit Shipment';
-    const setV=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
-    setV('f-ref',s.ref); setV('f-ref2',s.ref2); setV('f-booking',s.booking_no);
-    setV('f-carrier',s.carrier); setV('f-client',s.client);
-    setV('f-client-email',s.client_email); setV('f-pol',s.pol); setV('f-pod',s.pod);
-    setV('f-etd',s.etd?s.etd.split('T')[0]:''); setV('f-eta',s.eta?s.eta.split('T')[0]:'');
-    setV('f-note',s.note); setV('f-quot',s.quotation_number);
+    const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
+    set('f-ref',s.ref); set('f-ref2',s.ref2); set('f-booking',s.booking_no);
+    set('f-carrier',s.carrier); set('f-client',s.client);
+    set('f-client-email',s.client_email); set('f-pol',s.pol); set('f-pod',s.pod);
+    set('f-etd',s.etd?s.etd.split('T')[0]:''); set('f-eta',s.eta?s.eta.split('T')[0]:'');
+    set('f-note',s.note);
     const fm=document.getElementById('f-mode'); if(fm) fm.value=s.mode||'Ocean';
     const fs=document.getElementById('f-status'); if(fs) fs.value=s.status||'Pending';
-    // ── Equipment: read from containers ──
-    const conts = s.containers || [];
-    const eqTypeEl = document.getElementById('f-eq-type');
-    const eqQtyEl  = document.getElementById('f-eq-qty');
-    const eqTeuEl  = document.getElementById('f-eq-teu');
-    // Populate new trade fields
-    const fd=document.getElementById('f-direction'); if(fd) fd.value=s.direction||'';
-    const fi=document.getElementById('f-incoterm');  if(fi) fi.value=s.incoterm||'';
-    const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
-    sv('f-stuffing-date',s.stuffing_date); sv('f-agent',s.agent);
-    toggleDirectionFields(); toggleIncotermFields();
     openModal('modal-add');
-    // Set equipment AFTER modal is open so <select> is rendered
-    requestAnimationFrame(()=>{
-      if(eqTypeEl) eqTypeEl.value = conts.length > 0 ? (conts[0].size_type || '') : '';
-      if(eqQtyEl)  eqQtyEl.value  = conts.length > 0 ? String(conts.length) : '';
-      calcTEU();
-    });
   }catch(e){ toast(e.message,'error'); }
 }
 
@@ -1366,19 +1222,7 @@ async function trackAll(){
   try{ await apiFetch('/api/track-all',{method:'POST'}); toast('Sync started!','success'); }
   catch(e){ toast(e.message,'error'); }
 }
-async function exportXLSX(){
-  try{
-    const token=localStorage.getItem('ft_token');
-    const res=await fetch('/api/export/xlsx',{headers:{Authorization:'Bearer '+token}});
-    if(!res.ok){ const e=await res.json(); throw new Error(e.detail||'Export failed'); }
-    const blob=await res.blob();
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download='shipments_export.xlsx'; a.click();
-    URL.revokeObjectURL(url);
-    toast('Export downloaded','success');
-  }catch(e){ toast(e.message,'error'); }
-}
+function exportXLSX(){ window.open('/api/export/xlsx','_blank'); }
 
 
 /* ── Charts registry ── */
@@ -1554,9 +1398,8 @@ function initTheme(){
 /* ── Init ── */
 initTheme();
 loadDashboard();
-</script>
 
-<script>
+
 // ══════════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════════
@@ -1729,144 +1572,8 @@ async function deleteUser(id){
   const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
   if(r.ok) loadUsers();
 }
-</script>
 
 
-<!-- ═══════ ADD USER MODAL ═══════ -->
-<div class="overlay" id="modal-add-user">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">➕ Add Team Member</div>
-      <button class="modal-close" onclick="closeModal('modal-add-user')">
-        <i class="fa fa-xmark"></i>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Full Name <span style="color:#ef4444">*</span></label>
-          <input id="nu-name" class="form-control" type="text" placeholder="e.g. Sara Dupont"/>
-        </div>
-        <div class="form-group">
-          <label>Email Address <span style="color:#ef4444">*</span></label>
-          <input id="nu-email" class="form-control" type="email" placeholder="sara@company.com"/>
-        </div>
-        <div class="form-group">
-          <label>Password <span style="color:#ef4444">*</span></label>
-          <input id="nu-pw" class="form-control" type="password" placeholder="Minimum 6 characters"/>
-        </div>
-        <div class="form-group">
-          <label>Role</label>
-          <select id="nu-role" class="form-control">
-            <option value="cs">🎧 CS Agent — create, track & delete shipments</option>
-            <option value="admin">👑 Admin — full access incl. KPI & team</option>
-          </select>
-        </div>
-      </div>
-      <div id="nu-error" style="display:none;margin-top:10px;padding:10px 12px;
-        background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
-        border-radius:8px;font-size:12px;color:#ef4444"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
-      <button class="btn btn-primary" onclick="createUser()">
-        <i class="fa fa-check"></i> Create User
-      </button>
-    </div>
-  </div>
-</div>
-
-
-<!-- CHANGE PASSWORD -->
-<div class="overlay" id="modal-change-pw">
-  <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">🔐 Change Password</div>
-      <button class="modal-close" onclick="closeModal('modal-change-pw')"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group full"><label>Current Password</label>
-          <input id="cpw-old" class="form-control" type="password" placeholder="Current password"/></div>
-        <div class="form-group full"><label>New Password</label>
-          <input id="cpw-new" class="form-control" type="password" placeholder="Min 6 characters"/></div>
-        <div class="form-group full"><label>Confirm New Password</label>
-          <input id="cpw-confirm" class="form-control" type="password" placeholder="Repeat new password"/></div>
-      </div>
-      <div id="cpw-msg" style="display:none;margin-top:8px;padding:10px 12px;border-radius:8px;font-size:12px"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-change-pw')">Cancel</button>
-      <button class="btn btn-primary" onclick="doChangePassword()"><i class="fa fa-check"></i> Update</button>
-    </div>
-  </div>
-</div>
-<!-- BULK IMPORT -->
-<div class="overlay" id="modal-bulk-import">
-  <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">📥 Bulk Import</div>
-      <button class="modal-close" onclick="closeModal('modal-bulk-import')"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2)">
-        <strong style="color:var(--text1)">Excel columns (row 1 = headers):</strong>
-        <code style="display:block;margin-top:4px;font-size:11px">ref · ref2 · mode · carrier · client · client_email · pol · pod · booking_no</code>
-        <div style="margin-top:6px">Only <strong>ref</strong> is required.</div>
-      </div>
-      <div id="bulk-drop-zone" onclick="document.getElementById('bulk-file').click()"
-        style="border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:.2s">
-        <i class="fa fa-file-excel" style="font-size:30px;color:#22c55e;display:block;margin-bottom:8px"></i>
-        <div style="font-size:13px;font-weight:600;color:var(--text1)">Drop .xlsx here</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px">or click to browse</div>
-      </div>
-      <input id="bulk-file" type="file" accept=".xlsx" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
-      <div id="bulk-selected" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px"></div>
-      <div id="bulk-result" style="display:none;margin-top:10px;padding:12px;border-radius:8px;font-size:13px"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-bulk-import')">Close</button>
-      <button class="btn btn-primary" id="bulk-upload-btn" style="display:none" onclick="doBulkUpload()">
-        <i class="fa fa-upload"></i> Import
-      </button>
-    </div>
-  </div>
-</div>
-<!-- ADD USER -->
-<div class="overlay" id="modal-add-user">
-  <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">➕ Add Team Member</div>
-      <button class="modal-close" onclick="closeModal('modal-add-user')"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group full"><label>Full Name <span style="color:#ef4444">*</span></label>
-          <input id="nu-name" class="form-control" type="text" placeholder="e.g. Sara Dupont"/></div>
-        <div class="form-group full"><label>Email <span style="color:#ef4444">*</span></label>
-          <input id="nu-email" class="form-control" type="email" placeholder="sara@company.com"/></div>
-        <div class="form-group full"><label>Password <span style="color:#ef4444">*</span></label>
-          <input id="nu-pw" class="form-control" type="password" placeholder="Min 6 characters"/></div>
-        <div class="form-group full"><label>Role</label>
-          <select id="nu-role" class="form-control">
-            <option value="cs">🎧 CS Agent</option>
-            <option value="admin">👑 Admin</option>
-          </select>
-        </div>
-      </div>
-      <div id="nu-error" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(239,68,68,.1);
-        border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:12px;color:#ef4444"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
-      <button class="btn btn-primary" onclick="createUser()"><i class="fa fa-check"></i> Create</button>
-    </div>
-  </div>
-</div>
-
-
-<script>
 // ═══ AUTH ════════════════════════════════════════════════════
 const TOKEN_KEY="ft_token", USER_KEY="ft_user";
 function getToken(){ return localStorage.getItem(TOKEN_KEY); }
@@ -2127,7 +1834,6 @@ function _renderDetail(s){
     {l:"ETD",v:s.etd||"—"},{l:"ETA",v:s.eta||"—"},
     {l:"Client",v:s.client||"—",full:true},
     {l:"Client Email",v:s.client_email||"—",full:true},
-    {l:"Quotation #",v:s.quotation_number||"—"},
     {l:"Booking No.",v:s.booking_no||"—"},
     {l:"Note",v:s.note||"—",full:true},
     {l:"Last Synced",v:s.last_tracked||"Never"},
@@ -2190,52 +1896,8 @@ function showToast(msg,type){
   t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"✅":"❌"}</span>${msg}`;
   wrap.appendChild(t); setTimeout(()=>t.remove(),2800);
 }
-</script>
 
 
-<!-- FILES BOTTOM SHEET -->
-<div class="overlay" id="sheet-files" onclick="if(event.target===this)closeModal('sheet-files')" style="align-items:flex-end">
-  <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:18px 18px 0 0;
-    padding:0 0 calc(env(safe-area-inset-bottom)+16px);box-shadow:var(--shadow)">
-    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 4px"></div>
-    <div style="padding:10px 20px 16px">
-      <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">Files</div>
-      <!-- Export -->
-      <button onclick="exportXLSX();closeModal('sheet-files')"
-        style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;
-          background:var(--bg3);border:none;border-radius:12px;cursor:pointer;margin-bottom:10px;
-          font-family:inherit;text-align:left">
-        <div style="width:42px;height:42px;border-radius:10px;background:rgba(34,197,94,.15);
-          display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <i class="fa fa-download" style="color:#22c55e;font-size:18px"></i>
-        </div>
-        <div>
-          <div style="font-size:14px;font-weight:600;color:var(--text1)">Export XLSX</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Download shipments as Excel file</div>
-        </div>
-        <i class="fa fa-chevron-right" style="color:var(--text3);margin-left:auto"></i>
-      </button>
-      <!-- Import (admin only) -->
-      <button id="sheet-import-btn" onclick="openModal('modal-bulk-import');closeModal('sheet-files')"
-        style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;
-          background:var(--bg3);border:none;border-radius:12px;cursor:pointer;
-          font-family:inherit;text-align:left;display:none">
-        <div style="width:42px;height:42px;border-radius:10px;background:rgba(79,142,247,.15);
-          display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <i class="fa fa-upload" style="color:#4f8ef7;font-size:18px"></i>
-        </div>
-        <div>
-          <div style="font-size:14px;font-weight:600;color:var(--text1)">Import XLSX</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Upload Excel to create shipments in bulk</div>
-        </div>
-        <i class="fa fa-chevron-right" style="color:var(--text3);margin-left:auto"></i>
-      </button>
-    </div>
-  </div>
-</div>
-
-
-<script>
 function openFilesSheet(){
   // Show import button only for admins
   const importBtn = document.getElementById("sheet-import-btn");
@@ -2243,422 +1905,81 @@ function openFilesSheet(){
   openModal("sheet-files");
 }
 
-async function downloadPDF(sid){
+/* ═══════════════════════════════════════════
+   MANUAL EMAIL TO CLIENT
+═══════════════════════════════════════════ */
+const STATUS_TEMPLATES = {
+  Pending:    { subject: "Your shipment {ref} has been registered",
+    body: "Dear {client},\n\nYour shipment {ref} has been registered.\n\nRoute: {pol} \u2192 {pod}\nCarrier: {carrier}\nETD: {etd} \u00b7 ETA: {eta}\n\nBest regards,\nFreightTrack Team" },
+  Booked:     { subject: "Your shipment {ref} is confirmed & booked",
+    body: "Dear {client},\n\nYour shipment {ref} is confirmed with {carrier}.\n\nBooking #: {booking_no}\nETD: {etd} \u00b7 ETA: {eta}\n\nBest regards,\nFreightTrack Team" },
+  Sailing:    { subject: "Your shipment {ref} has departed \u2014 now sailing",
+    body: "Dear {client},\n\nYour shipment {ref} has departed from {pol} and is sailing to {pod}.\n\nCarrier: {carrier} \u00b7 Vessel: {vessel}\nETA: {eta}\n\nBest regards,\nFreightTrack Team" },
+  Transit:    { subject: "Your shipment {ref} is in transit",
+    body: "Dear {client},\n\nYour shipment {ref} is in transit to {pod}.\n\nETA: {eta} \u00b7 Carrier: {carrier}\n\nBest regards,\nFreightTrack Team" },
+  Arrived:    { subject: "Your shipment {ref} has arrived at {pod}",
+    body: "Dear {client},\n\nYour shipment {ref} has arrived at {pod}.\n\nPlease coordinate with your agent for customs clearance.\n\nBooking #: {booking_no}\n\nBest regards,\nFreightTrack Team" },
+  Discharged: { subject: "Your shipment {ref} has been discharged at {pod}",
+    body: "Dear {client},\n\nYour shipment {ref} has been discharged at {pod} and is awaiting customs clearance.\n\nBooking #: {booking_no}\n\nBest regards,\nFreightTrack Team" },
+  Delivered:  { subject: "Your shipment {ref} has been delivered \u2705",
+    body: "Dear {client},\n\nYour shipment {ref} has been successfully delivered.\n\nThank you for trusting us with your cargo.\n\nBest regards,\nFreightTrack Team" },
+  Delayed:    { subject: "Important: Your shipment {ref} is delayed",
+    body: "Dear {client},\n\nYour shipment {ref} is experiencing a delay.\n\nRevised ETA: {eta} \u00b7 Carrier: {carrier}\nRoute: {pol} \u2192 {pod}\n\nWe apologize for the inconvenience and will keep you updated.\n\nBest regards,\nFreightTrack Team" },
+};
+
+function _fillTemplate(tpl, s){
+  return tpl
+    .replace(/{ref}/g,        s.ref         || '\u2014')
+    .replace(/{client}/g,     s.client      || 'Customer')
+    .replace(/{carrier}/g,    s.carrier     || '\u2014')
+    .replace(/{vessel}/g,     s.vessel      || '\u2014')
+    .replace(/{pol}/g,        s.pol         || '\u2014')
+    .replace(/{pod}/g,        s.pod         || '\u2014')
+    .replace(/{etd}/g,        (s.etd  || '\u2014').substring(0,10))
+    .replace(/{eta}/g,        (s.eta  || '\u2014').substring(0,10))
+    .replace(/{booking_no}/g, s.booking_no  || '\u2014');
+}
+
+let _emailShipment = null;
+
+async function openEmailPreview(){
+  if(!currentDetailId) return;
   try{
-    const token=localStorage.getItem('ft_token');
-    const res=await fetch(`/api/shipments/${sid}/pdf`,{headers:{Authorization:'Bearer '+token}});
-    if(!res.ok){ const e=await res.json(); throw new Error(e.detail||'PDF failed'); }
-    const blob=await res.blob();
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=`shipment_${sid}.pdf`; a.click();
-    URL.revokeObjectURL(url);
+    const s = await apiFetch('/api/shipments/' + currentDetailId);
+    _emailShipment = s;
+    if(!s.client_email){ toast('No client email on this shipment','error'); return; }
+    const tpl = STATUS_TEMPLATES[s.status] || STATUS_TEMPLATES['Pending'];
+    document.getElementById('ep-to-email').textContent = s.client_email;
+    document.getElementById('ep-subject').value = _fillTemplate(tpl.subject, s);
+    document.getElementById('ep-body').value    = _fillTemplate(tpl.body, s);
+    openModal('modal-email-preview');
   }catch(e){ toast(e.message,'error'); }
 }
-async function downloadDashboardPDF(){
+
+async function confirmSendEmail(){
+  if(!_emailShipment) return;
+  const btn = document.getElementById('btn-confirm-send');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Sending\u2026';
   try{
-    const token=localStorage.getItem('ft_token');
-    const res=await fetch('/api/dashboard/pdf',{headers:{Authorization:'Bearer '+token}});
-    if(!res.ok){ const e=await res.json(); throw new Error(e.detail||'PDF failed'); }
-    const blob=await res.blob();
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=`dashboard_report.pdf`; a.click();
-    URL.revokeObjectURL(url);
-    toast('Dashboard PDF downloaded','success');
-  }catch(e){ toast(e.message,'error'); }
-}
-
-async function showAddContainer(){
-  // Build inline modal
-  const existing = document.getElementById('modal-add-container');
-  if(existing) existing.remove();
-  const m = document.createElement('div');
-  m.id = 'modal-add-container';
-  m.style.cssText='position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px';
-  m.innerHTML=`
-    <div style="background:var(--bg2,#1a2236);border-radius:16px;padding:24px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h3 style="margin:0;font-size:17px;font-weight:700;color:var(--text1)">Add Container</h3>
-        <button onclick="document.getElementById('modal-add-container').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2)">✕</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div>
-          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Container Number *</label>
-          <input id="cnt-no" class="form-control" placeholder="e.g. MSCU1234567" style="width:100%;box-sizing:border-box"/>
-        </div>
-        <div>
-          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Container Type *</label>
-          <select id="cnt-type" class="form-control" style="width:100%;box-sizing:border-box">
-            <option value="">— Select Type —</option>
-            <option value="20DRY">20DRY (20' Dry — 1 TEU)</option>
-            <option value="40HC">40HC (40' High Cube — 2 TEU)</option>
-            <option value="40DRY">40DRY (40' Dry — 2 TEU)</option>
-            <option value="40RF">40RF (40' Reefer — 2 TEU)</option>
-            <option value="FLEXI">FLEXI (Flexitank — 1 TEU)</option>
-            <option value="TRUCK">TRUCK (Road Truck — 2 TEU)</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Seal Number</label>
-          <input id="cnt-seal" class="form-control" placeholder="Optional" style="width:100%;box-sizing:border-box"/>
-        </div>
-        <div>
-          <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Weight (kg)</label>
-          <input id="cnt-weight" class="form-control" placeholder="Optional, e.g. 24000" style="width:100%;box-sizing:border-box"/>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:20px">
-        <button onclick="document.getElementById('modal-add-container').remove()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--text2);cursor:pointer;font-size:14px">Cancel</button>
-        <button onclick="submitAddContainer()" style="flex:2;padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#4f8ef7,#6c63ff);color:#fff;font-weight:600;cursor:pointer;font-size:14px">Add Container</button>
-      </div>
-    </div>`;
-  document.body.appendChild(m);
-  setTimeout(()=>document.getElementById('cnt-no')?.focus(), 100);
-}
-
-async function submitAddContainer(){
-  const no = document.getElementById('cnt-no')?.value?.trim();
-  const type = document.getElementById('cnt-type')?.value;
-  const seal = document.getElementById('cnt-seal')?.value?.trim() || null;
-  const weight = document.getElementById('cnt-weight')?.value?.trim() || null;
-  if(!no){ toast('Container number is required','error'); return; }
-  if(!type){ toast('Container type is required','error'); return; }
-  try{
-    await apiFetch(`/api/shipments/${currentDetailId}/containers`,{
-      method:'POST',body:JSON.stringify({container_no:no, size_type:type, seal_no:seal, weight})
-    });
-    document.getElementById('modal-add-container')?.remove();
-    toast('Container added ✓');
-    loadContainers(currentDetailId);
-  }catch(e){ toast('Failed: '+e.message,'error'); }
-}
-
-const TEU_MAP={'20DRY':1,'40HC':2,'40DRY':2,'40RF':2,'FLEXI':1,'TRUCK':2};
-function getTypeColor(t){const m={'20DRY':'#3b82f6','40HC':'#8b5cf6','40DRY':'#6366f1','40RF':'#06b6d4','FLEXI':'#22c55e','TRUCK':'#f59e0b'};return m[t]||'#64748b';}
-
-async function loadContainers(sid){
-  try{
-    const conts=await apiFetch(`/api/shipments/${sid}/containers`);
-    const el=document.getElementById('containers-list');
-    if(!el) return;
-    if(!conts.length){el.innerHTML='<div style="padding:24px;text-align:center;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px">📦</div>No containers yet.<br><small>Click Add Container to get started.</small></div>';return;}
-    const totalTEU = conts.reduce((s,c)=>{const t=c.size_type||'';return s+(TEU_MAP[t]||0);},0);
-    el.innerHTML=`
-      <div style="background:linear-gradient(135deg,rgba(79,142,247,.12),rgba(108,99,255,.12));border:1px solid rgba(79,142,247,.25);border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;gap:24px;align-items:center">
-        <div><div style="font-size:11px;color:var(--text2)">Containers</div><div style="font-size:18px;font-weight:700;color:var(--text1)">${conts.length}</div></div>
-        <div style="width:1px;height:30px;background:var(--border)"></div>
-        <div><div style="font-size:11px;color:var(--text2)">Total TEU</div><div style="font-size:18px;font-weight:700;color:#4f8ef7">${totalTEU}</div></div>
-      </div>
-      ${conts.map(c=>{
-        const teu = TEU_MAP[c.size_type]!==undefined ? TEU_MAP[c.size_type] : '—';
-        const color = getTypeColor(c.size_type);
-        return `<div style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:3px solid ${color}">
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:700;font-size:14px;color:var(--text1)">${c.container_no}</div>
-            <div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
-              <span style="background:${color}22;color:${color};border:1px solid ${color}44;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600">${c.size_type||'—'}</span>
-              <span style="background:rgba(79,142,247,.1);color:#4f8ef7;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600">${teu} TEU</span>
-              ${c.seal_no?`<span style="color:var(--text2);font-size:11px">Seal: ${c.seal_no}</span>`:''}
-              ${c.weight?`<span style="color:var(--text2);font-size:11px">⚖ ${c.weight} kg</span>`:''}
-            </div>
-          </div>
-          <button onclick="deleteContainer(${c.id})" style="margin-left:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:6px 10px;cursor:pointer;color:#ef4444;font-size:12px" title="Delete">🗑</button>
-        </div>`;
-      }).join('')}`;
-  }catch(e){console.error(e);}
-}
-
-async function deleteContainer(cid){
-  if(!confirm('Delete this container?')) return;
-  try{
-    await apiFetch(`/api/containers/${cid}`,{method:'DELETE'});
-    toast('Container deleted');loadContainers(currentDetailId);
-  }catch(e){toast('Failed: '+e.message,'error');}
-}
-
-
-async function downloadDashboardPDF(){
-  try {
-    toast('Generating dashboard PDF...', 'info');
-    const t = localStorage.getItem('ft_token');
-    const res = await fetch('/api/dashboard/pdf', {headers:{Authorization:'Bearer '+t}});
-    if(!res.ok) {
-      const text = await res.text();
-      console.error('Dashboard PDF error:', text);
-      throw new Error(text);
-    }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'dashboard.pdf'; a.click();
-    URL.revokeObjectURL(url);
-    toast('Dashboard PDF downloaded!', 'success');
-  } catch(e) { 
-    console.error('PDF error:', e);
-    toast('Dashboard PDF failed: ' + (e.message || 'Unknown error'), 'error'); 
+    const subject = document.getElementById('ep-subject').value.trim();
+    const body    = document.getElementById('ep-body').value.trim();
+    await apiFetch('/api/shipments/' + _emailShipment.id + '/send-email',
+      { method: 'POST', body: JSON.stringify({ subject, body }) });
+    toast('Email sent to ' + _emailShipment.client_email, 'success');
+    closeModal('modal-email-preview');
+  }catch(e){
+    toast(e.message, 'error');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa fa-paper-plane"></i> Confirm & Send';
   }
-}
-
-
-async function downloadKPIReport(){
-  try {
-    toast('Generating KPI report...', 'info');
-    const t = localStorage.getItem('ft_token');
-    const res = await fetch('/api/kpi/report/pdf', {headers:{Authorization:'Bearer '+t}});
-    if(!res.ok) throw new Error(await res.text());
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'kpi_report.pdf'; a.click();
-    URL.revokeObjectURL(url);
-    toast('KPI report downloaded!', 'success');
-  } catch(e) { 
-    console.error('KPI report error:', e);
-    toast('Report generation failed', 'error'); 
-  }
-}
-
-
-function calcTEU(){
-  const TEU_MAP={'20DRY':1,'40HC':2,'40DRY':2,'40RF':2,'FLEXI':1,'TRUCK':2};
-  const type = document.getElementById('f-eq-type')?.value;
-  const qty  = parseInt(document.getElementById('f-eq-qty')?.value) || 0;
-  const teu  = type && qty ? (TEU_MAP[type] || 0) * qty : 0;
-  const teuEl = document.getElementById('f-eq-teu');
-  if(teuEl) teuEl.value = teu > 0 ? teu : '';
-}
-
-/* ══════════════════════════════════════════════
-   ALERTS SYSTEM
-══════════════════════════════════════════════ */
-const DISMISSED_KEY = 'ft_dismissed_alerts';
-
-function getDismissed(){
-  try{ return JSON.parse(localStorage.getItem(DISMISSED_KEY)||'[]'); }
-  catch{ return []; }
-}
-function dismiss(key){
-  const d = getDismissed();
-  if(!d.includes(key)){ d.push(key); localStorage.setItem(DISMISSED_KEY, JSON.stringify(d)); }
-  loadAlerts();
-}
-
-function buildAlerts(ships){
-  const today = new Date(); today.setHours(0,0,0,0);
-  const in7 = new Date(today); in7.setDate(today.getDate()+7);
-  const dismissed = getDismissed();
-  const alerts = [];
-
-  ships.forEach(s => {
-    const activeStatuses = ['pending','booked','sailing','transit','in transit'];
-    const isActive = activeStatuses.includes((s.status||'').toLowerCase());
-
-    // ── ETD passed but shipment still Pending/Booked → needs retrack
-    if(s.etd && isActive && ['pending','booked'].includes((s.status||'').toLowerCase())){
-      const etd = new Date(s.etd); etd.setHours(0,0,0,0);
-      if(etd <= today){
-        alerts.push({
-          key: `etd-${s.id}-${s.etd}`,
-          type: 'warning',
-          icon: '🚨',
-          title: `${s.ref} — ETD reached, confirm departure`,
-          sub: `ETD was ${s.etd.substring(0,10)} · Status: ${s.status} · ${s.pol||'?'} → ${s.pod||'?'}`,
-          shipId: s.id, ref: s.ref
-        });
-      }
-    }
-
-    // ── Stuffing date today or past (EXW) → needs action
-    if(s.stuffing_date && (s.incoterm||'').toUpperCase()==='EXW'){
-      const sf = new Date(s.stuffing_date); sf.setHours(0,0,0,0);
-      const activeForStuff = ['pending','booked'].includes((s.status||'').toLowerCase());
-      if(sf <= today && activeForStuff){
-        alerts.push({
-          key: `stuffing-${s.id}-${s.stuffing_date}`,
-          type: 'warning',
-          icon: '📦',
-          title: `${s.ref} — Stuffing date reached (EXW)`,
-          sub: `Stuffing was ${s.stuffing_date} · ${s.pol||'?'} → ${s.pod||'?'} · Client: ${s.client||'?'}`,
-          shipId: s.id, ref: s.ref
-        });
-      }
-    }
-
-    // ── ETA today or past → arriving/arrived, check shipment
-    if(s.eta && isActive){
-      const eta = new Date(s.eta); eta.setHours(0,0,0,0);
-      if(eta <= today){
-        alerts.push({
-          key: `eta-${s.id}-${s.eta}`,
-          type: 'danger',
-          icon: '🛬',
-          title: `${s.ref} — ETA reached, check arrival`,
-          sub: `ETA was ${s.eta.substring(0,10)} · ${s.pol||'?'} → ${s.pod||'?'} · Carrier: ${s.carrier||'?'}`,
-          shipId: s.id, ref: s.ref
-        });
-      }
-    }
-
-    // ── Arriving in next 7 days
-    if(s.eta && isActive){
-      const eta = new Date(s.eta); eta.setHours(0,0,0,0);
-      const daysLeft = Math.round((eta - today) / 86400000);
-      if(daysLeft > 0 && daysLeft <= 7){
-        alerts.push({
-          key: `eta-soon-${s.id}-${s.eta}`,
-          type: 'info',
-          icon: '📅',
-          title: `${s.ref} — Arriving in ${daysLeft} day${daysLeft>1?'s':''}`,
-          sub: `ETA ${s.eta.substring(0,10)} · ${s.pol||'?'} → ${s.pod||'?'} · ${s.carrier||''}`,
-          shipId: s.id, ref: s.ref
-        });
-      }
-    }
-  });
-
-  return alerts.filter(a => !dismissed.includes(a.key));
-}
-
-function alertColor(type){
-  return {warning:'#f59e0b', danger:'#ef4444', info:'#4f8ef7'}[type]||'#4f8ef7';
-}
-function alertBg(type){
-  return {warning:'rgba(245,158,11,.1)', danger:'rgba(239,68,68,.1)', info:'rgba(79,142,247,.08)'}[type]||'rgba(79,142,247,.08)';
-}
-
-async function loadAlerts(){
-  const el = document.getElementById('alerts-container');
-  if(!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:32px"><div class="spinner"></div></div>';
-  try{
-    // Use already-loaded shipments if available, else fetch fresh
-    const ships = (typeof allShipments !== 'undefined' && allShipments && allShipments.length > 0)
-      ? allShipments
-      : await apiFetch('/api/shipments?search=&status=&mode=');
-    const alerts = buildAlerts(ships);
-
-    // Update badge
-    const badge = document.getElementById('alerts-badge');
-    if(badge){
-      badge.textContent = alerts.length;
-      badge.style.display = alerts.length > 0 ? 'inline-flex' : 'none';
-    }
-    const refreshEl = document.getElementById('alerts-last-refresh');
-    if(refreshEl) refreshEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
-
-    if(alerts.length === 0){
-      el.innerHTML = `<div style="text-align:center;padding:64px 20px">
-        <div style="font-size:48px;margin-bottom:16px">✅</div>
-        <div style="font-size:17px;font-weight:700;margin-bottom:8px">All clear!</div>
-        <div style="font-size:13px;color:var(--text2)">No shipments require attention right now.</div>
-      </div>`;
-      return;
-    }
-
-    // Group by type
-    const groups = {danger:[], warning:[], info:[]};
-    alerts.forEach(a => (groups[a.type]||groups.info).push(a));
-    const groupLabels = {danger:'🛬 Arriving / Overdue ETA', warning:'🚨 Action Required (ETD / Stuffing)', info:'📅 Arriving This Week'};
-
-    let out = '';
-    ['danger','warning','info'].forEach(type => {
-      if(!groups[type].length) return;
-      out += `<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;
-        letter-spacing:.8px;margin:20px 0 10px">${groupLabels[type]} (${groups[type].length})</div>`;
-      groups[type].forEach(a => {
-        out += `<div style="background:${alertBg(a.type)};border:1px solid ${alertColor(a.type)}40;
-          border-left:4px solid ${alertColor(a.type)};border-radius:12px;padding:14px 16px;
-          margin-bottom:10px;display:flex;align-items:flex-start;gap:12px">
-          <div style="font-size:22px;flex-shrink:0;margin-top:2px">${a.icon}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">${a.title}</div>
-            <div style="font-size:11px;color:var(--text2)">${a.sub}</div>
-            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-              <button onclick="openDetail(${a.shipId})" style="font-size:11px;font-weight:600;
-                padding:4px 12px;border-radius:6px;border:1px solid ${alertColor(a.type)};
-                color:${alertColor(a.type)};background:transparent;cursor:pointer">
-                View Shipment
-              </button>
-              <button onclick="dismiss('${a.key}')" style="font-size:11px;font-weight:600;
-                padding:4px 12px;border-radius:6px;border:1px solid var(--border);
-                color:var(--text2);background:transparent;cursor:pointer">
-                ✓ Dismiss
-              </button>
-            </div>
-          </div>
-        </div>`;
-      });
-    });
-
-    // Reset dismissed button
-    const dismissed = getDismissed();
-    if(dismissed.length > 0){
-      out += `<div style="text-align:center;margin-top:20px">
-        <button onclick="localStorage.removeItem('${DISMISSED_KEY}');loadAlerts()" 
-          style="font-size:11px;color:var(--text3);background:none;border:none;cursor:pointer;text-decoration:underline">
-          Reset ${dismissed.length} dismissed alert${dismissed.length>1?'s':''}
-        </button>
-      </div>`;
-    }
-
-    el.innerHTML = out;
-  }catch(e){ el.innerHTML = `<div style="color:var(--red);padding:20px">${e.message}</div>`; }
-}
-
-function checkDeparturAlerts(ships){
-  const today = new Date(); today.setHours(0,0,0,0);
-  const dismissed = getDismissed();
-
-  // Only show popup toasts for urgent ones (ETA today or past, not dismissed)
-  ships.forEach(s => {
-    if(!s.eta) return;
-    const isActive = ['pending','booked','sailing','transit','in transit'].includes((s.status||'').toLowerCase());
-    if(!isActive) return;
-    const eta = new Date(s.eta); eta.setHours(0,0,0,0);
-    const etaKey = `eta-${s.id}-${s.eta}`;
-    if(eta <= today && !dismissed.includes(etaKey)){
-      toast(`🛬 ${s.ref} — ETA reached! Check arrival status.`, 'warning');
-    }
-    if(s.etd){
-      const etd = new Date(s.etd); etd.setHours(0,0,0,0);
-      const etdKey = `etd-${s.id}-${s.etd}`;
-      if(etd <= today && ['pending','booked'].includes((s.status||'').toLowerCase()) && !dismissed.includes(etdKey)){
-        toast(`🚨 ${s.ref} — ETD passed, retrack to confirm departure!`, 'warning');
-      }
-    }
-    if(s.stuffing_date && (s.incoterm||'').toUpperCase()==='EXW'){
-      const sf = new Date(s.stuffing_date); sf.setHours(0,0,0,0);
-      const sfKey = `stuffing-${s.id}-${s.stuffing_date}`;
-      if(sf <= today && ['pending','booked'].includes((s.status||'').toLowerCase()) && !dismissed.includes(sfKey)){
-        toast(`📦 ${s.ref} — EXW Stuffing date reached, confirm loading!`, 'warning');
-      }
-    }
-  });
-
-  // Update badge count
-  const alerts = buildAlerts(ships);
-  const badge = document.getElementById('alerts-badge');
-  if(badge){
-    badge.textContent = alerts.length;
-    badge.style.display = alerts.length > 0 ? 'inline-flex' : 'none';
-  }
-}
-
-function toggleIncotermFields(){
-  const v=document.getElementById('f-incoterm')?.value;
-  const sw=document.getElementById('f-stuffing-wrap');
-  if(sw) sw.style.display=(v==='EXW')?'block':'none';
-}
-function toggleDirectionFields(){
-  const v=document.getElementById('f-direction')?.value;
-  const aw=document.getElementById('f-agent-wrap');
-  if(aw) aw.style.display=(v==='Import')?'block':'none';
 }
 
 </script>
 
-<!-- ═══════ EMAIL PREVIEW MODAL ═══════ -->
+
+<!-- EMAIL PREVIEW MODAL -->
 <div class="overlay" id="modal-email-preview">
   <div class="modal" style="max-width:520px">
     <div class="modal-handle"></div>
@@ -2677,12 +1998,12 @@ function toggleDirectionFields(){
       </div>
       <div class="form-group">
         <label>Message</label>
-        <textarea id="ep-body" class="form-control" rows="8"
-          style="font-size:13px;line-height:1.7;resize:vertical;min-height:180px"
+        <textarea id="ep-body" class="form-control" rows="9"
+          style="font-size:13px;line-height:1.7;resize:vertical;min-height:200px"
           placeholder="Email body…"></textarea>
       </div>
       <div style="font-size:11px;color:var(--text3);margin-top:-6px">
-        <i class="fa fa-circle-info"></i> The shipment details and tracking link are automatically included in the email.
+        <i class="fa fa-circle-info"></i> Shipment details and tracking link are automatically included.
       </div>
     </div>
     <div class="modal-foot">
@@ -2693,6 +2014,5 @@ function toggleDirectionFields(){
     </div>
   </div>
 </div>
-
 </body>
 </html>
