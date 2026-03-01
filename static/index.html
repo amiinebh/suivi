@@ -517,7 +517,7 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-users"></i> Team Members
     </div>
     <div class="nav-section">Tools</div>
-    <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts">
+        <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts">
       <i class="fa fa-bell"></i> Alerts
       <span class="nav-badge" id="alerts-badge" style="display:none">0</span>
     </div>
@@ -530,6 +530,7 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')" style="display:none">
       <i class="fa fa-file-import"></i> Bulk Import
     </div>
+    
   </div>
   <div class="sidebar-bottom">
     <div class="sidebar-user">
@@ -669,25 +670,6 @@ textarea.form-control{resize:none;min-height:72px}
     </div>
 
 
-    <!-- ─── ALERTS PAGE ─── -->
-    <div class="page" id="page-alerts">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div>
-          <div style="font-size:16px;font-weight:700;color:var(--text)">🔔 Alerts</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments requiring your attention</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="loadAlerts()">
-          <i class="fa fa-rotate"></i> Refresh
-        </button>
-      </div>
-      <div id="alerts-list">
-        <div style="text-align:center;padding:40px;color:var(--text2);font-size:13px">
-          <div style="font-size:32px;margin-bottom:8px">🔔</div>
-          Loading alerts...
-        </div>
-      </div>
-    </div>
-
     <!-- ═══ DETAIL PAGE ═══ -->
     <div class="page" id="page-detail">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
@@ -731,7 +713,8 @@ textarea.form-control{resize:none;min-height:72px}
       </div>
       <div id="dtab-timeline">
         <div id="detail-events-list" class="tl-list"></div>
-        
+        <div id="detail-no-events" style="display:none;text-align:center;padding:30px;color:var(--text2);font-size:12px">
+          
       </div>
       <div id="dtab-notes" style="display:none">
         <div id="detail-comments-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
@@ -827,7 +810,6 @@ textarea.form-control{resize:none;min-height:72px}
         <div class="form-group full">
           <label>Client Email</label>
           <input id="f-client-email" class="form-control" type="email" placeholder="client@example.com" oninput="validateEmailField(this)"/>
-          <div id="f-client-email-msg" style="font-size:11px;margin-top:4px;display:none"></div>
         </div>
         <div class="form-group">
           <label>POL</label>
@@ -877,6 +859,7 @@ textarea.form-control{resize:none;min-height:72px}
         <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
+        
         <button class="modal-close" onclick="closeModal('modal-detail')"><i class="fa fa-xmark"></i></button>
       </div>
     </div>
@@ -884,9 +867,6 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="modal-foot" id="detail-foot">
       <button class="btn btn-secondary" style="flex:1" onclick="editFromDetail()">
         <i class="fa fa-pen"></i> Edit
-      </button>
-      <button class="btn btn-primary" style="flex:1" onclick="openEmailPreview()" id="btn-send-email">
-        <i class="fa fa-envelope"></i> Email
       </button>
       <button class="btn btn-danger" style="flex:1" onclick="deleteFromDetail()">
         <i class="fa fa-trash"></i> Delete
@@ -1158,7 +1138,7 @@ async function openDetail(sid){
               <div><div style="font-size:13px;font-weight:500">${e.description||'—'}</div>
               <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
             </div>`).join('')}
-        </div>`:``}
+        </div>`:`}
     `;
   }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
 }
@@ -1166,27 +1146,30 @@ async function openDetail(sid){
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
 function editFromDetail(){ closeModal('modal-detail'); editShipment(currentDetailId); }
 async function deleteFromDetail(){ if(await confirmDelete()) deleteShipment(currentDetailId); }
-function confirmDelete(){ return Promise.resolve(new Promise(function(res){ showConfirm({title:'Delete Shipment',message:'Delete this shipment?<br><span style="color:var(--red)">This cannot be undone.</span>',okText:'Delete',okClass:'btn-danger',onOk:function(){res(true);},onCancel:function(){res(false);}}); }); }
+function confirmDelete(){ return new Promise(function(res){
+    showConfirm({title:'Delete Shipment',
+      message:'Delete this shipment?<br><span style="color:var(--red)">This cannot be undone.</span>',
+      okText:'Delete', okClass:'btn-danger',
+      onOk:function(){res(true);}, onCancel:function(){res(false);}
+    });
+  }); }
 
 /* ── Save ── */
 async function saveShipment(){
   const ref=(document.getElementById('f-ref')?.value||'').trim();
   if(!ref){ toast('Reference is required','error'); return; }
-  const _emailEl=document.getElementById('f-client-email');
-  const _emailVal=(_emailEl?.value||'').trim();
-  if(_emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_emailVal)){
-    if(_emailEl) _emailEl.style.border='2px solid var(--red)';
-    if(_emailEl) _emailEl.focus();
-    toast('Invalid client email address','error'); return;
+  const _eEl=document.getElementById('f-client-email');
+  const _eVal=(_eEl?.value||'').trim();
+  if(_eVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_eVal)){
+    _eEl.style.border='2px solid var(--red)'; _eEl.focus();
+    toast('Invalid client email','error'); return;
   }
-  if(_emailEl) _emailEl.style.border='';
-  if(!_emailVal){
+  if(_eEl) _eEl.style.border='';
+  if(!_eVal){
     showConfirm({title:'No Client Email',subtitle:'Email alerts disabled',
-      message:'No client email entered.<br>Automated alerts will <strong style="color:var(--yellow)">not be sent</strong> for this shipment.<br><br>Continue saving anyway?',
-      okText:'Save Anyway',
-      onOk:function(){ _doSaveShipment(); }
-    });
-    return;
+      message:'No client email entered.<br>Alerts will <strong style="color:var(--yellow)">not be sent</strong>.<br><br>Continue saving anyway?',
+      okText:'Save Anyway', onOk:function(){ _doSaveShipment(); }
+    }); return;
   }
   _doSaveShipment();
 }
@@ -1232,13 +1215,17 @@ async function editShipment(sid){
 
 /* ── Delete ── */
 async function deleteShipment(sid){
-  showConfirm({title:'Delete Shipment',message:'Delete this shipment?<br><span style="color:var(--red)">This cannot be undone.</span>',okText:'Delete',okClass:'btn-danger',onOk:async function(){
-  try{
-    await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
-    toast('Deleted','success'); closeModal('modal-detail');
-    initTheme();
-loadDashboard(); loadShipments();
-  }catch(e){ toast(e.message,'error'); }
+  showConfirm({title:'Delete Shipment',
+    message:'Delete this shipment?<br><span style="color:var(--red)">This cannot be undone.</span>',
+    okText:'Delete', okClass:'btn-danger',
+    onOk:async function(){
+      try{
+        await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
+        toast('Deleted','success'); closeModal('modal-detail');
+        loadDashboard(); loadShipments();
+      }catch(e){ toast(e.message,'error'); }
+    }
+  }); return;
 }
 
 /* ── Track ── */
@@ -1604,9 +1591,14 @@ async function toggleUser(id){
 }
 
 async function deleteUser(id){
-  showConfirm({title:"Delete User",message:"Delete this user permanently?<br><span style='color:var(--red)'>This cannot be undone.</span>",okText:"Delete",okClass:"btn-danger",onOk:async function(){
-  const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
-  if(r.ok) loadUsers();
+  showConfirm({title:"Delete User",
+    message:"Delete this user permanently?<br><span style='color:var(--red)'>This cannot be undone.</span>",
+    okText:"Delete", okClass:"btn-danger",
+    onOk:async function(){
+      const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
+      if(r.ok) loadUsers();
+    }
+  }); return;
 }
 </script>
 
@@ -1929,9 +1921,14 @@ async function toggleUser(id){
 }
 
 async function deleteUser(id){
-  showConfirm({title:"Delete User",message:"Delete this user permanently?<br><span style='color:var(--red)'>This cannot be undone.</span>",okText:"Delete",okClass:"btn-danger",onOk:async function(){
-  try{ await apiFetch(`/api/users/${id}`,{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
-  catch(e){ showToast("Error: "+e.message,"error"); }
+  showConfirm({title:"Delete User",
+    message:"Delete this user permanently?<br><span style='color:var(--red)'>This cannot be undone.</span>",
+    okText:"Delete", okClass:"btn-danger",
+    onOk:async function(){
+      try{ await apiFetch(`/api/users/${id}`,{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
+      catch(e){ showToast("Error: "+e.message,"error"); }
+    }
+  }); return;
 }
 
 // ═══ SHIPMENT DETAIL ═════════════════════════════════════════
@@ -2123,226 +2120,19 @@ function openFilesSheet(){
 </script>
 
 
-<!-- ═══ EMAIL PREVIEW MODAL ═══ -->
-<div class="overlay" id="modal-email-preview" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center">
-  <div class="modal" style="max-width:520px;width:94%;background:var(--card);border-radius:20px;padding:0;overflow:hidden">
-    <div style="background:var(--card);padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="fa fa-envelope" style="color:var(--accent);margin-right:8px"></i>Send Email to Client</div>
-      <button onclick="closeEmailModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div style="padding:16px 20px">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px">
-        <i class="fa fa-circle-info" style="color:var(--accent)"></i>
-        Sending to: <strong id="ep-to-email" style="color:var(--text)">-</strong>
+    <!-- ALERTS PAGE -->
+    <div class="page" id="page-alerts">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:16px;font-weight:700">🔔 Alerts</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments requiring attention</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadAlerts()"><i class="fa fa-rotate"></i> Refresh</button>
       </div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Subject</label>
-        <input id="ep-subject" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box" placeholder="Email subject"/>
+      <div id="alerts-list">
+        <div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><div style="font-size:32px;margin-bottom:8px">🔔</div>Loading...</div>
       </div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Message</label>
-        <textarea id="ep-body" rows="9" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;line-height:1.7;resize:vertical;box-sizing:border-box" placeholder="Email body..."></textarea>
-      </div>
-      <div style="font-size:11px;color:var(--text3)"><i class="fa fa-circle-info"></i> Shipment details and tracking link are automatically included.</div>
     </div>
-    <div style="padding:12px 20px 20px;display:flex;gap:10px">
-      <button onclick="closeEmailModal()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
-      <button id="btn-confirm-send" onclick="confirmSendEmail()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer"><i class="fa fa-paper-plane"></i> Confirm &amp; Send</button>
-    </div>
-  </div>
-</div>
-
-<script>
-var STATUS_TEMPLATES = {
-  Pending:    { subject: "Your shipment {ref} has been registered",     body: "Dear {client},\n\nYour shipment {ref} has been registered in our system.\n\nRoute: {pol} to {pod}\nCarrier: {carrier}\nETD: {etd}   ETA: {eta}\n\nYou can track your shipment at any time using the link below.\n\nBest regards,\nFreightTrack Team" },
-  Booked:     { subject: "Your shipment {ref} is confirmed and booked", body: "Dear {client},\n\nGreat news! Your shipment {ref} has been confirmed and booked with {carrier}.\n\nBooking: {booking_no}\nETD: {etd}   ETA: {eta}\n\nBest regards,\nFreightTrack Team" },
-  Sailing:    { subject: "Your shipment {ref} has departed",            body: "Dear {client},\n\nYour shipment {ref} has departed from {pol} and is now sailing to {pod}.\n\nCarrier: {carrier}\nVessel: {vessel}\nETA: {eta}\n\nTrack your cargo using the link below.\n\nBest regards,\nFreightTrack Team" },
-  Transit:    { subject: "Your shipment {ref} is in transit",           body: "Dear {client},\n\nYour shipment {ref} is currently in transit to {pod}.\n\nETA: {eta}   Carrier: {carrier}\n\nBest regards,\nFreightTrack Team" },
-  Arrived:    { subject: "Your shipment {ref} has arrived at {pod}",    body: "Dear {client},\n\nYour shipment {ref} has arrived at {pod}.\n\nPlease coordinate with your local agent for customs clearance.\n\nBooking: {booking_no}\n\nBest regards,\nFreightTrack Team" },
-  Discharged: { subject: "Your shipment {ref} has been discharged",     body: "Dear {client},\n\nYour shipment {ref} has been discharged at {pod} and is awaiting customs clearance.\n\nBooking: {booking_no}\n\nBest regards,\nFreightTrack Team" },
-  Delivered:  { subject: "Your shipment {ref} has been delivered",      body: "Dear {client},\n\nYour shipment {ref} has been successfully delivered.\n\nThank you for trusting us with your cargo. We look forward to serving you again.\n\nBest regards,\nFreightTrack Team" },
-  Delayed:    { subject: "Important: Your shipment {ref} is delayed",   body: "Dear {client},\n\nYour shipment {ref} is experiencing a delay.\n\nRevised ETA: {eta}   Carrier: {carrier}\nRoute: {pol} to {pod}\n\nWe apologize for the inconvenience and will keep you updated.\n\nBest regards,\nFreightTrack Team" }
-};
-
-function fillTpl(tpl, s) {
-  return tpl
-    .replace(/{ref}/g,        s.ref         || '-')
-    .replace(/{client}/g,     s.client      || 'Customer')
-    .replace(/{carrier}/g,    s.carrier     || '-')
-    .replace(/{vessel}/g,     s.vessel      || '-')
-    .replace(/{pol}/g,        s.pol         || '-')
-    .replace(/{pod}/g,        s.pod         || '-')
-    .replace(/{etd}/g,        (s.etd        || '-').substring(0, 10))
-    .replace(/{eta}/g,        (s.eta        || '-').substring(0, 10))
-    .replace(/{booking_no}/g, s.booking_no  || '-');
-}
-
-function closeEmailModal() {
-  var m = document.getElementById('modal-email-preview');
-  m.style.display = 'none';
-}
-
-var _emailShipment = null;
-
-async function openEmailPreview() {
-  if (!currentDetailId) { alert('No shipment selected'); return; }
-  try {
-    var s = await apiFetch('/api/shipments/' + currentDetailId);
-    _emailShipment = s;
-    if (!s.client_email) { alert('This shipment has no client email address.'); return; }
-    var tpl = STATUS_TEMPLATES[s.status] || STATUS_TEMPLATES['Pending'];
-    document.getElementById('ep-to-email').textContent = s.client_email;
-    document.getElementById('ep-subject').value = fillTpl(tpl.subject, s);
-    document.getElementById('ep-body').value    = fillTpl(tpl.body,    s);
-    // Force show the modal
-    var modal = document.getElementById('modal-email-preview');
-    modal.style.display = 'flex';
-  } catch(e) {
-    alert('Error loading shipment: ' + e.message);
-  }
-}
-
-async function confirmSendEmail() {
-  if (!_emailShipment) return;
-  var btn = document.getElementById('btn-confirm-send');
-  btn.disabled = true;
-  btn.innerHTML = 'Sending...';
-  try {
-    var subject = document.getElementById('ep-subject').value.trim();
-    var body    = document.getElementById('ep-body').value.trim();
-    if (!subject || !body) { alert('Subject and message cannot be empty.'); return; }
-    await apiFetch('/api/shipments/' + _emailShipment.id + '/send-email',
-      { method: 'POST', body: JSON.stringify({ subject: subject, body: body }) });
-    alert('Email sent successfully to ' + _emailShipment.client_email);
-    closeEmailModal();
-  } catch(e) {
-    alert('Failed to send email: ' + e.message);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa fa-paper-plane"></i> Confirm & Send';
-  }
-}
-</script>
-
-<script>
-
-/* ═══ CUSTOM CONFIRM DIALOG ═══ */
-function showConfirm(opts){
-  document.getElementById('confirm-title').textContent    = opts.title    ||'Confirm';
-  document.getElementById('confirm-subtitle').textContent = opts.subtitle ||'';
-  document.getElementById('confirm-message').innerHTML    = opts.message  ||'';
-  var ok=document.getElementById('confirm-ok-btn');
-  ok.textContent=opts.okText||'Continue';
-  ok.className='btn '+(opts.okClass||'btn-primary');
-  ok.style.flex='1';
-  ok.onclick=function(){ closeModal('modal-confirm'); if(opts.onOk) opts.onOk(); };
-  var cancel=document.getElementById('confirm-cancel-btn');
-  cancel.textContent=opts.cancelText||'Cancel';
-  cancel.onclick=function(){ closeModal('modal-confirm'); if(opts.onCancel) opts.onCancel(); };
-  openModal('modal-confirm');
-}
-/* ═══ ALERTS PAGE ═══ */
-async function loadAlerts() {
-  var container = document.getElementById('alerts-list');
-  var badge     = document.getElementById('alerts-badge');
-  if (!container) return;
-  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><div style="font-size:32px;margin-bottom:8px">⏳</div>Loading...</div>';
-  try {
-    var ships = await apiFetch('/api/shipments');
-    var alerts = buildAlerts(ships);
-    if (badge) {
-      badge.textContent = alerts.length;
-      badge.style.display = alerts.length ? '' : 'none';
-    }
-    if (!alerts.length) {
-      container.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention right now.</div></div>';
-      return;
-    }
-    container.innerHTML = alerts.map(function(a) {
-      var color = a.type === 'danger' ? 'var(--red)' : a.type === 'warning' ? 'var(--yellow)' : 'var(--accent)';
-      return '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ' + color + ';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer" onclick="openDetail(' + a.id + ')">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-        + '<span style="font-size:14px;font-weight:700;color:var(--text)">' + a.ref + '</span>'
-        + '<span style="font-size:11px;background:' + color + '22;color:' + color + ';padding:3px 10px;border-radius:20px;font-weight:600">' + a.label + '</span>'
-        + '</div>'
-        + '<div style="font-size:12px;color:var(--text2)">' + a.message + '</div>'
-        + '</div>';
-    }).join('');
-  } catch(e) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">Error: ' + e.message + '</div>';
-  }
-}
-
-function buildAlerts(ships) {
-  var today = new Date(); today.setHours(0,0,0,0);
-  var alerts = [];
-  ships.forEach(function(s) {
-    if (['Delivered','Discharged'].includes(s.status)) return;
-    if (s.eta) {
-      var eta = new Date(s.eta); eta.setHours(0,0,0,0);
-      var diff = Math.round((eta - today) / 86400000);
-      if (diff < 0) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'danger', label: 'ETA Passed', message: 'ETA was ' + s.eta.substring(0,10) + ' — ' + s.pod });
-      } else if (diff <= 3) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'warning', label: 'Arriving Soon', message: 'Arriving in ' + diff + ' day' + (diff===1?'':'s') + ' at ' + (s.pod||'—') });
-      }
-    }
-    if (s.etd) {
-      var etd = new Date(s.etd); etd.setHours(0,0,0,0);
-      if (etd < today && ['Pending','Booked'].includes(s.status)) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'warning', label: 'ETD Passed', message: 'ETD was ' + s.etd.substring(0,10) + ' — still ' + s.status });
-      }
-    }
-    if (s.stuffing_date && ['Pending','Booked'].includes(s.status)) {
-      var sf = new Date(s.stuffing_date); sf.setHours(0,0,0,0);
-      if (sf <= today) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'info', label: 'Stuffing Date', message: 'EXW stuffing date reached — confirm loading' });
-      }
-    }
-    if (s.status === 'Delayed') {
-      alerts.push({ id: s.id, ref: s.ref, type: 'danger', label: 'Delayed', message: (s.pol||'—') + ' → ' + (s.pod||'—') + ' · ETA: ' + (s.eta?s.eta.substring(0,10):'—') });
-    }
-  });
-  return alerts;
-}
-
-/* ═══ EMAIL LOG ═══ */
-async function loadEmailLog(sid) {
-  var container = document.getElementById('email-log-list');
-  var countEl   = document.getElementById('email-log-count');
-  if (!container) return;
-  try {
-    var logs = await apiFetch('/api/shipments/' + sid + '/email-log');
-    if (!logs || !logs.length) {
-      container.innerHTML = '<div style="text-align:center;padding:10px;font-size:12px;color:var(--text2);opacity:.6"><i class="fa fa-inbox"></i> No emails sent yet</div>';
-      if (countEl) countEl.textContent = '';
-      return;
-    }
-    if (countEl) countEl.textContent = '(' + logs.length + ' sent)';
-    container.innerHTML = logs.map(function(l) {
-      return '<div style="padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;border-left:3px solid var(--accent)">'
-        + '<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">' + (l.subject||'—') + '</div>'
-        + '<div style="font-size:11px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap">'
-        + '<span><i class="fa fa-paper-plane" style="color:var(--accent)"></i> ' + (l.sent_to||'—') + '</span>'
-        + '<span><i class="fa fa-user" style="color:var(--text3)"></i> ' + (l.sent_by||'System') + '</span>'
-        + '<span><i class="fa fa-clock" style="color:var(--text3)"></i> ' + (l.sent_at?(l.sent_at.substring(0,16).replace('T',' ')):'—') + '</span>'
-        + '</div></div>';
-    }).join('');
-  } catch(e) {
-    container.innerHTML = '<div style="font-size:12px;color:var(--text2);padding:8px;opacity:.6">Could not load email log</div>';
-  }
-}
-
-/* ═══ EMAIL FIELD VALIDATION ═══ */
-function validateEmailField(el) {
-  var val = (el.value||'').trim();
-  var msg = document.getElementById('f-client-email-msg');
-  if (!val) { el.style.border=''; if(msg){msg.style.display='none';} return; }
-  var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-  el.style.border = ok ? '2px solid var(--green)' : '2px solid var(--red)';
-  if (msg) { msg.style.display='block'; msg.style.color=ok?'var(--green)':'var(--red)'; msg.textContent=ok?'Valid email':'Invalid format'; }
-}
-</script>
 
   <!-- CUSTOM CONFIRM MODAL -->
   <div class="overlay" id="modal-confirm">
@@ -2364,5 +2154,83 @@ function validateEmailField(el) {
       </div>
     </div>
   </div>
+<script>
+/* ── Custom Confirm ── */
+function showConfirm(opts){
+  document.getElementById('confirm-title').textContent=opts.title||'Confirm';
+  document.getElementById('confirm-subtitle').textContent=opts.subtitle||'';
+  document.getElementById('confirm-message').innerHTML=opts.message||'';
+  var ok=document.getElementById('confirm-ok-btn');
+  ok.textContent=opts.okText||'Continue';
+  ok.className='btn '+(opts.okClass||'btn-primary'); ok.style.flex='1';
+  ok.onclick=function(){ closeModal('modal-confirm'); if(opts.onOk) opts.onOk(); };
+  var c=document.getElementById('confirm-cancel-btn');
+  c.textContent=opts.cancelText||'Cancel';
+  c.onclick=function(){ closeModal('modal-confirm'); if(opts.onCancel) opts.onCancel(); };
+  openModal('modal-confirm');
+}
+/* ── Email field validation ── */
+function validateEmailField(el){
+  var v=(el.value||'').trim();
+  el.style.border=!v?'':/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)?'2px solid var(--green)':'2px solid var(--red)';
+}
+/* ── Email Log ── */
+async function loadEmailLog(sid){
+  var c=document.getElementById('email-log-list'), cnt=document.getElementById('email-log-count');
+  if(!c) return;
+  try{
+    var logs=await apiFetch('/api/shipments/'+sid+'/email-log');
+    if(!logs||!logs.length){ c.innerHTML='<div style="text-align:center;padding:10px;font-size:12px;color:var(--text2);opacity:.6"><i class="fa fa-inbox"></i> No emails sent yet</div>'; if(cnt) cnt.textContent=''; return; }
+    if(cnt) cnt.textContent='('+logs.length+' sent)';
+    c.innerHTML=logs.map(function(l){
+      return '<div style="padding:10px 12px;background:var(--bg3);border-radius:10px;margin-bottom:8px;border-left:3px solid var(--accent)">'
+        +'<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">'+(l.subject||'—')+'</div>'
+        +'<div style="font-size:11px;color:var(--text2);display:flex;gap:10px;flex-wrap:wrap">'
+        +'<span><i class="fa fa-paper-plane" style="color:var(--accent)"></i> '+(l.sent_to||'—')+'</span>'
+        +'<span><i class="fa fa-user" style="color:var(--text3)"></i> '+(l.sent_by||'System')+'</span>'
+        +'<span><i class="fa fa-clock" style="color:var(--text3)"></i> '+(l.sent_at?l.sent_at.substring(0,16).replace('T',' '):'—')+'</span>'
+        +'</div></div>';
+    }).join('');
+  }catch(e){ c.innerHTML='<div style="font-size:12px;color:var(--text2);padding:8px">Could not load email log</div>'; }
+}
+/* ── Alerts ── */
+async function loadAlerts(){
+  var c=document.getElementById('alerts-list'), badge=document.getElementById('alerts-badge');
+  if(!c) return;
+  c.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:32px;margin-bottom:8px">⏳</div>Loading...</div>';
+  try{
+    var ships=await apiFetch('/api/shipments');
+    var alerts=buildAlerts(ships);
+    if(badge){ badge.textContent=alerts.length; badge.style.display=alerts.length?'':'none'; }
+    if(!alerts.length){ c.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention.</div></div>'; return; }
+    c.innerHTML=alerts.map(function(a){
+      var col=a.type==='danger'?'var(--red)':a.type==='warning'?'var(--yellow)':'var(--accent)';
+      return '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer" onclick="openDetail('+a.id+')">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+        +'<span style="font-size:14px;font-weight:700">'+a.ref+'</span>'
+        +'<span style="font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;background:'+col+'22;color:'+col+'">'+a.label+'</span>'
+        +'</div><div style="font-size:12px;color:var(--text2)">'+a.message+'</div></div>';
+    }).join('');
+  }catch(e){ c.innerHTML='<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">'+e.message+'</div>'; }
+}
+function buildAlerts(ships){
+  var today=new Date(); today.setHours(0,0,0,0); var out=[];
+  ships.forEach(function(s){
+    if(['Delivered','Discharged'].includes(s.status)) return;
+    if(s.eta){
+      var eta=new Date(s.eta); eta.setHours(0,0,0,0);
+      var d=Math.round((eta-today)/86400000);
+      if(d<0) out.push({id:s.id,ref:s.ref,type:'danger',label:'ETA Passed',message:'ETA was '+s.eta.slice(0,10)+' — '+(s.pod||'')});
+      else if(d<=3) out.push({id:s.id,ref:s.ref,type:'warning',label:'Arriving Soon',message:'Arriving in '+d+' day'+(d===1?'':'s')+' at '+(s.pod||'—')});
+    }
+    if(s.status==='Delayed') out.push({id:s.id,ref:s.ref,type:'danger',label:'Delayed',message:(s.pol||'—')+' → '+(s.pod||'—')+' · ETA: '+(s.eta?s.eta.slice(0,10):'—')});
+    if(s.etd&&['Pending','Booked'].includes(s.status)){
+      var etd=new Date(s.etd); etd.setHours(0,0,0,0);
+      if(etd<today) out.push({id:s.id,ref:s.ref,type:'warning',label:'ETD Passed',message:'ETD was '+s.etd.slice(0,10)+' — still '+s.status});
+    }
+  });
+  return out;
+}
+</script>
 </body>
 </html>
