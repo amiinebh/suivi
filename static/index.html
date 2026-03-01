@@ -1103,12 +1103,59 @@ async function loadShipments(){
 }
 
 /* ── Detail ── */
-
+async function openDetail(sid){
+  currentDetailId=sid;
+  openModal('modal-detail');
+  document.getElementById('detail-body').innerHTML=`<div style="text-align:center;padding:40px"><div class="spinner" style="width:28px;height:28px;border-width:3px"></div></div>`;
+  try{
+    const s=await apiFetch(`/api/shipments/${sid}`);
+    document.getElementById('detail-title').textContent=s.ref;
+    document.getElementById('detail-sub').textContent=`${s.client||''}${s.carrier?' · '+s.carrier:''}`;
+    const trackLink=`${location.origin}/track/${s.ref}`;
+    document.getElementById('detail-body').innerHTML=`
+      <div class="detail-grid">
+        <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${statusBadge(s.status)}</div></div>
+        <div class="detail-item"><div class="detail-label">Mode</div><div class="detail-value">${modeBadge(s.mode)}</div></div>
+        <div class="detail-item"><div class="detail-label">Container / AWB</div><div class="detail-value">${s.ref2||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">Booking No</div><div class="detail-value">${s.booking_no||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">Carrier</div><div class="detail-value">${s.carrier||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">Vessel</div><div class="detail-value">${s.vessel||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">POL → POD</div><div class="detail-value">${s.pol||'—'} → ${s.pod||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">ETD / ETA</div><div class="detail-value">${fmt(s.etd)} → ${fmt(s.eta)}</div></div>
+        <div class="detail-item" style="grid-column:1/-1">
+          <div class="detail-label">Client Tracking Link</div>
+          <div class="detail-value">
+            <span class="copy-link" onclick="copyLink('${trackLink}')">
+              <i class="fa fa-link"></i> Copy link
+            </span>
+          </div>
+        </div>
+        ${s.note?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Note</div><div class="detail-value" style="color:var(--text2)">${s.note}</div></div>`:''}
+      </div>
+      ${s.events&&s.events.length?`
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">
+          <i class="fa fa-timeline" style="color:var(--accent);margin-right:6px"></i>Events
+        </div>
+        <div class="events-list">
+          ${s.events.slice(0,6).map(e=>`
+            <div class="event-item">
+              <div class="event-dot"></div>
+              <div><div style="font-size:13px;font-weight:500">${e.description||'—'}</div>
+              <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
+            </div>`).join('')}
+        </div>`:`
+        <div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">
+          <i class="fa fa-satellite-dish" style="font-size:22px;margin-bottom:8px;display:block;opacity:.3"></i>
+          No events yet — tap Track
+        </div>`}
+    `;
+  }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
+}
 
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
 function editFromDetail(){ closeModal('modal-detail'); editShipment(currentDetailId); }
 async function deleteFromDetail(){ if(await confirmDelete()) deleteShipment(currentDetailId); }
-function confirmDelete(){ return _confirm('Delete this shipment?'); }
+function confirmDelete(){ return Promise.resolve(confirm('Delete this shipment?')); }
 
 /* ── Save ── */
 async function saveShipment(){
@@ -1155,7 +1202,7 @@ async function editShipment(sid){
 
 /* ── Delete ── */
 async function deleteShipment(sid){
-  if(!await _confirm('Delete this shipment?')) return;
+  if(!confirm('Delete this shipment?')) return;
   try{
     await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
     toast('Deleted','success'); closeModal('modal-detail');
@@ -1496,6 +1543,8 @@ loadDashboard();
 </div>
 
 
+
+
 <script>
 // ═══ AUTH ════════════════════════════════════════════════════
 const TOKEN_KEY="ft_token", USER_KEY="ft_user";
@@ -1561,7 +1610,7 @@ window.addEventListener("DOMContentLoaded",()=>{
 async function doChangePassword(){
   const old_pw=document.getElementById("cpw-old").value;
   const new_pw=document.getElementById("cpw-new").value;
-  const confirm=document.getElementById("cpw-confirm").value;
+  const confirm_pw=document.getElementById("cpw-confirm").value;
   const msg=document.getElementById("cpw-msg");
   function showMsg(txt,ok){
     msg.textContent=txt; msg.style.display="block";
@@ -1569,9 +1618,9 @@ async function doChangePassword(){
     msg.style.border="1px solid "+(ok?"rgba(34,197,94,.3)":"rgba(239,68,68,.3)");
     msg.style.color=ok?"#16a34a":"#ef4444";
   }
-  if(!old_pw||!new_pw||!confirm){ showMsg("All fields are required",false); return; }
+  if(!old_pw||!new_pw||!confirm_pw){ showMsg("All fields are required",false); return; }
   if(new_pw.length<6){ showMsg("New password must be at least 6 characters",false); return; }
-  if(new_pw!==confirm){ showMsg("Passwords do not match",false); return; }
+  if(new_pw!==confirm_pw){ showMsg("Passwords do not match",false); return; }
   try{
     await apiFetch("/api/auth/change-password",{method:"POST",
       body:JSON.stringify({old_password:old_pw,new_password:new_pw})});
@@ -1719,7 +1768,6 @@ function _renderDetail(s){
   const ha=document.getElementById("detail-portal-href");
   if(ha) ha.href="/track/"+(s.ref||"");
 
-  // Timeline
   const evList=document.getElementById("detail-events-list");
   const noEv=document.getElementById("detail-no-events");
   const evts=(s.events||[]).slice().reverse();
@@ -1737,7 +1785,6 @@ function _renderDetail(s){
       </div>`).join("");
   }
 
-  // Comments
   const cList=document.getElementById("detail-comments-list");
   const comments=s.comments||[];
   cList.innerHTML=!comments.length
@@ -1749,7 +1796,6 @@ function _renderDetail(s){
         <div class="comment-text">${c.text||""}</div>
       </div>`).join("");
 
-  // Info chips
   const chips=[
     {l:"Reference",v:s.ref},{l:"Container/AWB",v:s.ref2||"—"},
     {l:"Mode",v:s.mode||"—"},{l:"Carrier",v:s.carrier||"—"},
@@ -1822,6 +1868,8 @@ function showToast(msg,type){
 </script>
 
 
+
+
 <!-- FILES BOTTOM SHEET -->
 <div class="overlay" id="sheet-files" onclick="if(event.target===this)closeModal('sheet-files')" style="align-items:flex-end">
   <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:18px 18px 0 0;
@@ -1864,6 +1912,8 @@ function showToast(msg,type){
 </div>
 
 
+
+
 <script>
 function openFilesSheet(){
   // Show import button only for admins
@@ -1901,64 +1951,46 @@ function openFilesSheet(){
     </div>
   </div>
 
+
 <script>
 /* ── Custom Confirm ── */
-let _confirmRes = null;
-function _confirm(msg) {
-  return new Promise(resolve => {
-    _confirmRes = resolve;
-    document.getElementById('confirm-msg').textContent = msg;
-    document.getElementById('confirm-ok-btn').onclick = () => { closeModal('modal-confirm'); _confirmRes = null; resolve(true); };
+let _confirmRes=null;
+function _confirm(msg){
+  return new Promise(resolve=>{
+    _confirmRes=resolve;
+    document.getElementById('confirm-msg').textContent=msg;
+    document.getElementById('confirm-ok-btn').onclick=()=>{ closeModal('modal-confirm'); _confirmRes=null; resolve(true); };
     openModal('modal-confirm');
   });
 }
-function _confirmReject() {
-  closeModal('modal-confirm');
-  if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
-}
+function _confirmReject(){ closeModal('modal-confirm'); if(_confirmRes){ _confirmRes(false); _confirmRes=null; } }
 
 /* ── Alerts ── */
-async function loadAlerts() {
-  const c = document.getElementById('alerts-list');
-  const badge = document.getElementById('alerts-badge');
-  if (!c) return;
-  c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px">⏳</div></div>';
-  try {
-    const ships = await apiFetch('/api/shipments');
-    const today = new Date(); today.setHours(0,0,0,0);
-    const out = [];
-    ships.forEach(s => {
-      if (['Delivered','Discharged'].includes(s.status)) return;
-      if (s.eta) {
-        const eta = new Date(s.eta); eta.setHours(0,0,0,0);
-        const d = Math.round((eta - today) / 86400000);
-        if (d < 0) out.push({id:s.id, ref:s.ref, type:'danger', label:'ETA Passed', msg:'ETA was ' + s.eta.slice(0,10)});
-        else if (d <= 3) out.push({id:s.id, ref:s.ref, type:'warning', label:'Arriving Soon', msg:'In ' + d + ' day' + (d===1?'':'s') + ' → ' + (s.pod||'—')});
-      }
-      if (s.status === 'Delayed') out.push({id:s.id, ref:s.ref, type:'danger', label:'Delayed', msg:(s.pol||'—') + ' → ' + (s.pod||'—')});
-      if (s.etd && s.status === 'Pending') {
-        const etd = new Date(s.etd); etd.setHours(0,0,0,0);
-        if (etd < today) out.push({id:s.id, ref:s.ref, type:'warning', label:'ETD Passed', msg:'ETD was ' + s.etd.slice(0,10)});
-      }
+async function loadAlerts(){
+  const c=document.getElementById('alerts-list'), badge=document.getElementById('alerts-badge');
+  if(!c) return;
+  c.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px">⏳</div></div>';
+  try{
+    const ships=await apiFetch('/api/shipments');
+    const today=new Date(); today.setHours(0,0,0,0);
+    const out=[];
+    ships.forEach(s=>{
+      if(['Delivered','Discharged'].includes(s.status)) return;
+      if(s.eta){ const eta=new Date(s.eta); eta.setHours(0,0,0,0);
+        const d=Math.round((eta-today)/86400000);
+        if(d<0) out.push({id:s.id,ref:s.ref,type:'danger',label:'ETA Passed',msg:'ETA was '+s.eta.slice(0,10)});
+        else if(d<=3) out.push({id:s.id,ref:s.ref,type:'warning',label:'Arriving Soon',msg:'In '+d+' day'+(d===1?'':'s')+' → '+(s.pod||'—')}); }
+      if(s.status==='Delayed') out.push({id:s.id,ref:s.ref,type:'danger',label:'Delayed',msg:(s.pol||'—')+' → '+(s.pod||'—')});
     });
-    if (badge) { badge.textContent = out.length; badge.style.display = out.length ? '' : 'none'; }
-    if (!out.length) {
-      c.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700">All clear!</div><div style="font-size:13px;margin-top:6px">No shipments need attention.</div></div>';
-      return;
-    }
-    c.innerHTML = out.map(a => {
-      const col = a.type === 'danger' ? 'var(--red)' : 'var(--yellow)';
+    if(badge){ badge.textContent=out.length; badge.style.display=out.length?'':'none'; }
+    if(!out.length){ c.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700">All clear!</div></div>'; return; }
+    c.innerHTML=out.map(a=>{ const col=a.type==='danger'?'var(--red)':'var(--yellow)';
       return `<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${col};border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer" onclick="openDetail(${a.id})">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
           <span style="font-size:14px;font-weight:700">${a.ref}</span>
           <span style="font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;background:${col}22;color:${col}">${a.label}</span>
-        </div>
-        <div style="font-size:12px;color:var(--text2)">${a.msg}</div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">' + e.message + '</div>';
-  }
+        </div><div style="font-size:12px;color:var(--text2)">${a.msg}</div></div>`;}).join('');
+  } catch(e){ c.innerHTML='<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">'+e.message+'</div>'; }
 }
 </script>
 
