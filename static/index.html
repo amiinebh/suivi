@@ -736,7 +736,7 @@ textarea.form-control{resize:none;min-height:72px}
       <div id="dtab-timeline">
         <div id="detail-events-list" class="tl-list"></div>
         <div id="detail-no-events" style="display:none;text-align:center;padding:30px;color:var(--text2);font-size:12px">
-          <div style="font-size:28px;margin-bottom:6px">📭</div>No events yet. Tap Sync to update.
+          <div style="font-size:28px;margin-bottom:6px">📭</div>No tracking events recorded yet.
         </div>
       </div>
       <div id="dtab-notes" style="display:none">
@@ -1096,11 +1096,16 @@ function renderCards(ships,containerId='ship-cards'){
           <div class="ship-field-label">ETA</div>
           <div class="ship-field-value">${fmt(s.eta)}</div>
         </div>
+        ${s.incoterm?`<div class="ship-field">
+          <div class="ship-field-label">Incoterm</div>
+          <div class="ship-field-value" style="font-weight:700;color:var(--accent)">${s.incoterm}</div>
+        </div>`:''}
+        ${(()=>{const TEU_MAP={'20DRY':1,'40HC':2,'40DRY':2,'40RF':2,'FLEXI':1,'TRUCK':2};const teu=s.containers?s.containers.reduce((a,c)=>a+(TEU_MAP[c.size_type]||0),0):0;return teu>0?`<div class="ship-field"><div class="ship-field-label">Total TEU</div><div class="ship-field-value" style="font-weight:700;color:var(--accent)">${teu} TEU</div></div>`:''})()}
       </div>
       <div class="ship-card-foot">
         <div style="font-size:11px;color:var(--text2)">
           <i class="fa fa-clock" style="margin-right:4px"></i>
-          ${s.last_tracked?'Updated '+fmt(s.last_tracked):'Not tracked yet'}
+          ${s.last_tracked?'Updated '+fmt(s.last_tracked):''}
         </div>
         <div class="ship-actions" onclick="event.stopPropagation()">
           <button class="btn btn-secondary btn-sm btn-icon" onclick="downloadPDF(${s.id})" title="Download PDF">
@@ -1225,6 +1230,11 @@ async function openDetail(sid){
             </span>
           </div>
         </div>
+        ${s.incoterm?`<div class="detail-item"><div class="detail-label">Incoterm</div><div class="detail-value" style="font-weight:700;color:var(--accent)">${s.incoterm}</div></div>`:''}
+        ${s.direction?`<div class="detail-item"><div class="detail-label">Direction</div><div class="detail-value">${s.direction}</div></div>`:''}
+        ${s.stuffing_date?`<div class="detail-item"><div class="detail-label">Stuffing Date</div><div class="detail-value" style="color:var(--yellow)">${s.stuffing_date}</div></div>`:''}
+        ${s.agent?`<div class="detail-item"><div class="detail-label">Agent</div><div class="detail-value">${s.agent}</div></div>`:''}
+        ${(()=>{const TEU_MAP={'20DRY':1,'40HC':2,'40DRY':2,'40RF':2,'FLEXI':1,'TRUCK':2};const teu=s.containers?s.containers.reduce((a,c)=>a+(TEU_MAP[c.size_type]||0),0):0;return teu>0?`<div class="detail-item"><div class="detail-label">Total TEU</div><div class="detail-value" style="font-weight:700;color:var(--accent)">${teu} TEU</div></div>`:''})()}
         ${s.note?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Note</div><div class="detail-value" style="color:var(--text2)">${s.note}</div></div>`:''}
       </div>
       ${s.events&&s.events.length?`
@@ -1239,9 +1249,9 @@ async function openDetail(sid){
               <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
             </div>`).join('')}
         </div>`:`
-        <div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">
-          <i class="fa fa-satellite-dish" style="font-size:22px;margin-bottom:8px;display:block;opacity:.3"></i>
-          No events yet — tap Track
+        <div style="text-align:center;padding:20px;color:var(--text2);font-size:13px;opacity:.5">
+          <i class="fa fa-satellite-dish" style="font-size:22px;margin-bottom:8px;display:block"></i>
+          No tracking events yet
         </div>`}
     `;
   }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
@@ -2460,6 +2470,22 @@ function buildAlerts(ships){
       }
     }
 
+    // ── Stuffing date today or past (EXW) → needs action
+    if(s.stuffing_date && (s.incoterm||'').toUpperCase()==='EXW'){
+      const sf = new Date(s.stuffing_date); sf.setHours(0,0,0,0);
+      const activeForStuff = ['pending','booked'].includes((s.status||'').toLowerCase());
+      if(sf <= today && activeForStuff){
+        alerts.push({
+          key: `stuffing-${s.id}-${s.stuffing_date}`,
+          type: 'warning',
+          icon: '📦',
+          title: `${s.ref} — Stuffing date reached (EXW)`,
+          sub: `Stuffing was ${s.stuffing_date} · ${s.pol||'?'} → ${s.pod||'?'} · Client: ${s.client||'?'}`,
+          shipId: s.id, ref: s.ref
+        });
+      }
+    }
+
     // ── ETA today or past → arriving/arrived, check shipment
     if(s.eta && isActive){
       const eta = new Date(s.eta); eta.setHours(0,0,0,0);
@@ -2534,7 +2560,7 @@ async function loadAlerts(){
     // Group by type
     const groups = {danger:[], warning:[], info:[]};
     alerts.forEach(a => (groups[a.type]||groups.info).push(a));
-    const groupLabels = {danger:'🛬 Arriving / Overdue ETA', warning:'🚨 ETD Passed — Retrack Required', info:'📅 Arriving This Week'};
+    const groupLabels = {danger:'🛬 Arriving / Overdue ETA', warning:'🚨 Action Required (ETD / Stuffing)', info:'📅 Arriving This Week'};
 
     let out = '';
     ['danger','warning','info'].forEach(type => {
@@ -2600,6 +2626,13 @@ function checkDeparturAlerts(ships){
       const etdKey = `etd-${s.id}-${s.etd}`;
       if(etd <= today && ['pending','booked'].includes((s.status||'').toLowerCase()) && !dismissed.includes(etdKey)){
         toast(`🚨 ${s.ref} — ETD passed, retrack to confirm departure!`, 'warning');
+      }
+    }
+    if(s.stuffing_date && (s.incoterm||'').toUpperCase()==='EXW'){
+      const sf = new Date(s.stuffing_date); sf.setHours(0,0,0,0);
+      const sfKey = `stuffing-${s.id}-${s.stuffing_date}`;
+      if(sf <= today && ['pending','booked'].includes((s.status||'').toLowerCase()) && !dismissed.includes(sfKey)){
+        toast(`📦 ${s.ref} — EXW Stuffing date reached, confirm loading!`, 'warning');
       }
     }
   });
