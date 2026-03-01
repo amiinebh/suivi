@@ -888,6 +888,47 @@ textarea.form-control{resize:none;min-height:72px}
             <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text2)">TEU</span>
           </div>
         </div>
+        <!-- ── Direction + Incoterm ── -->
+        <div class="form-group" style="grid-column:1/-1">
+          <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;
+            letter-spacing:.8px;margin-bottom:10px;padding-top:4px;border-top:1px solid var(--border)">Trade Info</div>
+        </div>
+        <div class="form-group">
+          <label>Direction</label>
+          <select id="f-direction" class="form-control" onchange="toggleDirectionFields()">
+            <option value="">— Select —</option>
+            <option value="Export">🚀 Export</option>
+            <option value="Import">📥 Import</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Incoterm</label>
+          <select id="f-incoterm" class="form-control" onchange="toggleIncotermFields()">
+            <option value="">— Select —</option>
+            <option value="EXW">EXW — Ex Works</option>
+            <option value="FCA">FCA — Free Carrier</option>
+            <option value="FAS">FAS — Free Alongside Ship</option>
+            <option value="FOB">FOB — Free On Board</option>
+            <option value="CFR">CFR — Cost &amp; Freight</option>
+            <option value="CIF">CIF — Cost, Insurance &amp; Freight</option>
+            <option value="CPT">CPT — Carriage Paid To</option>
+            <option value="CIP">CIP — Carriage &amp; Insurance Paid</option>
+            <option value="DAP">DAP — Delivered At Place</option>
+            <option value="DPU">DPU — Delivered at Place Unloaded</option>
+            <option value="DDP">DDP — Delivered Duty Paid</option>
+          </select>
+        </div>
+        <!-- Stuffing Date (EXW only) -->
+        <div class="form-group" id="f-stuffing-wrap" style="display:none">
+          <label>Stuffing Date</label>
+          <input id="f-stuffing-date" class="form-control" type="date"
+            style="border-color:rgba(245,158,11,.35)"/>
+        </div>
+        <!-- Agent (Import only) -->
+        <div class="form-group" id="f-agent-wrap" style="display:none">
+          <label>Agent</label>
+          <input id="f-agent" class="form-control" placeholder="Agent name or company"/>
+        </div>
         <div class="form-group full">
           <label>Notes</label>
           <textarea id="f-note" class="form-control" placeholder="Internal notes…"></textarea>
@@ -998,6 +1039,10 @@ function resetForm(){
     const fq=document.getElementById('f-quot'); if(fq) fq.value='';
     ['f-eq-type','f-eq-qty','f-eq-teu'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   editId=null;
+  ['f-direction','f-incoterm'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-stuffing-date','f-agent'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const sw=document.getElementById('f-stuffing-wrap'); if(sw) sw.style.display='none';
+  const aw=document.getElementById('f-agent-wrap');    if(aw) aw.style.display='none';
 }
 function statusBadge(s){
   const m={Pending:'pending',Sailing:'sailing',Transit:'transit',Arrived:'arrived',
@@ -1218,7 +1263,7 @@ async function saveShipment(){
     mode:document.getElementById('f-mode')?.value||'Ocean',
     carrier:g('f-carrier'),client:g('f-client'),client_email:g('f-client-email'),
     pol:g('f-pol'),pod:g('f-pod'),etd:g('f-etd'),eta:g('f-eta'),
-    status:document.getElementById('f-status')?.value||'Pending',note:g('f-note'),quotation_number:g('f-quot'),eq_type:g('f-eq-type'),eq_qty:g('f-eq-qty')};
+    status:document.getElementById('f-status')?.value||'Pending',note:g('f-note'),quotation_number:g('f-quot'),eq_type:g('f-eq-type'),eq_qty:g('f-eq-qty'),direction:document.getElementById('f-direction')?.value||null,incoterm:document.getElementById('f-incoterm')?.value||null,stuffing_date:g('f-stuffing-date'),agent:g('f-agent')};
   try{
     let r;
     if(editId) r=await apiFetch(`/api/shipments/${editId}`,{method:'PATCH',body:JSON.stringify(data)});
@@ -1269,6 +1314,12 @@ async function editShipment(sid){
     const eqTypeEl = document.getElementById('f-eq-type');
     const eqQtyEl  = document.getElementById('f-eq-qty');
     const eqTeuEl  = document.getElementById('f-eq-teu');
+    // Populate new trade fields
+    const fd=document.getElementById('f-direction'); if(fd) fd.value=s.direction||'';
+    const fi=document.getElementById('f-incoterm');  if(fi) fi.value=s.incoterm||'';
+    const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
+    sv('f-stuffing-date',s.stuffing_date); sv('f-agent',s.agent);
+    toggleDirectionFields(); toggleIncotermFields();
     openModal('modal-add');
     // Set equipment AFTER modal is open so <select> is rendered
     requestAnimationFrame(()=>{
@@ -2560,6 +2611,17 @@ function checkDeparturAlerts(ships){
     badge.textContent = alerts.length;
     badge.style.display = alerts.length > 0 ? 'inline-flex' : 'none';
   }
+}
+
+function toggleIncotermFields(){
+  const v=document.getElementById('f-incoterm')?.value;
+  const sw=document.getElementById('f-stuffing-wrap');
+  if(sw) sw.style.display=(v==='EXW')?'block':'none';
+}
+function toggleDirectionFields(){
+  const v=document.getElementById('f-direction')?.value;
+  const aw=document.getElementById('f-agent-wrap');
+  if(aw) aw.style.display=(v==='Import')?'block':'none';
 }
 
 </script>
