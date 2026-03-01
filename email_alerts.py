@@ -1,11 +1,9 @@
-import os, resend
+import os
 from datetime import datetime
 
-resend.api_key = os.getenv("RESEND_API_KEY", "")
-FROM_EMAIL     = os.getenv("ALERT_FROM_EMAIL", "onboarding@resend.dev")
-TO_EMAILS_RAW  = os.getenv("ALERT_TO_EMAILS", "")
-TEAM_EMAILS    = [e.strip() for e in TO_EMAILS_RAW.split(",") if e.strip()]
-APP_URL        = os.getenv("APP_URL", "https://suivi-production-18db.up.railway.app")
+FROM_EMAIL  = os.getenv("ALERT_FROM_EMAIL", "onboarding@resend.dev")
+TEAM_EMAILS = [e.strip() for e in os.getenv("ALERT_TO_EMAILS","").split(",") if e.strip()]
+APP_URL     = os.getenv("APP_URL", "https://suivi-production-18db.up.railway.app")
 
 COLORS = {
     "danger":  "#ef4444",
@@ -84,10 +82,13 @@ def _shipment_body(s, extra_rows="") -> str:
     """
 
 def _send(to: list, subject: str, html: str):
-    if not resend.api_key or not to:
+    api_key = os.getenv("RESEND_API_KEY", "")
+    if not api_key or not to:
         print(f"[email] skipped — no API key or recipients. subject={subject}")
         return
     try:
+        import resend
+        resend.api_key = api_key
         resend.Emails.send({"from": FROM_EMAIL, "to": to, "subject": subject, "html": html})
         print(f"[email] sent: {subject} → {to}")
     except Exception as e:

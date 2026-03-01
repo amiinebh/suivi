@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Response, Request
-import scheduler as alert_scheduler
 from auth import get_current_user, require_admin, hash_password, verify_password, create_token
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -21,12 +20,15 @@ def get_db():
     db = SessionLocal()
     try: yield db
     finally: db.close()
-    # Start daily email alert scheduler (non-blocking)
-    try:
-        import threading
-        threading.Thread(target=alert_scheduler.start_scheduler, daemon=True).start()
-    except Exception as e:
-        print(f"scheduler start error: {e}")
+    # Start daily email alert scheduler (non-blocking, lazy import)
+    def _start_sched():
+        try:
+            import scheduler as _sched
+            _sched.start_scheduler()
+        except Exception as e:
+            print(f"scheduler start error: {e}")
+    import threading
+    threading.Thread(target=_start_sched, daemon=True).start()
 
 
 # ── Pages ────────────────────────────────────────────────────────────────────
@@ -156,20 +158,24 @@ async def update_shipment(sid: int, request: Request, db: Session = Depends(get_
     body = await request.json()
     body.pop("eq_type", None); body.pop("eq_qty", None)
     data = schemas.ShipmentUpdate(**{k: v or None for k, v in body.items() if v is not None})
-    old_status = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
-    old_status_val = old_status.status if old_status else None
+    # Only fetch old status if status field is being updated (perf optimization)
+    old_status_val = None
+    if "status" in body and body["status"]:
+        existing = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
+        old_status_val = existing.status if existing else None
     s = crud.update_shipment(db, sid, data)
     if not s: raise HTTPException(404, "Not found")
     db.refresh(s)
-    # Auto-email client on status change
-    new_status_val = s.status
-    if old_status_val != new_status_val and s.client_email:
-        try:
-            import email_alerts, threading
-            threading.Thread(target=email_alerts.send_status_change_email,
-                             args=(s, old_status_val, new_status_val), daemon=True).start()
-        except Exception as ex:
-            print(f"[email] status change email error: {ex}")
+    # Auto-email client only when status actually changed
+    if old_status_val and old_status_val != s.status and s.client_email:
+        def _notify(ship, old_s, new_s):
+            try:
+                import email_alerts
+                email_alerts.send_status_change_email(ship, old_s, new_s)
+            except Exception as ex:
+                print(f"[email] status change email error: {ex}")
+        import threading
+        threading.Thread(target=_notify, args=(s, old_status_val, s.status), daemon=True).start()
     return s
 
 
