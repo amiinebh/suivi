@@ -1205,7 +1205,7 @@ async function saveShipment(){
     mode:document.getElementById('f-mode')?.value||'Ocean',
     carrier:g('f-carrier'),client:g('f-client'),client_email:g('f-client-email'),
     pol:g('f-pol'),pod:g('f-pod'),etd:g('f-etd'),eta:g('f-eta'),
-    status:document.getElementById('f-status')?.value||'Pending',note:g('f-note'),quotation_number:g('f-quot')};
+    status:document.getElementById('f-status')?.value||'Pending',note:g('f-note'),quotation_number:g('f-quot'),eq_type:g('f-eq-type'),eq_qty:g('f-eq-qty')};
   try{
     let r;
     if(editId) r=await apiFetch(`/api/shipments/${editId}`,{method:'PATCH',body:JSON.stringify(data)});
