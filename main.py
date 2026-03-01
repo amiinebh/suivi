@@ -156,10 +156,37 @@ async def update_shipment(sid: int, request: Request, db: Session = Depends(get_
     body = await request.json()
     body.pop("eq_type", None); body.pop("eq_qty", None)
     data = schemas.ShipmentUpdate(**{k: v or None for k, v in body.items() if v is not None})
+    old_status = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
+    old_status_val = old_status.status if old_status else None
     s = crud.update_shipment(db, sid, data)
     if not s: raise HTTPException(404, "Not found")
     db.refresh(s)
+    # Auto-email client on status change
+    new_status_val = s.status
+    if old_status_val != new_status_val and s.client_email:
+        try:
+            import email_alerts, threading
+            threading.Thread(target=email_alerts.send_status_change_email,
+                             args=(s, old_status_val, new_status_val), daemon=True).start()
+        except Exception as ex:
+            print(f"[email] status change email error: {ex}")
     return s
+
+
+@app.post("/api/shipments/{sid}/send-email")
+async def send_client_email(sid: int, request: Request, db: Session = Depends(get_db),
+                            current=Depends(get_current_user)):
+    """Manually send a custom email to the shipment client."""
+    body = await request.json()
+    subject = body.get("subject", "").strip()
+    msg_body = body.get("body", "").strip()
+    s = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
+    if not s: raise HTTPException(404, "Shipment not found")
+    if not s.client_email: raise HTTPException(400, "No client email on this shipment")
+    if not subject or not msg_body: raise HTTPException(400, "Subject and body required")
+    import email_alerts
+    email_alerts.send_custom_client_email(s, subject, msg_body)
+    return {"ok": True, "sent_to": s.client_email}
 
 @app.delete("/api/shipments/{sid}")
 def delete_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):

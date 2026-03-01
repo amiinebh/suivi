@@ -172,3 +172,57 @@ def send_stuffing_date_reached(s):
         COLORS["warning"], "📦", body
     )
     _send(TEAM_EMAILS, subject, html)
+
+def send_custom_client_email(s, subject: str, body_text: str):
+    """Send a manually composed email to the shipment client."""
+    if not s.client_email: return
+    track_url = f"{APP_URL}/track/{s.ref}"
+    body_html = body_text.replace("\n", "<br/>")
+    html = _html_wrapper(
+        subject, COLORS["info"], "📧",
+        f"""<div style="font-size:14px;color:#475569;line-height:1.8;margin-bottom:24px">{body_html}</div>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0"/>
+        <a href="{track_url}" style="display:inline-block;background:linear-gradient(135deg,#4f8ef7,#6c63ff);
+          color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700">
+          🔍 Track Your Shipment
+        </a>
+        <div style="font-size:11px;color:#94a3b8;margin-top:8px">{track_url}</div>"""
+    )
+    _send([s.client_email], subject, html)
+
+
+STATUS_ICONS = {
+    "Pending":"📋","Booked":"✅","Sailing":"🚢","Transit":"🔄",
+    "Arrived":"🛬","Discharged":"📦","Delivered":"🎉","Delayed":"⚠️"
+}
+
+def send_status_change_email(s, old_status: str, new_status: str):
+    """Auto-send to client when shipment status changes."""
+    if not s.client_email: return
+    track_url = f"{APP_URL}/track/{s.ref}"
+    icon = STATUS_ICONS.get(new_status, "📋")
+    color = COLORS.get({
+        "Sailing":"info","Transit":"info","Arrived":"danger",
+        "Discharged":"danger","Delivered":"success","Delayed":"warning"
+    }.get(new_status,"info"), COLORS["info"])
+
+    body = f"""
+    <p style="font-size:15px;color:#0f172a;margin-bottom:16px">Dear {s.client or 'Customer'},</p>
+    <p style="font-size:14px;color:#475569;line-height:1.7;margin-bottom:20px">
+      The status of your shipment has been updated:
+    </p>
+    <div style="display:flex;align-items:center;gap:16px;background:#f8fafc;border-radius:12px;
+      padding:16px;margin-bottom:24px">
+      <div style="font-size:13px;color:#94a3b8;font-weight:600">{old_status or '—'}</div>
+      <div style="font-size:20px">→</div>
+      <div style="background:{color}22;color:{color};padding:6px 16px;border-radius:20px;
+        font-size:14px;font-weight:700">{icon} {new_status}</div>
+    </div>
+    {_shipment_body(s)}
+    """
+    html = _html_wrapper(
+        f"{s.ref} — Status updated to {new_status}",
+        color, icon, body
+    )
+    _send([s.client_email], f"{icon} [{s.ref}] Status update: {new_status}", html)
+
