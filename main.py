@@ -47,15 +47,31 @@ def client_portal(ref: str): return FileResponse("static/portal/index.html")
 
 # ── Portal API ───────────────────────────────────────────────────────────────
 @app.get("/api/portal/{ref}")
+@app.get("/api/track/{ref}")
 def portal_data(ref: str, db: Session = Depends(get_db)):
-    s = crud.get_shipment(db, ref)
+    from sqlalchemy import or_
+    # Search by ref, booking_no, container number (ref2), or quotation number — case-insensitive
+    s = db.query(models.Shipment).filter(
+        or_(
+            models.Shipment.ref.ilike(ref),
+            models.Shipment.booking_no.ilike(ref),
+            models.Shipment.ref2.ilike(ref),
+            models.Shipment.quotation_number.ilike(ref),
+        )
+    ).first()
     if not s: raise HTTPException(404, "Shipment not found")
     return {
         "ref": s.ref, "ref2": s.ref2, "mode": s.mode,
+        "booking_no": s.booking_no, "quotation_number": s.quotation_number,
         "carrier": s.carrier, "vessel": s.vessel,
         "pol": s.pol, "pod": s.pod, "etd": s.etd,
         "eta": s.eta, "status": s.status,
         "client": s.client, "last_tracked": s.last_tracked,
+        "containers": [
+            {"id": c.id, "container_no": c.container_no, "size_type": c.size_type,
+             "seal_no": c.seal_no, "weight": c.weight}
+            for c in s.containers
+        ],
         "events": [{"timestamp": e.timestamp, "location": e.location,
                     "description": e.description, "status": e.status}
                    for e in sorted(s.events, key=lambda x: x.timestamp, reverse=True)]
