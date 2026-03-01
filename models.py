@@ -21,6 +21,7 @@ class Shipment(Base):
     client_email  = Column(String, nullable=True)       # for email alerts
     note          = Column(Text, nullable=True)
     shipsgo_id    = Column(Integer, nullable=True)
+    quotation_number = Column(String, nullable=True)
     last_tracked  = Column(String, nullable=True)
     created_at    = Column(String, default=lambda: datetime.utcnow().isoformat())
     events        = relationship("ShipmentEvent", back_populates="shipment", cascade="all, delete")

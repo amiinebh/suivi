@@ -3,7 +3,6 @@ from auth import get_current_user, require_admin, hash_password, verify_password
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
-from apscheduler.schedulers.background import BackgroundScheduler
 import models, schemas, crud, tracker, export
 from database import SessionLocal, engine
 import os, logging
@@ -145,10 +144,6 @@ def track_one(sid: int, db: Session = Depends(get_db), current=Depends(get_curre
     return tracker.track_and_update(db, s)
 
 @app.post("/api/track-all")
-def track_all(background_tasks: BackgroundTasks, db: Session = Depends(get_db), current=Depends(get_current_user)):
-    background_tasks.add_task(tracker.run_auto_tracking, db)
-    return {"message": "Tracking started"}
-
 # ── Comments ──────────────────────────────────────────────────────────────────
 @app.post("/api/shipments/{sid}/comments", response_model=schemas.CommentOut)
 def add_comment(sid: int, data: schemas.CommentCreate, db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -477,16 +472,5 @@ def t49_debug(db: Session = Depends(get_db)):
          "carrier": s.carrier, "t49_note": s.note}
         for s in unregistered
     ]
-    return result
-
-
-@app.get("/api/shipments/{sid}/track-now")
-def track_now(sid: int, db: Session = Depends(get_db)):
-    """Force-track a shipment using direct carrier scraping — no API key needed."""
-    import tracker as _t
-    s = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
-    if not s:
-        return {"error": f"Shipment id={sid} not found"}
-    result = _t.track_and_update(db, s)
     return result
 
