@@ -868,6 +868,9 @@ textarea.form-control{resize:none;min-height:72px}
       <button class="btn btn-secondary" style="flex:1" onclick="editFromDetail()">
         <i class="fa fa-pen"></i> Edit
       </button>
+      <button class="btn btn-primary" style="flex:1" onclick="openEmailPreview()" id="btn-send-email">
+        <i class="fa fa-envelope"></i> Email
+      </button>
       <button class="btn btn-danger" style="flex:1" onclick="deleteFromDetail()">
         <i class="fa fa-trash"></i> Delete
       </button>
@@ -877,7 +880,6 @@ textarea.form-control{resize:none;min-height:72px}
 
 <!-- ═══════ JS ═══════ -->
 <script>
-
 let editId=null, currentDetailId=null, allShipments=[];
 
 /* ── Nav ── */
@@ -895,7 +897,6 @@ function showPage(id,el){
   document.getElementById('page-title').textContent=titles[id]||id;
   if(id==='shipments') loadShipments();
   if(id==='analytics') loadAnalytics();
-  if(id==='dashboard') loadDashboard();
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -1043,7 +1044,7 @@ function renderTable(ships){
 }
 
 /* ── Dashboard ── */
-async async function loadDashboard(){
+async function loadDashboard(){
   try{
     const stats=await apiFetch('/api/stats');
     const bs=stats.by_status||{};
@@ -1399,8 +1400,9 @@ function initTheme(){
 /* ── Init ── */
 initTheme();
 loadDashboard();
+</script>
 
-
+<script>
 // ══════════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════════
@@ -1481,7 +1483,6 @@ function showApp(){
   if(r) r.textContent = isAdmin() ? "Admin" : "CS Agent";
   const a = document.getElementById("sidebar-avatar");
   if(a) a.textContent = (user?.name||"U")[0].toUpperCase();
-  loadDashboard();
 }
 
 function doLogout(){
@@ -1574,8 +1575,144 @@ async function deleteUser(id){
   const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
   if(r.ok) loadUsers();
 }
+</script>
 
 
+<!-- ═══════ ADD USER MODAL ═══════ -->
+<div class="overlay" id="modal-add-user">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title">➕ Add Team Member</div>
+      <button class="modal-close" onclick="closeModal('modal-add-user')">
+        <i class="fa fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name <span style="color:#ef4444">*</span></label>
+          <input id="nu-name" class="form-control" type="text" placeholder="e.g. Sara Dupont"/>
+        </div>
+        <div class="form-group">
+          <label>Email Address <span style="color:#ef4444">*</span></label>
+          <input id="nu-email" class="form-control" type="email" placeholder="sara@company.com"/>
+        </div>
+        <div class="form-group">
+          <label>Password <span style="color:#ef4444">*</span></label>
+          <input id="nu-pw" class="form-control" type="password" placeholder="Minimum 6 characters"/>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="nu-role" class="form-control">
+            <option value="cs">🎧 CS Agent — create, track & delete shipments</option>
+            <option value="admin">👑 Admin — full access incl. KPI & team</option>
+          </select>
+        </div>
+      </div>
+      <div id="nu-error" style="display:none;margin-top:10px;padding:10px 12px;
+        background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+        border-radius:8px;font-size:12px;color:#ef4444"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
+      <button class="btn btn-primary" onclick="createUser()">
+        <i class="fa fa-check"></i> Create User
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- CHANGE PASSWORD -->
+<div class="overlay" id="modal-change-pw">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title">🔐 Change Password</div>
+      <button class="modal-close" onclick="closeModal('modal-change-pw')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Current Password</label>
+          <input id="cpw-old" class="form-control" type="password" placeholder="Current password"/></div>
+        <div class="form-group full"><label>New Password</label>
+          <input id="cpw-new" class="form-control" type="password" placeholder="Min 6 characters"/></div>
+        <div class="form-group full"><label>Confirm New Password</label>
+          <input id="cpw-confirm" class="form-control" type="password" placeholder="Repeat new password"/></div>
+      </div>
+      <div id="cpw-msg" style="display:none;margin-top:8px;padding:10px 12px;border-radius:8px;font-size:12px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-change-pw')">Cancel</button>
+      <button class="btn btn-primary" onclick="doChangePassword()"><i class="fa fa-check"></i> Update</button>
+    </div>
+  </div>
+</div>
+<!-- BULK IMPORT -->
+<div class="overlay" id="modal-bulk-import">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title">📥 Bulk Import</div>
+      <button class="modal-close" onclick="closeModal('modal-bulk-import')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2)">
+        <strong style="color:var(--text1)">Excel columns (row 1 = headers):</strong>
+        <code style="display:block;margin-top:4px;font-size:11px">ref · ref2 · mode · carrier · client · client_email · pol · pod · booking_no</code>
+        <div style="margin-top:6px">Only <strong>ref</strong> is required.</div>
+      </div>
+      <div id="bulk-drop-zone" onclick="document.getElementById('bulk-file').click()"
+        style="border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:.2s">
+        <i class="fa fa-file-excel" style="font-size:30px;color:#22c55e;display:block;margin-bottom:8px"></i>
+        <div style="font-size:13px;font-weight:600;color:var(--text1)">Drop .xlsx here</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">or click to browse</div>
+      </div>
+      <input id="bulk-file" type="file" accept=".xlsx" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
+      <div id="bulk-selected" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px"></div>
+      <div id="bulk-result" style="display:none;margin-top:10px;padding:12px;border-radius:8px;font-size:13px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-bulk-import')">Close</button>
+      <button class="btn btn-primary" id="bulk-upload-btn" style="display:none" onclick="doBulkUpload()">
+        <i class="fa fa-upload"></i> Import
+      </button>
+    </div>
+  </div>
+</div>
+<!-- ADD USER -->
+<div class="overlay" id="modal-add-user">
+  <div class="modal"><div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title">➕ Add Team Member</div>
+      <button class="modal-close" onclick="closeModal('modal-add-user')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Full Name <span style="color:#ef4444">*</span></label>
+          <input id="nu-name" class="form-control" type="text" placeholder="e.g. Sara Dupont"/></div>
+        <div class="form-group full"><label>Email <span style="color:#ef4444">*</span></label>
+          <input id="nu-email" class="form-control" type="email" placeholder="sara@company.com"/></div>
+        <div class="form-group full"><label>Password <span style="color:#ef4444">*</span></label>
+          <input id="nu-pw" class="form-control" type="password" placeholder="Min 6 characters"/></div>
+        <div class="form-group full"><label>Role</label>
+          <select id="nu-role" class="form-control">
+            <option value="cs">🎧 CS Agent</option>
+            <option value="admin">👑 Admin</option>
+          </select>
+        </div>
+      </div>
+      <div id="nu-error" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(239,68,68,.1);
+        border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:12px;color:#ef4444"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
+      <button class="btn btn-primary" onclick="createUser()"><i class="fa fa-check"></i> Create</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
 // ═══ AUTH ════════════════════════════════════════════════════
 const TOKEN_KEY="ft_token", USER_KEY="ft_user";
 function getToken(){ return localStorage.getItem(TOKEN_KEY); }
@@ -1898,86 +2035,58 @@ function showToast(msg,type){
   t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"✅":"❌"}</span>${msg}`;
   wrap.appendChild(t); setTimeout(()=>t.remove(),2800);
 }
+</script>
 
 
+<!-- FILES BOTTOM SHEET -->
+<div class="overlay" id="sheet-files" onclick="if(event.target===this)closeModal('sheet-files')" style="align-items:flex-end">
+  <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:18px 18px 0 0;
+    padding:0 0 calc(env(safe-area-inset-bottom)+16px);box-shadow:var(--shadow)">
+    <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 4px"></div>
+    <div style="padding:10px 20px 16px">
+      <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">Files</div>
+      <!-- Export -->
+      <button onclick="exportXLSX();closeModal('sheet-files')"
+        style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;
+          background:var(--bg3);border:none;border-radius:12px;cursor:pointer;margin-bottom:10px;
+          font-family:inherit;text-align:left">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(34,197,94,.15);
+          display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="fa fa-download" style="color:#22c55e;font-size:18px"></i>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text1)">Export XLSX</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">Download shipments as Excel file</div>
+        </div>
+        <i class="fa fa-chevron-right" style="color:var(--text3);margin-left:auto"></i>
+      </button>
+      <!-- Import (admin only) -->
+      <button id="sheet-import-btn" onclick="openModal('modal-bulk-import');closeModal('sheet-files')"
+        style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;
+          background:var(--bg3);border:none;border-radius:12px;cursor:pointer;
+          font-family:inherit;text-align:left;display:none">
+        <div style="width:42px;height:42px;border-radius:10px;background:rgba(79,142,247,.15);
+          display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="fa fa-upload" style="color:#4f8ef7;font-size:18px"></i>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text1)">Import XLSX</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">Upload Excel to create shipments in bulk</div>
+        </div>
+        <i class="fa fa-chevron-right" style="color:var(--text3);margin-left:auto"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<script>
 function openFilesSheet(){
   // Show import button only for admins
   const importBtn = document.getElementById("sheet-import-btn");
   if(importBtn) importBtn.style.display = isAdmin() ? "flex" : "none";
   openModal("sheet-files");
 }
-
-/* ═══════════════════════════════════════════
-   MANUAL EMAIL TO CLIENT
-═══════════════════════════════════════════ */
-const STATUS_TEMPLATES = {
-  Pending:    { subject: "Your shipment {ref} has been registered",
-    body: "Dear {client},\n\nYour shipment {ref} has been registered.\n\nRoute: {pol} \u2192 {pod}\nCarrier: {carrier}\nETD: {etd} \u00b7 ETA: {eta}\n\nBest regards,\nFreightTrack Team" },
-  Booked:     { subject: "Your shipment {ref} is confirmed & booked",
-    body: "Dear {client},\n\nYour shipment {ref} is confirmed with {carrier}.\n\nBooking #: {booking_no}\nETD: {etd} \u00b7 ETA: {eta}\n\nBest regards,\nFreightTrack Team" },
-  Sailing:    { subject: "Your shipment {ref} has departed \u2014 now sailing",
-    body: "Dear {client},\n\nYour shipment {ref} has departed from {pol} and is sailing to {pod}.\n\nCarrier: {carrier} \u00b7 Vessel: {vessel}\nETA: {eta}\n\nBest regards,\nFreightTrack Team" },
-  Transit:    { subject: "Your shipment {ref} is in transit",
-    body: "Dear {client},\n\nYour shipment {ref} is in transit to {pod}.\n\nETA: {eta} \u00b7 Carrier: {carrier}\n\nBest regards,\nFreightTrack Team" },
-  Arrived:    { subject: "Your shipment {ref} has arrived at {pod}",
-    body: "Dear {client},\n\nYour shipment {ref} has arrived at {pod}.\n\nPlease coordinate with your agent for customs clearance.\n\nBooking #: {booking_no}\n\nBest regards,\nFreightTrack Team" },
-  Discharged: { subject: "Your shipment {ref} has been discharged at {pod}",
-    body: "Dear {client},\n\nYour shipment {ref} has been discharged at {pod} and is awaiting customs clearance.\n\nBooking #: {booking_no}\n\nBest regards,\nFreightTrack Team" },
-  Delivered:  { subject: "Your shipment {ref} has been delivered \u2705",
-    body: "Dear {client},\n\nYour shipment {ref} has been successfully delivered.\n\nThank you for trusting us with your cargo.\n\nBest regards,\nFreightTrack Team" },
-  Delayed:    { subject: "Important: Your shipment {ref} is delayed",
-    body: "Dear {client},\n\nYour shipment {ref} is experiencing a delay.\n\nRevised ETA: {eta} \u00b7 Carrier: {carrier}\nRoute: {pol} \u2192 {pod}\n\nWe apologize for the inconvenience and will keep you updated.\n\nBest regards,\nFreightTrack Team" },
-};
-
-function _fillTemplate(tpl, s){
-  return tpl
-    .replace(/{ref}/g,        s.ref         || '\u2014')
-    .replace(/{client}/g,     s.client      || 'Customer')
-    .replace(/{carrier}/g,    s.carrier     || '\u2014')
-    .replace(/{vessel}/g,     s.vessel      || '\u2014')
-    .replace(/{pol}/g,        s.pol         || '\u2014')
-    .replace(/{pod}/g,        s.pod         || '\u2014')
-    .replace(/{etd}/g,        (s.etd  || '\u2014').substring(0,10))
-    .replace(/{eta}/g,        (s.eta  || '\u2014').substring(0,10))
-    .replace(/{booking_no}/g, s.booking_no  || '\u2014');
-}
-
-let _emailShipment = null;
-
-async function openEmailPreview(){
-  if(!currentDetailId) return;
-  try{
-    const s = await apiFetch('/api/shipments/' + currentDetailId);
-    _emailShipment = s;
-    if(!s.client_email){ toast('No client email on this shipment','error'); return; }
-    const tpl = STATUS_TEMPLATES[s.status] || STATUS_TEMPLATES['Pending'];
-    document.getElementById('ep-to-email').textContent = s.client_email;
-    document.getElementById('ep-subject').value = _fillTemplate(tpl.subject, s);
-    document.getElementById('ep-body').value    = _fillTemplate(tpl.body, s);
-    openModal('modal-email-preview');
-  }catch(e){ toast(e.message,'error'); }
-}
-
-async function confirmSendEmail(){
-  if(!_emailShipment) return;
-  const btn = document.getElementById('btn-confirm-send');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Sending\u2026';
-  try{
-    const subject = document.getElementById('ep-subject').value.trim();
-    const body    = document.getElementById('ep-body').value.trim();
-    await apiFetch('/api/shipments/' + _emailShipment.id + '/send-email',
-      { method: 'POST', body: JSON.stringify({ subject, body }) });
-    toast('Email sent to ' + _emailShipment.client_email, 'success');
-    closeModal('modal-email-preview');
-  }catch(e){
-    toast(e.message, 'error');
-  }finally{
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa fa-paper-plane"></i> Confirm & Send';
-  }
-}
-
 </script>
 
 
@@ -1992,7 +2101,7 @@ async function confirmSendEmail(){
     <div class="modal-body">
       <div style="font-size:12px;color:var(--text2);margin-bottom:14px">
         <i class="fa fa-circle-info" style="color:var(--accent)"></i>
-        Sending to: <strong id="ep-to-email" style="color:var(--text)">—</strong>
+        Sending to: <strong id="ep-to-email" style="color:var(--text)">-</strong>
       </div>
       <div class="form-group">
         <label>Subject</label>
@@ -2002,7 +2111,7 @@ async function confirmSendEmail(){
         <label>Message</label>
         <textarea id="ep-body" class="form-control" rows="9"
           style="font-size:13px;line-height:1.7;resize:vertical;min-height:200px"
-          placeholder="Email body…"></textarea>
+          placeholder="Email body..."></textarea>
       </div>
       <div style="font-size:11px;color:var(--text3);margin-top:-6px">
         <i class="fa fa-circle-info"></i> Shipment details and tracking link are automatically included.
@@ -2011,10 +2120,133 @@ async function confirmSendEmail(){
     <div class="modal-foot">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-email-preview')">Cancel</button>
       <button class="btn btn-primary" style="flex:2" id="btn-confirm-send" onclick="confirmSendEmail()">
-        <i class="fa fa-paper-plane"></i> Confirm & Send
+        <i class="fa fa-paper-plane"></i> Confirm &amp; Send
       </button>
     </div>
   </div>
 </div>
+
+<script>
+var STATUS_TEMPLATES = {
+  Pending:    { subject: "Your shipment {ref} has been registered", body: "Dear {client},
+
+Your shipment {ref} has been registered.
+
+Route: {pol} to {pod}
+Carrier: {carrier}
+ETD: {etd} - ETA: {eta}
+
+Best regards,
+FreightTrack Team" },
+  Booked:     { subject: "Your shipment {ref} is confirmed and booked", body: "Dear {client},
+
+Your shipment {ref} has been confirmed with {carrier}.
+
+Booking: {booking_no}
+ETD: {etd} - ETA: {eta}
+
+Best regards,
+FreightTrack Team" },
+  Sailing:    { subject: "Your shipment {ref} has departed", body: "Dear {client},
+
+Your shipment {ref} has departed from {pol} and is sailing to {pod}.
+
+Carrier: {carrier} - Vessel: {vessel}
+ETA: {eta}
+
+Best regards,
+FreightTrack Team" },
+  Transit:    { subject: "Your shipment {ref} is in transit", body: "Dear {client},
+
+Your shipment {ref} is in transit to {pod}.
+
+ETA: {eta} - Carrier: {carrier}
+
+Best regards,
+FreightTrack Team" },
+  Arrived:    { subject: "Your shipment {ref} has arrived at {pod}", body: "Dear {client},
+
+Your shipment {ref} has arrived at {pod}. Please arrange customs clearance.
+
+Booking: {booking_no}
+
+Best regards,
+FreightTrack Team" },
+  Discharged: { subject: "Your shipment {ref} has been discharged", body: "Dear {client},
+
+Your shipment {ref} has been discharged at {pod} and is awaiting customs clearance.
+
+Booking: {booking_no}
+
+Best regards,
+FreightTrack Team" },
+  Delivered:  { subject: "Your shipment {ref} has been delivered", body: "Dear {client},
+
+Your shipment {ref} has been successfully delivered. Thank you for your trust.
+
+Best regards,
+FreightTrack Team" },
+  Delayed:    { subject: "Important: Your shipment {ref} is delayed", body: "Dear {client},
+
+Your shipment {ref} is experiencing a delay.
+
+Revised ETA: {eta} - Carrier: {carrier}
+Route: {pol} to {pod}
+
+We apologize for the inconvenience.
+
+Best regards,
+FreightTrack Team" }
+};
+
+function fillTpl(tpl, s){
+  return tpl
+    .replace(/{ref}/g, s.ref || '-')
+    .replace(/{client}/g, s.client || 'Customer')
+    .replace(/{carrier}/g, s.carrier || '-')
+    .replace(/{vessel}/g, s.vessel || '-')
+    .replace(/{pol}/g, s.pol || '-')
+    .replace(/{pod}/g, s.pod || '-')
+    .replace(/{etd}/g, (s.etd || '-').substring(0, 10))
+    .replace(/{eta}/g, (s.eta || '-').substring(0, 10))
+    .replace(/{booking_no}/g, s.booking_no || '-');
+}
+
+var _emailShipment = null;
+
+async function openEmailPreview(){
+  if(!currentDetailId) return;
+  try {
+    var s = await apiFetch('/api/shipments/' + currentDetailId);
+    _emailShipment = s;
+    if(!s.client_email){ toast('No client email on this shipment', 'error'); return; }
+    var tpl = STATUS_TEMPLATES[s.status] || STATUS_TEMPLATES['Pending'];
+    document.getElementById('ep-to-email').textContent = s.client_email;
+    document.getElementById('ep-subject').value = fillTpl(tpl.subject, s);
+    document.getElementById('ep-body').value    = fillTpl(tpl.body, s);
+    openModal('modal-email-preview');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function confirmSendEmail(){
+  if(!_emailShipment) return;
+  var btn = document.getElementById('btn-confirm-send');
+  btn.disabled = true;
+  btn.innerHTML = 'Sending...';
+  try {
+    var subject = document.getElementById('ep-subject').value.trim();
+    var body    = document.getElementById('ep-body').value.trim();
+    await apiFetch('/api/shipments/' + _emailShipment.id + '/send-email',
+      { method: 'POST', body: JSON.stringify({ subject: subject, body: body }) });
+    toast('Email sent to ' + _emailShipment.client_email, 'success');
+    closeModal('modal-email-preview');
+  } catch(e) {
+    toast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa fa-paper-plane"></i> Confirm & Send';
+  }
+}
+</script>
 </body>
 </html>
