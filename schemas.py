@@ -39,6 +39,21 @@ class ShipmentCreate(BaseModel):
     eta: Optional[str] = None
     status: Optional[str] = "Pending"
 
+
+class ContainerOut(BaseModel):
+    id: int
+    container_no: str
+    seal_no: Optional[str]
+    size_type: Optional[str]
+    weight: Optional[str]
+    class Config: from_attributes = True
+
+class ContainerCreate(BaseModel):
+    container_no: str
+    seal_no: Optional[str] = None
+    size_type: Optional[str] = None
+    weight: Optional[str] = None
+
 class ShipmentOut(BaseModel):
     id: int
     ref: str
@@ -60,6 +75,7 @@ class ShipmentOut(BaseModel):
     created_at: Optional[str]
     events: List[EventOut] = []
     comments: List[CommentOut] = []
+    containers: List[ContainerOut] = []
     class Config: from_attributes = True
 
 class ShipmentUpdate(BaseModel):

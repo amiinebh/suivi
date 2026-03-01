@@ -169,6 +169,71 @@ async def webhook(payload: dict, db: Session = Depends(get_db)):
     return {"ok": True}
 
 # ── Health check ──────────────────────────────────────────────────────────────
+
+# ══ PDF EXPORTS ════════════════════════════════════════════════════════════
+@app.get("/api/shipments/{sid}/pdf")
+def shipment_pdf(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    """Generate PDF report for a single shipment."""
+    import pdf_export
+    s = crud.get_shipment_by_id(db, sid)
+    if not s: raise HTTPException(404, "Shipment not found")
+    pdf_bytes = pdf_export.generate_shipment_pdf(s)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="shipment_{s.ref}.pdf"'}
+    )
+
+@app.get("/api/dashboard/pdf")
+def dashboard_pdf(db: Session = Depends(get_db), current=Depends(get_current_user)):
+    """Generate dashboard summary PDF."""
+    import pdf_export
+    stats = crud.get_stats(db)
+    ships = crud.get_shipments(db, "", "", "")
+    pdf_bytes = pdf_export.generate_dashboard_pdf(stats, ships)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="dashboard_{datetime.now().strftime("%Y%m%d")}.pdf"'}
+    )
+
+# ══ CONTAINERS (Multi-container per shipment) ═════════════════════════════
+@app.get("/api/shipments/{sid}/containers")
+def get_containers(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    """Get all containers for a shipment."""
+    s = crud.get_shipment_by_id(db, sid)
+    if not s: raise HTTPException(404, "Shipment not found")
+    return s.containers
+
+@app.post("/api/shipments/{sid}/containers")
+def add_container(sid: int, data: dict, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    """Add a container to a shipment."""
+    s = crud.get_shipment_by_id(db, sid)
+    if not s: raise HTTPException(404, "Shipment not found")
+    from models import Container
+    cont = Container(
+        shipment_id=sid,
+        container_no=data.get("container_no"),
+        seal_no=data.get("seal_no"),
+        size_type=data.get("size_type"),
+        weight=data.get("weight")
+    )
+    db.add(cont)
+    db.commit()
+    db.refresh(cont)
+    return cont
+
+@app.delete("/api/containers/{cid}")
+def delete_container(cid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    """Delete a container."""
+    from models import Container
+    cont = db.query(Container).filter(Container.id == cid).first()
+    if not cont: raise HTTPException(404, "Container not found")
+    db.delete(cont)
+    db.commit()
+    return {"ok": True}
+
+
 @app.get("/api/health")
 def health(db: Session = Depends(get_db)):
     try:

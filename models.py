@@ -26,6 +26,7 @@ class Shipment(Base):
     created_at    = Column(String, default=lambda: datetime.utcnow().isoformat())
     events        = relationship("ShipmentEvent", back_populates="shipment", cascade="all, delete")
     comments      = relationship("ShipmentComment", back_populates="shipment", cascade="all, delete")
+    containers    = relationship("Container", back_populates="shipment", cascade="all, delete")
 
 class ShipmentEvent(Base):
     __tablename__ = "shipment_events"
@@ -45,6 +46,18 @@ class ShipmentComment(Base):
     author        = Column(String, default="Agent")
     text          = Column(Text)
     shipment      = relationship("Shipment", back_populates="comments")
+
+
+class Container(Base):
+    __tablename__ = "containers"
+    id            = Column(Integer, primary_key=True, index=True)
+    shipment_id   = Column(Integer, ForeignKey("shipments.id"))
+    container_no  = Column(String, nullable=False)  # MSCU1234567
+    seal_no       = Column(String, nullable=True)
+    size_type     = Column(String, nullable=True)   # 20GP, 40HC, 40RF
+    weight        = Column(String, nullable=True)
+    created_at    = Column(String, default=lambda: datetime.utcnow().isoformat())
+    shipment      = relationship("Shipment", back_populates="containers")
 
 class User(Base):
     __tablename__ = "users"
