@@ -517,10 +517,6 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-users"></i> Team Members
     </div>
     <div class="nav-section">Tools</div>
-        <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts">
-      <i class="fa fa-bell"></i> Alerts
-      <span class="nav-badge" id="alerts-badge" style="display:none">0</span>
-    </div>
     <div class="nav-item" onclick="exportXLSX()">
       <i class="fa fa-file-excel"></i> Export XLSX
     </div>
@@ -530,7 +526,9 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')" style="display:none">
       <i class="fa fa-file-import"></i> Bulk Import
     </div>
-    
+    <div class="nav-item" onclick="trackAll()">
+      <i class="fa fa-rotate"></i> Sync All
+    </div>
   </div>
   <div class="sidebar-bottom">
     <div class="sidebar-user">
@@ -714,7 +712,8 @@ textarea.form-control{resize:none;min-height:72px}
       <div id="dtab-timeline">
         <div id="detail-events-list" class="tl-list"></div>
         <div id="detail-no-events" style="display:none;text-align:center;padding:30px;color:var(--text2);font-size:12px">
-          
+          <div style="font-size:28px;margin-bottom:6px">📭</div>No events yet. Tap Sync to update.
+        </div>
       </div>
       <div id="dtab-notes" style="display:none">
         <div id="detail-comments-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
@@ -760,9 +759,8 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-users"></i><span>Team</span>
     </button>
     
-    
-    <button class="bnav-item" id="bnav-alerts" onclick="showPage('alerts',null);setBottomNav('alerts')">
-      <i class="fa fa-bell"></i><span>Alerts</span>
+    <button class="bnav-item" id="bnav-sync" onclick="trackAll()">
+      <i class="fa fa-rotate"></i><span>Sync</span>
     </button>
     <button class="bnav-item" id="bnav-export" onclick="openFilesSheet()">
       <i class="fa fa-file-arrow-down"></i><span>Files</span>
@@ -809,7 +807,7 @@ textarea.form-control{resize:none;min-height:72px}
         </div>
         <div class="form-group full">
           <label>Client Email</label>
-          <input id="f-client-email" class="form-control" type="email" placeholder="client@example.com" oninput="validateEmailField(this)"/>
+          <input id="f-client-email" class="form-control" type="email" placeholder="client@example.com"/>
         </div>
         <div class="form-group">
           <label>POL</label>
@@ -859,7 +857,9 @@ textarea.form-control{resize:none;min-height:72px}
         <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        
+        <button class="btn btn-secondary btn-sm" id="detail-track-btn" onclick="trackOne()">
+          <i class="fa fa-rotate"></i> Track
+        </button>
         <button class="modal-close" onclick="closeModal('modal-detail')"><i class="fa fa-xmark"></i></button>
       </div>
     </div>
@@ -894,7 +894,6 @@ function showPage(id,el){
   document.getElementById('page-title').textContent=titles[id]||id;
   if(id==='shipments') loadShipments();
   if(id==='analytics') loadAnalytics();
-  if(id==='alerts') loadAlerts();
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -1014,6 +1013,7 @@ function renderCards(ships,containerId='ship-cards'){
         </div>
       </div>
     </div>`).join('');
+}
 }
 
 /* ── Render table (desktop) ── */
@@ -1138,7 +1138,11 @@ async function openDetail(sid){
               <div><div style="font-size:13px;font-weight:500">${e.description||'—'}</div>
               <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
             </div>`).join('')}
-        </div>`:`}
+        </div>`:`
+        <div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">
+          <i class="fa fa-satellite-dish" style="font-size:22px;margin-bottom:8px;display:block;opacity:.3"></i>
+          No events yet — tap Track
+        </div>`}
     `;
   }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
 }
@@ -1146,34 +1150,12 @@ async function openDetail(sid){
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
 function editFromDetail(){ closeModal('modal-detail'); editShipment(currentDetailId); }
 async function deleteFromDetail(){ if(await confirmDelete()) deleteShipment(currentDetailId); }
-function confirmDelete(){ return new Promise(function(res){
-    showConfirm({title:'Delete Shipment',
-      message:'Delete this shipment?<br><span style="color:var(--red)">This cannot be undone.</span>',
-      okText:'Delete', okClass:'btn-danger',
-      onOk:function(){res(true);}, onCancel:function(){res(false);}
-    });
-  }); }
+function confirmDelete(){ return Promise.resolve(confirm('Delete this shipment?')); }
 
 /* ── Save ── */
 async function saveShipment(){
   const ref=(document.getElementById('f-ref')?.value||'').trim();
   if(!ref){ toast('Reference is required','error'); return; }
-  const _eEl=document.getElementById('f-client-email');
-  const _eVal=(_eEl?.value||'').trim();
-  if(_eVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_eVal)){
-    _eEl.style.border='2px solid var(--red)'; _eEl.focus();
-    toast('Invalid client email','error'); return;
-  }
-  if(_eEl) _eEl.style.border='';
-  if(!_eVal){
-    showConfirm({title:'No Client Email',subtitle:'Email alerts disabled',
-      message:'No client email entered.<br>Alerts will <strong style="color:var(--yellow)">not be sent</strong>.<br><br>Continue saving anyway?',
-      okText:'Save Anyway', onOk:function(){ _doSaveShipment(); }
-    }); return;
-  }
-  _doSaveShipment();
-}
-async function _doSaveShipment(){
   const btn=document.getElementById('btn-save');
   btn.innerHTML='<span class="spinner"></span> Saving…'; btn.disabled=true;
   const g=id=>{ const el=document.getElementById(id); return el?el.value.trim()||null:null; };
@@ -1215,17 +1197,13 @@ async function editShipment(sid){
 
 /* ── Delete ── */
 async function deleteShipment(sid){
-  showConfirm({title:'Delete Shipment',
-    message:'Delete this shipment?<br><span style="color:var(--red)">This cannot be undone.</span>',
-    okText:'Delete', okClass:'btn-danger',
-    onOk:async function(){
-      try{
-        await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
-        toast('Deleted','success'); closeModal('modal-detail');
-        loadDashboard(); loadShipments();
-      }catch(e){ toast(e.message,'error'); }
-    }
-  }); return;
+  if(!confirm('Delete this shipment?')) return;
+  try{
+    await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
+    toast('Deleted','success'); closeModal('modal-detail');
+    initTheme();
+loadDashboard(); loadShipments();
+  }catch(e){ toast(e.message,'error'); }
 }
 
 /* ── Track ── */
@@ -1420,6 +1398,7 @@ function initTheme(){
 /* ── Init ── */
 initTheme();
 loadDashboard();
+}
 </script>
 
 <script>
@@ -1591,14 +1570,9 @@ async function toggleUser(id){
 }
 
 async function deleteUser(id){
-  showConfirm({title:"Delete User",
-    message:"Delete this user permanently?<br><span style='color:var(--red)'>This cannot be undone.</span>",
-    okText:"Delete", okClass:"btn-danger",
-    onOk:async function(){
-      const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
-      if(r.ok) loadUsers();
-    }
-  }); return;
+  if(!confirm("Delete this user permanently?")) return;
+  const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
+  if(r.ok) loadUsers();
 }
 </script>
 
@@ -1921,14 +1895,9 @@ async function toggleUser(id){
 }
 
 async function deleteUser(id){
-  showConfirm({title:"Delete User",
-    message:"Delete this user permanently?<br><span style='color:var(--red)'>This cannot be undone.</span>",
-    okText:"Delete", okClass:"btn-danger",
-    onOk:async function(){
-      try{ await apiFetch(`/api/users/${id}`,{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
-      catch(e){ showToast("Error: "+e.message,"error"); }
-    }
-  }); return;
+  if(!confirm("Delete this user permanently?")) return;
+  try{ await apiFetch(`/api/users/${id}`,{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
+  catch(e){ showToast("Error: "+e.message,"error"); }
 }
 
 // ═══ SHIPMENT DETAIL ═════════════════════════════════════════
@@ -2119,118 +2088,5 @@ function openFilesSheet(){
 }
 </script>
 
-
-    <!-- ALERTS PAGE -->
-    <div class="page" id="page-alerts">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div>
-          <div style="font-size:16px;font-weight:700">🔔 Alerts</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments requiring attention</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="loadAlerts()"><i class="fa fa-rotate"></i> Refresh</button>
-      </div>
-      <div id="alerts-list">
-        <div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><div style="font-size:32px;margin-bottom:8px">🔔</div>Loading...</div>
-      </div>
-    </div>
-
-  <!-- CUSTOM CONFIRM MODAL -->
-  <div class="overlay" id="modal-confirm">
-    <div class="modal" style="max-width:360px">
-      <div class="modal-handle"></div>
-      <div class="modal-head" style="border-bottom:none;padding-bottom:4px">
-        <div>
-          <div class="modal-title" id="confirm-title">Confirm</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:3px" id="confirm-subtitle"></div>
-        </div>
-        <button class="modal-close" onclick="closeModal('modal-confirm')"><i class="fa fa-xmark"></i></button>
-      </div>
-      <div class="modal-body" style="padding-top:4px">
-        <div id="confirm-message" style="font-size:13px;color:var(--text2);line-height:1.6"></div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn btn-ghost" style="flex:1" id="confirm-cancel-btn" onclick="closeModal('modal-confirm')">Cancel</button>
-        <button class="btn btn-primary" style="flex:1" id="confirm-ok-btn">Continue</button>
-      </div>
-    </div>
-  </div>
-<script>
-/* ── Custom Confirm ── */
-function showConfirm(opts){
-  document.getElementById('confirm-title').textContent=opts.title||'Confirm';
-  document.getElementById('confirm-subtitle').textContent=opts.subtitle||'';
-  document.getElementById('confirm-message').innerHTML=opts.message||'';
-  var ok=document.getElementById('confirm-ok-btn');
-  ok.textContent=opts.okText||'Continue';
-  ok.className='btn '+(opts.okClass||'btn-primary'); ok.style.flex='1';
-  ok.onclick=function(){ closeModal('modal-confirm'); if(opts.onOk) opts.onOk(); };
-  var c=document.getElementById('confirm-cancel-btn');
-  c.textContent=opts.cancelText||'Cancel';
-  c.onclick=function(){ closeModal('modal-confirm'); if(opts.onCancel) opts.onCancel(); };
-  openModal('modal-confirm');
-}
-/* ── Email field validation ── */
-function validateEmailField(el){
-  var v=(el.value||'').trim();
-  el.style.border=!v?'':/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)?'2px solid var(--green)':'2px solid var(--red)';
-}
-/* ── Email Log ── */
-async function loadEmailLog(sid){
-  var c=document.getElementById('email-log-list'), cnt=document.getElementById('email-log-count');
-  if(!c) return;
-  try{
-    var logs=await apiFetch('/api/shipments/'+sid+'/email-log');
-    if(!logs||!logs.length){ c.innerHTML='<div style="text-align:center;padding:10px;font-size:12px;color:var(--text2);opacity:.6"><i class="fa fa-inbox"></i> No emails sent yet</div>'; if(cnt) cnt.textContent=''; return; }
-    if(cnt) cnt.textContent='('+logs.length+' sent)';
-    c.innerHTML=logs.map(function(l){
-      return '<div style="padding:10px 12px;background:var(--bg3);border-radius:10px;margin-bottom:8px;border-left:3px solid var(--accent)">'
-        +'<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">'+(l.subject||'—')+'</div>'
-        +'<div style="font-size:11px;color:var(--text2);display:flex;gap:10px;flex-wrap:wrap">'
-        +'<span><i class="fa fa-paper-plane" style="color:var(--accent)"></i> '+(l.sent_to||'—')+'</span>'
-        +'<span><i class="fa fa-user" style="color:var(--text3)"></i> '+(l.sent_by||'System')+'</span>'
-        +'<span><i class="fa fa-clock" style="color:var(--text3)"></i> '+(l.sent_at?l.sent_at.substring(0,16).replace('T',' '):'—')+'</span>'
-        +'</div></div>';
-    }).join('');
-  }catch(e){ c.innerHTML='<div style="font-size:12px;color:var(--text2);padding:8px">Could not load email log</div>'; }
-}
-/* ── Alerts ── */
-async function loadAlerts(){
-  var c=document.getElementById('alerts-list'), badge=document.getElementById('alerts-badge');
-  if(!c) return;
-  c.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:32px;margin-bottom:8px">⏳</div>Loading...</div>';
-  try{
-    var ships=await apiFetch('/api/shipments');
-    var alerts=buildAlerts(ships);
-    if(badge){ badge.textContent=alerts.length; badge.style.display=alerts.length?'':'none'; }
-    if(!alerts.length){ c.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention.</div></div>'; return; }
-    c.innerHTML=alerts.map(function(a){
-      var col=a.type==='danger'?'var(--red)':a.type==='warning'?'var(--yellow)':'var(--accent)';
-      return '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid '+col+';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer" onclick="openDetail('+a.id+')">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-        +'<span style="font-size:14px;font-weight:700">'+a.ref+'</span>'
-        +'<span style="font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;background:'+col+'22;color:'+col+'">'+a.label+'</span>'
-        +'</div><div style="font-size:12px;color:var(--text2)">'+a.message+'</div></div>';
-    }).join('');
-  }catch(e){ c.innerHTML='<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">'+e.message+'</div>'; }
-}
-function buildAlerts(ships){
-  var today=new Date(); today.setHours(0,0,0,0); var out=[];
-  ships.forEach(function(s){
-    if(['Delivered','Discharged'].includes(s.status)) return;
-    if(s.eta){
-      var eta=new Date(s.eta); eta.setHours(0,0,0,0);
-      var d=Math.round((eta-today)/86400000);
-      if(d<0) out.push({id:s.id,ref:s.ref,type:'danger',label:'ETA Passed',message:'ETA was '+s.eta.slice(0,10)+' — '+(s.pod||'')});
-      else if(d<=3) out.push({id:s.id,ref:s.ref,type:'warning',label:'Arriving Soon',message:'Arriving in '+d+' day'+(d===1?'':'s')+' at '+(s.pod||'—')});
-    }
-    if(s.status==='Delayed') out.push({id:s.id,ref:s.ref,type:'danger',label:'Delayed',message:(s.pol||'—')+' → '+(s.pod||'—')+' · ETA: '+(s.eta?s.eta.slice(0,10):'—')});
-    if(s.etd&&['Pending','Booked'].includes(s.status)){
-      var etd=new Date(s.etd); etd.setHours(0,0,0,0);
-      if(etd<today) out.push({id:s.id,ref:s.ref,type:'warning',label:'ETD Passed',message:'ETD was '+s.etd.slice(0,10)+' — still '+s.status});
-    }
-  });
-  return out;
-}
-</script>
 </body>
 </html>
