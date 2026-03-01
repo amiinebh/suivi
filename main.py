@@ -96,6 +96,20 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         vessel=body.get("vessel") or None,
     )
     ship = crud.create_shipment(db, s)
+
+    # Auto-create containers if equipment type + qty provided
+    eq_type = (body.get("eq_type") or "").strip()
+    eq_qty  = int(body.get("eq_qty") or 0)
+    if eq_type and eq_qty > 0:
+        for _ in range(eq_qty):
+            cont = models.Container(
+                shipment_id=ship.id,
+                size_type=eq_type,
+            )
+            db.add(cont)
+        db.commit()
+        db.refresh(ship)
+
     return ship
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
