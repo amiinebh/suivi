@@ -1166,7 +1166,7 @@ async function openDetail(sid){
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
 function editFromDetail(){ closeModal('modal-detail'); editShipment(currentDetailId); }
 async function deleteFromDetail(){ if(await confirmDelete()) deleteShipment(currentDetailId); }
-function confirmDelete(){ return Promise.resolve(confirm('Delete this shipment?')); }
+function confirmDelete(){ return _confirm('Delete this shipment?'); }
 
 /* ── Save ── */
 async function saveShipment(){
@@ -1181,7 +1181,7 @@ async function saveShipment(){
   }
   if(_emailEl) _emailEl.style.border='';
   if(!_emailVal){
-    if(!confirm('No client email entered. Email alerts will not be sent.\n\nContinue anyway?')) return;
+    if(!await _confirm('No client email entered. Email alerts will not be sent.\n\nContinue anyway?')) return;
   }
   const btn=document.getElementById('btn-save');
   btn.innerHTML='<span class="spinner"></span> Saving…'; btn.disabled=true;
@@ -1224,7 +1224,7 @@ async function editShipment(sid){
 
 /* ── Delete ── */
 async function deleteShipment(sid){
-  if(!confirm('Delete this shipment?')) return;
+  if(!await _confirm('Delete this shipment?')) return;
   try{
     await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
     toast('Deleted','success'); closeModal('modal-detail');
@@ -1596,7 +1596,7 @@ async function toggleUser(id){
 }
 
 async function deleteUser(id){
-  if(!confirm("Delete this user permanently?")) return;
+  if(!await _confirm("Delete this user permanently?")) return;
   const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
   if(r.ok) loadUsers();
 }
@@ -1921,7 +1921,7 @@ async function toggleUser(id){
 }
 
 async function deleteUser(id){
-  if(!confirm("Delete this user permanently?")) return;
+  if(!await _confirm("Delete this user permanently?")) return;
   try{ await apiFetch(`/api/users/${id}`,{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
   catch(e){ showToast("Error: "+e.message,"error"); }
 }
@@ -2317,6 +2317,40 @@ function validateEmailField(el) {
   var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
   el.style.border = ok ? '2px solid var(--green)' : '2px solid var(--red)';
   if (msg) { msg.style.display='block'; msg.style.color=ok?'var(--green)':'var(--red)'; msg.textContent=ok?'Valid email':'Invalid format'; }
+}
+</script>
+
+  <!-- Confirm Modal -->
+  <div class="overlay" id="modal-confirm">
+    <div class="modal" style="max-width:340px">
+      <div class="modal-handle"></div>
+      <div class="modal-head" style="border-bottom:none">
+        <div class="modal-title" id="confirm-msg">Are you sure?</div>
+        <button class="modal-close" onclick="_confirmReject()"><i class="fa fa-xmark"></i></button>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" style="flex:1" onclick="_confirmReject()">Cancel</button>
+        <button class="btn btn-danger" style="flex:2" id="confirm-ok-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ── Custom Confirm ── */
+let _confirmRes = null;
+function _confirm(msg) {
+  return new Promise(resolve => {
+    _confirmRes = resolve;
+    document.getElementById('confirm-msg').textContent = msg;
+    document.getElementById('confirm-ok-btn').onclick = () => {
+      closeModal('modal-confirm'); _confirmRes = null; resolve(true);
+    };
+    openModal('modal-confirm');
+  });
+}
+function _confirmReject() {
+  closeModal('modal-confirm');
+  if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
 }
 </script>
 </body>
