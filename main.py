@@ -1,5 +1,5 @@
-from fastapi import FastAPI
-import scheduler as alert_scheduler, Depends, HTTPException, BackgroundTasks, Response, Request
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Response, Request
+import scheduler as alert_scheduler
 from auth import get_current_user, require_admin, hash_password, verify_password, create_token
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -21,9 +21,10 @@ def get_db():
     db = SessionLocal()
     try: yield db
     finally: db.close()
-    # Start daily email alert scheduler
+    # Start daily email alert scheduler (non-blocking)
     try:
-        alert_scheduler.start_scheduler()
+        import threading
+        threading.Thread(target=alert_scheduler.start_scheduler, daemon=True).start()
     except Exception as e:
         print(f"scheduler start error: {e}")
 
