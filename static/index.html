@@ -1026,11 +1026,11 @@ function renderTable(ships){
   if(!wrap) return;
   if(!ships.length){ wrap.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No shipments</div></div>`; return; }
   wrap.innerHTML=`<table><thead><tr>
-    <th>Reference</th><th>Quotation #</th><th>Container</th><th>Client</th><th>Carrier</th>
+    <th>Reference</th><th>Container</th><th>Client</th><th>Carrier</th>
     <th>Route</th><th>Mode</th><th>ETA</th><th>Status</th><th></th>
   </tr></thead><tbody>
   ${ships.map(s=>`<tr class="clickable" onclick="openDetail(${s.id})">
-    <td class="ref-cell">${s.ref}</td><td style="font-size:11px;color:var(--accent)">${s.quotation_number||"—"}</td>
+    <td class="ref-cell">${s.ref}</td>
     <td style="color:var(--text2)">${s.ref2||'—'}</td>
     <td>${s.client||'—'}</td>
     <td>${s.carrier||'—'}</td>
@@ -1927,6 +1927,7 @@ async function openDetail(id){
 }
 
 function _renderDetail(s){
+  loadContainers(s.id);
   document.getElementById("detail-ref").textContent=s.ref||"—";
   document.getElementById("detail-sub").textContent=[s.ref2,s.carrier].filter(Boolean).join(" · ")||"No container/carrier info";
   document.getElementById("detail-status-badge").innerHTML=typeof statusBadge==="function"?statusBadge(s.status):`<span>${s.status}</span>`;
@@ -1986,7 +1987,7 @@ function _renderDetail(s){
 }
 
 function switchDTab(tab){
-  ["timeline","notes","info"].forEach(t=>{
+  ["timeline","notes","info","containers"].forEach(t=>{
     const p=document.getElementById("dtab-"+t);
     const b=document.getElementById("dtab-btn-"+t);
     if(p) p.style.display=t===tab?"block":"none";
