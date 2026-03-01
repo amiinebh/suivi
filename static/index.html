@@ -615,6 +615,12 @@ textarea.form-control{resize:none;min-height:72px}
 
     <!-- ─── ANALYTICS / KPI PAGE ─── -->
     <div class="page" id="page-analytics">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="margin:0;font-size:20px;font-weight:700;color:var(--text1)">KPI & Analytics</h2>
+        <button class="btn btn-primary btn-sm" onclick="downloadKPIReport()" style="gap:6px">
+          <i class="fa fa-file-pdf"></i> Generate Report
+        </button>
+      </div>
       <div class="kpi-grid" id="kpi-cards">
         <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-value">—</div><div class="kpi-label">Total Shipments</div></div>
         <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-value">—</div><div class="kpi-label">On-Time Rate</div></div>
@@ -2175,15 +2181,43 @@ async function deleteContainer(cid){
 
 async function downloadDashboardPDF(){
   try {
+    toast('Generating dashboard PDF...', 'info');
     const t = localStorage.getItem('ft_token');
     const res = await fetch('/api/dashboard/pdf', {headers:{Authorization:'Bearer '+t}});
-    if(!res.ok) throw new Error(await res.text());
+    if(!res.ok) {
+      const text = await res.text();
+      console.error('Dashboard PDF error:', text);
+      throw new Error(text);
+    }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = 'dashboard.pdf'; a.click();
     URL.revokeObjectURL(url);
-  } catch(e) { toast('Dashboard PDF failed','error'); }
+    toast('Dashboard PDF downloaded!', 'success');
+  } catch(e) { 
+    console.error('PDF error:', e);
+    toast('Dashboard PDF failed: ' + (e.message || 'Unknown error'), 'error'); 
+  }
+}
+
+
+async function downloadKPIReport(){
+  try {
+    toast('Generating KPI report...', 'info');
+    const t = localStorage.getItem('ft_token');
+    const res = await fetch('/api/kpi/report/pdf', {headers:{Authorization:'Bearer '+t}});
+    if(!res.ok) throw new Error(await res.text());
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'kpi_report.pdf'; a.click();
+    URL.revokeObjectURL(url);
+    toast('KPI report downloaded!', 'success');
+  } catch(e) { 
+    console.error('KPI report error:', e);
+    toast('Report generation failed', 'error'); 
+  }
 }
 
 </script>
