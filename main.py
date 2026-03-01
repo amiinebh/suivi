@@ -107,9 +107,13 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
                 size_type=eq_type,
             )
             db.add(cont)
-        db.commit()
-        db.refresh(ship)
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+        db.expire(ship)
 
+    db.refresh(ship)
     return ship
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
@@ -119,11 +123,14 @@ def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_cu
     return s
 
 @app.put("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
-async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db)):
+@app.patch("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
+async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
     body = await request.json()
+    body.pop("eq_type", None); body.pop("eq_qty", None)
     data = schemas.ShipmentUpdate(**{k: v or None for k, v in body.items() if v is not None})
     s = crud.update_shipment(db, sid, data)
     if not s: raise HTTPException(404, "Not found")
+    db.refresh(s)
     return s
 
 @app.delete("/api/shipments/{sid}")
