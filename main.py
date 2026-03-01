@@ -427,3 +427,68 @@ def force_register(sid: int, db: Session = Depends(get_db)):
                 "scac_resolved": scac, "shipsgo_id_saved": sid_val}
     except Exception as e:
         return {"error": str(e), "body_sent": body}
+
+# ══ Terminal49 Debug (no auth — public) ═══════════════════════════════
+@app.get("/api/debug/t49")
+def t49_debug(db: Session = Depends(get_db)):
+    """Test Terminal49 API connectivity + register container SEKU6272191."""
+    import requests as req_lib
+    key = os.getenv("TERMINAL49_API_KEY", "")
+    result = {"key_set": bool(key), "key_preview": key[:6]+"…" if key else "NOT SET"}
+
+    hdrs = {
+        "Authorization": f"Token {key}",
+        "Content-Type": "application/vnd.api+json",
+        "Accept": "application/json"
+    }
+
+    # 1. List existing tracking requests
+    try:
+        r = req_lib.get("https://api.terminal49.com/v2/tracking_requests?page[size]=3",
+                        headers=hdrs, timeout=15)
+        result["list_status"] = r.status_code
+        try: result["list_body"] = r.json()
+        except: result["list_body"] = r.text[:300]
+    except Exception as e:
+        result["list_error"] = str(e)
+
+    # 2. Test POST with real container
+    body = {"data": {"type": "tracking_request", "attributes": {
+        "request_type": "container",
+        "request_number": "SEKU6272191",
+        "scac": "CMDU"
+    }}}
+    try:
+        r2 = req_lib.post("https://api.terminal49.com/v2/tracking_requests",
+                          headers=hdrs, json=body, timeout=15)
+        result["test_post_status"] = r2.status_code
+        try: result["test_post_body"] = r2.json()
+        except: result["test_post_body"] = r2.text[:300]
+    except Exception as e:
+        result["test_post_error"] = str(e)
+
+    # 3. Show unregistered shipments in DB
+    unregistered = db.query(models.Shipment).filter(
+        models.Shipment.ref2 != None,
+        models.Shipment.ref2 != ""
+    ).all()
+    result["shipments_in_db"] = [
+        {"id": s.id, "ref": s.ref, "container": s.ref2,
+         "carrier": s.carrier, "t49_note": s.note}
+        for s in unregistered
+    ]
+    return result
+
+
+@app.get("/api/shipments/{sid}/track-now")
+def track_now(sid: int, db: Session = Depends(get_db)):
+    """Force-track a shipment via Terminal49 — accessible via GET (no auth)."""
+    import tracker as _t
+    s = db.query(models.Shipment).filter(models.Shipment.id == sid).first()
+    if not s:
+        return {"error": f"Shipment id={sid} not found"}
+    # Clear old shipsgo_id and note so it re-registers fresh with T49
+    s.shipsgo_id = None
+    db.commit()
+    result = _t.track_and_update(db, s)
+    return result
