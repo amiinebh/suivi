@@ -895,6 +895,7 @@ function showPage(id,el){
   document.getElementById('page-title').textContent=titles[id]||id;
   if(id==='shipments') loadShipments();
   if(id==='analytics') loadAnalytics();
+  if(id==='dashboard') loadDashboard();
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -1042,7 +1043,7 @@ function renderTable(ships){
 }
 
 /* ── Dashboard ── */
-async function loadDashboard(){
+async async function loadDashboard(){
   try{
     const stats=await apiFetch('/api/stats');
     const bs=stats.by_status||{};
@@ -1480,6 +1481,7 @@ function showApp(){
   if(r) r.textContent = isAdmin() ? "Admin" : "CS Agent";
   const a = document.getElementById("sidebar-avatar");
   if(a) a.textContent = (user?.name||"U")[0].toUpperCase();
+  loadDashboard();
 }
 
 function doLogout(){
