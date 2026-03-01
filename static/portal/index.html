@@ -1,115 +1,229 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5"/>
+<meta name="theme-color" content="#4f8ef7"/>
 <title>Track Your Shipment</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#f0f4f8;min-height:100vh}
-.header{background:#1a365d;padding:20px 0;text-align:center;color:#fff}
-.header h1{font-size:22px;font-weight:700}
-.header p{font-size:14px;opacity:.7;margin-top:4px}
-.container{max-width:680px;margin:32px auto;padding:0 16px}
-.card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.08);overflow:hidden;margin-bottom:20px}
-.card-header{padding:18px 24px;border-bottom:1px solid #f1f5f9}
-.card-header h2{font-size:16px;font-weight:600;color:#2d3748}
-.card-body{padding:24px}
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.info-item .label{font-size:11px;color:#a0aec0;text-transform:uppercase;letter-spacing:.5px}
-.info-item .value{font-size:15px;color:#2d3748;font-weight:600;margin-top:3px}
-.badge{padding:5px 14px;border-radius:99px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
-.badge-pending{background:#fef9c3;color:#854d0e}
-.badge-in-transit{background:#dbeafe;color:#1e40af}
-.badge-delivered{background:#dcfce7;color:#166534}
-.badge-delayed{background:#fee2e2;color:#991b1b}
-.badge-customs{background:#ede9fe;color:#5b21b6}
-.progress-bar{height:8px;background:#e2e8f0;border-radius:99px;margin:20px 0 8px;overflow:hidden}
-.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#2b6cb0,#63b3ed);transition:width .5s}
-.progress-labels{display:flex;justify-content:space-between;font-size:11px;color:#a0aec0}
+:root{
+  --accent:#4f8ef7;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--cyan:#06b6d4;
+  --bg:#f0f4ff;--bg2:#ffffff;--card:#ffffff;--border:#d0d8f0;
+  --text:#1a2040;--text2:#5a6a8a;--shadow:0 4px 24px rgba(79,142,247,.15);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
+.container{max-width:700px;margin:0 auto}
+.header{background:linear-gradient(135deg,var(--accent),#6c63ff);
+  border-radius:20px;padding:32px 24px;text-align:center;color:#fff;margin-bottom:20px;
+  box-shadow:var(--shadow)}
+.header-icon{font-size:48px;margin-bottom:12px}
+.header h1{font-size:24px;margin-bottom:6px}
+.header-sub{font-size:14px;opacity:.9}
+.card{background:var(--card);border-radius:16px;padding:20px;margin-bottom:16px;
+  box-shadow:var(--shadow);border:1px solid var(--border)}
+.section-title{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:480px){.info-grid{grid-template-columns:1fr}}
+.info-item{background:var(--bg);border-radius:10px;padding:12px}
+.info-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.info-value{font-size:14px;font-weight:600;word-break:break-word}
+.route{display:flex;align-items:center;gap:8px;margin:16px 0;padding:16px;
+  background:var(--bg);border-radius:12px}
+.route-point{flex:1;text-align:center}
+.route-point-code{font-size:16px;font-weight:700;color:var(--accent)}
+.route-point-label{font-size:10px;color:var(--text2);margin-top:2px}
+.route-arrow{flex:2;display:flex;align-items:center;justify-content:center;gap:4px}
+.route-arrow-line{flex:1;height:3px;background:linear-gradient(90deg,var(--accent),var(--cyan));border-radius:2px}
+.route-arrow-icon{font-size:20px;color:var(--accent)}
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
+  border-radius:30px;font-size:13px;font-weight:700;margin:12px 0}
+.status-badge::before{content:'';width:8px;height:8px;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.badge-sailing{background:rgba(79,142,247,.15);color:var(--accent)}
+.badge-sailing::before{background:var(--accent)}
+.badge-delivered{background:rgba(34,197,94,.15);color:var(--green)}
+.badge-delivered::before{background:var(--green)}
+.badge-delayed{background:rgba(239,68,68,.15);color:var(--red)}
+.badge-delayed::before{background:var(--red)}
+.badge-default{background:rgba(90,106,138,.1);color:var(--text2)}
+.badge-default::before{background:var(--text2)}
 .timeline{display:flex;flex-direction:column;gap:0}
-.tl-item{display:flex;gap:12px;padding-bottom:16px;position:relative}
-.tl-item:not(:last-child)::before{content:'';position:absolute;left:8px;top:18px;bottom:0;width:2px;background:#e2e8f0}
-.tl-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;margin-top:2px}
-.tl-desc{font-size:14px;color:#2d3748;font-weight:500}
-.tl-meta{font-size:12px;color:#a0aec0;margin-top:2px}
-.footer{text-align:center;padding:32px 16px;color:#a0aec0;font-size:13px}
-.not-found{text-align:center;padding:60px 24px;color:#a0aec0}
-.not-found .icon{font-size:56px;margin-bottom:16px}
-.spinner-wrap{text-align:center;padding:60px;color:#a0aec0;font-size:15px}
+.timeline-item{display:flex;gap:14px;padding:14px 0;border-left:2px solid var(--border);margin-left:12px;position:relative}
+.timeline-item:last-child{border-left-color:transparent}
+.timeline-dot{width:24px;height:24px;border-radius:50%;background:var(--bg2);
+  border:3px solid var(--border);position:absolute;left:-13px;top:14px;
+  display:flex;align-items:center;justify-content:center;font-size:10px}
+.timeline-item:first-child .timeline-dot{background:var(--accent);border-color:var(--accent);color:#fff}
+.timeline-content{flex:1;padding-left:20px}
+.timeline-time{font-size:11px;color:var(--text2);margin-bottom:4px}
+.timeline-desc{font-size:13px;font-weight:600;margin-bottom:2px}
+.timeline-loc{font-size:12px;color:var(--text2)}
+.empty{text-align:center;padding:40px 20px;color:var(--text2)}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:.3}
+.footer{text-align:center;padding:24px;color:var(--text2);font-size:12px}
+.footer-logo{font-size:20px;margin-bottom:6px}
+.loader{text-align:center;padding:60px 20px}
+.spinner{display:inline-block;width:40px;height:40px;border:4px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div class="header">
-  <h1>🚢 Shipment Tracker</h1>
-  <p>Real-time tracking for your cargo</p>
-</div>
-<div class="container" id="app">
-  <div class="spinner-wrap">Loading…</div>
-</div>
-<div class="footer">Powered by FreightTrack Pro · Updates every 6 hours</div>
-<script>
-const ref = window.location.pathname.split('/track/')[1];
-const STATUS_PROGRESS = {'Pending':10,'In Transit':55,'Customs':75,'Delayed':55,'Delivered':100};
-const STATUS_ICONS = {'Pending':'⏳','In Transit':'🚢','Customs':'🛃','Delayed':'⚠️','Delivered':'✅'};
-const STATUS_CLASS = {'In Transit':'badge-in-transit','Delivered':'badge-delivered','Delayed':'badge-delayed','Customs':'badge-customs','Pending':'badge-pending'};
+<div class="container">
+  <div class="header">
+    <div class="header-icon">🚢</div>
+    <h1>Track Your Shipment</h1>
+    <div class="header-sub">Real-time freight tracking</div>
+  </div>
 
-async function load(){
-  try{
-    const r = await fetch(`/api/portal/${encodeURIComponent(ref)}`);
-    if(!r.ok){ document.getElementById('app').innerHTML=`
-      <div class="card"><div class="card-body"><div class="not-found">
-        <div class="icon">🔍</div>
-        <div style="font-size:18px;font-weight:600;color:#2d3748;margin-bottom:8px">Shipment not found</div>
-        <div>Reference <strong>${ref}</strong> was not found. Please contact your freight agent.</div>
-      </div></div></div>`; return;
-    }
-    const s = await r.json();
-    const pct = STATUS_PROGRESS[s.status]||10;
-    const icon = STATUS_ICONS[s.status]||'📦';
-    const bc = STATUS_CLASS[s.status]||'badge-default';
-    document.getElementById('app').innerHTML=`
-      <div class="card">
-        <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-          <h2>📦 ${s.ref}</h2>
-          <span class="badge ${bc}">${icon} ${s.status}</span>
+  <div id="loading" class="loader">
+    <div class="spinner"></div>
+    <div style="margin-top:16px;color:var(--text2)">Loading shipment details...</div>
+  </div>
+
+  <div id="error" style="display:none" class="card">
+    <div class="empty">
+      <div class="empty-icon">❌</div>
+      <h3 style="margin-bottom:8px">Shipment Not Found</h3>
+      <p>Please check your tracking reference and try again.</p>
+    </div>
+  </div>
+
+  <div id="content" style="display:none">
+    <!-- Ref + Status -->
+    <div class="card">
+      <h2 style="font-size:20px;margin-bottom:4px" id="ref">—</h2>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px" id="sub">—</div>
+      <div id="status-badge"></div>
+    </div>
+
+    <!-- Route -->
+    <div class="card">
+      <div class="section-title">🗺️ Route</div>
+      <div class="route">
+        <div class="route-point">
+          <div class="route-point-code" id="pol">—</div>
+          <div class="route-point-label">Origin</div>
+          <div style="font-size:11px;margin-top:4px;color:var(--text2)">ETD: <span id="etd">—</span></div>
         </div>
-        <div class="card-body">
-          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-          <div class="progress-labels"><span>Booking</span><span>In Transit</span><span>Customs</span><span>Delivered</span></div>
-          <div class="info-grid" style="margin-top:24px">
-            <div class="info-item"><div class="label">Container / AWB</div><div class="value">${s.ref2||'—'}</div></div>
-            <div class="info-item"><div class="label">Mode</div><div class="value">${s.mode==='Air'?'✈️ Air':'🚢 Ocean'}</div></div>
-            <div class="info-item"><div class="label">Carrier</div><div class="value">${s.carrier||'—'}</div></div>
-            <div class="info-item"><div class="label">Vessel</div><div class="value">${s.vessel||'—'}</div></div>
-            <div class="info-item"><div class="label">Port of Loading</div><div class="value">${s.pol||'—'}</div></div>
-            <div class="info-item"><div class="label">Port of Discharge</div><div class="value">${s.pod||'—'}</div></div>
-            <div class="info-item"><div class="label">Departure (ETD)</div><div class="value">${s.etd||'—'}</div></div>
-            <div class="info-item"><div class="label">Arrival (ETA)</div><div class="value" style="color:${s.status==='Delayed'?'#c53030':'#2b6cb0'}">${s.eta||'—'}</div></div>
-          </div>
-          ${s.last_tracked?`<p style="font-size:12px;color:#a0aec0;margin-top:16px;text-align:right">Last updated: ${s.last_tracked.slice(0,19).replace('T',' ')} UTC</p>`:''}
+        <div class="route-arrow">
+          <div class="route-arrow-line"></div>
+          <div class="route-arrow-icon">✈️</div>
+          <div class="route-arrow-line"></div>
+        </div>
+        <div class="route-point">
+          <div class="route-point-code" id="pod">—</div>
+          <div class="route-point-label">Destination</div>
+          <div style="font-size:11px;margin-top:4px;color:var(--accent);font-weight:600">ETA: <span id="eta">—</span></div>
         </div>
       </div>
-      ${s.events&&s.events.length?`
-      <div class="card">
-        <div class="card-header"><h2>📋 Tracking History</h2></div>
-        <div class="card-body">
-          <div class="timeline">
-            ${s.events.slice(0,20).map(e=>`
-              <div class="tl-item">
-                <div class="tl-dot" style="background:${e.status==='Delivered'?'#276749':e.status==='Delayed'?'#c53030':e.status==='Customs'?'#6b46c1':'#2b6cb0'}"></div>
-                <div>
-                  <div class="tl-desc">${e.description||'Status update'}</div>
-                  <div class="tl-meta">${e.location?e.location+' · ':''}${(e.timestamp||'').slice(0,16).replace('T',' ')} UTC</div>
-                </div>
-              </div>`).join('')}
-          </div>
+    </div>
+
+    <!-- Info -->
+    <div class="card">
+      <div class="section-title">📋 Details</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Mode</div>
+          <div class="info-value" id="mode">—</div>
         </div>
-      </div>`:''}`;
-  }catch(e){
-    document.getElementById('app').innerHTML=`<div class="card"><div class="card-body"><div class="not-found"><div class="icon">⚠️</div><div>Unable to load shipment data.</div></div></div></div>`;
-  }
+        <div class="info-item">
+          <div class="info-label">Carrier</div>
+          <div class="info-value" id="carrier">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Vessel</div>
+          <div class="info-value" id="vessel">—</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Container/AWB</div>
+          <div class="info-value" id="ref2">—</div>
+        </div>
+      </div>
+      <div id="containers-section" style="display:none">
+        <div class="section-title" style="margin-top:16px">📦 Containers</div>
+        <div id="containers-list"></div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card">
+      <div class="section-title">📍 Timeline</div>
+      <div id="timeline"></div>
+      <div id="no-events" style="display:none" class="empty">
+        <div class="empty-icon">📭</div>
+        <p>No tracking events yet. Check back soon!</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-logo">FreightTrack Pro</div>
+    <div>Professional Freight Management</div>
+  </div>
+</div>
+
+<script>
+const ref = window.location.pathname.split('/track/')[1];
+if(!ref){ document.getElementById('error').style.display='block'; document.getElementById('loading').style.display='none'; }
+else{
+  fetch(`/api/portal/${ref}`)
+    .then(r=>r.ok?r.json():Promise.reject('Not found'))
+    .then(s=>{
+      document.getElementById('loading').style.display='none';
+      document.getElementById('content').style.display='block';
+      document.getElementById('ref').textContent=s.ref||'—';
+      document.getElementById('sub').textContent=[s.ref2,s.carrier,s.vessel].filter(Boolean).join(' · ')||'No additional info';
+
+      const badges={Sailing:'sailing',Transit:'sailing',Arrived:'delivered',
+                    Delivered:'delivered',Delayed:'delayed'};
+      const bc=badges[s.status]||'default';
+      document.getElementById('status-badge').innerHTML=
+        `<div class="status-badge badge-${bc}">${s.status||'Pending'}</div>`;
+
+      document.getElementById('pol').textContent=s.pol||'—';
+      document.getElementById('pod').textContent=s.pod||'—';
+      document.getElementById('etd').textContent=s.etd?s.etd.split('T')[0]:'—';
+      document.getElementById('eta').textContent=s.eta?s.eta.split('T')[0]:'—';
+      document.getElementById('mode').textContent=s.mode||'—';
+      document.getElementById('carrier').textContent=s.carrier||'—';
+      document.getElementById('vessel').textContent=s.vessel||'—';
+      document.getElementById('ref2').textContent=s.ref2||'—';
+
+      // Containers
+      if(s.containers && s.containers.length){
+        document.getElementById('containers-section').style.display='block';
+        document.getElementById('containers-list').innerHTML=s.containers.map(c=>
+          `<div class="info-item" style="margin-bottom:8px">
+            <div class="info-label">${c.container_no} ${c.size_type?'('+c.size_type+')':''}</div>
+            <div class="info-value" style="font-size:12px">Seal: ${c.seal_no||'—'} | Weight: ${c.weight||'—'}</div>
+          </div>`
+        ).join('');
+      }
+
+      const tl=document.getElementById('timeline');
+      const noEv=document.getElementById('no-events');
+      if(!s.events||!s.events.length){ tl.style.display='none'; noEv.style.display='block'; }
+      else{
+        tl.innerHTML=s.events.map((e,i)=>
+          `<div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-time">${e.timestamp?e.timestamp.split('T').join(' ').substring(0,16):'—'}</div>
+              <div class="timeline-desc">${e.description||e.status||'Update'}</div>
+              ${e.location?`<div class="timeline-loc">📌 ${e.location}</div>`:''}
+            </div>
+          </div>`
+        ).join('');
+      }
+    })
+    .catch(e=>{
+      document.getElementById('loading').style.display='none';
+      document.getElementById('error').style.display='block';
+    });
 }
-load();
 </script>
 </body>
 </html>
