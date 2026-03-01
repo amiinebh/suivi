@@ -826,6 +826,7 @@ textarea.form-control{resize:none;min-height:72px}
           <label>Carrier</label>
           <input id="f-carrier" class="form-control" placeholder="CMA, MSC…"/>
         </div>
+
         <div class="form-group">
           <label>Client</label>
           <input id="f-client" class="form-control" placeholder="Company name"/>
@@ -857,6 +858,30 @@ textarea.form-control{resize:none;min-height:72px}
             <option>Pending</option><option>Sailing</option><option>Transit</option>
             <option>Arrived</option><option>Discharged</option><option>Delivered</option><option>Delayed</option>
           </select>
+        </div>
+        <div class="form-group full" id="containers-section">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>🗃 Containers</span>
+            <span id="teu-total-badge" style="font-size:11px;color:var(--accent);font-weight:700;display:none"></span>
+          </label>
+          <!-- Add container line -->
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input id="new-cont-qty" class="form-control" type="number" min="1" max="99" placeholder="Qty" style="width:70px;flex-shrink:0"/>
+            <select id="new-cont-type" class="form-control" style="flex:1">
+              <option value="">Type</option>
+              <option value="20GP">20GP (1 TEU)</option>
+              <option value="40GP">40GP (2 TEU)</option>
+              <option value="40HC">40HC (2 TEU)</option>
+              <option value="40RF">40RF (2 TEU)</option>
+              <option value="20RF">20RF (1 TEU)</option>
+              <option value="45HC">45HC (2 TEU)</option>
+            </select>
+            <button type="button" class="btn btn-primary btn-sm" onclick="addContainerRow()" style="flex-shrink:0;padding:0 16px">
+              <i class="fa fa-plus"></i> Add
+            </button>
+          </div>
+          <!-- Container list -->
+          <div id="containers-list" style="display:flex;flex-direction:column;gap:6px"></div>
         </div>
         <div class="form-group full">
           <label>Notes</label>
@@ -1014,7 +1039,7 @@ function renderCards(ships,containerId='ship-cards'){
         </div>
         <div class="ship-field">
           <div class="ship-field-label">Mode</div>
-          <div class="ship-field-value">${s.mode||'Ocean'}</div>
+          <div class="ship-field-value">${s.mode||'Ocean'}${s.teu?' · <strong>'+s.teu+' TEU</strong>':''}</div>
         </div>
         <div class="ship-field">
           <div class="ship-field-label">Route</div>
@@ -1028,7 +1053,7 @@ function renderCards(ships,containerId='ship-cards'){
       <div class="ship-card-foot">
         <div style="font-size:11px;color:var(--text2)">
           <i class="fa fa-clock" style="margin-right:4px"></i>
-          ${s.last_tracked?'Updated '+fmt(s.last_tracked):'Not tracked yet'}
+          ${s.last_tracked?'<i class="fa fa-rotate" style="font-size:10px;margin-right:3px"></i>Updated '+fmt(s.last_tracked):''}
         </div>
         <div class="ship-actions" onclick="event.stopPropagation()">
           <button class="btn btn-secondary btn-sm btn-icon" onclick="editShipment(${s.id})" title="Edit">
@@ -1204,6 +1229,9 @@ async function saveShipment(){
     if(editId) r=await apiFetch(`/api/shipments/${editId}`,{method:'PATCH',body:JSON.stringify(data)});
     else r=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
     if(r&&r.id){
+      try{ await _saveContainers(r.id); } catch(e){}
+      const totalTeu3=_formContainers.reduce((a,c)=>a+c.teu,0);
+      if(totalTeu3) try{ await apiFetch('/api/shipments/'+r.id,{method:'PATCH',body:JSON.stringify({teu:totalTeu3})}); }catch(e){}
       toast(editId?'Updated ✅':'Added ✅','success');
       closeModal('modal-add'); initTheme();
 loadDashboard(); loadShipments();
@@ -1935,6 +1963,7 @@ async function loadUsers(){
 }
 
 function openNewUserModal(){
+  _resetContainerForm();
   ["nu-name","nu-email","nu-pw"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
   const r=document.getElementById("nu-role"); if(r) r.value="cs";
   const e=document.getElementById("nu-error"); if(e) e.style.display="none";
@@ -2393,73 +2422,255 @@ async function generateReport(){
   const btn = document.getElementById('report-btn');
   if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa fa-spinner fa-spin"></i> Generating…'; }
   try{
-    const [ships, statsRes] = await Promise.all([
-      apiFetch('/api/shipments'),
-      apiFetch('/api/stats')
-    ]);
-    const stats = statsRes;
-    const bs = stats.by_status||{};
+    const [ships, stats] = await Promise.all([apiFetch('/api/shipments'), apiFetch('/api/stats')]);
     const today = new Date();
-    const fmt = d => d ? d.slice(0,10) : '—';
-    const statusColor = s => ({'Pending':'#f59e0b','Sailing':'#4f8ef7','Transit':'#4f8ef7','Arrived':'#22c55e','Discharged':'#06b6d4','Delivered':'#22c55e','Delayed':'#ef4444'}[s]||'#888');
+    const fmtD = d => d ? d.slice(0,10) : '—';
+    const bs = stats.by_status||{};
+    const bm = stats.by_mode||{};
 
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    // Compute metrics
+    const total = ships.length;
+    const totalTeu = ships.reduce((s,x)=>(s+(x.teu||0)),0);
+    const completed = ships.filter(s=>['Delivered','Arrived','Discharged'].includes(s.status)).length;
+    const inTransit = ships.filter(s=>['Sailing','Transit'].includes(s.status)).length;
+    const delayed = ships.filter(s=>s.status==='Delayed').length;
+    const pending = ships.filter(s=>s.status==='Pending').length;
+
+    // By status breakdown
+    const statusList = ['Pending','Sailing','Transit','Arrived','Discharged','Delivered','Delayed'];
+    const statusColors = {Pending:'#f59e0b',Sailing:'#4f8ef7',Transit:'#6c63ff',Arrived:'#22c55e',Discharged:'#06b6d4',Delivered:'#16a34a',Delayed:'#ef4444'};
+
+    // By carrier
+    const byCarrier = {};
+    ships.forEach(s=>{ if(s.carrier){ byCarrier[s.carrier]=(byCarrier[s.carrier]||0)+1; }});
+    const carrierRows = Object.entries(byCarrier).sort((a,b)=>b[1]-a[1]);
+
+    // By POD
+    const byPod = {};
+    ships.forEach(s=>{ if(s.pod){ byPod[s.pod]=(byPod[s.pod]||0)+1; }});
+    const podRows = Object.entries(byPod).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+    // Overdue (ETA passed, not delivered)
+    const todayMs = new Date().setHours(0,0,0,0);
+    const overdue = ships.filter(s=>s.eta&&!['Delivered','Discharged'].includes(s.status)&&new Date(s.eta)<todayMs);
+
+    const statusColor = s => statusColors[s]||'#888';
+
+    const reportHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>FreightTrack Pro — Report ${today.toLocaleDateString()}</title>
     <style>
       *{margin:0;padding:0;box-sizing:border-box}
-      body{font-family:Inter,sans-serif;background:#f8fafc;color:#1a2040;padding:32px}
-      h1{font-size:22px;font-weight:800;color:#1a2040;margin-bottom:4px}
-      .sub{font-size:13px;color:#5a6a8a;margin-bottom:28px}
-      .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
-      .stat{background:#fff;border:1px solid #e0e8f0;border-radius:12px;padding:16px;text-align:center}
-      .stat-val{font-size:28px;font-weight:800;color:#4f8ef7}
-      .stat-lbl{font-size:11px;color:#8892b0;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
-      table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-      th{background:#f0f4ff;color:#5a6a8a;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:11px 14px;text-align:left}
-      td{padding:11px 14px;font-size:12px;border-top:1px solid #eef2f8;vertical-align:middle}
-      tr:hover td{background:#f8faff}
+      body{font-family:Inter,-apple-system,sans-serif;background:#f0f4f8;color:#1a2040;padding:32px;font-size:13px}
+      .page-header{background:linear-gradient(135deg,#1a2040,#2d3a6a);color:#fff;border-radius:16px;padding:28px 32px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center}
+      .page-header h1{font-size:20px;font-weight:800;margin-bottom:4px}
+      .page-header .sub{font-size:12px;opacity:.7}
+      .print-btn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px)}
+      .print-btn:hover{background:rgba(255,255,255,.25)}
+      .section{background:#fff;border-radius:14px;padding:22px 24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+      .section-title{font-size:14px;font-weight:700;color:#1a2040;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f4f8;display:flex;align-items:center;gap:8px}
+      .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:0}
+      .kpi{background:#f8fafc;border:1px solid #e8eef6;border-radius:12px;padding:16px;text-align:center}
+      .kpi-val{font-size:26px;font-weight:800;color:#4f8ef7}
+      .kpi-lbl{font-size:10px;color:#8892b0;margin-top:4px;text-transform:uppercase;letter-spacing:.6px}
+      .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+      table{width:100%;border-collapse:collapse}
+      th{background:#f8fafc;color:#5a6a8a;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;padding:10px 12px;text-align:left;border-bottom:2px solid #e8eef6}
+      td{padding:10px 12px;border-bottom:1px solid #f0f4f8;color:#1a2040}
+      tr:last-child td{border-bottom:none}
+      tr:hover td{background:#fafbff}
       .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-      .footer{margin-top:24px;text-align:center;font-size:11px;color:#aaa}
-      @media print{body{padding:16px}.no-print{display:none}}
+      .bar-wrap{background:#f0f4f8;border-radius:4px;height:8px;width:100%;margin-top:4px;overflow:hidden}
+      .bar{height:8px;border-radius:4px;transition:width .3s}
+      .overdue-row td{background:#fff5f5!important;color:#dc2626}
+      .footer{text-align:center;font-size:11px;color:#aaa;margin-top:24px;padding:16px}
+      @media print{
+        body{background:#fff;padding:16px}
+        .no-print{display:none!important}
+        .section{box-shadow:none;border:1px solid #e8eef6}
+        .page-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      }
     </style></head><body>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+
+    <div class="page-header">
       <div>
         <h1>🚢 FreightTrack Pro — Shipment Report</h1>
-        <div class="sub">Generated on ${today.toLocaleString()} · ${ships.length} total shipments</div>
+        <div class="sub">Generated ${today.toLocaleString()} &nbsp;·&nbsp; ${total} shipments &nbsp;·&nbsp; ${totalTeu} TEU total</div>
       </div>
-      <button class="no-print" onclick="window.print()" style="background:#4f8ef7;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer">🖨 Print / Save PDF</button>
+      <button class="print-btn no-print" onclick="window.print()">🖨 Print / Save PDF</button>
     </div>
-    <div class="stats">
-      <div class="stat"><div class="stat-val">${stats.total||0}</div><div class="stat-lbl">Total</div></div>
-      <div class="stat"><div class="stat-val" style="color:#22c55e">${(bs.Delivered||0)+(bs.Arrived||0)+(bs.Discharged||0)}</div><div class="stat-lbl">Completed</div></div>
-      <div class="stat"><div class="stat-val" style="color:#4f8ef7">${(bs.Sailing||0)+(bs.Transit||0)}</div><div class="stat-lbl">In Transit</div></div>
-      <div class="stat"><div class="stat-val" style="color:#ef4444">${stats.delayed_count||0}</div><div class="stat-lbl">Delayed</div></div>
+
+    <!-- KPI Summary -->
+    <div class="section">
+      <div class="section-title">📊 Key Performance Indicators</div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-val">${total}</div><div class="kpi-lbl">Total</div></div>
+        <div class="kpi"><div class="kpi-val" style="color:#22c55e">${completed}</div><div class="kpi-lbl">Completed</div></div>
+        <div class="kpi"><div class="kpi-val" style="color:#4f8ef7">${inTransit}</div><div class="kpi-lbl">In Transit</div></div>
+        <div class="kpi"><div class="kpi-val" style="color:#f59e0b">${pending}</div><div class="kpi-lbl">Pending</div></div>
+        <div class="kpi"><div class="kpi-val" style="color:#ef4444">${delayed}</div><div class="kpi-lbl">Delayed</div></div>
+        <div class="kpi"><div class="kpi-val" style="color:#6c63ff">${totalTeu||'—'}</div><div class="kpi-lbl">Total TEU</div></div>
+      </div>
     </div>
-    <table>
-      <thead><tr><th>#</th><th>Reference</th><th>Container/AWB</th><th>Client</th><th>Carrier</th><th>Route</th><th>Mode</th><th>ETD</th><th>ETA</th><th>Status</th></tr></thead>
-      <tbody>
+
+    <!-- Status + Carrier breakdown -->
+    <div class="two-col">
+      <div class="section">
+        <div class="section-title">📦 By Status</div>
+        <table><thead><tr><th>Status</th><th>Count</th><th style="width:120px">Share</th></tr></thead><tbody>
+          ${statusList.filter(s=>bs[s]).map(s=>`<tr>
+            <td><span class="badge" style="background:${statusColors[s]}22;color:${statusColors[s]}">${s}</span></td>
+            <td style="font-weight:700">${bs[s]||0}</td>
+            <td><div class="bar-wrap"><div class="bar" style="width:${Math.round(((bs[s]||0)/total)*100)}%;background:${statusColors[s]}"></div></div></td>
+          </tr>`).join('')}
+        </tbody></table>
+      </div>
+      <div class="section">
+        <div class="section-title">🚢 By Carrier</div>
+        <table><thead><tr><th>Carrier</th><th>Shipments</th><th style="width:120px">Share</th></tr></thead><tbody>
+          ${carrierRows.length ? carrierRows.map(([c,n])=>`<tr>
+            <td style="font-weight:600">${c}</td>
+            <td style="font-weight:700">${n}</td>
+            <td><div class="bar-wrap"><div class="bar" style="width:${Math.round((n/total)*100)}%;background:#4f8ef7"></div></div></td>
+          </tr>`).join('') : '<tr><td colspan="3" style="color:#aaa;text-align:center;padding:20px">No carrier data</td></tr>'}
+        </tbody></table>
+      </div>
+    </div>
+
+    <!-- Mode + POD breakdown -->
+    <div class="two-col">
+      <div class="section">
+        <div class="section-title">✈ By Mode</div>
+        <table><thead><tr><th>Mode</th><th>Count</th><th>TEU</th></tr></thead><tbody>
+          ${Object.entries(bm).map(([m,n])=>`<tr>
+            <td style="font-weight:600">${m}</td>
+            <td>${n}</td>
+            <td style="color:#6c63ff;font-weight:600">${ships.filter(s=>s.mode===m).reduce((a,s)=>a+(s.teu||0),0)||'—'}</td>
+          </tr>`).join('')}
+        </tbody></table>
+      </div>
+      <div class="section">
+        <div class="section-title">🏁 Top Destinations (POD)</div>
+        <table><thead><tr><th>Port</th><th>Count</th></tr></thead><tbody>
+          ${podRows.map(([p,n])=>`<tr><td style="font-weight:600">${p}</td><td>${n}</td></tr>`).join('')}
+        </tbody></table>
+      </div>
+    </div>
+
+    ${overdue.length ? `
+    <!-- Overdue -->
+    <div class="section">
+      <div class="section-title" style="color:#dc2626">⚠️ Overdue Shipments (ETA Passed)</div>
+      <table><thead><tr><th>Ref</th><th>Client</th><th>Route</th><th>Carrier</th><th>ETA</th><th>Status</th></tr></thead><tbody>
+        ${overdue.map(s=>`<tr class="overdue-row">
+          <td style="font-weight:700">${s.ref}</td>
+          <td>${s.client||'—'}</td>
+          <td>${s.pol||'—'} → ${s.pod||'—'}</td>
+          <td>${s.carrier||'—'}</td>
+          <td style="font-weight:700">${fmtD(s.eta)}</td>
+          <td><span class="badge" style="background:${statusColor(s.status)}22;color:${statusColor(s.status)}">${s.status}</span></td>
+        </tr>`).join('')}
+      </tbody></table>
+    </div>` : ''}
+
+    <!-- Full Shipment List -->
+    <div class="section">
+      <div class="section-title">📋 All Shipments (${total})</div>
+      <table><thead><tr><th>#</th><th>Reference</th><th>Container/AWB</th><th>Client</th><th>Carrier</th><th>Route</th><th>Mode</th><th>TEU</th><th>ETD</th><th>ETA</th><th>Status</th></tr></thead><tbody>
         ${ships.map((s,i)=>`<tr>
           <td style="color:#aaa">${i+1}</td>
           <td style="font-weight:700;color:#4f8ef7">${s.ref||'—'}</td>
-          <td style="color:#5a6a8a">${s.ref2||'—'}</td>
+          <td style="color:#5a6a8a;font-size:11px">${s.ref2||'—'}</td>
           <td>${s.client||'—'}</td>
           <td>${s.carrier||'—'}</td>
           <td style="font-size:11px">${s.pol||'—'} → ${s.pod||'—'}</td>
           <td>${s.mode||'—'}</td>
-          <td>${fmt(s.etd)}</td>
-          <td>${fmt(s.eta)}</td>
+          <td style="font-weight:600;color:#6c63ff">${s.teu||'—'}</td>
+          <td>${fmtD(s.etd)}</td>
+          <td>${fmtD(s.eta)}</td>
           <td><span class="badge" style="background:${statusColor(s.status)}22;color:${statusColor(s.status)}">${s.status||'—'}</span></td>
         </tr>`).join('')}
-      </tbody>
-    </table>
-    <div class="footer">FreightTrack Pro · ${today.getFullYear()} · ${ships.length} shipments exported</div>
+      </tbody></table>
+    </div>
+
+    <div class="footer">FreightTrack Pro &nbsp;·&nbsp; ${today.getFullYear()} &nbsp;·&nbsp; Confidential</div>
     </body></html>`;
 
     const w = window.open('','_blank');
-    w.document.write(html);
+    w.document.write(reportHtml);
     w.document.close();
-  }catch(e){ showToast('Report error: '+e.message,'error'); }
+  } catch(e){ showToast('Report error: '+e.message,'error'); }
   finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa fa-file-lines"></i> Generate Report'; } }
+}
+
+
+/* ── Form Containers ── */
+let _formContainers = []; // [{qty, size_type, teu_each, teu_total}]
+
+function _teuFromType(t){ return t&&t.startsWith('20')?1:t?2:0; }
+
+function addContainerRow(){
+  const qty = parseInt(document.getElementById('new-cont-qty')?.value)||0;
+  const type = document.getElementById('new-cont-type').value;
+  if(!qty||qty<1){ showToast('Enter quantity','error'); return; }
+  if(!type){ showToast('Select container type','error'); return; }
+  const teuEach = _teuFromType(type);
+  // Merge if same type already exists
+  const existing = _formContainers.find(c=>c.size_type===type);
+  if(existing){ existing.qty+=qty; existing.teu_total=existing.qty*teuEach; }
+  else { _formContainers.push({size_type:type, qty, teu_each:teuEach, teu_total:qty*teuEach}); }
+  const qtyEl=document.getElementById('new-cont-qty'); if(qtyEl) qtyEl.value='';
+  const typeEl=document.getElementById('new-cont-type'); if(typeEl) typeEl.value='';
+  _renderContainerList();
+}
+
+function removeContainerRow(idx){
+  _formContainers.splice(idx,1);
+  _renderContainerList();
+}
+
+function _renderContainerList(){
+  const list = document.getElementById('containers-list');
+  const badge = document.getElementById('teu-total-badge');
+  if(!list) return;
+  const totalTeu = _formContainers.reduce((s,c)=>s+c.teu_total,0);
+  const totalCont = _formContainers.reduce((s,c)=>s+c.qty,0);
+  if(badge){ 
+    badge.textContent = totalTeu ? totalCont+' container'+(totalCont>1?'s':'')+' · '+totalTeu+' TEU' : ''; 
+    badge.style.display = totalTeu?'':'none'; 
+  }
+  if(!_formContainers.length){
+    list.innerHTML = '<div style="font-size:12px;color:var(--text2);text-align:center;padding:10px">No containers added yet</div>';
+    return;
+  }
+  list.innerHTML = _formContainers.map((c,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+      <div style="font-size:20px">📦</div>
+      <div style="flex:1">
+        <span style="font-size:13px;font-weight:700;color:var(--text1)">${c.qty} × ${c.size_type}</span>
+        <span style="font-size:11px;color:var(--accent);font-weight:700;margin-left:8px">${c.teu_total} TEU</span>
+      </div>
+      <button type="button" onclick="removeContainerRow(${i})" class="btn btn-danger btn-sm btn-icon" style="padding:4px 8px">
+        <i class="fa fa-trash"></i>
+      </button>
+    </div>`).join('');
+}
+
+function _resetContainerForm(){
+  _formContainers=[];
+  const q=document.getElementById('new-cont-qty'); if(q) q.value='';
+  const t=document.getElementById('new-cont-type'); if(t) t.value='';
+  _renderContainerList();
+}
+
+async function _saveContainers(shipmentId){
+  // Save each container line as individual container records
+  for(const c of _formContainers){
+    for(let i=0;i<c.qty;i++){
+      await apiFetch(`/api/shipments/${shipmentId}/containers`,{
+        method:'POST', body:JSON.stringify({container_no:c.size_type+'_'+String(i+1).padStart(2,'0'), size_type:c.size_type, seal_no:null})
+      });
+    }
+  }
 }
 
 /* ── Custom Confirm ── */
