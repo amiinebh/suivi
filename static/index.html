@@ -1041,26 +1041,38 @@ function renderCards(ships,containerId='ship-cards'){
       <div class="ship-card-head">
         <div>
           <div class="ship-ref">${s.ref}</div>
-          <div class="ship-sub">${s.ref2||''} ${s.carrier?'· '+s.carrier:''}</div>
+          <div class="ship-sub">${s.booking_no||'—'} ${s.carrier?'· '+s.carrier:''}</div>
         </div>
         ${statusBadge(s.status)}
       </div>
-      <div class="ship-card-body">
+      <div class="ship-card-body" style="grid-template-columns: repeat(2, 1fr); gap:12px">
         <div class="ship-field">
           <div class="ship-field-label">Client</div>
           <div class="ship-field-value">${s.client||'—'}</div>
         </div>
         <div class="ship-field">
-          <div class="ship-field-label">Mode</div>
-          <div class="ship-field-value">${s.mode||'Ocean'}${s.teu?' · <strong>'+s.teu+' TEU</strong>':''}</div>
+          <div class="ship-field-label">Incoterm</div>
+          <div class="ship-field-value">${s.incoterm||'—'}</div>
         </div>
         <div class="ship-field">
-          <div class="ship-field-label">Route</div>
-          <div class="ship-field-value">${s.pol||'—'} → ${s.pod||'—'}</div>
+          <div class="ship-field-label">POL</div>
+          <div class="ship-field-value">${s.pol||'—'}</div>
+        </div>
+        <div class="ship-field">
+          <div class="ship-field-label">POD</div>
+          <div class="ship-field-value">${s.pod||'—'}</div>
+        </div>
+        <div class="ship-field">
+          <div class="ship-field-label">ETD</div>
+          <div class="ship-field-value">${fmt(s.etd)}</div>
         </div>
         <div class="ship-field">
           <div class="ship-field-label">ETA</div>
           <div class="ship-field-value">${fmt(s.eta)}</div>
+        </div>
+        <div class="ship-field" style="grid-column: span 2;">
+          <div class="ship-field-label">Quantity</div>
+          <div class="ship-field-value" style="color:var(--accent);font-weight:600">${s.teu?s.teu+' TEU':'—'}</div>
         </div>
       </div>
       <div class="ship-card-foot">
@@ -1086,17 +1098,20 @@ function renderTable(ships){
   if(!wrap) return;
   if(!ships.length){ wrap.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No shipments</div></div>`; return; }
   wrap.innerHTML=`<table><thead><tr>
-    <th>Reference</th><th>Container</th><th>Client</th><th>Carrier</th>
-    <th>Route</th><th>Mode</th><th>ETA</th><th>Status</th><th></th>
+    <th>Ref / Booking</th><th>Client</th><th>Incoterm</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th><th>TEU</th><th>Status</th><th style="width:70px"></th>
   </tr></thead><tbody>
   ${ships.map(s=>`<tr class="clickable" onclick="openDetail(${s.id})">
-    <td class="ref-cell">${s.ref}</td>
-    <td style="color:var(--text2)">${s.ref2||'—'}</td>
+    <td class="ref-cell">
+      <div>${s.ref}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">${s.booking_no||'—'}</div>
+    </td>
     <td>${s.client||'—'}</td>
-    <td>${s.carrier||'—'}</td>
-    <td style="font-size:11px">${s.pol||'—'} → ${s.pod||'—'}</td>
-    <td>${modeBadge(s.mode)}</td>
-    <td>${fmt(s.eta)}</td>
+    <td>${s.incoterm||'—'}</td>
+    <td style="font-size:12px;color:var(--text2)">${s.pol||'—'}</td>
+    <td style="font-size:12px;color:var(--text2)">${s.pod||'—'}</td>
+    <td style="font-size:12px">${fmt(s.etd)}</td>
+    <td style="font-size:12px">${fmt(s.eta)}</td>
+    <td><span class="badge badge-blue" style="font-size:11px">${s.teu?s.teu+' TEU':'—'}</span></td>
     <td>${statusBadge(s.status)}</td>
     <td><div class="actions">
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="fa fa-pen"></i></button>
