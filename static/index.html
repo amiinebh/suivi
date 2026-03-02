@@ -112,111 +112,22 @@ async function convertQuoteToShipment(id) {
 }
 
 
-// PDF Quote Export using jsPDF
 function exportQuotePDF(quoteId) {
   const quote = allQuotes.find(q => q.id === quoteId);
   if (!quote) return;
-
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   const total = (quote.totalTeu * quote.rate).toLocaleString();
 
-  // Header
-  doc.setFontSize(22);
-  doc.setTextColor(33, 128, 141);
-  doc.text('FreightTrack Pro', 20, 20);
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text('Freight Forwarding Solutions', 20, 27);
+  doc.setFontSize(22); doc.setTextColor(33, 128, 141); doc.text('FreightTrack Pro', 20, 20);
+  doc.setFontSize(16); doc.setTextColor(0); doc.text(`Quotation ${quote.ref || 'Q'+quote.id.slice(-6)}`, 20, 45);
+  doc.setFontSize(10); doc.text(`Client: ${quote.client}`, 20, 65);
+  doc.text(`Origin: ${quote.pol} -> Destination: ${quote.pod}`, 20, 85);
+  doc.text(`Mode: ${quote.mode} | Total TEU: ${quote.totalTeu}`, 20, 95);
+  doc.setFontSize(14); doc.text(`Total: EURO ${total}`, 20, 115);
+  if (quote.notes) doc.text(`Notes: ${quote.notes}`, 20, 135);
 
-  // Quote number
-  doc.setFontSize(16);
-  doc.setTextColor(0);
-  doc.text(`Quotation ${quote.ref || 'Q'+quote.id.slice(-6)}`, 20, 45);
-
-  // Date
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text(`Date: ${new Date().toLocaleDateString()}`, 150, 45);
-  doc.text(`Valid until: ${new Date(Date.now() + 7*24*60*60*1000).toLocaleDateString()}`, 150, 52);
-
-  // Client info
-  doc.setFontSize(12);
-  doc.setTextColor(0);
-  doc.text('Bill To:', 20, 65);
-  doc.setFontSize(10);
-  doc.text(quote.client || 'N/A', 20, 72);
-  doc.setTextColor(100);
-  doc.text(quote.email || '', 20, 78);
-
-  // Route details
-  doc.setFillColor(245, 245, 245);
-  doc.rect(20, 90, 170, 8, 'F');
-  doc.setFontSize(11);
-  doc.setTextColor(0);
-  doc.text('Route Details', 22, 95);
-
-  doc.setFontSize(10);
-  doc.text(`Origin (POL): ${quote.pol}`, 22, 105);
-  doc.text(`Destination (POD): ${quote.pod}`, 22, 112);
-  doc.text(`Mode: ${quote.mode}`, 22, 119);
-  doc.text(`Total TEU: ${quote.totalTeu}`, 22, 126);
-
-  // Pricing table
-  doc.setFillColor(245, 245, 245);
-  doc.rect(20, 140, 170, 8, 'F');
-  doc.setFontSize(11);
-  doc.text('Pricing', 22, 145);
-
-  let yPos = 155;
-  doc.setFontSize(10);
-  doc.text('Description', 22, yPos);
-  doc.text('Quantity', 100, yPos);
-  doc.text('Rate', 130, yPos);
-  doc.text('Amount', 160, yPos);
-
-  yPos += 7;
-  doc.line(20, yPos, 190, yPos);
-  yPos += 7;
-
-  // Line items
-  (quote.containers || []).forEach(c => {
-    doc.text(c.type, 22, yPos);
-    doc.text(`${c.teu} TEU`, 100, yPos);
-    doc.text(`€${quote.rate}`, 130, yPos);
-    doc.text(`€${(c.teu * quote.rate).toLocaleString()}`, 160, yPos);
-    yPos += 7;
-  });
-
-  // Total
-  yPos += 5;
-  doc.setDrawColor(33, 128, 141);
-  doc.line(20, yPos, 190, yPos);
-  yPos += 7;
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  doc.text('Total:', 130, yPos);
-  doc.text(`€${total}`, 160, yPos);
-
-  // Notes
-  if (quote.notes) {
-    yPos += 15;
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(100);
-    doc.text('Notes:', 22, yPos);
-    doc.text(quote.notes, 22, yPos + 7, { maxWidth: 160 });
-  }
-
-  // Footer
-  doc.setFontSize(9);
-  doc.setTextColor(150);
-  doc.text('Thank you for your business!', 105, 280, { align: 'center' });
-  doc.text('This quote is valid for 7 days from issue date.', 105, 285, { align: 'center' });
-
-  // Save
   doc.save(`Quote_${quote.ref || quote.id.slice(-6)}.pdf`);
-  toast('PDF downloaded!', 'success');
 }
 
 
