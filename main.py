@@ -99,7 +99,12 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         vessel=body.get("vessel") or None,
         teu=int(body["teu"]) if body.get("teu") else None,
     )
-    ship = crud.create_shipment(db, s)
+    try:
+        ship = crud.create_shipment(db, s)
+    except Exception as e:
+        db.rollback()
+        import traceback; traceback.print_exc()
+        raise HTTPException(500, f"DB Create Error: {str(e)}")
     return ship
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
@@ -119,7 +124,11 @@ async def update_shipment(sid: int, request: Request, db: Session = Depends(get_
         elif v is not None:
             update_dict[k] = v or None
     data = schemas.ShipmentUpdate(**update_dict)
-    s = crud.update_shipment(db, sid, data)
+    try:
+        s = crud.update_shipment(db, sid, data)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"DB Update Error: {str(e)}")
     if not s: raise HTTPException(404, "Not found")
     return s
 
@@ -133,7 +142,11 @@ async def patch_shipment(sid: int, request: Request, db: Session = Depends(get_d
         if k == "teu": update_dict2[k] = int(v) if v else None
         elif v is not None: update_dict2[k] = v or None
     data = schemas.ShipmentUpdate(**update_dict2)
-    s = crud.update_shipment(db, sid, data)
+    try:
+        s = crud.update_shipment(db, sid, data)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"DB Patch Error: {str(e)}")
     if not s: raise HTTPException(404, "Not found")
     return s
 
