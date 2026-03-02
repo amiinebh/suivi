@@ -98,7 +98,6 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         status=body.get("status") or "Pending",
         vessel=body.get("vessel") or None,
         teu=int(body["teu"]) if body.get("teu") else None,
-        teu=int(body["teu"]) if body.get("teu") else None,
     )
     ship = crud.create_shipment(db, s)
     return ship
