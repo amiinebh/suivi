@@ -1594,15 +1594,6 @@ function initTheme(){
 /* ── Init ── */
 initTheme();
 loadDashboard();
-
-
-// HTML AUTOCOMPLETE LINKER - 5 lines
-document.addEventListener("DOMContentLoaded", () => {
-  ["f-pol","f-pod","f-carrier"].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.list = id.includes("pol") ? "port-list" : "carrier-list";
-  });
-});
 </script>
 
 <script>
@@ -2197,17 +2188,8 @@ function _renderDetail(s){
       document.getElementById("detail-containers-section").style.display="none";
     }
   }
-</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
-    ].filter(Boolean).join('');
-    infoChips.style.display = infoChips.innerHTML ? 'flex' : 'none';
-  }
 
   const ha=document.getElementById("detail-portal-href");
-  const infoChips = document.getElementById("detail-info-chips");
   if(infoChips){
     infoChips.innerHTML = [
       s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
@@ -2801,30 +2783,6 @@ async function generateReport(){
     <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
-
-
-<!-- SAFE AUTOCOMPLETE - HTML ONLY -->
-<datalist id="port-list">
-<option value="TNG">Tanger Med
-<option value="AGP">Agadir 
-<option value="NTE">Nantes
-<option value="LIS">Lisbon
-<option value="MAD">Madrid
-<option value="BCN">Barcelona
-<option value="FAO">Faro
-<option value="ORY">Oran
-<option value="NYC">New York
-<option value="LAX">Los Angeles
-</datalist>
-<datalist id="carrier-list">
-<option value="MSC">
-<option value="MAERSK">
-<option value="CMA CGM">
-<option value="COSCO">
-<option value="HMM">
-<option value="ONE">
-</datalist>
-
 </body></html>`;
 
     const w = window.open('','_blank');
@@ -2946,29 +2904,5 @@ function _confirmReject() {
 <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
-
-
-<!-- SAFE AUTOCOMPLETE - HTML ONLY -->
-<datalist id="port-list">
-<option value="TNG">Tanger Med
-<option value="AGP">Agadir 
-<option value="NTE">Nantes
-<option value="LIS">Lisbon
-<option value="MAD">Madrid
-<option value="BCN">Barcelona
-<option value="FAO">Faro
-<option value="ORY">Oran
-<option value="NYC">New York
-<option value="LAX">Los Angeles
-</datalist>
-<datalist id="carrier-list">
-<option value="MSC">
-<option value="MAERSK">
-<option value="CMA CGM">
-<option value="COSCO">
-<option value="HMM">
-<option value="ONE">
-</datalist>
-
 </body>
   </html>
