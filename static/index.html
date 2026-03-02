@@ -992,6 +992,7 @@ document.querySelectorAll('.overlay').forEach(o=>{
 function resetForm(){
   ['f-ref','f-ref2','f-booking','f-carrier','f-client','f-client-email','f-pol','f-pod','f-etd','f-eta','f-note']
     .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  _resetContainerForm();
   const fm=document.getElementById('f-mode'); if(fm) fm.value='Ocean';
   const fs=document.getElementById('f-status'); if(fs) fs.value='Pending';
   document.getElementById('modal-add-title').textContent='New Shipment';
@@ -1231,7 +1232,7 @@ async function saveShipment(){
     if(r&&r.id){
       try{ await _saveContainers(r.id); } catch(e){}
       const totalTeu3=_formContainers.reduce((a,c)=>a+c.teu,0);
-      if(totalTeu3) try{ await apiFetch('/api/shipments/'+r.id,{method:'PATCH',body:JSON.stringify({teu:totalTeu3})}); }catch(e){}
+      if(totalTeu3) try{ await apiFetch(`/api/shipments/${r.id}`,{method:'PATCH',body:JSON.stringify({teu:totalTeu3})}); }catch(e){}
       toast(editId?'Updated ✅':'Added ✅','success');
       closeModal('modal-add'); initTheme();
 loadDashboard(); loadShipments();
@@ -1254,6 +1255,18 @@ async function editShipment(sid){
     set('f-note',s.note);
     const fm=document.getElementById('f-mode'); if(fm) fm.value=s.mode||'Ocean';
     const fs=document.getElementById('f-status'); if(fs) fs.value=s.status||'Pending';
+    // Reset + load existing containers grouped by type
+    const _rawConts = (s.containers||[]);
+    const _cMerged = {};
+    _rawConts.forEach(c => {
+      const t = c.size_type||'?';
+      if(!_cMerged[t]) _cMerged[t] = {size_type:t, qty:0, teu_each:_teuFromType(t), teu_total:0, fromDB:true, dbIds:[]};
+      _cMerged[t].qty++;
+      _cMerged[t].teu_total += _teuFromType(t);
+      _cMerged[t].dbIds.push(c.id);
+    });
+    _formContainers = Object.values(_cMerged);
+    _renderContainerList();
     openModal('modal-add');
   }catch(e){ toast(e.message,'error'); }
 }
@@ -2649,7 +2662,7 @@ function _renderContainerList(){
         <span style="font-size:13px;font-weight:700;color:var(--text1)">${c.qty} × ${c.size_type}</span>
         <span style="font-size:11px;color:var(--accent);font-weight:700;margin-left:8px">${c.teu_total} TEU</span>
       </div>
-      <button type="button" onclick="removeContainerRow(${i})" class="btn btn-danger btn-sm btn-icon" style="padding:4px 8px">
+      <button type="button" onclick="${c.fromDB&&c.dbIds?.length?`deleteContainerGroup(${i})`:"removeContainerRow("+i+")"}" class="btn btn-danger btn-sm btn-icon" style="padding:4px 8px">
         <i class="fa fa-trash"></i>
       </button>
     </div>`).join('');
@@ -2662,9 +2675,20 @@ function _resetContainerForm(){
   _renderContainerList();
 }
 
+async function deleteContainerGroup(idx){
+  const c=_formContainers[idx];
+  if(c.fromDB&&c.dbIds){
+    for(const id of c.dbIds){
+      try{ await apiFetch(`/api/containers/${id}`,{method:'DELETE'}); }catch(e){}
+    }
+  }
+  _formContainers.splice(idx,1);
+  _renderContainerList();
+}
+
 async function _saveContainers(shipmentId){
-  // Save each container line as individual container records
   for(const c of _formContainers){
+    if(c.fromDB) continue; // already saved in DB, skip
     for(let i=0;i<c.qty;i++){
       await apiFetch(`/api/shipments/${shipmentId}/containers`,{
         method:'POST', body:JSON.stringify({container_no:c.size_type+'_'+String(i+1).padStart(2,'0'), size_type:c.size_type, seal_no:null})
