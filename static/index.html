@@ -1,62 +1,1015 @@
-id="modal-detail">
-  <div class="modal detail-modal">
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate"/>
+<meta name="theme-color" content="#0a0f1e"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>FreightTrack Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --accent:#4f8ef7;--accent2:#6c63ff;
+  --green:#22c55e;--yellow:#f59e0b;--red:#ef4444;
+  --orange:#f97316;--cyan:#06b6d4;
+  --radius:14px;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+/* ── DARK theme (default) ── */
+[data-theme="dark"]{
+  --bg:#0a0f1e;--bg2:#0f1629;--bg3:#151d35;
+  --card:#1a2240;--card2:#1f2a4a;--border:#2a3a5c;
+  --text:#e8eaf6;--text2:#8892b0;--text3:#4a5568;
+  --shadow:0 8px 32px rgba(0,0,0,.5);
+  --modal-overlay:rgba(0,0,0,.65);
+}
+/* ── LIGHT theme ── */
+[data-theme="light"]{
+  --bg:#f0f4ff;--bg2:#ffffff;--bg3:#e8edf8;
+  --card:#ffffff;--card2:#f5f7ff;--border:#d0d8f0;
+  --text:#1a2040;--text2:#5a6a8a;--text3:#a0aec0;
+  --shadow:0 4px 24px rgba(79,142,247,.1);
+  --modal-overlay:rgba(30,40,80,.5);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);transition:background .25s,color .25s;
+  display:flex;flex-direction:column;}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* ══════════════════════════════════════
+   DESKTOP LAYOUT
+══════════════════════════════════════ */
+.app{display:flex;flex:1;overflow:hidden}
+
+/* Sidebar — desktop only */
+.sidebar{
+  width:230px;min-width:230px;background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.sidebar-logo{
+  padding:22px 18px 14px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+}
+.logo-icon{width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.logo-text{font-size:14px;font-weight:700}
+.logo-sub{font-size:10px;color:var(--text2);margin-top:1px}
+.nav{flex:1;padding:12px 10px}
+.nav-section{font-size:10px;font-weight:600;color:var(--text3);
+  letter-spacing:1.2px;text-transform:uppercase;padding:8px 8px 4px;margin-top:6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;
+  color:var(--text2);transition:all .15s;margin-bottom:2px}
+.nav-item:hover,.nav-item:active{background:var(--card);color:var(--text)}
+.nav-item.active{background:linear-gradient(135deg,rgba(79,142,247,.15),rgba(108,99,255,.15));
+  color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+.nav-item i{width:16px;text-align:center;font-size:13px}
+.nav-badge{margin-left:auto;background:var(--accent);color:#fff;
+  font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px}
+.sidebar-bottom{padding:10px;border-top:1px solid var(--border)}
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-radius:8px;background:var(--card)}
+.avatar{width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.user-info .name{font-size:12px;font-weight:600}
+.user-info .role{font-size:10px;color:var(--text2)}
+
+/* Main area */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+
+/* Topbar */
+.topbar{
+  height:56px;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;gap:12px;
+  flex-shrink:0;z-index:10;
+}
+.topbar-title{font-size:16px;font-weight:700;flex:1}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--card);
+  border:1px solid var(--border);border-radius:8px;padding:7px 12px;flex:1;max-width:260px}
+.search-box input{background:none;border:none;outline:none;color:var(--text);
+  font-size:13px;width:100%;font-family:inherit}
+.search-box i{color:var(--text2);font-size:12px;flex-shrink:0}
+
+/* Scrollable content */
+.content{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;
+  border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;
+  border:none;transition:all .15s;white-space:nowrap;font-family:inherit;
+  -webkit-user-select:none;user-select:none}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border)}
+.btn-ghost{background:none;color:var(--text2);border:1px solid var(--border)}
+.btn-danger{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
+.btn-icon{width:34px;height:34px;padding:0;justify-content:center}
+.btn-fab{
+  position:fixed;bottom:calc(72px + var(--safe-bottom));right:16px;
+  width:52px;height:52px;border-radius:50%;padding:0;justify-content:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;font-size:20px;box-shadow:0 4px 20px rgba(79,142,247,.5);
+  z-index:200;display:none;
+}
+
+/* ══════════════════════════════════════
+   PAGES
+══════════════════════════════════════ */
+.page{display:none}.page.active{display:block}
+
+/* ── Stats ── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 12px;display:flex;flex-direction:column;gap:8px}
+.stat-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:15px}
+.stat-icon.blue{background:rgba(79,142,247,.15);color:var(--accent)}
+.stat-icon.green{background:rgba(34,197,94,.15);color:var(--green)}
+.stat-icon.orange{background:rgba(249,115,22,.15);color:var(--orange)}
+.stat-icon.red{background:rgba(239,68,68,.15);color:var(--red)}
+.stat-icon.cyan{background:rgba(6,182,212,.15);color:var(--cyan)}
+.stat-icon.purple{background:rgba(108,99,255,.15);color:var(--accent2)}
+.stat-value{font-size:22px;font-weight:700;line-height:1}
+.stat-label{font-size:10px;color:var(--text2)}
+
+/* ── Section header ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;gap:8px}
+.section-title{font-size:15px;font-weight:700}
+
+/* ── Shipment Cards (mobile) ── */
+.ship-cards{display:flex;flex-direction:column;gap:10px}
+.ship-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;cursor:pointer;transition:border-color .15s;
+  -webkit-user-select:none;user-select:none;
+}
+.ship-card:active{border-color:var(--accent);background:var(--card2)}
+.ship-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px}
+.ship-ref{font-size:15px;font-weight:700;color:var(--accent)}
+.ship-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.ship-card-body{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ship-field{display:flex;flex-direction:column;gap:2px}
+.ship-field-label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.ship-field-value{font-size:12px;font-weight:500}
+.ship-card-foot{display:flex;align-items:center;justify-content:space-between;
+  margin-top:12px;padding-top:10px;border-top:1px solid rgba(42,58,92,.5)}
+.ship-actions{display:flex;gap:8px}
+
+/* ── Table (desktop) ── */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-header{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid var(--border);gap:10px;flex-wrap:wrap}
+.table-title{font-size:14px;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{background:var(--bg3);color:var(--text2);font-size:10px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.8px;padding:11px 14px;text-align:left;white-space:nowrap}
+td{padding:12px 14px;font-size:12px;border-top:1px solid rgba(42,58,92,.5);vertical-align:middle}
+tr:hover td{background:rgba(79,142,247,.04)}
+tr.clickable{cursor:pointer}
+.ref-cell{font-weight:700;color:var(--accent)}
+.actions{display:flex;gap:6px;opacity:0;transition:opacity .15s}
+tr:hover .actions{opacity:1}
+
+/* ── Badges ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;
+  border-radius:20px;font-size:11px;font-weight:600}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%}
+.badge-pending{background:rgba(245,158,11,.12);color:var(--yellow)}.badge-pending::before{background:var(--yellow)}
+.badge-sailing,.badge-transit{background:rgba(79,142,247,.12);color:var(--accent)}.badge-sailing::before,.badge-transit::before{background:var(--accent)}
+.badge-arrived,.badge-delivered{background:rgba(34,197,94,.12);color:var(--green)}.badge-arrived::before,.badge-delivered::before{background:var(--green)}
+.badge-delayed{background:rgba(239,68,68,.12);color:var(--red)}.badge-delayed::before{background:var(--red)}
+.badge-discharged{background:rgba(6,182,212,.12);color:var(--cyan)}.badge-discharged::before{background:var(--cyan)}
+.badge-ocean{background:rgba(79,142,247,.1);color:var(--accent)}
+.badge-air{background:rgba(108,99,255,.1);color:var(--accent2)}
+.badge::before.badge-ocean,.badge-mode::before{display:none}
+
+/* ── Filters ── */
+.filters-row{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;
+  -webkit-overflow-scrolling:touch}
+.filters-row::-webkit-scrollbar{display:none}
+select.filter{background:var(--card);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:7px 12px;font-size:12px;outline:none;flex-shrink:0;font-family:inherit}
+
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:var(--modal-overlay);
+  backdrop-filter:blur(6px);z-index:500;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+/* Desktop: center modal */
+@media(min-width:768px){.overlay{align-items:center}}
+.modal{
+  background:var(--bg2);border:1px solid var(--border);
+  width:100%;max-width:640px;
+  border-radius:20px 20px 0 0;
+  max-height:92vh;overflow-y:auto;
+  box-shadow:var(--shadow);
+  animation:slideUp .28s cubic-bezier(.34,1.56,.64,1);
+  -webkit-overflow-scrolling:touch;
+}
+@media(min-width:768px){.modal{border-radius:16px;max-height:85vh}}
+@keyframes slideUp{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
+/* Pull handle */
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:4px;
+  margin:10px auto 0}
+.modal-head{display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px 12px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{width:28px;height:28px;border-radius:8px;background:var(--card);
+  border:none;color:var(--text2);cursor:pointer;font-size:15px;
+  display:flex;align-items:center;justify-content:center}
+.modal-body{padding:16px 20px}
+.modal-foot{display:flex;gap:10px;padding:12px 20px 16px;
+  border-top:1px solid var(--border);padding-bottom:calc(16px + var(--safe-bottom))}
+
+/* ── Form ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr}}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group.full{grid-column:1/-1}
+label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.form-control{background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;
+  outline:none;transition:border-color .2s;font-family:inherit;
+  -webkit-appearance:none;appearance:none}
+.form-control:focus{border-color:var(--accent)}
+.form-control::placeholder{color:var(--text3)}
+textarea.form-control{resize:none;min-height:72px}
+
+/* ── Detail sheet ── */
+.detail-modal{max-width:700px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+@media(max-width:480px){.detail-grid{grid-template-columns:1fr}}
+.detail-item{background:var(--bg3);border-radius:10px;padding:12px 14px}
+.detail-label{font-size:10px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.detail-value{font-size:13px;font-weight:500}
+.events-list{display:flex;flex-direction:column}
+.event-item{display:flex;gap:14px;padding:10px 0;
+  border-bottom:1px solid rgba(42,58,92,.4)}
+.event-item:last-child{border:none}
+.event-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);
+  margin-top:4px;flex-shrink:0}
+.event-time{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* ── Bottom Nav (mobile) ── */
+.bottom-nav{
+  display:none;
+  background:var(--bg2);border-top:1px solid var(--border);
+  padding:8px 0 calc(8px + var(--safe-bottom));
+  flex-shrink:0;z-index:100;
+}
+.bottom-nav-items{display:flex;justify-content:space-around}
+.bnav-item{display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 16px;cursor:pointer;color:var(--text3);transition:color .15s;
+  font-size:10px;font-weight:500;border:none;background:none;font-family:inherit;
+  -webkit-user-select:none;user-select:none;min-width:60px}
+.bnav-item i{font-size:18px}
+.bnav-item.active{color:var(--accent)}
+.bnav-item:active{opacity:.7}
+
+/* ── Toast ── */
+#toast-wrap{position:fixed;bottom:calc(80px + var(--safe-bottom));right:12px;
+  z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;background:var(--card2);
+  border:1px solid var(--border);border-radius:10px;padding:12px 14px;
+  min-width:220px;max-width:300px;box-shadow:var(--shadow);
+  animation:fadeIn .25s ease;font-size:13px;font-weight:500}
+.toast.success{border-left:3px solid var(--green)}
+.toast.error{border-left:3px solid var(--red)}
+.toast.info{border-left:3px solid var(--accent)}
+.toast i{font-size:14px}
+.toast.success i{color:var(--green)}.toast.error i{color:var(--red)}.toast.info i{color:var(--accent)}
+@keyframes fadeIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── Spinner ── */
+.spinner{display:inline-block;width:13px;height:13px;
+  border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
+  border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:48px 20px}
+.empty-icon{font-size:44px;margin-bottom:14px;opacity:.25}
+.empty-title{font-size:16px;font-weight:700;margin-bottom:6px}
+.empty-sub{font-size:13px;color:var(--text2)}
+
+/* ── Copy link ── */
+.copy-link{display:inline-flex;align-items:center;gap:6px;font-size:12px;
+  color:var(--accent);cursor:pointer}
+
+/* ══════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+══════════════════════════════════════ */
+@media(max-width:767px){
+  .sidebar{display:none}
+  .bottom-nav{display:block}
+  .btn-fab{display:flex}
+  .topbar{padding:0 12px}
+  .content{padding:12px 12px 80px}
+  #toast-wrap{right:10px;left:10px;bottom:calc(78px + var(--safe-bottom))}
+  .toast{max-width:100%}
+  /* Show cards, hide table on mobile */
+  .desktop-table{display:none}
+  .mobile-cards{display:block}
+  .search-box{flex:1}
+  .topbar-actions-desktop{display:none}
+}
+@media(min-width:768px){
+  .mobile-cards{display:none}
+  .desktop-table{display:block}
+  .btn-fab{display:none}
+  .bottom-nav{display:none}
+  .topbar{padding:0 20px}
+  .content{padding:20px}
+  #toast-wrap{right:20px;bottom:20px;left:auto}
+}
+
+/* Version watermark */
+.version-tag{position:fixed;bottom:4px;left:8px;font-size:9px;
+  color:var(--text3);z-index:1;pointer-events:none}
+
+/* ── Light theme overrides ── */
+[data-theme="light"] .sidebar{border-right-color:var(--border)}
+[data-theme="light"] .topbar{border-bottom-color:var(--border)}
+[data-theme="light"] .bottom-nav{border-top-color:var(--border);background:var(--bg2)}
+[data-theme="light"] th{background:var(--bg3);color:var(--text2)}
+[data-theme="light"] .stat-card:hover{border-color:var(--accent)}
+[data-theme="light"] .form-control{background:var(--bg3);border-color:var(--border)}
+[data-theme="light"] .form-control:focus{background:#fff}
+[data-theme="light"] .nav-item:hover{background:var(--bg3)}
+[data-theme="light"] .search-box{background:var(--bg3)}
+[data-theme="light"] select.filter{background:var(--bg3)}
+[data-theme="light"] .ship-card:active{background:var(--bg3)}
+[data-theme="light"] .detail-item{background:var(--bg3)}
+[data-theme="light"] .modal{background:var(--bg2)}
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:var(--border)}
+[data-theme="light"] .badge-pending{background:rgba(245,158,11,.1)}
+[data-theme="light"] .badge-sailing,[data-theme="light"] .badge-transit{background:rgba(79,142,247,.1)}
+[data-theme="light"] .badge-arrived,[data-theme="light"] .badge-delivered{background:rgba(34,197,94,.1)}
+[data-theme="light"] .badge-delayed{background:rgba(239,68,68,.1)}
+[data-theme="light"] .badge-discharged{background:rgba(6,182,212,.1)}
+[data-theme="light"] .stat-icon.blue{background:rgba(79,142,247,.12)}
+[data-theme="light"] .stat-icon.green{background:rgba(34,197,94,.12)}
+[data-theme="light"] .stat-icon.orange{background:rgba(249,115,22,.12)}
+[data-theme="light"] .stat-icon.red{background:rgba(239,68,68,.12)}
+[data-theme="light"] .stat-icon.cyan{background:rgba(6,182,212,.12)}
+[data-theme="light"] .stat-icon.purple{background:rgba(108,99,255,.12)}
+[data-theme="light"] .version-tag{color:var(--text3)}
+[data-theme="light"] .sidebar-user{background:var(--bg3)}
+[data-theme="light"] .nav-item.active{background:rgba(79,142,247,.1)}
+
+/* ── KPI Page ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+@media(min-width:768px){.kpi-grid{grid-template-columns:repeat(4,1fr)}}
+.kpi-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 16px;display:flex;flex-direction:column;gap:6px;
+  transition:transform .2s,border-color .2s;
+}
+.kpi-card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.kpi-icon{font-size:22px;margin-bottom:2px}
+.kpi-value{font-size:28px;font-weight:800;line-height:1}
+.kpi-label{font-size:11px;color:var(--text2);font-weight:500}
+.kpi-sub{font-size:11px;margin-top:2px}
+.kpi-sub.good{color:var(--green)}.kpi-sub.bad{color:var(--red)}.kpi-sub.neutral{color:var(--text2)}
+
+.charts-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:20px}
+@media(min-width:768px){.charts-grid{grid-template-columns:1fr 1fr}}
+.chart-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 16px;
+}
+.chart-title{font-size:13px;font-weight:700;margin-bottom:16px;
+  display:flex;align-items:center;gap:8px}
+.chart-title i{color:var(--accent)}
+.chart-wrap{position:relative;height:220px}
+@media(max-width:767px){.chart-wrap{height:190px}}
+
+.overdue-list{display:flex;flex-direction:column;gap:8px}
+.overdue-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);
+  border-radius:10px;padding:10px 14px;
+}
+.overdue-ref{font-size:13px;font-weight:700;color:var(--red)}
+.overdue-days{font-size:11px;background:rgba(239,68,68,.15);color:var(--red);
+  padding:2px 8px;border-radius:20px;font-weight:700}
+
+.bar-list{display:flex;flex-direction:column;gap:8px}
+.bar-item{display:flex;flex-direction:column;gap:4px}
+.bar-label{display:flex;justify-content:space-between;font-size:12px}
+.bar-label span:last-child{color:var(--text2)}
+.bar-track{background:var(--bg3);border-radius:4px;height:8px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  transition:width .6s ease}
+
+.detail-tab{flex:1;padding:7px 4px;border:none;background:none;border-radius:7px;
+  font-size:11px;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;transition:.15s}
+.detail-tab.active{background:var(--bg2);color:var(--accent);box-shadow:var(--shadow)}
+.tl-list{display:flex;flex-direction:column}
+.timeline-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.timeline-item:last-child{border-bottom:none}
+.tl-dot{width:30px;height:30px;border-radius:50%;background:var(--bg3);
+  border:2px solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-size:12px;flex-shrink:0}
+.tl-dot.latest{background:var(--accent);border-color:var(--accent);color:#fff}
+.tl-content{flex:1;padding-top:2px}
+.tl-time{font-size:10px;color:var(--text3);margin-bottom:2px}
+.tl-label{font-size:12px;font-weight:600;color:var(--text1)}
+.tl-loc{font-size:11px;color:var(--text2);margin-top:2px}
+.info-chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.info-chip{background:var(--bg3);border-radius:10px;padding:10px 12px}
+.info-chip.full{grid-column:1/-1}
+.chip-label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.chip-value{font-size:13px;font-weight:600;color:var(--text1);margin-top:3px;word-break:break-word}
+.comment-bubble{background:var(--bg3);border-radius:10px;padding:10px 12px}
+.comment-author{font-size:11px;font-weight:700;color:var(--accent)}
+.comment-time{font-size:10px;color:var(--text3);margin-left:6px}
+.comment-text{font-size:12px;color:var(--text1);margin-top:4px;line-height:1.5}
+#bulk-drop-zone:hover{border-color:var(--accent)!important;background:var(--bg3)}
+
+</style>
+</head>
+<body>
+  <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;
+    background:#0a0f1e;align-items:center;justify-content:center">
+    <div style="background:#1a2240;border:1px solid #2a3a5c;border-radius:20px;
+      padding:36px 28px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <div style="text-align:center;margin-bottom:28px">
+        <div style="font-size:36px;margin-bottom:8px">🚢</div>
+        <div style="font-size:18px;font-weight:700;color:#e8eaf6">FreightTrack Pro</div>
+        <div style="font-size:12px;color:#8892b0;margin-top:4px">Sign in to your account</div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:600;color:#8892b0;text-transform:uppercase;
+          letter-spacing:.5px;display:block;margin-bottom:5px">Email</label>
+        <input id="login-email" type="email" placeholder="admin@freighttrack.com"
+          style="width:100%;background:#0f1629;border:1px solid #2a3a5c;border-radius:8px;
+          padding:11px 13px;color:#e8eaf6;font-size:13px;outline:none;font-family:inherit;
+          box-sizing:border-box"/>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:11px;font-weight:600;color:#8892b0;text-transform:uppercase;
+          letter-spacing:.5px;display:block;margin-bottom:5px">Password</label>
+        <input id="login-password" type="password" placeholder="••••••••"
+          style="width:100%;background:#0f1629;border:1px solid #2a3a5c;border-radius:8px;
+          padding:11px 13px;color:#e8eaf6;font-size:13px;outline:none;font-family:inherit;
+          box-sizing:border-box"/>
+      </div>
+      <div id="login-error" style="display:none;background:rgba(239,68,68,.12);
+        border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 12px;
+        font-size:12px;color:#ef4444;margin-bottom:14px"></div>
+      <button onclick="doLogin()" id="login-btn"
+        style="width:100%;background:linear-gradient(135deg,#4f8ef7,#6c63ff);color:#fff;
+        border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:600;
+        cursor:pointer;font-family:inherit;transition:opacity .15s">
+        Sign In →
+      </button>
+    </div>
+  </div>
+<div id="toast-wrap"></div>
+<div class="version-tag">v27</div>
+
+<!-- FAB for mobile -->
+<button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
+  <i class="fa fa-plus"></i>
+</button>
+
+<div class="app">
+<!-- ═══════ SIDEBAR (desktop) ═══════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🚢</div>
+    <div><div class="logo-text">FreightTrack</div><div class="logo-sub">Pro Dashboard</div></div>
+  </div>
+  <div class="nav">
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <i class="fa fa-chart-pie"></i> Overview
+    </div>
+    <div class="nav-item" onclick="showPage('shipments',this)">
+      <i class="fa fa-boxes-stacked"></i> Shipments
+      <span class="nav-badge" id="nav-count">0</span>
+    </div>
+    <div class="nav-section">Analytics</div>
+    <div class="nav-item admin-only" onclick="showPage('analytics',this)">
+      <i class="fa fa-chart-line"></i> KPI & Charts
+    </div>
+    <div class="nav-section admin-only">Team</div>
+    <div class="nav-item admin-only" onclick="showPage('users',this)">
+      <i class="fa fa-users"></i> Team Members
+    </div>
+    <div class="nav-section">Tools</div>
+    <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts">
+      <i class="fa fa-bell"></i> Alerts
+      <span class="nav-badge" id="alerts-badge" style="display:none">0</span>
+    </div>
+    <div class="nav-item" onclick="exportXLSX()">
+      <i class="fa fa-file-excel"></i> Export XLSX
+    </div>
+    <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')">
+      <i class="fa fa-file-import" style="color:#22c55e"></i> Import XLSX
+    </div>
+
+  </div>
+  <div class="sidebar-bottom">
+    <div class="sidebar-user">
+      <div class="avatar" id="sidebar-avatar">A</div>
+      <div class="user-info">
+        <div class="name" id="sidebar-user-name">User</div>
+        <div class="role" id="sidebar-user-role">CS Agent</div>
+      </div>
+    </div>
+    <button onclick="openModal('modal-change-pw')" style="margin:6px 12px 4px;width:calc(100% - 24px);font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px;cursor:pointer;font-family:inherit">🔐 Change Password</button>
+    <button onclick="doLogout()" style="margin:6px 12px 12px;width:calc(100% - 24px);font-size:11px;color:#ef4444;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:7px;cursor:pointer;font-family:inherit;font-weight:600">⬡ Sign Out</button>
+  </div>
+</nav>
+
+<!-- ═══════ MAIN ═══════ -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Overview</div>
+    <div class="search-box">
+      <i class="fa fa-magnifying-glass"></i>
+      <input id="global-search" placeholder="Search…" oninput="onSearch(this.value)"/>
+    </div>
+    <div class="topbar-actions-desktop" style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-ghost btn-icon btn-sm" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme" style="font-size:16px">
+        🌙
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()">
+        <i class="fa fa-plus"></i> New
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ─── DASHBOARD ─── -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-icon blue"><i class="fa fa-ship"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:32px"></div><div class="stat-label">Total</div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="fa fa-anchor"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Transit</div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="fa fa-check"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Done</div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="fa fa-warning"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Delayed</div></div>
+        <div class="stat-card"><div class="stat-icon cyan"><i class="fa fa-clock"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Ocean</div></div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">Recent Shipments</div>
+        <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null);setBottomNav('shipments')">
+          View All <i class="fa fa-arrow-right"></i>
+        </button>
+      </div>
+      <div class="mobile-cards" id="recent-cards"></div>
+      <div class="desktop-table table-wrap" id="recent-table-wrap">
+        <div id="recent-table"></div>
+      </div>
+    </div>
+
+    <!-- ─── SHIPMENTS ─── -->
+    <div class="page" id="page-shipments">
+      <div class="filters-row">
+        <select class="filter" id="fil-status" onchange="loadShipments()">
+          <option value="">All Status</option>
+          <option>Pending</option><option>Sailing</option><option>Transit</option>
+          <option>Arrived</option><option>Discharged</option><option>Delivered</option><option>Delayed</option>
+        </select>
+        <select class="filter" id="fil-mode" onchange="loadShipments()">
+          <option value="">All Modes</option>
+          <option>Ocean</option><option>Air</option>
+        </select>
+        <select class="filter" id="fil-incoterm" onchange="loadShipments()">
+          <option value="">All Incoterms</option>
+          <option>EXW</option><option>FCA</option><option>CPT</option><option>CIP</option>
+          <option>DAP</option><option>DPU</option><option>DDP</option>
+          <option>FAS</option><option>FOB</option><option>CFR</option><option>CIF</option>
+        </select>
+        <button class="btn btn-primary btn-sm topbar-actions-desktop" onclick="exportXLSX()">
+          <i class="fa fa-download"></i> Export
+        </button>
+      </div>
+      <div id="ship-count-label" style="font-size:12px;color:var(--text2);margin-bottom:10px"></div>
+      <div id="pager" style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin:10px 0;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-secondary btn-sm" id="pg-prev" onclick="pagePrev()"><i class="fa fa-chevron-left"></i></button>
+          <div id="pg-info" style="font-size:12px;color:var(--text2)">Page 1/1</div>
+          <button class="btn btn-secondary btn-sm" id="pg-next" onclick="pageNext()"><i class="fa fa-chevron-right"></i></button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="font-size:12px;color:var(--text2)">Rows:</div>
+          <select id="pg-size" class="filter" style="min-width:90px" onchange="setPageSize(this.value)">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
+      <div class="mobile-cards" id="ship-cards"></div>
+      <div class="desktop-table table-wrap">
+        <div id="ship-table"></div>
+      </div>
+    </div>
+
+
+    <!-- ─── ANALYTICS / KPI PAGE ─── -->
+    <div class="page" id="page-analytics">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:16px;font-weight:700">📊 KPI &amp; Analytics</div>
+        <button id="report-btn" class="btn btn-primary btn-sm" onclick="generateReport()">
+          <i class="fa fa-file-lines"></i> Generate Report
+        </button>
+      </div>
+      <div class="kpi-grid" id="kpi-cards">
+        <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-value">—</div><div class="kpi-label">Total Shipments</div></div>
+        <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-value">—</div><div class="kpi-label">On-Time Rate</div></div>
+        <div class="kpi-card"><div class="kpi-icon">⚠️</div><div class="kpi-value">—</div><div class="kpi-label">Delay Rate</div></div>
+        <div class="kpi-card"><div class="kpi-icon">🕒</div><div class="kpi-value">—</div><div class="kpi-label">Avg Transit Days</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title"><i class="fa fa-chart-pie"></i> Status Distribution</div>
+          <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><i class="fa fa-chart-bar"></i> Monthly Volume</div>
+          <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
+        </div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title"><i class="fa fa-ship"></i> Top Carriers</div>
+          <div class="bar-list" id="bar-carriers"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><i class="fa fa-user"></i> Top Clients</div>
+          <div class="bar-list" id="bar-clients"></div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:16px">
+        <div class="chart-title"><i class="fa fa-triangle-exclamation" style="color:var(--red)"></i> Overdue Shipments</div>
+        <div class="overdue-list" id="overdue-list">
+          <div style="color:var(--text2);font-size:13px;text-align:center;padding:16px">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ─── USERS PAGE (admin only) ─── -->
+    <div class="page" id="page-users">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text1)">👥 Team Members</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Manage your CS team access</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-user')" style="gap:6px">
+          <i class="fa fa-user-plus"></i> Add User
+        </button>
+      </div>
+      <div id="users-list">
+        <div style="color:var(--text2);font-size:13px;text-align:center;padding:40px">
+          <div style="font-size:32px;margin-bottom:8px">👥</div>Loading team…
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ─── ALERTS PAGE ─── -->
+    <div class="page" id="page-alerts">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)">🔔 Alerts</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments requiring your attention</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadAlerts()">
+          <i class="fa fa-rotate"></i> Refresh
+        </button>
+      </div>
+      <div id="alerts-list">
+        <div style="text-align:center;padding:40px;color:var(--text2);font-size:13px">
+          <div style="font-size:32px;margin-bottom:8px">🔔</div>
+          Loading alerts...
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ DETAIL PAGE ═══ -->
+    <div class="page" id="page-detail">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null)" style="padding:6px 10px">
+          <i class="fa fa-arrow-left"></i>
+        </button>
+        <div style="flex:1;min-width:0">
+          <div id="detail-ref" style="font-size:15px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+          <div id="detail-sub" style="font-size:11px;color:var(--text2);margin-top:1px">—</div>
+        </div>
+        <div id="detail-status-badge"></div>
+        <button class="btn btn-primary btn-sm" onclick="syncDetail()" id="detail-sync-btn" style="padding:6px 10px;flex-shrink:0">
+          <i class="fa fa-rotate"></i>
+        </button>
+      </div>
+      <div class="shipment-card" style="margin-bottom:14px;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;text-align:center">
+            <div id="detail-pol" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:2px">Origin</div>
+          </div>
+          <div style="flex:2;display:flex;align-items:center;gap:3px">
+            <div style="flex:1;height:2px;background:var(--accent);border-radius:2px"></div>
+            <i class="fa fa-ship" style="color:var(--accent);font-size:14px"></i>
+            <div style="flex:1;height:2px;background:var(--border);border-radius:2px"></div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div id="detail-pod" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:2px">Destination</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--text2)">
+          <span>ETD <strong id="detail-etd" style="color:var(--text1)">—</strong></span>
+          <span>ETA <strong id="detail-eta" style="color:var(--accent)">—</strong></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;margin-bottom:12px;background:var(--bg3);border-radius:10px;padding:4px">
+        <button class="detail-tab active" id="dtab-btn-timeline" onclick="switchDTab('timeline')">📋 Timeline</button>
+        <button class="detail-tab" id="dtab-btn-notes" onclick="switchDTab('notes')">💬 Notes</button>
+        <button class="detail-tab" id="dtab-btn-info" onclick="switchDTab('info')">📄 Details</button>
+      </div>
+      <div id="dtab-timeline">
+        <div id="detail-events-list" class="tl-list"></div>
+        
+      </div>
+      <div id="dtab-notes" style="display:none">
+        <div id="detail-comments-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+        <div class="shipment-card" style="padding:12px">
+          <textarea id="detail-comment-text" class="form-control" rows="2"
+            style="resize:none;margin-bottom:8px" placeholder="Write an internal note…"></textarea>
+          <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="submitComment()">
+            <i class="fa fa-paper-plane"></i> Add Note
+          </button>
+        </div>
+      </div>
+      
+      <div style="margin-top:12px;background:var(--bg3);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+        <i class="fa fa-link" style="color:var(--accent);font-size:13px"></i>
+        <div style="flex:1;font-size:11px;color:var(--text2)">Client tracking link</div>
+        <button class="btn btn-ghost btn-sm" onclick="copyPortalLink()" style="font-size:11px;padding:4px 10px">
+          <i class="fa fa-copy"></i> Copy
+        </button>
+        <a id="detail-portal-href" href="#" target="_blank" class="btn btn-ghost btn-sm"
+          style="font-size:11px;padding:4px 10px"><i class="fa fa-arrow-up-right-from-square"></i></a>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══════ BOTTOM NAV (mobile) ═══════ -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-items">
+    <button class="bnav-item active" id="bnav-dashboard" onclick="showPage('dashboard',null);setBottomNav('dashboard')">
+      <i class="fa fa-chart-pie"></i><span>Overview</span>
+    </button>
+    <button class="bnav-item" id="bnav-shipments" onclick="showPage('shipments',null);setBottomNav('shipments')">
+      <i class="fa fa-boxes-stacked"></i><span>Shipments</span>
+    </button>
+    <button class="bnav-item admin-only" id="bnav-analytics" onclick="showPage('analytics',null);setBottomNav('analytics')">
+      <i class="fa fa-chart-line"></i><span>KPIs</span>
+    </button>
+    <button class="bnav-item admin-only" id="bnav-users" onclick="showPage('users',null);setBottomNav('users')">
+      <i class="fa fa-users"></i><span>Team</span>
+    </button>
+    
+    
+    <button class="bnav-item" id="bnav-alerts" onclick="showPage('alerts',null);setBottomNav('alerts')">
+      <i class="fa fa-bell"></i><span>Alerts</span>
+    </button>
+    <button class="bnav-item" id="bnav-export" onclick="openFilesSheet()">
+      <i class="fa fa-file-arrow-down"></i><span>Files</span>
+    </button>
+    <button class="bnav-item" id="bnav-theme" onclick="toggleTheme()">
+      <i class="fa fa-circle-half-stroke"></i><span>Theme</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════ ADD/EDIT MODAL ═══════ -->
+<div class="overlay" id="modal-add">
+  <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-head">
-      <div>
-        <div class="modal-title" id="detail-title">Details</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub"></div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="modal-close" onclick="closeModal('modal-detail')"><i class="fa fa-xmark"></i></button>
+      <div class="modal-title" id="modal-add-title">New Shipment</div>
+      <button class="modal-close" onclick="closeModal('modal-add')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Reference *</label>
+          <input id="f-ref" class="form-control" placeholder="e.g. AQUA034"/>
+        </div>
+        <div class="form-group">
+          <label>Mode</label>
+          <select id="f-mode" class="form-control"><option>Ocean</option><option>Air</option></select>
+        </div>
+        <div class="form-group">
+          <label>Container / AWB</label>
+          <input id="f-ref2" class="form-control" placeholder="MSCU1234567"/>
+        </div>
+        <div class="form-group">
+          <label>Booking No</label>
+          <input id="f-booking" class="form-control" placeholder="MRO1002308"/>
+        </div>
+        <div class="form-group">
+          <label>Carrier</label>
+          <input id="f-carrier" class="form-control" placeholder="CMA, MSC…" list="carrier-list"/>
+        </div>
+
+        <div class="form-group">
+          <label>Shipper</label>
+          <input id="f-shipper" class="form-control" placeholder="Shipper Name"/>
+        </div>
+        <div class="form-group">
+          <label>Consignee</label>
+          <input id="f-consignee" class="form-control" placeholder="Consignee Name" list="consignee-list"/>
+        </div>
+        <div class="form-group">
+          <label>Incoterm (2020)</label>
+          <select id="f-incoterm" class="form-control">
+            <option value="">— Select —</option>
+            <option>EXW</option>
+            <option>FCA</option>
+            <option>CPT</option>
+            <option>CIP</option>
+            <option>DAP</option>
+            <option>DPU</option>
+            <option>DDP</option>
+            <option>FAS</option>
+            <option>FOB</option>
+            <option>CFR</option>
+            <option>CIF</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Client</label>
+          <input id="f-client" class="form-control" placeholder="Company name"/>
+        </div>
+        <div class="form-group full">
+          <label>Client Email</label>
+          <input id="f-client-email" class="form-control" type="email" placeholder="client@example.com" oninput="validateEmailField(this)"/>
+          <div id="f-client-email-msg" style="font-size:11px;margin-top:4px;display:none"></div>
+        </div>
+        <div class="form-group">
+          <label>POL</label>
+          <input id="f-pol" class="form-control" placeholder="SHANGHAI" list="port-list"/>
+        </div>
+        <div class="form-group">
+          <label>POD</label>
+          <input id="f-pod" class="form-control" placeholder="CASABLANCA" list="port-list"/>
+        </div>
+        <div class="form-group">
+          <label>ETD</label>
+          <input id="f-etd" class="form-control" type="date"/>
+        </div>
+        <div class="form-group">
+          <label>ETA</label>
+          <input id="f-eta" class="form-control" type="date"/>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="f-status" class="form-control">
+            <option>Pending</option><option>Sailing</option><option>Transit</option>
+            <option>Arrived</option><option>Discharged</option><option>Delivered</option><option>Delayed</option>
+          </select>
+        </div>
+        <div class="form-group full" id="containers-section">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>🗃 Containers</span>
+            <span id="teu-total-badge" style="font-size:11px;color:var(--accent);font-weight:700;display:none"></span>
+          </label>
+          <!-- Add container line -->
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input id="new-cont-qty" class="form-control" type="number" min="1" max="99" placeholder="Qty" style="width:70px;flex-shrink:0"/>
+            <select id="new-cont-type" class="form-control" style="flex:1">
+              <option value="">Type</option>
+              <option value="20GP">20GP (1 TEU)</option>
+              <option value="40GP">40GP (2 TEU)</option>
+              <option value="40HC">40HC (2 TEU)</option>
+              <option value="40RF">40RF (2 TEU)</option>
+              <option value="20RF">20RF (1 TEU)</option>
+              <option value="45HC">45HC (2 TEU)</option>
+            </select>
+            <button type="button" class="btn btn-primary btn-sm" onclick="addContainerRow()" style="flex-shrink:0;padding:0 16px">
+              <i class="fa fa-plus"></i> Add
+            </button>
+          </div>
+          <!-- Container list -->
+          <div id="containers-list" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="f-note" class="form-control" placeholder="Internal notes…"></textarea>
+        </div>
       </div>
     </div>
-    
-<div class="modal-body" id="detail-body">
-  <div class="detail-section">
-    <div style="display:flex;align-items:center;gap:6px">
-      <div style="flex:1;text-align:center">
-        <div id="detail-pol" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
-        <div style="font-size:11px;color:var(--text2)">POL</div>
-      </div>
-      <i class="fa fa-arrow-right" style="color:var(--text2);font-size:16px"></i>
-      <div style="flex:1;text-align:center">
-        <div id="detail-pod" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
-        <div style="font-size:11px;color:var(--text2)">POD</div>
-      </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-add')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" id="btn-save" onclick="saveShipment()">
+        <i class="fa fa-floppy-disk"></i> Save Shipment
+      </button>
     </div>
-    <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
-      <div style="flex:1;text-align:center">
-        <div id="detail-etd" style="font-size:11px;color:var(--text2)">—</div>
-        <div style="font-size:9px;color:var(--text3)">ETD</div>
-      </div>
-      <div style="flex:1;text-align:center">
-        <div id="detail-eta" style="font-size:11px;color:var(--accent)">—</div>
-        <div style="font-size:9px;color:var(--text3)">ETA</div>
-      </div>
-    </div>
-  </div>
-  <div class="detail-section" style="margin-top:12px;background:var(--bg2);padding:12px;border-radius:10px">
-    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase">Shipment Details</div>
-    <div id="detail-info-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-  </div>
-  <div id="detail-containers-section" style="margin-top:12px;display:none;background:var(--bg2);padding:12px;border-radius:10px">
-    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Containers</div>
-    <div id="detail-containers-list"></div>
   </div>
 </div>
-    <div class="modal-foot" id="detail-foot">
-      <button class="btn btn-secondary" style="flex:1" onclick="editFromDetail()">
-        <i class="fa fa-pen"></i> Edit
-      </button>
-      <button class="btn btn-primary" style="flex:1" onclick="openEmailPreview()" id="btn-send-email">
-        <i class="fa fa-envelope"></i> Email
-      </button>
-      <button class="btn btn-danger" style="flex:1" onclick="deleteFromDetail()">
-        <i class="fa fa-trash"></i> Delete
-      </button>
+
+<!-- ═══════ DETAIL MODAL ═══════ -->
+<div class="overlay" 
+    <div class="modal-body" id="detail-body">
+      <!-- Route Section (existing) -->
+      <div class="detail-section">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;text-align:center">
+            <div id="detail-pol" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
+            <div style="font-size:11px;color:var(--text2)">POL</div>
+          </div>
+          <i class="fa fa-arrow-right" style="color:var(--text2);font-size:16px"></i>
+          <div style="flex:1;text-align:center">
+            <div id="detail-pod" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
+            <div style="font-size:11px;color:var(--text2)">POD</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+          <div style="flex:1;text-align:center">
+            <div id="detail-etd" style="font-size:11px;color:var(--text2)">—</div>
+            <div style="font-size:9px;color:var(--text3)">ETD</div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div id="detail-eta" style="font-size:11px;color:var(--accent)">—</div>
+            <div style="font-size:9px;color:var(--text3)">ETA</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEW Shipment Details Chips -->
+      <div class="detail-section" style="margin-top:12px;background:var(--bg2);padding:12px;border-radius:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase">Shipment Details</div>
+        <div class="info-chips" id="detail-info-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+
+      <!-- NEW Containers List -->
+      <div class="detail-section" id="detail-containers-section" style="margin-top:12px;display:none;background:var(--bg2);padding:12px;border-radius:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Containers</div>
+        <div id="detail-containers-list"></div>
+      </div>
+
+      <!-- Timeline (existing) -->
+      <div class="detail-section">
+        <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:10px">Timeline</div>
+        <div id="detail-events-list"></div>
+        <div id="detail-no-events" style="display:none;text-align:center;padding:40px;color:var(--text2)">
+          <i class="fa fa-clock" style="font-size:32px;margin-bottom:12px;color:var(--bg3)"></i>
+          <div style="font-size:14px;margin-bottom:4px">No updates yet</div>
+          <div style="font-size:11px;color:var(--text3)">Timeline will appear here as events happen</div>
+        </div>
+      </div>
+
+      <!-- Comments (existing) -->
+      <div class="detail-section">
+        <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:10px">Internal Notes</div>
+        <div id="detail-comments-list"></div>
+        <div id="detail-no-comments" style="display:none;text-align:center;padding:40px;color:var(--text2)">
+          <i class="fa fa-comment" style="font-size:32px;margin-bottom:12px;color:var(--bg3)"></i>
+          <div style="font-size:14px;margin-bottom:4px">No notes yet</div>
+          <div style="font-size:11px;color:var(--text3)">Add notes to share internal comments</div>
+        </div>
+        <div class="comment-form" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <textarea id="comment-text" class="form-control" rows="2" style="resize:none;margin-bottom:8px" placeholder="Write an internal note…"></textarea>
+          <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="submitComment()">
+            <i class="fa fa-paper-plane"></i> Add Note
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+
 
 <!-- ═══════ JS ═══════ -->
 <script>
@@ -1241,25 +2194,7 @@ async function openDetail(id){
   } catch(e){ document.getElementById("detail-ref").textContent="Error: "+e.message; }
 }
 
-function _renderDetail(s){document.getElementById("detail-ref").textContent=s.ref||"—";
-document.getElementById("detail-sub").textContent=[s.booking_no,s.carrier].filter(Boolean).join(" · ")||"No info";
-document.getElementById("detail-pol").textContent=s.pol||"—";
-document.getElementById("detail-pod").textContent=s.pod||"—";
-document.getElementById("detail-etd").textContent=s.etd||"—";
-document.getElementById("detail-eta").textContent=s.eta||"—";
-
-const chips=document.getElementById("detail-info-chips");
-if(chips){
-  chips.innerHTML=[s.shipper?`<div class="badge" style="font-size:12px;padding:4px 8px;background:var(--bg3)">🏭 ${s.shipper}</div>`:"",s.consignee?`<div class="badge" style="font-size:12px;padding:4px 8px;background:var(--bg3)">📦 ${s.consignee}</div>`:"",s.client?`<div class="badge badge-blue" style="font-size:12px;padding:4px 8px">👤 ${s.client}</div>`:"",s.incoterm?`<div class="badge badge-red" style="font-size:12px;padding:4px 8px">📋 ${s.incoterm}</div>`:"",s.containers?.length?`<div class="badge badge-green" style="font-size:12px;padding:4px 8px">🗃 ${s.containers.length}</div>`:""].filter(Boolean).join("");
-}
-
-const contSec=document.getElementById("detail-containers-section");
-if(contSec && s.containers?.length){
-  contSec.style.display="block";
-  document.getElementById("detail-containers-list").innerHTML=s.containers.map(c=>`<div style="display:flex;justify-content:space-between;padding:6px 0"><div style="font-weight:600">${c.container_no||c.size_type}</div><div style="color:var(--text2)">${c.size_type}</div></div>`).join("");
-} else if(contSec) contSec.style.display="none";
-
-
+function _renderDetail(s){
   document.getElementById("detail-ref").textContent=s.ref||"—";
   document.getElementById("detail-sub").textContent=[s.booking_no,s.carrier].filter(Boolean).join(" · ")||"No container/carrier info";
   document.getElementById("detail-status-badge").innerHTML=typeof statusBadge==="function"?statusBadge(s.status):`<span>${s.status}</span>`;
@@ -1267,44 +2202,40 @@ if(contSec && s.containers?.length){
   document.getElementById("detail-pod").textContent=s.pod||"—";
   document.getElementById("detail-etd").textContent=s.etd||"—";
   document.getElementById("detail-eta").textContent=s.eta||"—";
-  
+
+  // NEW Shipment Details Chips
   const infoChips = document.getElementById("detail-info-chips");
   if(infoChips){
     infoChips.innerHTML = [
-      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:6px 10px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:6px 10px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
-      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:6px 10px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
+      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
+      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
+      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:4px 8px">👤 <b>Client:</b> ${s.client}</div>` : '',
+      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:4px 8px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
+      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
+      (s.containers && s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:4px 8px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : ''
     ].filter(Boolean).join('');
   }
 
-  // Containers list
+  // NEW Containers List
+  const contSection = document.getElementById("detail-containers-section");
   const contList = document.getElementById("detail-containers-list");
-  if(contList){
+  if(contSection && contList){
     if(s.containers && s.containers.length){
+      contSection.style.display = 'block';
       contList.innerHTML = s.containers.map(c=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
           <div style="font-size:13px;font-weight:600;color:var(--text1)">${c.container_no||c.size_type||'Container'}</div>
-          <div class="badge badge-gray" style="font-size:11px">${c.size_type||'—'}</div>
-        </div>
-      `).join('');
-      document.getElementById("detail-containers-section").style.display="block";
+          <div style="font-size:11px;color:var(--text2)">${c.size_type||''}</div>
+        </div>`).join('');
     } else {
-      document.getElementById("detail-containers-section").style.display="none";
+      contSection.style.display = 'none';
+      contList.innerHTML = '';
     }
-  }
-</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
-    ].filter(Boolean).join('');
-    infoChips.style.display = infoChips.innerHTML ? 'flex' : 'none';
   }
 
   const ha=document.getElementById("detail-portal-href");
+  if(ha) ha.href="/track/"+(s.ref||"");
+
   const infoChips = document.getElementById("detail-info-chips");
   if(infoChips){
     infoChips.innerHTML = [
