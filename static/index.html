@@ -1,141 +1,5 @@
 <!DOCTYPE html>
-<html
-
-let allQuotes = [];
-let quoteFilters = {status: 'all'};
-
-async function loadQuotes() {
-  quoteFilters.status = document.getElementById('fil-quote-status')?.value || 'all';
-  try {
-    const params = new URLSearchParams(quoteFilters);
-    const quotes = await apiFetch(`/api/quotes?${params}`);
-    allQuotes = quotes;
-    renderQuoteCards(quotes);
-    updateQuotesStats(quotes);
-  } catch(e) {
-    toast('Error: ' + e.message, 'error');
-    renderQuoteCards([]);
-  }
-}
-
-function updateQuotesStats(quotes) {
-  const pending = quotes.filter(q => q.status === 'pending').length;
-  document.getElementById('quotes-stats').textContent = 
-    `${quotes.length} quotes • ${pending} pending`;
-}
-
-function renderQuoteCards(quotes) {
-  const cards = document.getElementById('quote-cards');
-  if (!quotes.length) {
-    cards.innerHTML = `<div class="empty"><div class="empty-icon">📊</div>
-      <div class="empty-title">No quotes yet</div>
-      <div class="empty-sub">Click New Quote to start</div></div>`;
-    return;
-  }
-  cards.innerHTML = quotes.map(q => quoteCardHTML(q)).join('');
-}
-
-function quoteCardHTML(q) {
-  const statusClass = {'pending':'badge-pending','approved':'badge-sailing','declined':'badge-delayed'}[q.status] || 'badge-pending';
-  const total = (q.totalTeu * q.rate).toLocaleString();
-  return `
-    <div class="ship-card">
-      <div class="ship-card-head">
-        <div class="ship-ref">${q.ref || 'Q'+q.id.slice(-6)}</div>
-        <div class="ship-sub">${q.client}</div>
-        <div><span class="badge ${statusClass}">${q.status.toUpperCase()}</span></div>
-      </div>
-      <div class="ship-card-body">
-        <div class="ship-field"><div class="ship-field-label">Route</div><div>${q.pol} → ${q.pod}</div></div>
-        <div class="ship-field"><div class="ship-field-label">TEU</div><div>${q.totalTeu}</div></div>
-        <div class="ship-field"><div class="ship-field-label">Value</div><div>€${total}</div></div>
-        <div class="ship-field span-2"><div class="ship-field-label">Date</div><div>${q.created_at?.split('T')[0] || '—'}</div></div>
-      </div>
-      <div class="ship-card-foot">
-        <div style="font-size:11px;color:var(--text2)">${q.status === 'approved' ? 'Ready to ship' : 'Awaiting approval'}</div>
-        <div class="ship-actions">
-          ${q.status === 'approved' ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();convertQuoteToShipment('${q.id}')">
-            <i class="fa fa-box"></i> Create Shipment
-          </button>` : ''}
-          <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();exportQuotePDF('${q.id}')" title="Export PDF"><i class="fa fa-file-pdf"></i></button>
-          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();toggleQuoteStatus('${q.id}')">
-            <i class="fa fa-edit"></i> ${q.status === 'pending' ? 'Approve' : q.status === 'approved' ? 'Decline' : 'Reopen'}
-          </button>
-        </div>
-      </div>
-    </div>`;
-}
-
-async function toggleQuoteStatus(id) {
-  const quote = allQuotes.find(q => q.id === id);
-  let newStatus;
-  if (quote.status === 'pending') newStatus = 'approved';
-  else if (quote.status === 'approved') newStatus = 'declined';
-  else newStatus = 'pending';
-
-  try {
-    await apiFetch(`/api/quotes/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({status: newStatus})
-    });
-    loadQuotes();
-    toast(`Quote ${newStatus.toUpperCase()}!`, 'success');
-  } catch(e) {
-    toast(e.message, 'error');
-  }
-}
-
-async function convertQuoteToShipment(id) {
-  if (!confirm('Create shipment from approved quote? Data will auto-fill.')) return;
-
-  const quote = allQuotes.find(q => q.id === id);
-  const shipment = {
-    ref: `S${Date.now().toString().slice(-6)}`,
-    client: quote.client,
-    clientemail: quote.email,
-    pol: quote.pol,
-    pod: quote.pod,
-    mode: quote.mode,
-    status: 'Pending',
-    teu: quote.totalTeu,
-    note: `Quote ${quote.ref || quote.id.slice(-6)} approved • €${(quote.rate * quote.totalTeu).toLocaleString()}`
-  };
-
-  try {
-    await apiFetch('/api/shipments', {method: 'POST', body: JSON.stringify(shipment)});
-    toast('✅ Shipment created & tracking started!', 'success');
-    loadQuotes();
-    loadShipments();
-  } catch(e) {
-    toast(e.message, 'error');
-  }
-}
-
-
-function exportQuotePDF(quoteId) {
-  const quote = allQuotes.find(q => q.id === quoteId);
-  if (!quote) return;
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const total = (quote.totalTeu * quote.rate).toLocaleString();
-
-  doc.setFontSize(22); doc.setTextColor(33, 128, 141); doc.text('FreightTrack Pro', 20, 20);
-  doc.setFontSize(16); doc.setTextColor(0); doc.text(`Quotation ${quote.ref || 'Q'+quote.id.slice(-6)}`, 20, 45);
-  doc.setFontSize(10); doc.text(`Client: ${quote.client}`, 20, 65);
-  doc.text(`Origin: ${quote.pol} -> Destination: ${quote.pod}`, 20, 85);
-  doc.text(`Mode: ${quote.mode} | Total TEU: ${quote.totalTeu}`, 20, 95);
-  doc.setFontSize(14); doc.text(`Total: EURO ${total}`, 20, 115);
-  if (quote.notes) doc.text(`Notes: ${quote.notes}`, 20, 135);
-
-  doc.save(`Quote_${quote.ref || quote.id.slice(-6)}.pdf`);
-}
-
-
-function showPageQuotes(el) {
-  showPage('quotes', el);
-  loadQuotes();
-}
- lang="en" data-theme="dark">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
@@ -621,7 +485,7 @@ textarea.form-control{resize:none;min-height:72px}
     </div>
   </div>
 <div id="toast-wrap"></div>
-<div class="version-tag">v27</div>
+<div class="version-tag">v36</div>
 
 <!-- FAB for mobile -->
 <button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
@@ -644,7 +508,11 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-boxes-stacked"></i> Shipments
       <span class="nav-badge" id="nav-count">0</span>
     </div>
-    <div class="nav-section">Analytics</div>
+    
+          <div class="nav-item" onclick="showPage('quotes',this)">
+            <i class="fa fa-file-invoice-dollar"></i> Quotes
+          </div>
+          <div class="nav-section">Analytics</div>
     <div class="nav-item admin-only" onclick="showPage('analytics',this)">
       <i class="fa fa-chart-line"></i> KPI & Charts
     </div>
@@ -652,9 +520,7 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="nav-item admin-only" onclick="showPage('users',this)">
       <i class="fa fa-users"></i> Team Members
     </div>
-    <div class="nav-section">Sales</div>
-      <div class="nav-item" onclick="showPageQuotes(this)"><i class="fa fa-file-invoice-dollar"></i> Quotes</div>
-      <div class="nav-section">Tools</div>
+    <div class="nav-section">Tools</div>
     <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts">
       <i class="fa fa-bell"></i> Alerts
       <span class="nav-badge" id="alerts-badge" style="display:none">0</span>
