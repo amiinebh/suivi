@@ -1,35 +1,62 @@
-from fastapi import Depends, HTTPException
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+import os, bcrypt
 from datetime import datetime, timedelta
-import os
-from database import SessionLocal
-import models
-from passlib.context import CryptContext
+from fastapi import HTTPException, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
 
-SECRET_KEY = os.getenv("JWT_SECRET", "super-secret-key-change-in-prod")
-ALGORITHM = "HS256"
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-security = HTTPBearer()
+try:
+    import jwt
+except ImportError:
+    from jose import jwt
 
-def hash_password(password: str):
-    return pwd_context.hash(password)
+SECRET   = os.getenv("JWT_SECRET", "freighttrack_secret_2026")
+ALG      = "HS256"
+EXPIRE_H = 24
+bearer   = HTTPBearer(auto_error=False)
 
-def verify_password(plain, hashed):
-    return pwd_context.verify(plain, hashed)
+def hash_password(pw: str) -> str:
+    return bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
 
-def create_token(user_id: int, role: str, name: str):
-    expire = datetime.utcnow() + timedelta(days=7)
-    return jwt.encode({"sub": str(user_id), "role": role, "name": name, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
-
-def get_current_user(creds: HTTPAuthorizationCredentials = Depends(security)):
+def verify_password(pw: str, hashed: str) -> bool:
     try:
-        payload = jwt.decode(creds.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except JWTError:
-        raise HTTPException(401, "Invalid token")
+        return bcrypt.checkpw(pw.encode("utf-8"),
+               hashed.encode("utf-8") if isinstance(hashed, str) else hashed)
+    except Exception as e:
+        print(f"verify_password error: {e}")
+        return False
 
-def require_admin(current = Depends(get_current_user)):
-    if current.get("role") != "admin":
+def create_token(user_id: int, role: str, name: str) -> str:
+    payload = {
+        "sub":  str(user_id),
+        "role": role,
+        "name": name,
+        "exp":  datetime.utcnow() + timedelta(hours=EXPIRE_H),
+    }
+    return jwt.encode(payload, SECRET, algorithm=ALG)
+
+def decode_token(token: str) -> dict:
+    try:
+        return jwt.decode(token, SECRET, algorithms=[ALG])
+    except Exception as e:
+        raise HTTPException(401, f"Invalid token: {e}")
+
+def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer)) -> dict:
+    if not creds:
+        raise HTTPException(401, "Not authenticated")
+    data = decode_token(creds.credentials)
+    # Check is_active from DB on every request
+    from database import SessionLocal
+    import models as m
+    db = SessionLocal()
+    try:
+        user = db.query(m.User).filter(m.User.id == int(data["sub"])).first()
+        if not user or not user.is_active:
+            raise HTTPException(401, "Account deactivated")
+    finally:
+        db.close()
+    return data
+
+def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    if user.get("role") != "admin":
         raise HTTPException(403, "Admin only")
-    return current
+    return user

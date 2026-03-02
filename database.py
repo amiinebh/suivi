@@ -1,66 +1,61 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
-import psycopg2
+import os, logging
 
-URL = os.getenv("DATABASE_URL", "sqlite:///./freight.db")
+log = logging.getLogger(__name__)
 
-if URL.startswith("postgres://"):
-    URL = URL.replace("postgres://", "postgresql://", 1)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./freight.db")
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-if "sqlite" in URL:
-    engine = create_engine(URL, connect_args={"check_same_thread": False})
-else:
-    engine = create_engine(URL)
+IS_SQLITE = "sqlite" in DATABASE_URL
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if IS_SQLITE else {},
+    pool_pre_ping=True,
+)
+
+if IS_SQLITE:
+    @event.listens_for(engine, "connect")
+    def set_wal_mode(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.close()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 def run_migrations():
-    if "sqlite" in URL: return
+    """Safe column-add migrations — won't fail if column already exists."""
+    migrations = [
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS booking_no VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS client_email VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS note TEXT",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS notes TEXT",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS vessel VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS shipsgo_id INTEGER",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS last_tracked VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS created_at VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS ref2 VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS etd VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS quotation_number VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS direction VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS incoterm VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS stuffing_date VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS agent VARCHAR",
+        "CREATE TABLE IF NOT EXISTS alert_logs (id SERIAL PRIMARY KEY, key VARCHAR NOT NULL, sent_date VARCHAR NOT NULL, created_at VARCHAR)",
+    ]
     try:
-        conn = psycopg2.connect(URL)
-        conn.autocommit = True
-        cur = conn.cursor()
-
-        cols = [
-            ("quotation_number", "VARCHAR(255)"),
-            ("direction", "VARCHAR(50)"),
-            ("incoterm", "VARCHAR(50)"),
-            ("stuffing_date", "VARCHAR(50)"),
-            ("agent", "VARCHAR(255)"),
-            ("vessel", "VARCHAR(255)")
-        ]
-
-        for col_name, col_type in cols:
-            try:
-                cur.execute(f"ALTER TABLE shipments ADD COLUMN {col_name} {col_type};")
-            except psycopg2.errors.DuplicateColumn:
-                pass
-
-        try:
-            cur.execute('''
-                CREATE TABLE IF NOT EXISTS quotes (
-                    id SERIAL PRIMARY KEY,
-                    ref VARCHAR(255) UNIQUE,
-                    client VARCHAR(255) NOT NULL,
-                    email VARCHAR(255) NOT NULL,
-                    pol VARCHAR(255) NOT NULL,
-                    pod VARCHAR(255) NOT NULL,
-                    mode VARCHAR(50) DEFAULT 'Ocean',
-                    rate FLOAT NOT NULL,
-                    totalTeu FLOAT NOT NULL,
-                    notes TEXT,
-                    status VARCHAR(50) DEFAULT 'pending',
-                    containers TEXT,
-                    created_at VARCHAR(100)
-                );
-            ''')
-        except Exception as e:
-            print(f"Error creating quotes table manually: {e}")
-
-        cur.close()
-        conn.close()
+        with engine.connect() as conn:
+            for sql in migrations:
+                try:
+                    conn.execute(text(sql))
+                    conn.commit()
+                except Exception as e:
+                    conn.rollback()
     except Exception as e:
-        print(f"Migration error: {e}")
+        logger.warning(f"Migration error: {e}")
+
