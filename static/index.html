@@ -846,7 +846,7 @@ textarea.form-control{resize:none;min-height:72px}
         </div>
         <div class="form-group">
           <label>Carrier</label>
-          <input id="f-carrier" class="form-control" placeholder="CMA, MSC…"/>
+          <input id="f-carrier" class="form-control" placeholder="CMA, MSC…" list="carrier-list"/>
         </div>
 
         <div class="form-group">
@@ -855,7 +855,7 @@ textarea.form-control{resize:none;min-height:72px}
         </div>
         <div class="form-group">
           <label>Consignee</label>
-          <input id="f-consignee" class="form-control" placeholder="Consignee Name"/>
+          <input id="f-consignee" class="form-control" placeholder="Consignee Name" list="consignee-list"/>
         </div>
         <div class="form-group">
           <label>Incoterm (2020)</label>
@@ -885,11 +885,11 @@ textarea.form-control{resize:none;min-height:72px}
         </div>
         <div class="form-group">
           <label>POL</label>
-          <input id="f-pol" class="form-control" placeholder="SHANGHAI"/>
+          <input id="f-pol" class="form-control" placeholder="SHANGHAI"/ list="port-list">
         </div>
         <div class="form-group">
           <label>POD</label>
-          <input id="f-pod" class="form-control" placeholder="CASABLANCA"/>
+          <input id="f-pod" class="form-control" placeholder="CASABLANCA"/ list="port-list">
         </div>
         <div class="form-group">
           <label>ETD</label>
@@ -1237,6 +1237,17 @@ async function loadShipments(){
     const lbl=document.getElementById('ship-count-label');
     if(lbl) lbl.textContent=`${_pgShips.length} shipment${_pgShips.length!==1?'s':''}`;
     renderPage();
+    // Update suggestions (Ports, Consignees, Carriers)
+    const ports = new Set(), cons = new Set(), cars = new Set();
+    ships.forEach(s => { 
+      if(s.pol) ports.add(s.pol); if(s.pod) ports.add(s.pod); 
+      if(s.consignee) cons.add(s.consignee);
+      if(s.carrier) cars.add(s.carrier);
+    });
+    const updateList = (id, set) => { const el = document.getElementById(id); if(el) el.innerHTML = Array.from(set).sort().map(v => `<option value="${v}">`).join(''); };
+    updateList('port-list', ports);
+    updateList('consignee-list', cons);
+    updateList('carrier-list', cars);
   }catch(e){ toast(e.message,'error'); }
 }
 
@@ -1292,6 +1303,25 @@ async function deleteFromDetail(){ if(await confirmDelete()) deleteShipment(curr
 function confirmDelete(){ return _confirm('Delete this shipment?'); }
 
 /* ── Save ── */
+
+function formatCarrier(name){
+  if(!name) return name;
+  const n = name.trim().toUpperCase();
+  const map = {
+    'CMA': 'CMA-CGM', 'CMA CGM': 'CMA-CGM', 'CMACGM': 'CMA-CGM', 'CMA-CGM': 'CMA-CGM',
+    'MSK': 'Maersk', 'MAERSK': 'Maersk', 'MAERSK LINE': 'Maersk',
+    'HPL': 'Hapag-Lloyd', 'HAPAG': 'Hapag-Lloyd', 'HAPAG LLOYD': 'Hapag-Lloyd', 'HAPAG-LLOYD': 'Hapag-Lloyd',
+    'MSC': 'MSC', 
+    'ZIM': 'ZIM',
+    'YML': 'Yang Ming', 'YANG MING': 'Yang Ming',
+    'ONE': 'ONE', 'OCEAN NETWORK EXPRESS': 'ONE',
+    'EMC': 'Evergreen', 'EVERGREEN': 'Evergreen',
+    'COSCO': 'COSCO', 
+    'HMM': 'HMM'
+  };
+  return map[n] || (name.trim().charAt(0).toUpperCase() + name.trim().slice(1));
+}
+
 async function saveShipment(){
   const ref=(document.getElementById('f-ref')?.value||'').trim();
   if(!ref){ toast('Reference is required','error'); return; }
@@ -1312,7 +1342,7 @@ async function saveShipment(){
   const totalTeuNow=_formContainers.reduce((a,c)=>a+(c.teu_total||0),0);
   const data={ref,ref2:g('f-ref2'),booking_no:g('f-booking'),
     mode:document.getElementById('f-mode')?.value||'Ocean',
-    carrier:g('f-carrier'),shipper:g('f-shipper'),consignee:g('f-consignee'),incoterm:g('f-incoterm'),client:g('f-client'),client_email:g('f-client-email'),
+    carrier:formatCarrier(g('f-carrier')),shipper:g('f-shipper'),consignee:g('f-consignee'),incoterm:g('f-incoterm'),client:g('f-client'),client_email:g('f-client-email'),
     pol:g('f-pol'),pod:g('f-pod'),etd:g('f-etd'),eta:g('f-eta'),
     status:document.getElementById('f-status')?.value||'Pending',note:g('f-note'),
     teu:totalTeuNow||null};
@@ -2711,7 +2741,10 @@ async function generateReport(){
     </div>
 
     <div class="footer">FreightTrack Pro &nbsp;·&nbsp; ${today.getFullYear()} &nbsp;·&nbsp; Confidential</div>
-    </body></html>`;
+    <datalist id="port-list"></datalist>
+<datalist id="consignee-list"></datalist>
+<datalist id="carrier-list"></datalist>
+</body></html>`;
 
     const w = window.open('','_blank');
     w.document.write(reportHtml);
@@ -2819,5 +2852,8 @@ function _confirmReject() {
   if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
 }
 </script>
+<datalist id="port-list"></datalist>
+<datalist id="consignee-list"></datalist>
+<datalist id="carrier-list"></datalist>
 </body>
   </html>
