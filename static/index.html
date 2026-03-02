@@ -942,74 +942,32 @@ textarea.form-control{resize:none;min-height:72px}
 </div>
 
 <!-- ═══════ DETAIL MODAL ═══════ -->
-<div class="overlay" 
-    <div class="modal-body" id="detail-body">
-      <!-- Route Section (existing) -->
-      <div class="detail-section">
-        <div style="display:flex;align-items:center;gap:6px">
-          <div style="flex:1;text-align:center">
-            <div id="detail-pol" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
-            <div style="font-size:11px;color:var(--text2)">POL</div>
-          </div>
-          <i class="fa fa-arrow-right" style="color:var(--text2);font-size:16px"></i>
-          <div style="flex:1;text-align:center">
-            <div id="detail-pod" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
-            <div style="font-size:11px;color:var(--text2)">POD</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
-          <div style="flex:1;text-align:center">
-            <div id="detail-etd" style="font-size:11px;color:var(--text2)">—</div>
-            <div style="font-size:9px;color:var(--text3)">ETD</div>
-          </div>
-          <div style="flex:1;text-align:center">
-            <div id="detail-eta" style="font-size:11px;color:var(--accent)">—</div>
-            <div style="font-size:9px;color:var(--text3)">ETA</div>
-          </div>
-        </div>
+<div class="overlay" id="modal-detail">
+  <div class="modal detail-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="detail-title">Details</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub"></div>
       </div>
-
-      <!-- NEW Shipment Details Chips -->
-      <div class="detail-section" style="margin-top:12px;background:var(--bg2);padding:12px;border-radius:10px">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase">Shipment Details</div>
-        <div class="info-chips" id="detail-info-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-      </div>
-
-      <!-- NEW Containers List -->
-      <div class="detail-section" id="detail-containers-section" style="margin-top:12px;display:none;background:var(--bg2);padding:12px;border-radius:10px">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Containers</div>
-        <div id="detail-containers-list"></div>
-      </div>
-
-      <!-- Timeline (existing) -->
-      <div class="detail-section">
-        <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:10px">Timeline</div>
-        <div id="detail-events-list"></div>
-        <div id="detail-no-events" style="display:none;text-align:center;padding:40px;color:var(--text2)">
-          <i class="fa fa-clock" style="font-size:32px;margin-bottom:12px;color:var(--bg3)"></i>
-          <div style="font-size:14px;margin-bottom:4px">No updates yet</div>
-          <div style="font-size:11px;color:var(--text3)">Timeline will appear here as events happen</div>
-        </div>
-      </div>
-
-      <!-- Comments (existing) -->
-      <div class="detail-section">
-        <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:10px">Internal Notes</div>
-        <div id="detail-comments-list"></div>
-        <div id="detail-no-comments" style="display:none;text-align:center;padding:40px;color:var(--text2)">
-          <i class="fa fa-comment" style="font-size:32px;margin-bottom:12px;color:var(--bg3)"></i>
-          <div style="font-size:14px;margin-bottom:4px">No notes yet</div>
-          <div style="font-size:11px;color:var(--text3)">Add notes to share internal comments</div>
-        </div>
-        <div class="comment-form" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
-          <textarea id="comment-text" class="form-control" rows="2" style="resize:none;margin-bottom:8px" placeholder="Write an internal note…"></textarea>
-          <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="submitComment()">
-            <i class="fa fa-paper-plane"></i> Add Note
-          </button>
-        </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="modal-close" onclick="closeModal('modal-detail')"><i class="fa fa-xmark"></i></button>
       </div>
     </div>
-
+    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-foot" id="detail-foot">
+      <button class="btn btn-secondary" style="flex:1" onclick="editFromDetail()">
+        <i class="fa fa-pen"></i> Edit
+      </button>
+      <button class="btn btn-primary" style="flex:1" onclick="openEmailPreview()" id="btn-send-email">
+        <i class="fa fa-envelope"></i> Email
+      </button>
+      <button class="btn btn-danger" style="flex:1" onclick="deleteFromDetail()">
+        <i class="fa fa-trash"></i> Delete
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════ JS ═══════ -->
 <script>
@@ -1636,6 +1594,15 @@ function initTheme(){
 /* ── Init ── */
 initTheme();
 loadDashboard();
+
+
+// HTML AUTOCOMPLETE LINKER - 5 lines
+document.addEventListener("DOMContentLoaded", () => {
+  ["f-pol","f-pod","f-carrier"].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.list = id.includes("pol") ? "port-list" : "carrier-list";
+  });
+});
 </script>
 
 <script>
@@ -2202,40 +2169,44 @@ function _renderDetail(s){
   document.getElementById("detail-pod").textContent=s.pod||"—";
   document.getElementById("detail-etd").textContent=s.etd||"—";
   document.getElementById("detail-eta").textContent=s.eta||"—";
-
-  // NEW Shipment Details Chips
+  
   const infoChips = document.getElementById("detail-info-chips");
   if(infoChips){
     infoChips.innerHTML = [
-      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:4px 8px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:4px 8px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
-      (s.containers && s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:4px 8px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : ''
+      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
+      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
+      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:6px 10px">👤 <b>Client:</b> ${s.client}</div>` : '',
+      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:6px 10px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
+      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
+      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:6px 10px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
     ].filter(Boolean).join('');
   }
 
-  // NEW Containers List
-  const contSection = document.getElementById("detail-containers-section");
+  // Containers list
   const contList = document.getElementById("detail-containers-list");
-  if(contSection && contList){
+  if(contList){
     if(s.containers && s.containers.length){
-      contSection.style.display = 'block';
       contList.innerHTML = s.containers.map(c=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
           <div style="font-size:13px;font-weight:600;color:var(--text1)">${c.container_no||c.size_type||'Container'}</div>
-          <div style="font-size:11px;color:var(--text2)">${c.size_type||''}</div>
-        </div>`).join('');
+          <div class="badge badge-gray" style="font-size:11px">${c.size_type||'—'}</div>
+        </div>
+      `).join('');
+      document.getElementById("detail-containers-section").style.display="block";
     } else {
-      contSection.style.display = 'none';
-      contList.innerHTML = '';
+      document.getElementById("detail-containers-section").style.display="none";
     }
+  }
+</div>` : '',
+      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
+      s.client     ? `<div class="badge badge-blue" style="font-size:12px">👤 <b>Client:</b> ${s.client}</div>` : '',
+      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
+      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
+    ].filter(Boolean).join('');
+    infoChips.style.display = infoChips.innerHTML ? 'flex' : 'none';
   }
 
   const ha=document.getElementById("detail-portal-href");
-  if(ha) ha.href="/track/"+(s.ref||"");
-
   const infoChips = document.getElementById("detail-info-chips");
   if(infoChips){
     infoChips.innerHTML = [
@@ -2830,6 +2801,30 @@ async function generateReport(){
     <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
+
+
+<!-- SAFE AUTOCOMPLETE - HTML ONLY -->
+<datalist id="port-list">
+<option value="TNG">Tanger Med
+<option value="AGP">Agadir 
+<option value="NTE">Nantes
+<option value="LIS">Lisbon
+<option value="MAD">Madrid
+<option value="BCN">Barcelona
+<option value="FAO">Faro
+<option value="ORY">Oran
+<option value="NYC">New York
+<option value="LAX">Los Angeles
+</datalist>
+<datalist id="carrier-list">
+<option value="MSC">
+<option value="MAERSK">
+<option value="CMA CGM">
+<option value="COSCO">
+<option value="HMM">
+<option value="ONE">
+</datalist>
+
 </body></html>`;
 
     const w = window.open('','_blank');
@@ -2951,5 +2946,29 @@ function _confirmReject() {
 <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
+
+
+<!-- SAFE AUTOCOMPLETE - HTML ONLY -->
+<datalist id="port-list">
+<option value="TNG">Tanger Med
+<option value="AGP">Agadir 
+<option value="NTE">Nantes
+<option value="LIS">Lisbon
+<option value="MAD">Madrid
+<option value="BCN">Barcelona
+<option value="FAO">Faro
+<option value="ORY">Oran
+<option value="NYC">New York
+<option value="LAX">Los Angeles
+</datalist>
+<datalist id="carrier-list">
+<option value="MSC">
+<option value="MAERSK">
+<option value="CMA CGM">
+<option value="COSCO">
+<option value="HMM">
+<option value="ONE">
+</datalist>
+
 </body>
   </html>
