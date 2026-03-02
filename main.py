@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Response, Request
-from auth import get_current_user, require_admin, hash_password, verify_password, create_token, decode_token
+from auth import get_current_user, require_admin, hash_password, verify_password, create_token
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
@@ -86,9 +86,6 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         carrier=body.get("carrier") or None,
         client=body.get("client") or None,
         client_email=body.get("client_email") or None,
-        shipper=body.get("shipper") or None,
-        consignee=body.get("consignee") or None,
-        incoterm=body.get("incoterm") or None,
         note=body.get("note") or None,
         pol=body.get("pol") or None,
         pod=body.get("pod") or None,
@@ -97,14 +94,8 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         quotation_number=body.get("quotation_number") or None,
         status=body.get("status") or "Pending",
         vessel=body.get("vessel") or None,
-        teu=int(body["teu"]) if body.get("teu") else None,
     )
-    try:
-        ship = crud.create_shipment(db, s)
-    except Exception as e:
-        db.rollback()
-        import traceback; traceback.print_exc()
-        raise HTTPException(500, f"DB Create Error: {str(e)}")
+    ship = crud.create_shipment(db, s)
     return ship
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
@@ -114,39 +105,10 @@ def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_cu
     return s
 
 @app.put("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
-async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
+async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db)):
     body = await request.json()
-    # Build update dict — handle teu (int) and other nullable fields carefully
-    update_dict = {}
-    for k, v in body.items():
-        if k == "teu":
-            update_dict[k] = int(v) if v else None
-        elif v is not None:
-            update_dict[k] = v or None
-    data = schemas.ShipmentUpdate(**update_dict)
-    try:
-        s = crud.update_shipment(db, sid, data)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(500, f"DB Update Error: {str(e)}")
-    if not s: raise HTTPException(404, "Not found")
-    return s
-
-
-@app.patch("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
-async def patch_shipment(sid: int, request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
-    """PATCH alias for update — used by frontend."""
-    body = await request.json()
-    update_dict2 = {}
-    for k, v in body.items():
-        if k == "teu": update_dict2[k] = int(v) if v else None
-        elif v is not None: update_dict2[k] = v or None
-    data = schemas.ShipmentUpdate(**update_dict2)
-    try:
-        s = crud.update_shipment(db, sid, data)
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(500, f"DB Patch Error: {str(e)}")
+    data = schemas.ShipmentUpdate(**{k: v or None for k, v in body.items() if v is not None})
+    s = crud.update_shipment(db, sid, data)
     if not s: raise HTTPException(404, "Not found")
     return s
 
@@ -171,10 +133,7 @@ def add_comment(sid: int, data: schemas.CommentCreate, db: Session = Depends(get
 
 # ── Export ────────────────────────────────────────────────────────────────────
 @app.get("/api/export/xlsx")
-def export_xlsx(search:str="", status:str="", mode:str="", token:str="", db:Session=Depends(get_db)):
-    if not token:
-        raise HTTPException(401, "Not authenticated")
-    decode_token(token)  # raises 401 if invalid
+def export_xlsx(search:str="", status:str="", mode:str="", db:Session=Depends(get_db), current=Depends(get_current_user)):
     ships = crud.get_shipments(db, search, status, mode)
     data  = export.export_shipments_xlsx(ships)
     return Response(content=data,

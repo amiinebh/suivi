@@ -46,9 +46,6 @@ def run_migrations():
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS incoterm VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS stuffing_date VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS agent VARCHAR",
-        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS teu INTEGER",
-        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS shipper VARCHAR",
-        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS consignee VARCHAR",
         "CREATE TABLE IF NOT EXISTS alert_logs (id SERIAL PRIMARY KEY, key VARCHAR NOT NULL, sent_date VARCHAR NOT NULL, created_at VARCHAR)",
     ]
     try:
@@ -59,7 +56,6 @@ def run_migrations():
                     conn.commit()
                 except Exception as e:
                     conn.rollback()
-                    log.warning(f"Failed to execute migration: {sql} - {e}")
     except Exception as e:
-        log.warning(f"Migration error: {e}")
+        logger.warning(f"Migration error: {e}")
 
