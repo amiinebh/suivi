@@ -1298,7 +1298,10 @@ async function trackAll(){
   try{ await apiFetch('/api/track-all',{method:'POST'}); toast('Sync started!','success'); }
   catch(e){ toast(e.message,'error'); }
 }
-function exportXLSX(){ window.open('/api/export/xlsx','_blank'); }
+function exportXLSX(){
+  const token=localStorage.getItem('ft_token')||'';
+  window.open('/api/export/xlsx?token='+encodeURIComponent(token),'_blank');
+}
 
 
 /* ── Charts registry ── */
