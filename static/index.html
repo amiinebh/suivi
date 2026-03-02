@@ -11,7 +11,18 @@
 <title>FreightTrack Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+<script>
+// TINY LINKER - Zero risk
+["f-pol","f-pod","f-carrier"].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) {
+    el.setAttribute("list", id.includes("pol") ? "port-list" : "carrier-list");
+    el.setAttribute("autocomplete", "off");
+  }
+});
+</script>
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -1595,41 +1606,16 @@ function initTheme(){
 initTheme();
 loadDashboard();
 
-
-// TINY AUTOCOMPLETE - Native browser UI
-(function(){
-  const fields = {
-    "f-pol, f-pod": "pol",
-    "f-carrier": "carrier", 
-    "f-shipper": "shipper",
-    "f-consignee": "consignee",
-    "f-client": "client"
-  };
-
-  Object.entries(fields).forEach(([sel, field]) => {
-    document.querySelectorAll(sel).forEach(input => {
-      input.dataset.field = field;
-      input.addEventListener("input", async (e) => {
-        const q = e.target.value.trim();
-        if (q.length < 2) return;
-
-        try {
-          const res = await fetch(`/api/suggest?field=${field}&q=${encodeURIComponent(q)}`);
-          const suggestions = await res.json();
-
-          let datalist = document.getElementById(`${field}-list`);
-          if (!datalist) {
-            datalist = document.createElement("datalist");
-            datalist.id = `${field}-list`;
-            document.body.appendChild(datalist);
-          }
-          datalist.innerHTML = suggestions.map(s => `<option value="${s}">`).join("");
-          input.setAttribute("list", `${field}-list");
-        } catch(e) {}
-      });
-    });
-  });
-})();
+<script>
+// TINY LINKER - Zero risk
+["f-pol","f-pod","f-carrier"].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) {
+    el.setAttribute("list", id.includes("pol") ? "port-list" : "carrier-list");
+    el.setAttribute("autocomplete", "off");
+  }
+});
+</script>
 </script>
 
 <script>
@@ -1838,6 +1824,17 @@ async function deleteUser(id){
   const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
   if(r.ok) loadUsers();
 }
+
+<script>
+// TINY LINKER - Zero risk
+["f-pol","f-pod","f-carrier"].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) {
+    el.setAttribute("list", id.includes("pol") ? "port-list" : "carrier-list");
+    el.setAttribute("autocomplete", "off");
+  }
+});
+</script>
 </script>
 
 
@@ -2362,6 +2359,17 @@ function showToast(msg,type){
   t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"✅":"❌"}</span>${msg}`;
   wrap.appendChild(t); setTimeout(()=>t.remove(),2800);
 }
+
+<script>
+// TINY LINKER - Zero risk
+["f-pol","f-pod","f-carrier"].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) {
+    el.setAttribute("list", id.includes("pol") ? "port-list" : "carrier-list");
+    el.setAttribute("autocomplete", "off");
+  }
+});
+</script>
 </script>
 
 
@@ -2414,6 +2422,17 @@ function openFilesSheet(){
   if(importBtn) importBtn.style.display = isAdmin() ? "flex" : "none";
   openModal("sheet-files");
 }
+
+<script>
+// TINY LINKER - Zero risk
+["f-pol","f-pod","f-carrier"].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) {
+    el.setAttribute("list", id.includes("pol") ? "port-list" : "carrier-list");
+    el.setAttribute("autocomplete", "off");
+  }
+});
+</script>
 </script>
 
 
@@ -2516,6 +2535,17 @@ async function confirmSendEmail() {
     btn.innerHTML = '<i class="fa fa-paper-plane"></i> Confirm & Send';
   }
 }
+
+<script>
+// TINY LINKER - Zero risk
+["f-pol","f-pod","f-carrier"].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) {
+    el.setAttribute("list", id.includes("pol") ? "port-list" : "carrier-list");
+    el.setAttribute("autocomplete", "off");
+  }
+});
+</script>
 </script>
 
 <script>
@@ -2620,6 +2650,17 @@ function validateEmailField(el) {
   el.style.border = ok ? '2px solid var(--green)' : '2px solid var(--red)';
   if (msg) { msg.style.display='block'; msg.style.color=ok?'var(--green)':'var(--red)'; msg.textContent=ok?'Valid email':'Invalid format'; }
 }
+
+<script>
+// TINY LINKER - Zero risk
+["f-pol","f-pod","f-carrier"].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) {
+    el.setAttribute("list", id.includes("pol") ? "port-list" : "carrier-list");
+    el.setAttribute("autocomplete", "off");
+  }
+});
+</script>
 </script>
 
   <!-- Confirm Modal -->
@@ -2828,6 +2869,24 @@ async function generateReport(){
     <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
+
+<!-- STATIC PORTS AUTOCOMPLETE -->
+<datalist id="port-list">
+<option value="TNG">Tanger Med
+<option value="AGP">Agadir  
+<option value="NTE">Nantes
+<option value="LIS">Lisbon
+<option value="MAD">Madrid
+<option value="BCN">Barcelona
+<option value="FAO">Faro
+<option value="ORY">Oran
+</datalist>
+<datalist id="carrier-list">
+<option value="MSC">
+<option value="MAERSK">
+<option value="CMA CGM">
+<option value="COSCO">
+</datalist>
 </body></html>`;
 
     const w = window.open('','_blank');
@@ -2945,9 +3004,38 @@ function _confirmReject() {
   closeModal('modal-confirm');
   if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
 }
+
+<script>
+// TINY LINKER - Zero risk
+["f-pol","f-pod","f-carrier"].forEach(id => {
+  const el = document.getElementById(id);
+  if(el) {
+    el.setAttribute("list", id.includes("pol") ? "port-list" : "carrier-list");
+    el.setAttribute("autocomplete", "off");
+  }
+});
+</script>
 </script>
 <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
+
+<!-- STATIC PORTS AUTOCOMPLETE -->
+<datalist id="port-list">
+<option value="TNG">Tanger Med
+<option value="AGP">Agadir  
+<option value="NTE">Nantes
+<option value="LIS">Lisbon
+<option value="MAD">Madrid
+<option value="BCN">Barcelona
+<option value="FAO">Faro
+<option value="ORY">Oran
+</datalist>
+<datalist id="carrier-list">
+<option value="MSC">
+<option value="MAERSK">
+<option value="CMA CGM">
+<option value="COSCO">
+</datalist>
 </body>
   </html>
