@@ -86,6 +86,9 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         carrier=body.get("carrier") or None,
         client=body.get("client") or None,
         client_email=body.get("client_email") or None,
+        shipper=body.get("shipper") or None,
+        consignee=body.get("consignee") or None,
+        incoterm=body.get("incoterm") or None,
         note=body.get("note") or None,
         pol=body.get("pol") or None,
         pod=body.get("pod") or None,
@@ -94,6 +97,7 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         quotation_number=body.get("quotation_number") or None,
         status=body.get("status") or "Pending",
         vessel=body.get("vessel") or None,
+        teu=int(body["teu"]) if body.get("teu") else None,
         teu=int(body["teu"]) if body.get("teu") else None,
     )
     ship = crud.create_shipment(db, s)

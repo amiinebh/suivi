@@ -18,6 +18,8 @@ class Shipment(Base):
     etd = Column(String, nullable=True)
     status = Column(String, default="Pending")
     client = Column(String, nullable=True)
+    shipper = Column(String, nullable=True)
+    consignee = Column(String, nullable=True)
     client_email = Column(String, nullable=True)
     note = Column(Text, nullable=True)
     shipsgo_id = Column(Integer, nullable=True)

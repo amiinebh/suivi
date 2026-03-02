@@ -32,6 +32,9 @@ class ShipmentCreate(BaseModel):
     carrier: Optional[str] = None
     client: Optional[str] = None
     client_email: Optional[str] = None
+    shipper: Optional[str] = None
+    consignee: Optional[str] = None
+    incoterm: Optional[str] = None
     note: Optional[str] = None
     pol: Optional[str] = None
     pod: Optional[str] = None
@@ -90,6 +93,9 @@ class ShipmentUpdate(BaseModel):
     carrier: Optional[str] = None
     client: Optional[str] = None
     client_email: Optional[str] = None
+    shipper: Optional[str] = None
+    consignee: Optional[str] = None
+    incoterm: Optional[str] = None
     note: Optional[str] = None
     pol: Optional[str] = None
     pod: Optional[str] = None
