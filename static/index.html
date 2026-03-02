@@ -1220,19 +1220,20 @@ async function saveShipment(){
   const btn=document.getElementById('btn-save');
   btn.innerHTML='<span class="spinner"></span> Saving…'; btn.disabled=true;
   const g=id=>{ const el=document.getElementById(id); return el?el.value.trim()||null:null; };
+  const totalTeuNow=_formContainers.reduce((a,c)=>a+(c.teu_total||0),0);
   const data={ref,ref2:g('f-ref2'),booking_no:g('f-booking'),
     mode:document.getElementById('f-mode')?.value||'Ocean',
     carrier:g('f-carrier'),client:g('f-client'),client_email:g('f-client-email'),
     pol:g('f-pol'),pod:g('f-pod'),etd:g('f-etd'),eta:g('f-eta'),
-    status:document.getElementById('f-status')?.value||'Pending',note:g('f-note')};
+    status:document.getElementById('f-status')?.value||'Pending',note:g('f-note'),
+    teu:totalTeuNow||null};
   try{
     let r;
     if(editId) r=await apiFetch(`/api/shipments/${editId}`,{method:'PATCH',body:JSON.stringify(data)});
     else r=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
     if(r&&r.id){
       try{ await _saveContainers(r.id); } catch(e){}
-      const totalTeu3=_formContainers.reduce((a,c)=>a+c.teu,0);
-      if(totalTeu3) try{ await apiFetch(`/api/shipments/${r.id}`,{method:'PATCH',body:JSON.stringify({teu:totalTeu3})}); }catch(e){}
+      // teu already included in main save payload above
       toast(editId?'Updated ✅':'Added ✅','success');
       closeModal('modal-add'); initTheme();
 loadDashboard(); loadShipments();
