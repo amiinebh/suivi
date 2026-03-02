@@ -48,7 +48,7 @@ def root():
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "Pragma": "no-cache",
             "Expires": "0",
-            "X-Version": "v36"
+            "X-Version": "v37"
         }
     )
 
