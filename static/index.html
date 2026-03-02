@@ -601,11 +601,33 @@ textarea.form-control{resize:none;min-height:72px}
           <option value="">All Modes</option>
           <option>Ocean</option><option>Air</option>
         </select>
+        <select class="filter" id="fil-incoterm" onchange="loadShipments()">
+          <option value="">All Incoterms</option>
+          <option>EXW</option><option>FCA</option><option>CPT</option><option>CIP</option>
+          <option>DAP</option><option>DPU</option><option>DDP</option>
+          <option>FAS</option><option>FOB</option><option>CFR</option><option>CIF</option>
+        </select>
         <button class="btn btn-primary btn-sm topbar-actions-desktop" onclick="exportXLSX()">
           <i class="fa fa-download"></i> Export
         </button>
       </div>
       <div id="ship-count-label" style="font-size:12px;color:var(--text2);margin-bottom:10px"></div>
+      <div id="pager" style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin:10px 0;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-secondary btn-sm" id="pg-prev" onclick="pagePrev()"><i class="fa fa-chevron-left"></i></button>
+          <div id="pg-info" style="font-size:12px;color:var(--text2)">Page 1/1</div>
+          <button class="btn btn-secondary btn-sm" id="pg-next" onclick="pageNext()"><i class="fa fa-chevron-right"></i></button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="font-size:12px;color:var(--text2)">Rows:</div>
+          <select id="pg-size" class="filter" style="min-width:90px" onchange="setPageSize(this.value)">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+      </div>
       <div class="mobile-cards" id="ship-cards"></div>
       <div class="desktop-table table-wrap">
         <div id="ship-table"></div>
@@ -836,8 +858,21 @@ textarea.form-control{resize:none;min-height:72px}
           <input id="f-consignee" class="form-control" placeholder="Consignee Name"/>
         </div>
         <div class="form-group">
-          <label>Incoterm</label>
-          <input id="f-incoterm" class="form-control" placeholder="EXW, FOB, CIF..."/>
+          <label>Incoterm (2020)</label>
+          <select id="f-incoterm" class="form-control">
+            <option value="">— Select —</option>
+            <option>EXW</option>
+            <option>FCA</option>
+            <option>CPT</option>
+            <option>CIP</option>
+            <option>DAP</option>
+            <option>DPU</option>
+            <option>DDP</option>
+            <option>FAS</option>
+            <option>FOB</option>
+            <option>CFR</option>
+            <option>CIF</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Client</label>
@@ -1020,10 +1055,35 @@ function modeBadge(m){
 }
 function fmt(d){ return d?d.split('T')[0]:'—'; }
 function onSearch(v){
-  if(document.getElementById('page-shipments').classList.contains('active'))
-    renderCards(allShipments.filter(s=>
-      (s.ref+s.client+s.carrier+s.ref2+s.booking_no).toLowerCase().includes(v.toLowerCase())
-    ));
+  window._searchVal = v||'';
+  if(window._searchT) clearTimeout(window._searchT);
+  window._searchT = setTimeout(()=>loadShipments(), 250);
+}
+
+function renderPage(){
+  const total=_pgShips.length;
+  const pages=Math.max(1, Math.ceil(total/_pgSize));
+  if(_pgPage>pages) _pgPage=pages;
+  const start=(_pgPage-1)*_pgSize;
+  const pageShips=_pgShips.slice(start, start+_pgSize);
+  renderCards(pageShips,'ship-cards');
+  renderTable(pageShips);
+  const info=document.getElementById('pg-info');
+  if(info) info.textContent=`Page ${_pgPage}/${pages} · ${total} total`;
+  const prev=document.getElementById('pg-prev');
+  const next=document.getElementById('pg-next');
+  if(prev) prev.disabled = _pgPage<=1;
+  if(next) next.disabled = _pgPage>=pages;
+}
+function pagePrev(){ _pgPage=Math.max(1,_pgPage-1); renderPage(); }
+function pageNext(){
+  const pages=Math.max(1, Math.ceil(_pgShips.length/_pgSize));
+  _pgPage=Math.min(pages,_pgPage+1); renderPage();
+}
+function setPageSize(v){
+  _pgSize=parseInt(v||'20',10);
+  _pgPage=1;
+  renderPage();
 }
 
 /* ── Render cards (mobile) ── */
@@ -1167,14 +1227,16 @@ async function loadDashboard(){
 async function loadShipments(){
   const status=document.getElementById('fil-status')?.value||'';
   const mode=document.getElementById('fil-mode')?.value||'';
-  const search=document.getElementById('global-search')?.value||'';
+  const search=(window._searchVal!==undefined?window._searchVal:(document.getElementById('global-search')?.value||''));
   try{
     const ships=await apiFetch(`/api/shipments?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}&mode=${encodeURIComponent(mode)}`);
     allShipments=ships;
+    const inc=document.getElementById('fil-incoterm')?.value||'';
+    _pgShips = inc ? ships.filter(s=>(s.incoterm||'')===inc) : ships;
+    _pgPage = 1;
     const lbl=document.getElementById('ship-count-label');
-    if(lbl) lbl.textContent=`${ships.length} shipment${ships.length!==1?'s':''}`;
-    renderCards(ships,'ship-cards');
-    renderTable(ships);
+    if(lbl) lbl.textContent=`${_pgShips.length} shipment${_pgShips.length!==1?'s':''}`;
+    renderPage();
   }catch(e){ toast(e.message,'error'); }
 }
 
