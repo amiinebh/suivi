@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks, Response, Request
-from auth import get_current_user, require_admin, hash_password, verify_password, create_token
+from auth import get_current_user, require_admin, hash_password, verify_password, create_token, decode_token
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
@@ -108,7 +108,14 @@ def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_cu
 @app.put("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
 async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
     body = await request.json()
-    data = schemas.ShipmentUpdate(**{k: v or None for k, v in body.items() if v is not None})
+    # Build update dict — handle teu (int) and other nullable fields carefully
+    update_dict = {}
+    for k, v in body.items():
+        if k == "teu":
+            update_dict[k] = int(v) if v else None
+        elif v is not None:
+            update_dict[k] = v or None
+    data = schemas.ShipmentUpdate(**update_dict)
     s = crud.update_shipment(db, sid, data)
     if not s: raise HTTPException(404, "Not found")
     return s
@@ -118,7 +125,11 @@ async def update_shipment(sid: int, request: Request, db: Session = Depends(get_
 async def patch_shipment(sid: int, request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
     """PATCH alias for update — used by frontend."""
     body = await request.json()
-    data = schemas.ShipmentUpdate(**{k: v for k, v in body.items() if v is not None})
+    update_dict2 = {}
+    for k, v in body.items():
+        if k == "teu": update_dict2[k] = int(v) if v else None
+        elif v is not None: update_dict2[k] = v or None
+    data = schemas.ShipmentUpdate(**update_dict2)
     s = crud.update_shipment(db, sid, data)
     if not s: raise HTTPException(404, "Not found")
     return s
@@ -147,12 +158,7 @@ def add_comment(sid: int, data: schemas.CommentCreate, db: Session = Depends(get
 def export_xlsx(search:str="", status:str="", mode:str="", token:str="", db:Session=Depends(get_db)):
     if not token:
         raise HTTPException(401, "Not authenticated")
-    try:
-        from jose import jwt as _jwt
-        import os as _os
-        _jwt.decode(token, _os.getenv("SECRET_KEY","secret"), algorithms=["HS256"])
-    except Exception:
-        raise HTTPException(401, "Invalid or expired token")
+    decode_token(token)  # raises 401 if invalid
     ships = crud.get_shipments(db, search, status, mode)
     data  = export.export_shipments_xlsx(ships)
     return Response(content=data,
