@@ -990,7 +990,7 @@ document.querySelectorAll('.overlay').forEach(o=>{
 
 /* ── Helpers ── */
 function resetForm(){
-  ['f-ref','f-ref2','f-booking','f-carrier','f-client','f-client-email','f-pol','f-pod','f-etd','f-eta','f-note']
+  ['f-ref','f-ref2','f-booking','f-carrier','f-shipper','f-client','f-client-email','f-consignee','f-incoterm','f-pol','f-pod','f-etd','f-eta','f-note']
     .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   _resetContainerForm();
   const fm=document.getElementById('f-mode'); if(fm) fm.value='Ocean';
@@ -1079,7 +1079,7 @@ function renderTable(ships){
   </tr></thead><tbody>
   ${ships.map(s=>`<tr class="clickable" onclick="openDetail(${s.id})">
     <td class="ref-cell">${s.ref}</td>
-    <td style="color:var(--text2)">${s.ref2||'—'}</td>
+    <td style="color:var(--text2)">${s.booking_no||'—'}</td>
     <td>${s.client||'—'}</td>
     <td>${s.carrier||'—'}</td>
     <td style="font-size:11px">${s.pol||'—'} → ${s.pod||'—'}</td>
@@ -1165,7 +1165,7 @@ async function openDetail(sid){
       <div class="detail-grid">
         <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${statusBadge(s.status)}</div></div>
         <div class="detail-item"><div class="detail-label">Mode</div><div class="detail-value">${modeBadge(s.mode)}</div></div>
-        <div class="detail-item"><div class="detail-label">Container / AWB</div><div class="detail-value">${s.ref2||'—'}</div></div>
+        <div class="detail-item"><div class="detail-label">Container / AWB</div><div class="detail-value">${s.booking_no||'—'}</div></div>
         <div class="detail-item"><div class="detail-label">Booking No</div><div class="detail-value">${s.booking_no||'—'}</div></div>
         <div class="detail-item"><div class="detail-label">Carrier</div><div class="detail-value">${s.carrier||'—'}</div></div>
         <div class="detail-item"><div class="detail-label">Vessel</div><div class="detail-value">${s.vessel||'—'}</div></div>
@@ -1223,7 +1223,7 @@ async function saveShipment(){
   const totalTeuNow=_formContainers.reduce((a,c)=>a+(c.teu_total||0),0);
   const data={ref,ref2:g('f-ref2'),booking_no:g('f-booking'),
     mode:document.getElementById('f-mode')?.value||'Ocean',
-    carrier:g('f-carrier'),client:g('f-client'),client_email:g('f-client-email'),
+    carrier:g('f-carrier'),shipper:g('f-shipper'),client:g('f-client'),client_email:g('f-client-email'),consignee:g('f-consignee'),incoterm:g('f-incoterm'),
     pol:g('f-pol'),pod:g('f-pod'),etd:g('f-etd'),eta:g('f-eta'),
     status:document.getElementById('f-status')?.value||'Pending',note:g('f-note'),
     teu:totalTeuNow||null};
@@ -1250,8 +1250,8 @@ async function editShipment(sid){
     document.getElementById('modal-add-title').textContent='Edit Shipment';
     const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
     set('f-ref',s.ref); set('f-ref2',s.ref2); set('f-booking',s.booking_no);
-    set('f-carrier',s.carrier); set('f-client',s.client);
-    set('f-client-email',s.client_email); set('f-pol',s.pol); set('f-pod',s.pod);
+    set('f-carrier',s.carrier); set('f-shipper',s.shipper); set('f-client',s.client);
+    set('f-client-email',s.client_email); set('f-consignee',s.consignee); set('f-incoterm',s.incoterm); set('f-pol',s.pol); set('f-pod',s.pod);
     set('f-etd',s.etd?s.etd.split('T')[0]:''); set('f-eta',s.eta?s.eta.split('T')[0]:'');
     set('f-note',s.note);
     const fm=document.getElementById('f-mode'); if(fm) fm.value=s.mode||'Ocean';
@@ -2596,7 +2596,7 @@ async function generateReport(){
         ${ships.map((s,i)=>`<tr>
           <td style="color:#aaa">${i+1}</td>
           <td style="font-weight:700;color:#4f8ef7">${s.ref||'—'}</td>
-          <td style="color:#5a6a8a;font-size:11px">${s.ref2||'—'}</td>
+          <td style="color:#5a6a8a;font-size:11px">${s.booking_no||'—'}</td>
           <td>${s.client||'—'}</td>
           <td>${s.carrier||'—'}</td>
           <td style="font-size:11px">${s.pol||'—'} → ${s.pod||'—'}</td>
