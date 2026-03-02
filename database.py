@@ -59,6 +59,7 @@ def run_migrations():
                     conn.commit()
                 except Exception as e:
                     conn.rollback()
+                    log.warning(f"Failed to execute migration: {sql} - {e}")
     except Exception as e:
-        logger.warning(f"Migration error: {e}")
+        log.warning(f"Migration error: {e}")
 
