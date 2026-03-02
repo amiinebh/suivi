@@ -94,6 +94,7 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         quotation_number=body.get("quotation_number") or None,
         status=body.get("status") or "Pending",
         vessel=body.get("vessel") or None,
+        teu=int(body["teu"]) if body.get("teu") else None,
     )
     ship = crud.create_shipment(db, s)
     return ship
@@ -105,9 +106,19 @@ def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_cu
     return s
 
 @app.put("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
-async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db)):
+async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
     body = await request.json()
     data = schemas.ShipmentUpdate(**{k: v or None for k, v in body.items() if v is not None})
+    s = crud.update_shipment(db, sid, data)
+    if not s: raise HTTPException(404, "Not found")
+    return s
+
+
+@app.patch("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
+async def patch_shipment(sid: int, request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    """PATCH alias for update — used by frontend."""
+    body = await request.json()
+    data = schemas.ShipmentUpdate(**{k: v for k, v in body.items() if v is not None})
     s = crud.update_shipment(db, sid, data)
     if not s: raise HTTPException(404, "Not found")
     return s
@@ -133,7 +144,15 @@ def add_comment(sid: int, data: schemas.CommentCreate, db: Session = Depends(get
 
 # ── Export ────────────────────────────────────────────────────────────────────
 @app.get("/api/export/xlsx")
-def export_xlsx(search:str="", status:str="", mode:str="", db:Session=Depends(get_db), current=Depends(get_current_user)):
+def export_xlsx(search:str="", status:str="", mode:str="", token:str="", db:Session=Depends(get_db)):
+    if not token:
+        raise HTTPException(401, "Not authenticated")
+    try:
+        from jose import jwt as _jwt
+        import os as _os
+        _jwt.decode(token, _os.getenv("SECRET_KEY","secret"), algorithms=["HS256"])
+    except Exception:
+        raise HTTPException(401, "Invalid or expired token")
     ships = crud.get_shipments(db, search, status, mode)
     data  = export.export_shipments_xlsx(ships)
     return Response(content=data,
