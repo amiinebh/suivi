@@ -973,6 +973,182 @@ textarea.form-control{resize:none;min-height:72px}
   </div>
 </div>
 
+
+<!-- QUOTES PAGE -->
+<div class="page" id="page-quotes">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div>
+      <div style="font-size:16px;font-weight:700">Quotations</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">Create, review and approve freight quotations</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="openNewQuotation()" style="gap:6px">
+      <i class="fa fa-plus"></i> New Quotation
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="margin-bottom:16px">
+    <div class="stat-card"><div class="stat-icon blue"><i class="fa fa-file-invoice"></i></div><div class="stat-value" id="q-total">-</div><div class="stat-label">Total</div></div>
+    <div class="stat-card"><div class="stat-icon yellow"><i class="fa fa-clock"></i></div><div class="stat-value" id="q-pending">-</div><div class="stat-label">Pending</div></div>
+    <div class="stat-card"><div class="stat-icon green"><i class="fa fa-circle-check"></i></div><div class="stat-value" id="q-approved">-</div><div class="stat-label">Approved</div></div>
+    <div class="stat-card"><div class="stat-icon red"><i class="fa fa-circle-xmark"></i></div><div class="stat-value" id="q-declined">-</div><div class="stat-label">Declined</div></div>
+    <div class="stat-card"><div class="stat-icon cyan"><i class="fa fa-ship"></i></div><div class="stat-value" id="q-transit">-</div><div class="stat-label">In Transit</div></div>
+    <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value" id="q-ocean">-</div><div class="stat-label">Ocean</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-row" style="margin-bottom:12px">
+    <select class="filter" id="qfil-status" onchange="loadQuotations()">
+      <option value="">All Status</option>
+      <option>Pending</option>
+      <option>Approved</option>
+      <option>Declined</option>
+      <option>Sailing</option>
+      <option>Transit</option>
+      <option>Arrived</option>
+      <option>Delivered</option>
+      <option>Delayed</option>
+    </select>
+    <select class="filter" id="qfil-mode" onchange="loadQuotations()">
+      <option value="">All Modes</option>
+      <option>Ocean</option>
+      <option>Air</option>
+    </select>
+    <button class="btn btn-ghost btn-sm topbar-actions-desktop" onclick="exportXLSX()">
+      <i class="fa fa-download"></i> Export
+    </button>
+  </div>
+
+  <!-- Count + Pager -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+    <div id="q-count-label" style="font-size:12px;color:var(--text2)"></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-secondary btn-sm" id="qpg-prev" onclick="qPagePrev()"><i class="fa fa-chevron-left"></i></button>
+      <div id="qpg-info" style="font-size:12px;color:var(--text2)">Page 1/1</div>
+      <button class="btn btn-secondary btn-sm" id="qpg-next" onclick="qPageNext()"><i class="fa fa-chevron-right"></i></button>
+    </div>
+  </div>
+
+  <!-- Mobile cards -->
+  <div class="mobile-cards" id="quotes-cards"></div>
+
+  <!-- Desktop table -->
+  <div class="desktop-table table-wrap">
+    <div id="quotes-table"></div>
+  </div>
+</div>
+
+<!-- NEW QUOTATION MODAL -->
+<div class="overlay" id="modal-quotation">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title" id="modal-quotation-title">New Quotation</div>
+      <button class="modal-close" onclick="closeModal('modal-quotation')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Quotation Ref</label>
+          <input id="qf-ref" class="form-control" placeholder="e.g. QUO-2026-001">
+        </div>
+        <div class="form-group">
+          <label>Mode</label>
+          <select id="qf-mode" class="form-control">
+            <option>Ocean</option><option>Air</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Client</label>
+          <input id="qf-client" class="form-control" placeholder="Company name">
+        </div>
+        <div class="form-group">
+          <label>Client Email</label>
+          <input id="qf-email" class="form-control" type="email" placeholder="client@example.com">
+        </div>
+        <div class="form-group">
+          <label>Carrier</label>
+          <input id="qf-carrier" class="form-control" placeholder="CMA, MSC..." list="carrier-list">
+        </div>
+        <div class="form-group">
+          <label>Incoterm 2020</label>
+          <select id="qf-incoterm" class="form-control">
+            <option value="">Select</option>
+            <option>EXW</option><option>FCA</option><option>CPT</option><option>CIP</option>
+            <option>DAP</option><option>DPU</option><option>DDP</option>
+            <option>FAS</option><option>FOB</option><option>CFR</option><option>CIF</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>POL</label>
+          <input id="qf-pol" class="form-control" placeholder="SHANGHAI" list="port-list">
+        </div>
+        <div class="form-group">
+          <label>POD</label>
+          <input id="qf-pod" class="form-control" placeholder="CASABLANCA" list="port-list">
+        </div>
+        <div class="form-group">
+          <label>ETD</label>
+          <input id="qf-etd" class="form-control" type="date">
+        </div>
+        <div class="form-group">
+          <label>ETA</label>
+          <input id="qf-eta" class="form-control" type="date">
+        </div>
+        <div class="form-group">
+          <label>Booking No</label>
+          <input id="qf-booking" class="form-control" placeholder="MRO1002308">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="qf-status" class="form-control">
+            <option>Pending</option>
+            <option>Approved</option>
+            <option>Declined</option>
+            <option>Sailing</option>
+            <option>Transit</option>
+            <option>Arrived</option>
+            <option>Delivered</option>
+            <option>Delayed</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="qf-note" class="form-control" placeholder="Internal notes about this quotation"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-quotation')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" id="qbtn-save" onclick="saveQuotation()">
+        <i class="fa fa-floppy-disk"></i> Save Quotation
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- APPROVE / DECLINE CONFIRM MODAL -->
+<div class="overlay" id="modal-qaction">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title" id="qaction-title">Approve Quotation</div>
+      <button class="modal-close" onclick="closeModal('modal-qaction')"><i class="fa fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="qaction-msg" style="font-size:14px;color:var(--text2);margin:0 0 12px"></p>
+      <textarea id="qaction-note" class="form-control" placeholder="Optional note / reason..." rows="3"></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-qaction')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" id="qaction-confirm-btn" onclick="confirmQAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+
+
 <!-- ═══════ JS ═══════ -->
 <script>
 let _pgPage=1, _pgSize=20, _pgShips=[];
@@ -2797,179 +2973,6 @@ async function generateReport(){
     <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
-
-<!-- QUOTES PAGE -->
-<div class="page" id="page-quotes">
-  <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-    <div>
-      <div style="font-size:16px;font-weight:700">Quotations</div>
-      <div style="font-size:12px;color:var(--text2);margin-top:2px">Create, review and approve freight quotations</div>
-    </div>
-    <button class="btn btn-primary btn-sm" onclick="openNewQuotation()" style="gap:6px">
-      <i class="fa fa-plus"></i> New Quotation
-    </button>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats-grid" style="margin-bottom:16px">
-    <div class="stat-card"><div class="stat-icon blue"><i class="fa fa-file-invoice"></i></div><div class="stat-value" id="q-total">-</div><div class="stat-label">Total</div></div>
-    <div class="stat-card"><div class="stat-icon yellow"><i class="fa fa-clock"></i></div><div class="stat-value" id="q-pending">-</div><div class="stat-label">Pending</div></div>
-    <div class="stat-card"><div class="stat-icon green"><i class="fa fa-circle-check"></i></div><div class="stat-value" id="q-approved">-</div><div class="stat-label">Approved</div></div>
-    <div class="stat-card"><div class="stat-icon red"><i class="fa fa-circle-xmark"></i></div><div class="stat-value" id="q-declined">-</div><div class="stat-label">Declined</div></div>
-    <div class="stat-card"><div class="stat-icon cyan"><i class="fa fa-ship"></i></div><div class="stat-value" id="q-transit">-</div><div class="stat-label">In Transit</div></div>
-    <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value" id="q-ocean">-</div><div class="stat-label">Ocean</div></div>
-  </div>
-
-  <!-- Filters -->
-  <div class="filters-row" style="margin-bottom:12px">
-    <select class="filter" id="qfil-status" onchange="loadQuotations()">
-      <option value="">All Status</option>
-      <option>Pending</option>
-      <option>Approved</option>
-      <option>Declined</option>
-      <option>Sailing</option>
-      <option>Transit</option>
-      <option>Arrived</option>
-      <option>Delivered</option>
-      <option>Delayed</option>
-    </select>
-    <select class="filter" id="qfil-mode" onchange="loadQuotations()">
-      <option value="">All Modes</option>
-      <option>Ocean</option>
-      <option>Air</option>
-    </select>
-    <button class="btn btn-ghost btn-sm topbar-actions-desktop" onclick="exportXLSX()">
-      <i class="fa fa-download"></i> Export
-    </button>
-  </div>
-
-  <!-- Count + Pager -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-    <div id="q-count-label" style="font-size:12px;color:var(--text2)"></div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn btn-secondary btn-sm" id="qpg-prev" onclick="qPagePrev()"><i class="fa fa-chevron-left"></i></button>
-      <div id="qpg-info" style="font-size:12px;color:var(--text2)">Page 1/1</div>
-      <button class="btn btn-secondary btn-sm" id="qpg-next" onclick="qPageNext()"><i class="fa fa-chevron-right"></i></button>
-    </div>
-  </div>
-
-  <!-- Mobile cards -->
-  <div class="mobile-cards" id="quotes-cards"></div>
-
-  <!-- Desktop table -->
-  <div class="desktop-table table-wrap">
-    <div id="quotes-table"></div>
-  </div>
-</div>
-
-<!-- NEW QUOTATION MODAL -->
-<div class="overlay" id="modal-quotation">
-  <div class="modal" style="max-width:680px">
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title" id="modal-quotation-title">New Quotation</div>
-      <button class="modal-close" onclick="closeModal('modal-quotation')"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Quotation Ref</label>
-          <input id="qf-ref" class="form-control" placeholder="e.g. QUO-2026-001">
-        </div>
-        <div class="form-group">
-          <label>Mode</label>
-          <select id="qf-mode" class="form-control">
-            <option>Ocean</option><option>Air</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Client</label>
-          <input id="qf-client" class="form-control" placeholder="Company name">
-        </div>
-        <div class="form-group">
-          <label>Client Email</label>
-          <input id="qf-email" class="form-control" type="email" placeholder="client@example.com">
-        </div>
-        <div class="form-group">
-          <label>Carrier</label>
-          <input id="qf-carrier" class="form-control" placeholder="CMA, MSC..." list="carrier-list">
-        </div>
-        <div class="form-group">
-          <label>Incoterm 2020</label>
-          <select id="qf-incoterm" class="form-control">
-            <option value="">Select</option>
-            <option>EXW</option><option>FCA</option><option>CPT</option><option>CIP</option>
-            <option>DAP</option><option>DPU</option><option>DDP</option>
-            <option>FAS</option><option>FOB</option><option>CFR</option><option>CIF</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>POL</label>
-          <input id="qf-pol" class="form-control" placeholder="SHANGHAI" list="port-list">
-        </div>
-        <div class="form-group">
-          <label>POD</label>
-          <input id="qf-pod" class="form-control" placeholder="CASABLANCA" list="port-list">
-        </div>
-        <div class="form-group">
-          <label>ETD</label>
-          <input id="qf-etd" class="form-control" type="date">
-        </div>
-        <div class="form-group">
-          <label>ETA</label>
-          <input id="qf-eta" class="form-control" type="date">
-        </div>
-        <div class="form-group">
-          <label>Booking No</label>
-          <input id="qf-booking" class="form-control" placeholder="MRO1002308">
-        </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select id="qf-status" class="form-control">
-            <option>Pending</option>
-            <option>Approved</option>
-            <option>Declined</option>
-            <option>Sailing</option>
-            <option>Transit</option>
-            <option>Arrived</option>
-            <option>Delivered</option>
-            <option>Delayed</option>
-          </select>
-        </div>
-        <div class="form-group full">
-          <label>Notes</label>
-          <textarea id="qf-note" class="form-control" placeholder="Internal notes about this quotation"></textarea>
-        </div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-quotation')">Cancel</button>
-      <button class="btn btn-primary" style="flex:2" id="qbtn-save" onclick="saveQuotation()">
-        <i class="fa fa-floppy-disk"></i> Save Quotation
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- APPROVE / DECLINE CONFIRM MODAL -->
-<div class="overlay" id="modal-qaction">
-  <div class="modal" style="max-width:400px">
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title" id="qaction-title">Approve Quotation</div>
-      <button class="modal-close" onclick="closeModal('modal-qaction')"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <p id="qaction-msg" style="font-size:14px;color:var(--text2);margin:0 0 12px"></p>
-      <textarea id="qaction-note" class="form-control" placeholder="Optional note / reason..." rows="3"></textarea>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-qaction')">Cancel</button>
-      <button class="btn btn-primary" style="flex:2" id="qaction-confirm-btn" onclick="confirmQAction()">Confirm</button>
-    </div>
-  </div>
-</div>
 
 </body>></html>`;
 
