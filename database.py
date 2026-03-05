@@ -28,25 +28,42 @@ if IS_SQLITE:
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+
 def run_migrations():
-    """Safe column-add migrations — won't fail if column already exists."""
     migrations = [
-        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS booking_no VARCHAR",
-        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS client_email VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS bookingno VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS clientemail VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS note TEXT",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS notes TEXT",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS vessel VARCHAR",
-        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS shipsgo_id INTEGER",
-        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS last_tracked VARCHAR",
-        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS created_at VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS shipsgoid INTEGER",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS lasttracked VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS createdat VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS ref2 VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS etd VARCHAR",
-        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS quotation_number VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS quotationnumber VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS direction VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS incoterm VARCHAR",
-        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS stuffing_date VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS stuffingdate VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS agent VARCHAR",
-        "CREATE TABLE IF NOT EXISTS alert_logs (id SERIAL PRIMARY KEY, key VARCHAR NOT NULL, sent_date VARCHAR NOT NULL, created_at VARCHAR)",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS shipper VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS consignee VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS teu VARCHAR",
+        """CREATE TABLE IF NOT EXISTS quotations (
+            id SERIAL PRIMARY KEY, ref VARCHAR NOT NULL UNIQUE,
+            mode VARCHAR DEFAULT 'Ocean', client VARCHAR, clientemail VARCHAR,
+            carrier VARCHAR, pol VARCHAR, pod VARCHAR, etd VARCHAR, eta VARCHAR,
+            bookingno VARCHAR, incoterm VARCHAR, status VARCHAR DEFAULT 'Pending',
+            note TEXT, shipper VARCHAR, consignee VARCHAR,
+            createdat VARCHAR, updatedat VARCHAR
+        )""",
+        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS shipper VARCHAR",
+        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS consignee VARCHAR",
+        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS updatedat VARCHAR",
+        """CREATE TABLE IF NOT EXISTS alertlogs (
+            id SERIAL PRIMARY KEY, key VARCHAR NOT NULL,
+            sentdate VARCHAR NOT NULL, createdat VARCHAR
+        )""",
     ]
     try:
         with engine.connect() as conn:
@@ -56,6 +73,6 @@ def run_migrations():
                     conn.commit()
                 except Exception as e:
                     conn.rollback()
+                    log.debug(f"Migration skipped: {e}")
     except Exception as e:
-        logger.warning(f"Migration error: {e}")
-
+        log.warning(f"Migration error: {e}")

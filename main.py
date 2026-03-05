@@ -14,6 +14,11 @@ from database import run_migrations
 run_migrations()
 
 app = FastAPI(title="FreightTrack Pro")
+
+# ── Quotations router ────────────────────────────────────────────────────────
+from quotations_router import router as quot_router
+app.include_router(quot_router)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def get_db():
