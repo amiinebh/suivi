@@ -1,9 +1,3 @@
-"""
-/api/quotations — CRUD router.
-In main.py add:
-    from quotations_router import router as quot_router
-    app.include_router(quot_router)
-"""
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from database import SessionLocal
@@ -28,8 +22,10 @@ def list_quotations(q: str = "", status: str = "", mode: str = "",
     qs = db.query(Quotation)
     if q:
         like = f"%{q}%"
-        qs = qs.filter(Quotation.ref.ilike(like) | Quotation.client.ilike(like) |
-                       Quotation.pol.ilike(like)  | Quotation.pod.ilike(like))
+        qs = qs.filter(
+            Quotation.ref.ilike(like) | Quotation.client.ilike(like) |
+            Quotation.pol.ilike(like)  | Quotation.pod.ilike(like)
+        )
     if status and status not in ("", "All Status"):
         qs = qs.filter(Quotation.status == status)
     if mode and mode not in ("", "All Modes"):
@@ -38,7 +34,8 @@ def list_quotations(q: str = "", status: str = "", mode: str = "",
 
 
 @router.get("/{qid}")
-def get_quotation(qid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+def get_quotation(qid: int, db: Session = Depends(get_db),
+                  current=Depends(get_current_user)):
     q = db.query(Quotation).filter(Quotation.id == qid).first()
     if not q:
         raise HTTPException(404, "Quotation not found")
@@ -47,7 +44,7 @@ def get_quotation(qid: int, db: Session = Depends(get_db), current=Depends(get_c
 
 @router.post("")
 async def create_quotation(request: Request, db: Session = Depends(get_db),
-                           current=Depends(get_current_user)):
+                            current=Depends(get_current_user)):
     try:
         body = await request.json()
     except Exception:
@@ -58,14 +55,25 @@ async def create_quotation(request: Request, db: Session = Depends(get_db),
     if db.query(Quotation).filter(Quotation.ref == ref).first():
         raise HTTPException(400, "Ref already exists")
     now = datetime.utcnow().isoformat()
-    q = Quotation(ref=ref, mode=body.get("mode") or "Ocean",
-                  client=body.get("client") or None, clientemail=body.get("clientemail") or None,
-                  carrier=body.get("carrier") or None, pol=body.get("pol") or None,
-                  pod=body.get("pod") or None, etd=body.get("etd") or None,
-                  eta=body.get("eta") or None, bookingno=body.get("bookingno") or None,
-                  incoterm=body.get("incoterm") or None, status=body.get("status") or "Pending",
-                  note=body.get("note") or None, shipper=body.get("shipper") or None,
-                  consignee=body.get("consignee") or None, createdat=now, updatedat=now)
+    q = Quotation(
+        ref=ref,
+        mode=body.get("mode") or "Ocean",
+        client=body.get("client") or None,
+        client_email=body.get("clientemail") or None,
+        carrier=body.get("carrier") or None,
+        pol=body.get("pol") or None,
+        pod=body.get("pod") or None,
+        etd=body.get("etd") or None,
+        eta=body.get("eta") or None,
+        booking_no=body.get("bookingno") or None,
+        incoterm=body.get("incoterm") or None,
+        status=body.get("status") or "Pending",
+        note=body.get("note") or None,
+        shipper=body.get("shipper") or None,
+        consignee=body.get("consignee") or None,
+        created_at=now,
+        updated_at=now,
+    )
     db.add(q); db.commit(); db.refresh(q)
     return _s(q)
 
@@ -73,16 +81,22 @@ async def create_quotation(request: Request, db: Session = Depends(get_db),
 @router.put("/{qid}")
 @router.patch("/{qid}")
 async def update_quotation(qid: int, request: Request, db: Session = Depends(get_db),
-                           current=Depends(get_current_user)):
+                            current=Depends(get_current_user)):
     q = db.query(Quotation).filter(Quotation.id == qid).first()
     if not q:
         raise HTTPException(404, "Quotation not found")
     body = await request.json()
-    for field in ["mode","client","clientemail","carrier","pol","pod","etd","eta",
-                  "bookingno","incoterm","status","note","shipper","consignee"]:
-        if field in body:
-            setattr(q, field, body[field] or None)
-    q.updatedat = datetime.utcnow().isoformat()
+    field_map = {
+        "mode": "mode", "client": "client", "clientemail": "client_email",
+        "carrier": "carrier", "pol": "pol", "pod": "pod",
+        "etd": "etd", "eta": "eta", "bookingno": "booking_no",
+        "incoterm": "incoterm", "status": "status", "note": "note",
+        "shipper": "shipper", "consignee": "consignee",
+    }
+    for json_key, model_attr in field_map.items():
+        if json_key in body:
+            setattr(q, model_attr, body[json_key] or None)
+    q.updated_at = datetime.utcnow().isoformat()
     db.commit(); db.refresh(q)
     return _s(q)
 
@@ -98,9 +112,12 @@ def delete_quotation(qid: int, db: Session = Depends(get_db),
 
 
 def _s(q: Quotation) -> dict:
-    return {"id": q.id, "ref": q.ref, "mode": q.mode, "client": q.client,
-            "clientemail": q.clientemail, "carrier": q.carrier, "pol": q.pol,
-            "pod": q.pod, "etd": q.etd, "eta": q.eta, "bookingno": q.bookingno,
-            "incoterm": q.incoterm, "status": q.status, "note": q.note,
-            "shipper": q.shipper, "consignee": q.consignee,
-            "createdat": q.createdat, "updatedat": q.updatedat}
+    return {
+        "id": q.id, "ref": q.ref, "mode": q.mode,
+        "client": q.client, "clientemail": q.client_email,
+        "carrier": q.carrier, "pol": q.pol, "pod": q.pod,
+        "etd": q.etd, "eta": q.eta, "bookingno": q.booking_no,
+        "incoterm": q.incoterm, "status": q.status, "note": q.note,
+        "shipper": q.shipper, "consignee": q.consignee,
+        "createdat": q.created_at, "updatedat": q.updated_at,
+    }
