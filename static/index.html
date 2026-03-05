@@ -445,7 +445,13 @@ textarea.form-control{resize:none;min-height:72px}
 .comment-text{font-size:12px;color:var(--text1);margin-top:4px;line-height:1.5}
 #bulk-drop-zone:hover{border-color:var(--accent)!important;background:var(--bg3)}
 
-</style>
+
+    /* ── Quotations page layout fix ───────────────────────────── */
+    #page-quotes { display: none; }
+    #page-quotes.active { display: block; }
+    #page-quotes > div:first-child { flex-wrap: wrap; }
+
+  </style>
 </head>
 <body>
   <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;
@@ -3174,101 +3180,6 @@ function openQAction(id, type){
   document.getElementById('qaction-note').value='';
   openModal('modal-qaction');
 }
-
-async function confirmQAction(){
-  if(!qActionId||!qActionType) return;
-  const note=document.getElementById('qaction-note').value.trim();
-  const newStatus = qActionType==='approve' ? 'Sailing' : 'Declined';
-  try {
-    await apiFetch(`/api/quotations/${qActionId}`,{method:'PATCH',body:JSON.stringify({status:newStatus,note:note||undefined})});
-    toast(`Quotation ${qActionType==='approve'?'approved':'declined'} successfully`,'success');
-    closeModal('modal-qaction');
-    loadQuotations();
-  } catch(e){ toast(e.message,'error'); }
-}
-
-async function deleteQuotation(id){
-  if(!await _confirm('Delete this quotation? This cannot be undone.')) return;
-  try {
-    await apiFetch(`/api/quotations/${id}`,{method:'DELETE'});
-    toast('Quotation deleted','success');
-    loadQuotations();
-  } catch(e){ toast(e.message,'error'); }
-}
-
-function qPagePrev(){ qPage=Math.max(1,qPage-1); qRenderPage(); }
-function qPageNext(){
-  const pages=Math.max(1,Math.ceil(qShips.length/qSize));
-  qPage=Math.min(pages,qPage+1); qRenderPage();
-}
-
-function qRenderPage(){
-  const total=qShips.length;
-  const pages=Math.max(1,Math.ceil(total/qSize));
-  if(qPage>pages) qPage=pages;
-  const start=(qPage-1)*qSize;
-  const pageShips=qShips.slice(start,start+qSize);
-  const lbl=document.getElementById('q-count-label');
-  if(lbl) lbl.textContent=`${total} quotation${total!==1?'s':''}`;
-  const pi=document.getElementById('qpg-info');
-  if(pi) pi.textContent=`Page ${qPage}/${pages}`;
-  const prev=document.getElementById('qpg-prev');
-  const next=document.getElementById('qpg-next');
-  if(prev) prev.disabled=qPage===1;
-  if(next) next.disabled=qPage>=pages;
-  _qRenderCards(pageShips);
-  _qRenderTable(pageShips);
-}
-
-function _qActionBtns(s){
-  const canApprove = s.status==='Pending';
-  const canDecline = s.status==='Pending'||s.status==='Approved';
-  return `
-    ${canApprove?`<button class="btn btn-sm" style="background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);font-size:11px;padding:4px 10px"
-      onclick="event.stopPropagation();openQAction(${s.id},'approve')" title="Approve">
-      <i class="fa fa-circle-check"></i> Approve</button>`:''}
-    ${canDecline?`<button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);font-size:11px;padding:4px 10px"
-      onclick="event.stopPropagation();openQAction(${s.id},'decline')" title="Decline">
-      <i class="fa fa-circle-xmark"></i> Decline</button>`:''}
-    <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editQuotation(${s.id})" title="Edit"><i class="fa fa-pen"></i></button>
-    <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteQuotation(${s.id})" title="Delete"><i class="fa fa-trash"></i></button>`;
-}
-
-function _qRenderCards(ships){
-  const wrap=document.getElementById('quotes-cards');
-  if(!wrap) return;
-  if(!ships.length){
-    wrap.innerHTML=`<div class="empty"><div class="empty-icon">📋</div>
-      <div class="empty-title">No quotations found</div>
-      <div class="empty-sub">Tap + New Quotation to create one</div></div>`;
-    return;
-  }
-  wrap.innerHTML=ships.map(s=>`
-    <div class="ship-card" onclick="editQuotation(${s.id})">
-      <div class="ship-card-head">
-        <div>
-          <div class="ship-ref">${s.ref}</div>
-          <div class="ship-sub">${s.bookingno||''} ${s.carrier||''}</div>
-        </div>
-        ${statusBadge(s.status)}
-      </div>
-      <div class="ship-card-body" style="grid-template-columns:repeat(2,1fr);gap:10px">
-        <div class="ship-field"><div class="ship-field-label">Client</div><div class="ship-field-value">${s.client||'-'}</div></div>
-        <div class="ship-field"><div class="ship-field-label">Incoterm</div><div class="ship-field-value">${s.incoterm||'-'}</div></div>
-        <div class="ship-field"><div class="ship-field-label">POL</div><div class="ship-field-value">${s.pol||'-'}</div></div>
-        <div class="ship-field"><div class="ship-field-label">POD</div><div class="ship-field-value">${s.pod||'-'}</div></div>
-        <div class="ship-field"><div class="ship-field-label">ETD</div><div class="ship-field-value">${fmtD(s.etd)}</div></div>
-        <div class="ship-field"><div class="ship-field-label">ETA</div><div class="ship-field-value">${fmtD(s.eta)}</div></div>
-      </div>
-      <div class="ship-card-foot">
-        <div style="font-size:11px;color:var(--text2)">${s.mode||'Ocean'}</div>
-        <div class="ship-actions" onclick="event.stopPropagation()">
-          ${_qActionBtns(s)}
-        </div>
-      </div>
-    </div>`).join('');
-}
-
 
 async function confirmQAction(){
   if(!qActionId||!qActionType) return;
