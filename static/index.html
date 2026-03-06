@@ -3047,8 +3047,8 @@ async function openNewQuotation(){
   const m=document.getElementById('qf-mode'); if(m) m.value='Ocean';
   const s=document.getElementById('qf-status'); if(s) s.value='Pending';
   const i=document.getElementById('qf-incoterm'); if(i) i.value='';
-  const etd=document.getElementById('qf-etd'); if(etd) etd.value='';
-  const eta=document.getElementById('qf-eta'); if(eta) eta.value='';
+  
+  
   document.getElementById('modal-quotation-title').textContent='New Quotation';
   await loadNextQuotationRef();
   document.getElementById('qbtn-save').innerHTML='<i class="fa fa-floppy-disk"></i> Save Quotation';
@@ -3185,10 +3185,8 @@ function _qActionBtns(s){
   const canApprove = s.status==='Pending';
   const canDecline = s.status==='Pending'||s.status==='Approved';
   return `
-    ${canApprove?`<button class="btn btn-sm" style="background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);font-size:11px;padding:4px 10px"
-      onclick="event.stopPropagation();openQAction(${s.id},'approve')" title="Approve"><i class="fa fa-circle-check"></i> Approve</button>`:''}
-    ${canDecline?`<button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);font-size:11px;padding:4px 10px"
-      onclick="event.stopPropagation();openQAction(${s.id},'decline')" title="Decline"><i class="fa fa-circle-xmark"></i> Decline</button>`:''}
+    ${canApprove?`<button class="btn btn-sm" style="background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);font-size:11px;padding:4px 10px" onclick="event.stopPropagation();openQAction(${s.id},'approve')" title="Approve"><i class="fa fa-circle-check"></i> Approve</button>`:''}
+    ${canDecline?`<button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);font-size:11px;padding:4px 10px" onclick="event.stopPropagation();openQAction(${s.id},'decline')" title="Decline"><i class="fa fa-circle-xmark"></i> Decline</button>`:''}
     <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();downloadQuotationPDF(${s.id})" title="PDF"><i class="fa fa-file-pdf"></i></button>
     <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editQuotation(${s.id})" title="Edit"><i class="fa fa-pen"></i></button>
     <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteQuotation(${s.id})" title="Delete"><i class="fa fa-trash"></i></button>`;
