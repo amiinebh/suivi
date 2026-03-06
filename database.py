@@ -64,6 +64,10 @@ def run_migrations():
             created_at VARCHAR,
             updated_at VARCHAR
         )""",
+        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS client_email VARCHAR",
+        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS validity_date VARCHAR",
+        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'USD'",
+        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS updated_at VARCHAR",
         """CREATE TABLE IF NOT EXISTS quotation_charges (
             id SERIAL PRIMARY KEY,
             quotation_id INTEGER REFERENCES quotations(id) ON DELETE CASCADE,
@@ -73,18 +77,15 @@ def run_migrations():
             unit VARCHAR,
             note VARCHAR
         )""",
+        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS currency VARCHAR",
+        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS unit VARCHAR",
+        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS note VARCHAR",
         """CREATE TABLE IF NOT EXISTS quotation_containers (
             id SERIAL PRIMARY KEY,
             quotation_id INTEGER REFERENCES quotations(id) ON DELETE CASCADE,
             qty INTEGER NOT NULL,
             ctype VARCHAR NOT NULL
         )""",
-        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS validity_date VARCHAR",
-        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'USD'",
-        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS updated_at VARCHAR",
-        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS currency VARCHAR",
-        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS unit VARCHAR",
-        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS note VARCHAR",
     ]
     try:
         with engine.connect() as conn:

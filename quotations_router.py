@@ -17,8 +17,20 @@ def get_db():
     finally:
         db.close()
 
+def _colset(db, table):
+    rows = db.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name=:t"), {"t": table}).fetchall()
+    return set(r[0] for r in rows)
+
 def _charges_for(db, qid):
-    rows = db.execute(text("SELECT id, name, amount, currency, unit, note FROM quotation_charges WHERE quotation_id=:qid ORDER BY id ASC"), {"qid": qid}).fetchall()
+    cols = _colset(db, 'quotation_charges')
+    sel = ['id','name','amount']
+    if 'currency' in cols: sel.append('currency')
+    else: sel.append("NULL as currency")
+    if 'unit' in cols: sel.append('unit')
+    else: sel.append("NULL as unit")
+    if 'note' in cols: sel.append('note')
+    else: sel.append("NULL as note")
+    rows = db.execute(text(f"SELECT {', '.join(sel)} FROM quotation_charges WHERE quotation_id=:qid ORDER BY id ASC"), {"qid": qid}).fetchall()
     return [{"id": r[0], "name": r[1], "amount": r[2], "currency": r[3], "unit": r[4], "note": r[5]} for r in rows]
 
 def _containers_for(db, qid):
@@ -29,19 +41,19 @@ def _serialize(db, q):
     return {
         "id": q.id,
         "ref": q.ref,
-        "mode": q.mode,
-        "client": q.client,
-        "clientemail": q.client_email,
-        "carrier": q.carrier,
-        "pol": q.pol,
-        "pod": q.pod,
-        "incoterm": q.incoterm,
-        "validitydate": q.validity_date,
-        "status": q.status,
-        "note": q.note,
-        "currency": q.currency,
-        "createdat": q.created_at,
-        "updatedat": q.updated_at,
+        "mode": getattr(q, 'mode', None),
+        "client": getattr(q, 'client', None),
+        "clientemail": getattr(q, 'client_email', None),
+        "carrier": getattr(q, 'carrier', None),
+        "pol": getattr(q, 'pol', None),
+        "pod": getattr(q, 'pod', None),
+        "incoterm": getattr(q, 'incoterm', None),
+        "validitydate": getattr(q, 'validity_date', None),
+        "status": getattr(q, 'status', None),
+        "note": getattr(q, 'note', None),
+        "currency": getattr(q, 'currency', None),
+        "createdat": getattr(q, 'created_at', None),
+        "updatedat": getattr(q, 'updated_at', None),
         "charges": _charges_for(db, q.id),
         "containers": _containers_for(db, q.id),
     }
@@ -52,9 +64,8 @@ def _next_ref(db: Session):
     rows = db.execute(text("SELECT ref FROM quotations WHERE ref LIKE :p"), {"p": f"{prefix}%"}).fetchall()
     mx = 0
     for r in rows:
-        ref = r[0]
         try:
-            mx = max(mx, int((ref or '').split('-')[-1]))
+            mx = max(mx, int((r[0] or '').split('-')[-1]))
         except Exception:
             pass
     return f"{prefix}{str(mx+1).zfill(3)}"
@@ -94,49 +105,51 @@ async def create_quotation(request: Request, db: Session = Depends(get_db), curr
     body = await request.json()
     ref = (body.get('ref') or '').strip() or _next_ref(db)
     now = datetime.utcnow().isoformat()
+    qcols = _colset(db, 'quotations')
+    insert_cols = ['ref']
+    params = {'ref': ref}
+    mapping = [
+        ('mode', body.get('mode') or 'Ocean'),
+        ('client', body.get('client') or None),
+        ('client_email', body.get('clientemail') or None),
+        ('carrier', body.get('carrier') or None),
+        ('pol', body.get('pol') or None),
+        ('pod', body.get('pod') or None),
+        ('incoterm', body.get('incoterm') or None),
+        ('validity_date', body.get('validitydate') or None),
+        ('status', body.get('status') or 'Pending'),
+        ('note', body.get('note') or None),
+        ('currency', body.get('currency') or 'USD'),
+        ('created_at', now),
+        ('updated_at', now),
+    ]
+    for col, val in mapping:
+        if col in qcols:
+            insert_cols.append(col)
+            params[col] = val
+    col_sql = ', '.join(insert_cols)
+    val_sql = ', '.join(':' + c for c in insert_cols)
     try:
-        row = db.execute(text("""
-            INSERT INTO quotations (ref, mode, client, client_email, carrier, pol, pod, incoterm, validity_date, status, note, currency, created_at, updated_at)
-            VALUES (:ref, :mode, :client, :client_email, :carrier, :pol, :pod, :incoterm, :validity_date, :status, :note, :currency, :created_at, :updated_at)
-            RETURNING id
-        """), {
-            'ref': ref,
-            'mode': body.get('mode') or 'Ocean',
-            'client': body.get('client') or None,
-            'client_email': body.get('clientemail') or None,
-            'carrier': body.get('carrier') or None,
-            'pol': body.get('pol') or None,
-            'pod': body.get('pod') or None,
-            'incoterm': body.get('incoterm') or None,
-            'validity_date': body.get('validitydate') or None,
-            'status': body.get('status') or 'Pending',
-            'note': body.get('note') or None,
-            'currency': body.get('currency') or 'USD',
-            'created_at': now,
-            'updated_at': now,
-        }).fetchone()
+        row = db.execute(text(f"INSERT INTO quotations ({col_sql}) VALUES ({val_sql}) RETURNING id"), params).fetchone()
         qid = row[0]
+        ccols = _colset(db, 'quotation_charges')
         for c in (body.get('charges') or []):
             if isinstance(c, dict) and (c.get('name') or '').strip():
-                db.execute(text("INSERT INTO quotation_charges (quotation_id, name, amount, currency, unit, note) VALUES (:quotation_id, :name, :amount, :currency, :unit, :note)"), {
-                    'quotation_id': qid,
-                    'name': str(c.get('name')).strip(),
-                    'amount': None if c.get('amount') in (None, '') else str(c.get('amount')),
-                    'currency': str(c.get('currency') or 'USD'),
-                    'unit': str(c.get('unit') or ''),
-                    'note': str(c.get('note') or ''),
-                })
+                cols = ['quotation_id','name']
+                vals = {'quotation_id': qid, 'name': str(c.get('name')).strip()}
+                if 'amount' in ccols: cols.append('amount'); vals['amount'] = None if c.get('amount') in (None,'') else str(c.get('amount'))
+                if 'currency' in ccols: cols.append('currency'); vals['currency'] = str(c.get('currency') or 'USD')
+                if 'unit' in ccols: cols.append('unit'); vals['unit'] = str(c.get('unit') or '')
+                if 'note' in ccols: cols.append('note'); vals['note'] = str(c.get('note') or '')
+                db.execute(text(f"INSERT INTO quotation_charges ({', '.join(cols)}) VALUES ({', '.join(':'+x for x in cols)})"), vals)
+        tcols = _colset(db, 'quotation_containers')
         for ct in (body.get('containers') or []):
-            if isinstance(ct, dict) and ct.get('qty') and ct.get('ctype'):
+            if isinstance(ct, dict) and ct.get('qty') and ct.get('ctype') and {'quotation_id','qty','ctype'}.issubset(tcols):
                 try:
                     qty = int(ct.get('qty'))
                 except Exception:
                     continue
-                db.execute(text("INSERT INTO quotation_containers (quotation_id, qty, ctype) VALUES (:quotation_id, :qty, :ctype)"), {
-                    'quotation_id': qid,
-                    'qty': qty,
-                    'ctype': str(ct.get('ctype')),
-                })
+                db.execute(text("INSERT INTO quotation_containers (quotation_id, qty, ctype) VALUES (:quotation_id, :qty, :ctype)"), {'quotation_id': qid, 'qty': qty, 'ctype': str(ct.get('ctype'))})
         db.commit()
         q = db.query(Quotation).filter(Quotation.id == qid).first()
         return _serialize(db, q)
@@ -148,47 +161,50 @@ async def create_quotation(request: Request, db: Session = Depends(get_db), curr
 @router.put('/{qid}')
 async def update_quotation(qid: int, request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
     body = await request.json()
+    qcols = _colset(db, 'quotations')
+    sets = []
+    params = {'id': qid}
+    mapping = [
+        ('mode', body.get('mode') or 'Ocean'),
+        ('client', body.get('client') or None),
+        ('client_email', body.get('clientemail') or None),
+        ('carrier', body.get('carrier') or None),
+        ('pol', body.get('pol') or None),
+        ('pod', body.get('pod') or None),
+        ('incoterm', body.get('incoterm') or None),
+        ('validity_date', body.get('validitydate') or None),
+        ('status', body.get('status') or 'Pending'),
+        ('note', body.get('note') or None),
+        ('currency', body.get('currency') or 'USD'),
+        ('updated_at', datetime.utcnow().isoformat()),
+    ]
+    for col, val in mapping:
+        if col in qcols:
+            sets.append(f"{col}=:{col}")
+            params[col] = val
     try:
-        db.execute(text("""
-            UPDATE quotations SET mode=:mode, client=:client, client_email=:client_email, carrier=:carrier, pol=:pol, pod=:pod,
-            incoterm=:incoterm, validity_date=:validity_date, status=:status, note=:note, currency=:currency, updated_at=:updated_at
-            WHERE id=:id
-        """), {
-            'id': qid,
-            'mode': body.get('mode') or 'Ocean',
-            'client': body.get('client') or None,
-            'client_email': body.get('clientemail') or None,
-            'carrier': body.get('carrier') or None,
-            'pol': body.get('pol') or None,
-            'pod': body.get('pod') or None,
-            'incoterm': body.get('incoterm') or None,
-            'validity_date': body.get('validitydate') or None,
-            'status': body.get('status') or 'Pending',
-            'note': body.get('note') or None,
-            'currency': body.get('currency') or 'USD',
-            'updated_at': datetime.utcnow().isoformat(),
-        })
+        if sets:
+            db.execute(text(f"UPDATE quotations SET {', '.join(sets)} WHERE id=:id"), params)
         db.execute(text("DELETE FROM quotation_charges WHERE quotation_id=:qid"), {'qid': qid})
         db.execute(text("DELETE FROM quotation_containers WHERE quotation_id=:qid"), {'qid': qid})
+        ccols = _colset(db, 'quotation_charges')
         for c in (body.get('charges') or []):
             if isinstance(c, dict) and (c.get('name') or '').strip():
-                db.execute(text("INSERT INTO quotation_charges (quotation_id, name, amount, currency, unit, note) VALUES (:quotation_id, :name, :amount, :currency, :unit, :note)"), {
-                    'quotation_id': qid,
-                    'name': str(c.get('name')).strip(),
-                    'amount': None if c.get('amount') in (None, '') else str(c.get('amount')),
-                    'currency': str(c.get('currency') or 'USD'),
-                    'unit': str(c.get('unit') or ''),
-                    'note': str(c.get('note') or ''),
-                })
+                cols = ['quotation_id','name']
+                vals = {'quotation_id': qid, 'name': str(c.get('name')).strip()}
+                if 'amount' in ccols: cols.append('amount'); vals['amount'] = None if c.get('amount') in (None,'') else str(c.get('amount'))
+                if 'currency' in ccols: cols.append('currency'); vals['currency'] = str(c.get('currency') or 'USD')
+                if 'unit' in ccols: cols.append('unit'); vals['unit'] = str(c.get('unit') or '')
+                if 'note' in ccols: cols.append('note'); vals['note'] = str(c.get('note') or '')
+                db.execute(text(f"INSERT INTO quotation_charges ({', '.join(cols)}) VALUES ({', '.join(':'+x for x in cols)})"), vals)
+        tcols = _colset(db, 'quotation_containers')
         for ct in (body.get('containers') or []):
-            if isinstance(ct, dict) and ct.get('qty') and ct.get('ctype'):
+            if isinstance(ct, dict) and ct.get('qty') and ct.get('ctype') and {'quotation_id','qty','ctype'}.issubset(tcols):
                 try:
                     qty = int(ct.get('qty'))
                 except Exception:
                     continue
-                db.execute(text("INSERT INTO quotation_containers (quotation_id, qty, ctype) VALUES (:quotation_id, :qty, :ctype)"), {
-                    'quotation_id': qid, 'qty': qty, 'ctype': str(ct.get('ctype')),
-                })
+                db.execute(text("INSERT INTO quotation_containers (quotation_id, qty, ctype) VALUES (:quotation_id, :qty, :ctype)"), {'quotation_id': qid, 'qty': qty, 'ctype': str(ct.get('ctype'))})
         db.commit()
         q = db.query(Quotation).filter(Quotation.id == qid).first()
         return _serialize(db, q)
@@ -215,19 +231,16 @@ def quotation_pdf(qid: int, db: Session = Depends(get_db), current=Depends(get_c
         raise HTTPException(404, 'Quotation not found')
     charges = _charges_for(db, qid)
     containers = _containers_for(db, qid)
-    try:
-        from reportlab.lib.pagesizes import A4
-        from reportlab.lib import colors
-        from reportlab.lib.units import mm
-        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.enums import TA_CENTER
-    except Exception as e:
-        raise HTTPException(500, f'PDF dependency missing: {str(e)}')
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.units import mm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER
     buf = BytesIO(); doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=15*mm, bottomMargin=15*mm, leftMargin=15*mm, rightMargin=15*mm)
     styles = getSampleStyleSheet(); title = ParagraphStyle('title', parent=styles['Heading1'], alignment=TA_CENTER, textColor=colors.HexColor('#21808D'), fontSize=20); head = ParagraphStyle('head', parent=styles['Heading2'], textColor=colors.HexColor('#21808D'), fontSize=12)
-    story = [Paragraph('FREIGHT QUOTATION', title), Spacer(1, 5*mm), Paragraph(f'<b>Quotation Ref:</b> {q.ref}<br/><b>Valid Until:</b> {q.validity_date or "N/A"}', styles['Normal']), Spacer(1, 4*mm), Paragraph('SHIPMENT DETAILS', head)]
-    t = Table([['Client', q.client or 'N/A', 'Mode', q.mode or 'N/A'], ['POL', q.pol or 'N/A', 'POD', q.pod or 'N/A'], ['Carrier', q.carrier or 'N/A', 'Currency', q.currency or 'USD'], ['Incoterm', q.incoterm or 'N/A', 'Status', q.status or 'Pending']], colWidths=[28*mm, 62*mm, 28*mm, 62*mm])
+    story = [Paragraph('FREIGHT QUOTATION', title), Spacer(1, 5*mm), Paragraph(f'<b>Quotation Ref:</b> {q.ref}<br/><b>Valid Until:</b> {getattr(q, "validity_date", None) or "N/A"}', styles['Normal']), Spacer(1, 4*mm), Paragraph('SHIPMENT DETAILS', head)]
+    t = Table([['Client', getattr(q,'client',None) or 'N/A', 'Mode', getattr(q,'mode',None) or 'N/A'], ['POL', getattr(q,'pol',None) or 'N/A', 'POD', getattr(q,'pod',None) or 'N/A'], ['Carrier', getattr(q,'carrier',None) or 'N/A', 'Currency', getattr(q,'currency',None) or 'USD'], ['Incoterm', getattr(q,'incoterm',None) or 'N/A', 'Status', getattr(q,'status',None) or 'Pending']], colWidths=[28*mm, 62*mm, 28*mm, 62*mm])
     t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),0.5,colors.grey),('BACKGROUND',(0,0),(0,-1),colors.whitesmoke),('BACKGROUND',(2,0),(2,-1),colors.whitesmoke)])); story.append(t)
     if containers:
         story += [Spacer(1, 4*mm), Paragraph('CONTAINERS', head)]
@@ -239,10 +252,10 @@ def quotation_pdf(qid: int, db: Session = Depends(get_db), current=Depends(get_c
         rows.append([c['name'], c['amount'] or '0', c['currency'] or 'USD', c['unit'] or ''])
         try: totals[c['currency'] or 'USD'] = totals.get(c['currency'] or 'USD', 0) + float(c['amount'] or 0)
         except Exception: pass
-    if len(rows) == 1: rows.append(['No charges','0',q.currency or 'USD',''])
+    if len(rows) == 1: rows.append(['No charges','0',getattr(q,'currency',None) or 'USD',''])
     ch = Table(rows, colWidths=[80*mm, 30*mm, 30*mm, 40*mm])
     ch.setStyle(TableStyle([('GRID',(0,0),(-1,-1),0.5,colors.grey),('BACKGROUND',(0,0),(-1,0),colors.HexColor('#21808D')),('TEXTCOLOR',(0,0),(-1,0),colors.white)])); story.append(ch)
     if totals: story += [Spacer(1, 3*mm), Paragraph('<b>Total:</b> ' + ' + '.join([f'{v:,.2f} {k}' for k,v in totals.items()]), styles['Normal'])]
-    if q.note: story += [Spacer(1, 4*mm), Paragraph('NOTES', head), Paragraph((q.note or '').replace('\\n','<br/>'), styles['Normal'])]
+    if getattr(q,'note',None): story += [Spacer(1, 4*mm), Paragraph('NOTES', head), Paragraph((q.note or '').replace('\\n','<br/>'), styles['Normal'])]
     doc.build(story); buf.seek(0)
     return Response(content=buf.getvalue(), media_type='application/pdf', headers={'Content-Disposition': f'attachment; filename=quotation_{q.ref}.pdf'})
