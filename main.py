@@ -14,9 +14,6 @@ from database import run_migrations
 run_migrations()
 
 app = FastAPI(title="FreightTrack Pro")
-
-from quotations_router import router as quot_router
-app.include_router(quot_router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def get_db():
@@ -524,4 +521,5 @@ def t49_debug(db: Session = Depends(get_db)):
 
 if __name__ == '__main__':
     import os, uvicorn
-    uvicorn.run('main:app', host='0.0.0.0', port=int(os.getenv('PORT', '8000')))
+    port = int(os.getenv('PORT', '8000'))
+    uvicorn.run('main:app', host='0.0.0.0', port=port)

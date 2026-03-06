@@ -47,45 +47,6 @@ def run_migrations():
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS stuffing_date VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS agent VARCHAR",
         "CREATE TABLE IF NOT EXISTS alert_logs (id SERIAL PRIMARY KEY, key VARCHAR NOT NULL, sent_date VARCHAR NOT NULL, created_at VARCHAR)",
-        """CREATE TABLE IF NOT EXISTS quotations (
-            id SERIAL PRIMARY KEY,
-            ref VARCHAR NOT NULL UNIQUE,
-            mode VARCHAR DEFAULT 'Ocean',
-            client VARCHAR,
-            client_email VARCHAR,
-            carrier VARCHAR,
-            pol VARCHAR,
-            pod VARCHAR,
-            incoterm VARCHAR,
-            validity_date VARCHAR,
-            status VARCHAR DEFAULT 'Pending',
-            note TEXT,
-            currency VARCHAR DEFAULT 'USD',
-            created_at VARCHAR,
-            updated_at VARCHAR
-        )""",
-        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS client_email VARCHAR",
-        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS validity_date VARCHAR",
-        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'USD'",
-        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS updated_at VARCHAR",
-        """CREATE TABLE IF NOT EXISTS quotation_charges (
-            id SERIAL PRIMARY KEY,
-            quotation_id INTEGER REFERENCES quotations(id) ON DELETE CASCADE,
-            name VARCHAR NOT NULL,
-            amount VARCHAR,
-            currency VARCHAR,
-            unit VARCHAR,
-            note VARCHAR
-        )""",
-        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS currency VARCHAR",
-        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS unit VARCHAR",
-        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS note VARCHAR",
-        """CREATE TABLE IF NOT EXISTS quotation_containers (
-            id SERIAL PRIMARY KEY,
-            quotation_id INTEGER REFERENCES quotations(id) ON DELETE CASCADE,
-            qty INTEGER NOT NULL,
-            ctype VARCHAR NOT NULL
-        )""",
     ]
     try:
         with engine.connect() as conn:
