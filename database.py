@@ -50,8 +50,8 @@ def run_migrations():
         """CREATE TABLE IF NOT EXISTS quotations (
             id SERIAL PRIMARY KEY, ref VARCHAR NOT NULL UNIQUE,
             mode VARCHAR DEFAULT 'Ocean', client VARCHAR, client_email VARCHAR,
-            carrier VARCHAR, pol VARCHAR, pod VARCHAR, etd VARCHAR, eta VARCHAR,
-            booking_no VARCHAR, incoterm VARCHAR, status VARCHAR DEFAULT 'Pending',
+            carrier VARCHAR, pol VARCHAR, pod VARCHAR,
+            booking_no VARCHAR, incoterm VARCHAR, validity_date VARCHAR, status VARCHAR DEFAULT 'Pending',
             note TEXT, shipper VARCHAR, consignee VARCHAR, currency VARCHAR DEFAULT 'USD',
             created_at VARCHAR, updated_at VARCHAR
         )""",
@@ -60,6 +60,11 @@ def run_migrations():
             name VARCHAR NOT NULL, amount VARCHAR, currency VARCHAR DEFAULT 'USD',
             unit VARCHAR, note VARCHAR
         )""",
+        """CREATE TABLE IF NOT EXISTS quotation_containers (
+            id SERIAL PRIMARY KEY, quotation_id INTEGER REFERENCES quotations(id) ON DELETE CASCADE,
+            qty INTEGER NOT NULL, ctype VARCHAR NOT NULL
+        )""",
+        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS validity_date VARCHAR",
         "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS shipper VARCHAR",
         "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS consignee VARCHAR",
         "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS updated_at VARCHAR",

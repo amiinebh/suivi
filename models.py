@@ -85,35 +85,44 @@ class AlertLog(Base):
 
 class Quotation(Base):
     __tablename__ = "quotations"
-    id           = Column(Integer, primary_key=True, index=True)
-    ref          = Column(String, unique=True, index=True, nullable=False)
-    mode         = Column(String, default="Ocean")
-    client       = Column(String, nullable=True)
-    client_email = Column(String, nullable=True)
-    carrier      = Column(String, nullable=True)
-    pol          = Column(String, nullable=True)
-    pod          = Column(String, nullable=True)
-    etd          = Column(String, nullable=True)
-    eta          = Column(String, nullable=True)
-    booking_no   = Column(String, nullable=True)
-    incoterm     = Column(String, nullable=True)
-    status       = Column(String, default="Pending")
-    note         = Column(Text, nullable=True)
-    shipper      = Column(String, nullable=True)
-    consignee    = Column(String, nullable=True)
-    currency     = Column(String, default="USD")
-    created_at   = Column(String, default=lambda: datetime.utcnow().isoformat())
-    updated_at   = Column(String, default=lambda: datetime.utcnow().isoformat())
-    charges      = relationship("QuotationCharge", back_populates="quotation", cascade="all, delete")
+    id            = Column(Integer, primary_key=True, index=True)
+    ref           = Column(String, unique=True, index=True, nullable=False)
+    mode          = Column(String, default="Ocean")
+    client        = Column(String, nullable=True)
+    client_email  = Column(String, nullable=True)
+    carrier       = Column(String, nullable=True)
+    pol           = Column(String, nullable=True)
+    pod           = Column(String, nullable=True)
+    booking_no    = Column(String, nullable=True)
+    incoterm      = Column(String, nullable=True)
+    validity_date = Column(String, nullable=True)
+    status        = Column(String, default="Pending")
+    note          = Column(Text, nullable=True)
+    shipper       = Column(String, nullable=True)
+    consignee     = Column(String, nullable=True)
+    currency      = Column(String, default="USD")
+    created_at    = Column(String, default=lambda: datetime.utcnow().isoformat())
+    updated_at    = Column(String, default=lambda: datetime.utcnow().isoformat())
+    charges       = relationship("QuotationCharge", back_populates="quotation", cascade="all, delete")
+    containers    = relationship("QuotationContainer", back_populates="quotation", cascade="all, delete")
 
 
 class QuotationCharge(Base):
     __tablename__ = "quotation_charges"
     id           = Column(Integer, primary_key=True, index=True)
     quotation_id = Column(Integer, ForeignKey("quotations.id"))
-    name         = Column(String, nullable=False)   # e.g. Freight, THC, BL, Customs
+    name         = Column(String, nullable=False)
     amount       = Column(String, nullable=True)
     currency     = Column(String, default="USD")
-    unit         = Column(String, nullable=True)    # per container, per BL, lump sum
+    unit         = Column(String, nullable=True)
     note         = Column(String, nullable=True)
     quotation    = relationship("Quotation", back_populates="charges")
+
+
+class QuotationContainer(Base):
+    __tablename__ = "quotation_containers"
+    id           = Column(Integer, primary_key=True, index=True)
+    quotation_id = Column(Integer, ForeignKey("quotations.id"))
+    qty          = Column(Integer, nullable=False)
+    ctype        = Column(String, nullable=False)  # 20GP, 40HC, etc.
+    quotation    = relationship("Quotation", back_populates="containers")
