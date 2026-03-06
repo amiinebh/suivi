@@ -445,13 +445,7 @@ textarea.form-control{resize:none;min-height:72px}
 .comment-text{font-size:12px;color:var(--text1);margin-top:4px;line-height:1.5}
 #bulk-drop-zone:hover{border-color:var(--accent)!important;background:var(--bg3)}
 
-
-    /* ── Quotations page layout fix ───────────────────────────── */
-    #page-quotes { display: none; }
-    #page-quotes.active { display: block; }
-    #page-quotes > div:first-child { flex-wrap: wrap; }
-
-  </style>
+</style>
 </head>
 <body>
   <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;
@@ -792,70 +786,70 @@ textarea.form-control{resize:none;min-height:72px}
 
   
 
-  <!-- QUOTES PAGE -->
-  <div class="page" id="page-quotes">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-      <div>
-        <div style="font-size:16px;font-weight:700">Quotations</div>
-        <div style="font-size:12px;color:var(--text2);margin-top:2px">Create, review and approve freight quotations</div>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="openNewQuotation()" style="gap:6px">
-        <i class="fa fa-plus"></i> New Quotation
-      </button>
+<div class="page" id="page-quotes">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div>
+      <div style="font-size:16px;font-weight:700">Quotations</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">Create, review and approve freight quotations</div>
     </div>
-  
-    <!-- Stats -->
-    <div class="stats-grid" style="margin-bottom:16px">
-      <div class="stat-card"><div class="stat-icon blue"><i class="fa fa-file-invoice"></i></div><div class="stat-value" id="q-total">-</div><div class="stat-label">Total</div></div>
-      <div class="stat-card"><div class="stat-icon yellow"><i class="fa fa-clock"></i></div><div class="stat-value" id="q-pending">-</div><div class="stat-label">Pending</div></div>
-      <div class="stat-card"><div class="stat-icon green"><i class="fa fa-circle-check"></i></div><div class="stat-value" id="q-approved">-</div><div class="stat-label">Approved</div></div>
-      <div class="stat-card"><div class="stat-icon red"><i class="fa fa-circle-xmark"></i></div><div class="stat-value" id="q-declined">-</div><div class="stat-label">Declined</div></div>
-      <div class="stat-card"><div class="stat-icon cyan"><i class="fa fa-ship"></i></div><div class="stat-value" id="q-transit">-</div><div class="stat-label">In Transit</div></div>
-      <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value" id="q-ocean">-</div><div class="stat-label">Ocean</div></div>
-    </div>
-  
-    <!-- Filters -->
-    <div class="filters-row" style="margin-bottom:12px">
-      <select class="filter" id="qfil-status" onchange="loadQuotations()">
-        <option value="">All Status</option>
-        <option>Pending</option>
-        <option>Approved</option>
-        <option>Declined</option>
-        <option>Sailing</option>
-        <option>Transit</option>
-        <option>Arrived</option>
-        <option>Delivered</option>
-        <option>Delayed</option>
-      </select>
-      <select class="filter" id="qfil-mode" onchange="loadQuotations()">
-        <option value="">All Modes</option>
-        <option>Ocean</option>
-        <option>Air</option>
-      </select>
-      <button class="btn btn-ghost btn-sm topbar-actions-desktop" onclick="exportXLSX()">
-        <i class="fa fa-download"></i> Export
-      </button>
-    </div>
-  
-    <!-- Count + Pager -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-      <div id="q-count-label" style="font-size:12px;color:var(--text2)"></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn btn-secondary btn-sm" id="qpg-prev" onclick="qPagePrev()"><i class="fa fa-chevron-left"></i></button>
-        <div id="qpg-info" style="font-size:12px;color:var(--text2)">Page 1/1</div>
-        <button class="btn btn-secondary btn-sm" id="qpg-next" onclick="qPageNext()"><i class="fa fa-chevron-right"></i></button>
-      </div>
-    </div>
-  
-    <!-- Mobile cards -->
-    <div class="mobile-cards" id="quotes-cards"></div>
-  
-    <!-- Desktop table -->
-    <div class="desktop-table table-wrap">
-      <div id="quotes-table"></div>
+    <button class="btn btn-primary btn-sm" onclick="openNewQuotation()" style="gap:6px">
+      <i class="fa fa-plus"></i> New Quotation
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="margin-bottom:16px">
+    <div class="stat-card"><div class="stat-icon blue"><i class="fa fa-file-invoice"></i></div><div class="stat-value" id="q-total">-</div><div class="stat-label">Total</div></div>
+    <div class="stat-card"><div class="stat-icon yellow"><i class="fa fa-clock"></i></div><div class="stat-value" id="q-pending">-</div><div class="stat-label">Pending</div></div>
+    <div class="stat-card"><div class="stat-icon green"><i class="fa fa-circle-check"></i></div><div class="stat-value" id="q-approved">-</div><div class="stat-label">Approved</div></div>
+    <div class="stat-card"><div class="stat-icon red"><i class="fa fa-circle-xmark"></i></div><div class="stat-value" id="q-declined">-</div><div class="stat-label">Declined</div></div>
+    <div class="stat-card"><div class="stat-icon cyan"><i class="fa fa-ship"></i></div><div class="stat-value" id="q-transit">-</div><div class="stat-label">In Transit</div></div>
+    <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value" id="q-ocean">-</div><div class="stat-label">Ocean</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-row" style="margin-bottom:12px">
+    <select class="filter" id="qfil-status" onchange="loadQuotations()">
+      <option value="">All Status</option>
+      <option>Pending</option>
+      <option>Approved</option>
+      <option>Declined</option>
+      <option>Sailing</option>
+      <option>Transit</option>
+      <option>Arrived</option>
+      <option>Delivered</option>
+      <option>Delayed</option>
+    </select>
+    <select class="filter" id="qfil-mode" onchange="loadQuotations()">
+      <option value="">All Modes</option>
+      <option>Ocean</option>
+      <option>Air</option>
+    </select>
+    <button class="btn btn-ghost btn-sm topbar-actions-desktop" onclick="exportXLSX()">
+      <i class="fa fa-download"></i> Export
+    </button>
+  </div>
+
+  <!-- Count + Pager -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+    <div id="q-count-label" style="font-size:12px;color:var(--text2)"></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-secondary btn-sm" id="qpg-prev" onclick="qPagePrev()"><i class="fa fa-chevron-left"></i></button>
+      <div id="qpg-info" style="font-size:12px;color:var(--text2)">Page 1/1</div>
+      <button class="btn btn-secondary btn-sm" id="qpg-next" onclick="qPageNext()"><i class="fa fa-chevron-right"></i></button>
     </div>
   </div>
+
+  <!-- Mobile cards -->
+  <div class="mobile-cards" id="quotes-cards"></div>
+
+  <!-- Desktop table -->
+  <div class="desktop-table table-wrap">
+    <div id="quotes-table"></div>
+  </div>
+</div>
+
 </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /app -->
@@ -1048,7 +1042,7 @@ textarea.form-control{resize:none;min-height:72px}
 
 <!-- NEW QUOTATION MODAL -->
 <div class="overlay" id="modal-quotation">
-  <div class="modal" style="max-width:680px">
+  <div class="modal" style="max-width:720px">
     <div class="modal-handle"></div>
     <div class="modal-head">
       <div class="modal-title" id="modal-quotation-title">New Quotation</div>
@@ -1057,14 +1051,12 @@ textarea.form-control{resize:none;min-height:72px}
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-group">
-          <label>Quotation Ref</label>
+          <label>Quotation Ref *</label>
           <input id="qf-ref" class="form-control" placeholder="e.g. QUO-2026-001">
         </div>
         <div class="form-group">
           <label>Mode</label>
-          <select id="qf-mode" class="form-control">
-            <option>Ocean</option><option>Air</option>
-          </select>
+          <select id="qf-mode" class="form-control"><option>Ocean</option><option>Air</option></select>
         </div>
         <div class="form-group">
           <label>Client</label>
@@ -1108,21 +1100,46 @@ textarea.form-control{resize:none;min-height:72px}
           <input id="qf-booking" class="form-control" placeholder="MRO1002308">
         </div>
         <div class="form-group">
+          <label>Currency</label>
+          <select id="qf-currency" class="form-control">
+            <option value="USD">USD</option><option value="EUR">EUR</option>
+            <option value="GBP">GBP</option><option value="MAD">MAD</option>
+            <option value="CNY">CNY</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label>Status</label>
           <select id="qf-status" class="form-control">
-            <option>Pending</option>
-            <option>Approved</option>
-            <option>Declined</option>
-            <option>Sailing</option>
-            <option>Transit</option>
-            <option>Arrived</option>
-            <option>Delivered</option>
-            <option>Delayed</option>
+            <option>Pending</option><option>Approved</option><option>Declined</option>
+            <option>Sailing</option><option>Transit</option><option>Arrived</option>
+            <option>Delivered</option><option>Delayed</option>
           </select>
         </div>
         <div class="form-group full">
           <label>Notes</label>
           <textarea id="qf-note" class="form-control" placeholder="Internal notes about this quotation"></textarea>
+        </div>
+      </div>
+
+      <!-- ── CHARGES SECTION ───────────────────────────────────── -->
+      <div style="margin-top:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:13px;font-weight:700;color:var(--text1)">
+            <i class="fa fa-list-ul" style="color:var(--accent);margin-right:6px"></i>Charges
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="qAddCharge('Freight')">+ Freight</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="qAddCharge('THC Origin')">+ THC Orig</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="qAddCharge('THC Dest')">+ THC Dest</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="qAddCharge('BL Fee')">+ BL</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="qAddCharge('Customs')">+ Customs</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="qAddCharge('')">+ Other</button>
+          </div>
+        </div>
+        <!-- Charge rows injected here -->
+        <div id="qcharges-list" style="display:flex;flex-direction:column;gap:6px"></div>
+        <!-- Totals -->
+        <div id="qcharges-total" style="display:none;margin-top:10px;padding:10px 14px;background:var(--bg3);border-radius:10px;display:flex;justify-content:flex-end;gap:24px;font-size:13px;font-weight:600">
         </div>
       </div>
     </div>
@@ -3103,6 +3120,8 @@ function _confirmReject() {
 let qPage=1, qSize=20, qShips=[], qEditId=null, qActionId=null, qActionType=null;
 
 function openNewQuotation(){
+  qCharges=[];
+  qRenderCharges();
   qEditId=null;
   ['qf-ref','qf-client','qf-email','qf-carrier','qf-pol','qf-pod','qf-booking','qf-note'].forEach(id=>{
     const e=document.getElementById(id); if(e) e.value='';
@@ -3135,6 +3154,62 @@ async function editQuotation(id){
   } catch(e){ toast(e.message,'error'); }
 }
 
+
+// ── Quotation Charges ─────────────────────────────────────────────────────
+let qCharges = [];
+
+function qAddCharge(name) {
+  qCharges.push({ name: name, amount: '', currency: document.getElementById('qf-currency')?.value || 'USD', unit: 'Per BL', note: '' });
+  qRenderCharges();
+}
+
+function qRemoveCharge(idx) {
+  qCharges.splice(idx, 1);
+  qRenderCharges();
+}
+
+function qRenderCharges() {
+  const wrap = document.getElementById('qcharges-list');
+  if (!wrap) return;
+  if (!qCharges.length) {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:4px 0">No charges added yet. Use the buttons above to add.</div>';
+    document.getElementById('qcharges-total').style.display = 'none';
+    return;
+  }
+  wrap.innerHTML = qCharges.map((c, i) => `
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr auto;gap:6px;align-items:center;background:var(--bg3);padding:8px 10px;border-radius:8px">
+      <input class="form-control" style="font-size:12px;padding:5px 8px" placeholder="Charge name"
+        value="${c.name}" oninput="qCharges[${i}].name=this.value">
+      <input class="form-control" style="font-size:12px;padding:5px 8px" placeholder="Amount" type="number" min="0" step="0.01"
+        value="${c.amount}" oninput="qCharges[${i}].amount=this.value;qUpdateTotal()">
+      <select class="form-control" style="font-size:12px;padding:5px 8px" onchange="qCharges[${i}].currency=this.value;qUpdateTotal()">
+        ${['USD','EUR','GBP','MAD','CNY'].map(cu=>`<option ${c.currency===cu?'selected':''}>${cu}</option>`).join('')}
+      </select>
+      <select class="form-control" style="font-size:12px;padding:5px 8px" onchange="qCharges[${i}].unit=this.value">
+        ${['Per BL','Per Container','Lump Sum','Per KG','Per CBM'].map(u=>`<option ${c.unit===u?'selected':''}>${u}</option>`).join('')}
+      </select>
+      <button type="button" class="btn btn-danger btn-sm btn-icon" onclick="qRemoveCharge(${i})"><i class="fa fa-trash"></i></button>
+    </div>`).join('');
+  qUpdateTotal();
+}
+
+function qUpdateTotal() {
+  const totals = {};
+  qCharges.forEach(c => {
+    const amt = parseFloat(c.amount);
+    if (!isNaN(amt) && amt > 0) {
+      totals[c.currency] = (totals[c.currency] || 0) + amt;
+    }
+  });
+  const wrap = document.getElementById('qcharges-total');
+  if (!wrap) return;
+  const keys = Object.keys(totals);
+  if (!keys.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+  wrap.innerHTML = '<span style="color:var(--text2);font-weight:500;margin-right:8px">Total:</span>' +
+    keys.map(k => `<span style="color:var(--accent)">${totals[k].toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} ${k}</span>`).join('<span style="color:var(--text3);margin:0 4px">+</span>');
+}
+
 async function saveQuotation(){
   const gv=id=>document.getElementById(id)?.value.trim()||null;
   const ref=gv('qf-ref');
@@ -3150,7 +3225,8 @@ async function saveQuotation(){
     mode:document.getElementById('qf-mode')?.value||'Ocean',
     status:document.getElementById('qf-status')?.value||'Pending',
     incoterm:document.getElementById('qf-incoterm')?.value||null,
-    quotationnumber:ref
+    currency:document.getElementById('qf-currency')?.value||'USD',
+    charges:qCharges.filter(c=>c.name)
   };
   try {
     if(qEditId){
