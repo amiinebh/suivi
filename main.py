@@ -520,3 +520,8 @@ def t49_debug(db: Session = Depends(get_db)):
     ]
     return result
 
+
+
+if __name__ == '__main__':
+    import os, uvicorn
+    uvicorn.run('main:app', host='0.0.0.0', port=int(os.getenv('PORT', '8000')))
