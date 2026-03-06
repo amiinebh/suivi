@@ -70,7 +70,7 @@ def run_migrations():
             quotation_id INTEGER REFERENCES quotations(id) ON DELETE CASCADE,
             name VARCHAR NOT NULL,
             amount VARCHAR,
-            currency VARCHAR DEFAULT 'USD',
+            currency VARCHAR,
             unit VARCHAR,
             note VARCHAR
         )""",
@@ -84,6 +84,9 @@ def run_migrations():
         "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS validity_date VARCHAR",
         "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'USD'",
         "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS updated_at VARCHAR",
+        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS currency VARCHAR",
+        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS unit VARCHAR",
+        "ALTER TABLE quotation_charges ADD COLUMN IF NOT EXISTS note VARCHAR",
     ]
     try:
         with engine.connect() as conn:
