@@ -975,7 +975,7 @@ textarea.form-control{resize:none;min-height:72px}
 
 
 <!-- QUOTES PAGE -->
-<div class="page" id="page-quotes">
+<div class="page" id="page-quotes" style="padding-top:16px">
   <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
     <div>
@@ -1151,6 +1151,8 @@ textarea.form-control{resize:none;min-height:72px}
 
 <!-- ═══════ JS ═══════ -->
 <script>
+function fmtD(d){ return d ? d.toString().split('T')[0] : ''; }
+
 let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, allShipments=[];
 
