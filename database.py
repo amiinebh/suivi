@@ -56,7 +56,6 @@ def run_migrations():
             carrier VARCHAR,
             pol VARCHAR,
             pod VARCHAR,
-            booking_no VARCHAR,
             incoterm VARCHAR,
             validity_date VARCHAR,
             status VARCHAR DEFAULT 'Pending',
@@ -80,7 +79,6 @@ def run_migrations():
             qty INTEGER NOT NULL,
             ctype VARCHAR NOT NULL
         )""",
-        "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS booking_no VARCHAR",
         "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS validity_date VARCHAR",
         "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS currency VARCHAR DEFAULT 'USD'",
         "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS updated_at VARCHAR",

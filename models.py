@@ -93,7 +93,6 @@ class Quotation(Base):
     carrier = Column(String, nullable=True)
     pol = Column(String, nullable=True)
     pod = Column(String, nullable=True)
-    booking_no = Column(String, nullable=True)
     incoterm = Column(String, nullable=True)
     validity_date = Column(String, nullable=True)
     status = Column(String, default="Pending")
