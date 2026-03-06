@@ -101,24 +101,20 @@ class Quotation(Base):
     currency      = Column(String, default="USD")
     created_at    = Column(String, default=lambda: datetime.utcnow().isoformat())
     updated_at    = Column(String, default=lambda: datetime.utcnow().isoformat())
-    charges       = relationship("QuotationCharge", back_populates="quotation", cascade="all, delete")
-    containers    = relationship("QuotationContainer", back_populates="quotation", cascade="all, delete")
 
 class QuotationCharge(Base):
     __tablename__ = "quotation_charges"
     id           = Column(Integer, primary_key=True, index=True)
-    quotation_id = Column(Integer, ForeignKey("quotations.id"))
+    quotation_id = Column(Integer, ForeignKey("quotations.id", ondelete="CASCADE"), index=True)
     name         = Column(String, nullable=False)
     amount       = Column(String, nullable=True)
     currency     = Column(String, default="USD")
     unit         = Column(String, nullable=True)
     note         = Column(String, nullable=True)
-    quotation    = relationship("Quotation", back_populates="charges")
 
 class QuotationContainer(Base):
     __tablename__ = "quotation_containers"
     id           = Column(Integer, primary_key=True, index=True)
-    quotation_id = Column(Integer, ForeignKey("quotations.id"))
+    quotation_id = Column(Integer, ForeignKey("quotations.id", ondelete="CASCADE"), index=True)
     qty          = Column(Integer, nullable=False)
     ctype        = Column(String, nullable=False)
-    quotation    = relationship("Quotation", back_populates="containers")

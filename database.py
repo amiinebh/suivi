@@ -48,19 +48,37 @@ def run_migrations():
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS agent VARCHAR",
         "CREATE TABLE IF NOT EXISTS alert_logs (id SERIAL PRIMARY KEY, key VARCHAR NOT NULL, sent_date VARCHAR NOT NULL, created_at VARCHAR)",
         """CREATE TABLE IF NOT EXISTS quotations (
-            id SERIAL PRIMARY KEY, ref VARCHAR NOT NULL UNIQUE,
-            mode VARCHAR DEFAULT 'Ocean', client VARCHAR, client_email VARCHAR,
-            carrier VARCHAR, pol VARCHAR, pod VARCHAR, booking_no VARCHAR,
-            incoterm VARCHAR, validity_date VARCHAR, status VARCHAR DEFAULT 'Pending',
-            note TEXT, currency VARCHAR DEFAULT 'USD', created_at VARCHAR, updated_at VARCHAR
+            id SERIAL PRIMARY KEY,
+            ref VARCHAR NOT NULL UNIQUE,
+            mode VARCHAR DEFAULT 'Ocean',
+            client VARCHAR,
+            client_email VARCHAR,
+            carrier VARCHAR,
+            pol VARCHAR,
+            pod VARCHAR,
+            booking_no VARCHAR,
+            incoterm VARCHAR,
+            validity_date VARCHAR,
+            status VARCHAR DEFAULT 'Pending',
+            note TEXT,
+            currency VARCHAR DEFAULT 'USD',
+            created_at VARCHAR,
+            updated_at VARCHAR
         )""",
         """CREATE TABLE IF NOT EXISTS quotation_charges (
-            id SERIAL PRIMARY KEY, quotation_id INTEGER REFERENCES quotations(id) ON DELETE CASCADE,
-            name VARCHAR NOT NULL, amount VARCHAR, currency VARCHAR DEFAULT 'USD', unit VARCHAR, note VARCHAR
+            id SERIAL PRIMARY KEY,
+            quotation_id INTEGER REFERENCES quotations(id) ON DELETE CASCADE,
+            name VARCHAR NOT NULL,
+            amount VARCHAR,
+            currency VARCHAR DEFAULT 'USD',
+            unit VARCHAR,
+            note VARCHAR
         )""",
         """CREATE TABLE IF NOT EXISTS quotation_containers (
-            id SERIAL PRIMARY KEY, quotation_id INTEGER REFERENCES quotations(id) ON DELETE CASCADE,
-            qty INTEGER NOT NULL, ctype VARCHAR NOT NULL
+            id SERIAL PRIMARY KEY,
+            quotation_id INTEGER REFERENCES quotations(id) ON DELETE CASCADE,
+            qty INTEGER NOT NULL,
+            ctype VARCHAR NOT NULL
         )""",
         "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS booking_no VARCHAR",
         "ALTER TABLE quotations ADD COLUMN IF NOT EXISTS validity_date VARCHAR",
