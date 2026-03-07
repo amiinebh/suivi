@@ -940,6 +940,7 @@ function showPage(id,el){
   if(id==='shipments') loadShipments();
   if(id==='analytics') loadAnalytics();
   if(id==='alerts') loadAlerts();
+  if(id==='dashboard') setTimeout(bindOverviewCards,250);
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -1014,6 +1015,33 @@ function generateNextRef(){
   const y=d.getFullYear();
   const n=String(Date.now()).slice(-6);
   return `FT-${y}-${n}`;
+}
+
+
+window._overviewFilterApplied=false;
+function applyShipmentStatusFilter(status){
+  const ss=document.getElementById('search-status') || document.getElementById('status-filter');
+  if(ss){ ss.value=status; }
+  const page=document.getElementById('page-shipments');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  if(page) page.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const shipNav=[...document.querySelectorAll('.nav-item')].find(n => /Shipments/i.test(n.textContent||''));
+  if(shipNav) shipNav.classList.add('active');
+  if(typeof setBottomNav==='function') setBottomNav('shipments');
+  if(typeof loadShipments==='function') loadShipments();
+}
+function bindOverviewCards(){
+  const cards=[...document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,button,div')];
+  cards.forEach(el=>{
+    const t=(el.textContent||'').replace(/\s+/g,' ').trim();
+    if(!t) return;
+    if(/\bDelayed\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('Delayed'); }
+    else if(/\b(Pending|Booked|Confirmed)\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('Pending'); }
+    else if(/\b(Delivered|Arrived|Discharged|Done)\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('Delivered'); }
+    else if(/\b(Sailing|In Transit|Transit|Active)\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('In Transit'); }
+  });
+  window._overviewFilterApplied=true;
 }
 
 function statusBadge(s){
@@ -1153,6 +1181,7 @@ function renderTable(ships){
 
 /* ── Dashboard ── */
 async function loadDashboard(){
+  setTimeout(bindOverviewCards,400);
   try{
     const stats=await apiFetch('/api/stats');
     const bs=stats.by_status||{};
@@ -1327,7 +1356,7 @@ async function saveShipment(){
     if(r&&r.id){
       try{await _saveContainers(r.id);}catch(e){console.warn('containers:',e);}
       toast(editId?'Shipment updated':'Shipment added','success');
-      closeModal('modal-add'); loadDashboard(); setTimeout(attachOverviewFilters,200); loadShipments();
+      closeModal('modal-add'); loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200); loadShipments();
     } else { toast('Unexpected server response','error'); }
   }catch(e){ toast(e.message,'error'); console.error('saveShipment:',e); }
   btn.innerHTML='<i class="fa fa-floppy-disk"></i> Save Shipment'; btn.disabled=false;
@@ -1372,7 +1401,7 @@ async function deleteShipment(sid){
     await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
     toast('Deleted','success'); closeModal('modal-detail');
     initTheme();
-loadDashboard(); setTimeout(attachOverviewFilters,200); loadShipments();
+loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200); loadShipments();
   }catch(e){ toast(e.message,'error'); }
 }
 
@@ -1580,7 +1609,7 @@ function initTheme(){
 
 /* ── Init ── */
 initTheme();
-loadDashboard(); setTimeout(attachOverviewFilters,200);
+loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
 </script>
 
 <script>
@@ -1971,7 +2000,7 @@ function showApp(){
   if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
   const av=document.getElementById("sidebar-avatar");
   if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
-  if(typeof loadDashboard==="function") loadDashboard(); setTimeout(attachOverviewFilters,200);
+  if(typeof loadDashboard==="function") loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
 }
 
 function doLogout(){
@@ -2674,13 +2703,14 @@ async function generateReport(){
       }
     
 /* Ship form tabs */
-.modal-shipment{max-height:92vh;display:flex;flex-direction:column;}
-.ship-tabs{display:flex;padding:0 12px;background:var(--card,#fff);border-bottom:1px solid var(--border,#2a2f36);flex-shrink:0;overflow-x:auto;}
-.ship-tab{background:transparent;border:none;padding:10px 12px;font-size:12px;font-weight:700;color:var(--muted,#9aa4af);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all .2s;}
-.ship-tab.active{color:var(--accent,#38b2ac);border-bottom-color:var(--accent,#38b2ac);background:color-mix(in srgb,var(--accent,#38b2ac) 10%, transparent);}
+.modal-shipment{max-height:92vh;display:flex;flex-direction:column;background:var(--card-bg,#111827);color:var(--text,#e5e7eb);}
+.ship-tabs{display:flex;padding:6px 12px;background:var(--panel-bg,#0f172a);border-bottom:1px solid var(--border,#253041);flex-shrink:0;overflow-x:auto;gap:8px;}
+.ship-tab{background:var(--panel-2,#111827);border:1px solid var(--border,#253041);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;color:var(--muted,#94a3b8);cursor:pointer;white-space:nowrap;transition:all .2s;box-shadow:none;}
+.ship-tab:hover{color:var(--text,#e5e7eb);border-color:var(--accent,#14b8a6);}
+.ship-tab.active{color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--accent,#14b8a6) 30%, #1f2937),color-mix(in srgb,var(--accent,#14b8a6) 12%, #111827));border-color:var(--accent,#14b8a6);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent,#14b8a6) 35%, transparent) inset;}
 .ship-tab-panel{display:none;}.ship-tab-panel.active{display:block;}
-.ship-tab-dot{width:8px;height:8px;border-radius:50%;border:2px solid var(--border,#ddd);background:transparent;cursor:pointer;padding:0;transition:all .2s;}
-.ship-tab-dot.active{background:var(--accent,#38b2ac);border-color:var(--accent,#38b2ac);}
+.ship-tab-dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--border,#475569);background:transparent;cursor:pointer;padding:0;transition:all .2s;}
+.ship-tab-dot.active{background:var(--accent,#14b8a6);border-color:var(--accent,#14b8a6);}
 </style></head><body>
 
     <div class="page-header">
