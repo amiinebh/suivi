@@ -515,7 +515,7 @@ if __name__ == "__main__":
 
 
 @app.post("/api/seed-samples")
-def seed_samples(db: Session = Depends(get_db), current=Depends(get_current_user)):
+def seed_samples(db: Session = Depends(get_db)):
     """Seed 15 realistic sample shipments for testing."""
     samples=[
         {"ref":"FT-2026-001","mode":"Ocean","carrier":"MSC","client":"Maroc Textiles","shipper":"Guangzhou Mills","consignee":"Maroc Textiles SARL","pol":"Shanghai","pod":"Casablanca","etd":"2026-01-05","eta":"2026-02-10","status":"Delivered","direction":"Import","incoterm":"FOB","booking_no":"MSC1234567","vessel":"MSC DIANA"},
