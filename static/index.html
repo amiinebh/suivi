@@ -994,10 +994,26 @@ function resetForm(){
   const fd=document.getElementById('f-direction');if(fd) fd.value='';
   const fi=document.getElementById('f-incoterm');if(fi) fi.value='';
   document.getElementById('modal-add-title').textContent='New Shipment';
+  const fr=document.getElementById('f-ref'); if(fr) fr.value=generateNextRef();
   editId=null;
   if(typeof switchShipTabIdx==='function') switchShipTabIdx(0);
   if(typeof updateTransitPreview==='function') updateTransitPreview();
   if(typeof onModeChange==='function') onModeChange();
+}
+
+
+function filterShipmentsByStatus(status){
+  const ss=document.getElementById('search-status');
+  if(ss) ss.value=status||'All Status';
+  showPage('shipments', document.querySelector('.nav-item[onclick*="shipments"]'));
+  setBottomNav && setBottomNav('shipments');
+  loadShipments();
+}
+function generateNextRef(){
+  const d=new Date();
+  const y=d.getFullYear();
+  const n=String(Date.now()).slice(-6);
+  return `FT-${y}-${n}`;
 }
 
 function statusBadge(s){
@@ -1279,7 +1295,9 @@ function formatCarrier(name){
 
 async function saveShipment(){
   const ref=(document.getElementById('f-ref')?.value||'').trim();
-  if(!ref){ toast('Reference is required','error'); switchShipTabIdx(0); return; }
+  if(!ref){ const fr=document.getElementById('f-ref'); if(fr) fr.value=generateNextRef(); }
+  const ref2v=(document.getElementById('f-ref')?.value||'').trim();
+  if(!ref2v){ toast('Reference is required','error'); switchShipTabIdx(0); return; }
   const emailEl=document.getElementById('f-client-email');
   const emailVal=(emailEl?.value||'').trim();
   if(emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){
@@ -1292,7 +1310,7 @@ async function saveShipment(){
   const g=id=>{const el=document.getElementById(id);return el?(el.value.trim()||null):null;};
   const sv=id=>{const el=document.getElementById(id);return el?(el.value||null):null;};
   const data={
-    ref,ref2:g('f-ref2'),booking_no:g('f-booking'),
+    ref: ref2v,ref2:g('f-ref2'),booking_no:g('f-booking'),
     mode:sv('f-mode')||'Ocean',carrier:g('f-carrier'),vessel:g('f-vessel'),
     direction:sv('f-direction')||null,incoterm:sv('f-incoterm')||null,
     pol:g('f-pol'),pod:g('f-pod'),status:sv('f-status')||'Pending',
@@ -1309,7 +1327,7 @@ async function saveShipment(){
     if(r&&r.id){
       try{await _saveContainers(r.id);}catch(e){console.warn('containers:',e);}
       toast(editId?'Shipment updated':'Shipment added','success');
-      closeModal('modal-add'); loadDashboard(); loadShipments();
+      closeModal('modal-add'); loadDashboard(); setTimeout(attachOverviewFilters,200); loadShipments();
     } else { toast('Unexpected server response','error'); }
   }catch(e){ toast(e.message,'error'); console.error('saveShipment:',e); }
   btn.innerHTML='<i class="fa fa-floppy-disk"></i> Save Shipment'; btn.disabled=false;
@@ -1354,7 +1372,7 @@ async function deleteShipment(sid){
     await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
     toast('Deleted','success'); closeModal('modal-detail');
     initTheme();
-loadDashboard(); loadShipments();
+loadDashboard(); setTimeout(attachOverviewFilters,200); loadShipments();
   }catch(e){ toast(e.message,'error'); }
 }
 
@@ -1394,6 +1412,16 @@ function chartTextColor(){ return isDark()?'#8892b0':'#5a6a8a'; }
 function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)'; }
 
 /* ── KPI Page ── */
+
+function attachOverviewFilters(){
+  document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card').forEach(el=>{
+    const t=(el.textContent||'').trim();
+    if(/Delayed/i.test(t)) el.onclick=()=>filterShipmentsByStatus('Delayed');
+    else if(/Delivered|Arrived|Discharged/i.test(t)) el.onclick=()=>filterShipmentsByStatus('Delivered');
+    else if(/Pending|Booked|Confirmed/i.test(t)) el.onclick=()=>filterShipmentsByStatus('Pending');
+  });
+}
+
 async function loadAnalytics(){
   try{
     const k = await apiFetch('/api/kpis');
@@ -1552,7 +1580,7 @@ function initTheme(){
 
 /* ── Init ── */
 initTheme();
-loadDashboard();
+loadDashboard(); setTimeout(attachOverviewFilters,200);
 </script>
 
 <script>
@@ -1943,7 +1971,7 @@ function showApp(){
   if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
   const av=document.getElementById("sidebar-avatar");
   if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
-  if(typeof loadDashboard==="function") loadDashboard();
+  if(typeof loadDashboard==="function") loadDashboard(); setTimeout(attachOverviewFilters,200);
 }
 
 function doLogout(){
@@ -2647,12 +2675,12 @@ async function generateReport(){
     
 /* Ship form tabs */
 .modal-shipment{max-height:92vh;display:flex;flex-direction:column;}
-.ship-tabs{display:flex;padding:0 12px;background:var(--bg,#fff);border-bottom:2px solid var(--border,#eee);flex-shrink:0;overflow-x:auto;}
-.ship-tab{background:none;border:none;padding:10px 12px;font-size:12px;font-weight:600;color:var(--text2,#888);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .2s,border-color .2s;}
-.ship-tab.active{color:var(--accent,#21808D);border-bottom-color:var(--accent,#21808D);}
+.ship-tabs{display:flex;padding:0 12px;background:var(--card,#fff);border-bottom:1px solid var(--border,#2a2f36);flex-shrink:0;overflow-x:auto;}
+.ship-tab{background:transparent;border:none;padding:10px 12px;font-size:12px;font-weight:700;color:var(--muted,#9aa4af);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all .2s;}
+.ship-tab.active{color:var(--accent,#38b2ac);border-bottom-color:var(--accent,#38b2ac);background:color-mix(in srgb,var(--accent,#38b2ac) 10%, transparent);}
 .ship-tab-panel{display:none;}.ship-tab-panel.active{display:block;}
 .ship-tab-dot{width:8px;height:8px;border-radius:50%;border:2px solid var(--border,#ddd);background:transparent;cursor:pointer;padding:0;transition:all .2s;}
-.ship-tab-dot.active{background:var(--accent,#21808D);border-color:var(--accent,#21808D);}
+.ship-tab-dot.active{background:var(--accent,#38b2ac);border-color:var(--accent,#38b2ac);}
 </style></head><body>
 
     <div class="page-header">
