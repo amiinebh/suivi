@@ -96,6 +96,11 @@ def get_kpis(db:Session):
             except: pass
     overdue.sort(key=lambda x:x["days_late"],reverse=True)
     return {
+        "status_mix": [{"name":k,"count":v} for k,v in by_status.items()],
+        "mode_mix": [{"name":k,"count":v} for k,v in by_mode.items()],
+        "client_concentration": sorted([{"name":k,"count":v} for k,v in by_client.items()], key=lambda x:-x["count"])[:3],
+        "carrier_concentration": sorted([{"name":k,"count":v} for k,v in by_carrier.items()], key=lambda x:-x["count"])[:3],
+        "route_pairs": sorted([{"name":f"{k1} → {k2}","count":1} for k1 in by_pol.keys() for k2 in by_pod.keys()][:0], key=lambda x:-x["count"]),
         "total":total,"delayed":delayed,"delivered":delivered,"active":active,"pending":pending,
         "on_time_rate":on_time_rate,"delay_rate":delay_rate,"avg_transit":avg_transit,
         "by_status":by_status,
@@ -106,5 +111,7 @@ def get_kpis(db:Session):
         "top_pols":sorted([{"name":k,"count":v} for k,v in by_pol.items()],key=lambda x:-x["count"])[:5],
         "top_pods":sorted([{"name":k,"count":v} for k,v in by_pod.items()],key=lambda x:-x["count"])[:5],
         "monthly":[{"month":k,"count":v} for k,v in sorted(monthly.items())][-12:],
-        "overdue":overdue[:10],
+        "overdue_count": len(overdue),
+        "oldest_overdue_days": (overdue[0]["days_late"] if overdue else 0),
+        "overdue": overdue[:10],
     }

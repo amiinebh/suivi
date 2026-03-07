@@ -542,3 +542,32 @@ def seed_samples(db: Session = Depends(get_db)):
     db.commit()
     return {"added":added,"message":f"Seeded {added} sample shipments"}
 
+
+
+@app.get("/api/kpi-report")
+def kpi_report(db: Session = Depends(get_db), current=Depends(get_current_user)):
+    k = crud.get_kpis(db)
+    total = k.get("total",0)
+    delayed = k.get("delayed",0)
+    delivered = k.get("delivered",0)
+    active = k.get("active",0)
+    pending = k.get("pending",0)
+    insights = []
+    if total:
+        insights.append(f"Network volume stands at {total} shipments.")
+        insights.append(f"Delivered/arrived shipments represent {delivered} records, while delayed shipments are {delayed}.")
+        insights.append(f"Active in-transit operations total {active}, with {pending} still pending or booked.")
+    if k.get("avg_transit") and k.get("avg_transit") != "N/A":
+        insights.append(f"Average transit time is {k['avg_transit']}.")
+    if k.get("delay_rate"):
+        insights.append(f"Delay rate is {k['delay_rate']} and on-time completion rate is {k.get('on_time_rate','0%')}.")
+    if k.get("by_carrier"):
+        top = k['by_carrier'][0]
+        insights.append(f"Top carrier by volume is {top['name']} with {top['count']} shipments.")
+    if k.get("by_client"):
+        topc = k['by_client'][0]
+        insights.append(f"Largest client by shipment count is {topc['name']} with {topc['count']} shipments.")
+    if k.get("top_pods"):
+        tp = k['top_pods'][0]
+        insights.append(f"Top destination port is {tp['name']} with {tp['count']} shipments.")
+    return {"kpis": k, "insights": insights}
