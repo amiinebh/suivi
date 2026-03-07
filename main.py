@@ -545,7 +545,7 @@ def seed_samples(db: Session = Depends(get_db)):
 
 
 @app.get("/api/kpi-report")
-def kpi_report(db: Session = Depends(get_db), current=Depends(get_current_user)):
+def kpi_report(db: Session = Depends(get_db)):
     k = crud.get_kpis(db)
     total = k.get("total",0)
     delayed = k.get("delayed",0)
