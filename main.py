@@ -18,8 +18,8 @@ app = FastAPI(title="FreightTrack Pro")
 try:
     from quotations_router import router as quot_router
     app.include_router(quot_router)
-except Exception as e:
-    print(f"Quotation router error: {e}")
+except Exception as _qe:
+    print(f"Quotation router load error: {_qe}")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def get_db():
@@ -523,8 +523,3 @@ def t49_debug(db: Session = Depends(get_db)):
     ]
     return result
 
-
-
-if __name__ == '__main__':
-    import os, uvicorn
-    uvicorn.run('main:app', host='0.0.0.0', port=int(os.getenv('PORT','8000')))
