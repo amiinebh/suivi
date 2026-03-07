@@ -807,12 +807,10 @@ textarea.form-control{resize:none;min-height:72px}
       <div class="filters-row" style="margin-bottom:12px">
         <input id="qsearch" class="filter" placeholder="Search ref, client, POL, POD..." oninput="loadQuotations()" style="flex:1;min-width:160px">
         <select class="filter" id="qfil-status" onchange="loadQuotations()">
-          <option value="">All Status</option>
-          <option>Pending</option><option>Approved</option><option>Declined</option>
+          <option value="">All Status</option><option>Pending</option><option>Approved</option><option>Declined</option>
         </select>
         <select class="filter" id="qfil-mode" onchange="loadQuotations()">
-          <option value="">All Modes</option>
-          <option>Ocean</option><option>Air</option>
+          <option value="">All Modes</option><option>Ocean</option><option>Air</option>
         </select>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
@@ -1017,182 +1015,6 @@ textarea.form-control{resize:none;min-height:72px}
 </div>
 
 
-<!-- QUOTES PAGE -->
-<div class="page" id="page-quotes">
-  <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-    <div>
-      <div style="font-size:16px;font-weight:700">Quotations</div>
-      <div style="font-size:12px;color:var(--text2);margin-top:2px">Create, review and approve freight quotations</div>
-    </div>
-    <button class="btn btn-primary btn-sm" onclick="openNewQuotation()" style="gap:6px">
-      <i class="fa fa-plus"></i> New Quotation
-    </button>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats-grid" style="margin-bottom:16px">
-    <div class="stat-card"><div class="stat-icon blue"><i class="fa fa-file-invoice"></i></div><div class="stat-value" id="q-total">-</div><div class="stat-label">Total</div></div>
-    <div class="stat-card"><div class="stat-icon yellow"><i class="fa fa-clock"></i></div><div class="stat-value" id="q-pending">-</div><div class="stat-label">Pending</div></div>
-    <div class="stat-card"><div class="stat-icon green"><i class="fa fa-circle-check"></i></div><div class="stat-value" id="q-approved">-</div><div class="stat-label">Approved</div></div>
-    <div class="stat-card"><div class="stat-icon red"><i class="fa fa-circle-xmark"></i></div><div class="stat-value" id="q-declined">-</div><div class="stat-label">Declined</div></div>
-    <div class="stat-card"><div class="stat-icon cyan"><i class="fa fa-ship"></i></div><div class="stat-value" id="q-transit">-</div><div class="stat-label">In Transit</div></div>
-    <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value" id="q-ocean">-</div><div class="stat-label">Ocean</div></div>
-  </div>
-
-  <!-- Filters -->
-  <div class="filters-row" style="margin-bottom:12px">
-    <select class="filter" id="qfil-status" onchange="loadQuotations()">
-      <option value="">All Status</option>
-      <option>Pending</option>
-      <option>Approved</option>
-      <option>Declined</option>
-      <option>Sailing</option>
-      <option>Transit</option>
-      <option>Arrived</option>
-      <option>Delivered</option>
-      <option>Delayed</option>
-    </select>
-    <select class="filter" id="qfil-mode" onchange="loadQuotations()">
-      <option value="">All Modes</option>
-      <option>Ocean</option>
-      <option>Air</option>
-    </select>
-    <button class="btn btn-ghost btn-sm topbar-actions-desktop" onclick="exportXLSX()">
-      <i class="fa fa-download"></i> Export
-    </button>
-  </div>
-
-  <!-- Count + Pager -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-    <div id="q-count-label" style="font-size:12px;color:var(--text2)"></div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn btn-secondary btn-sm" id="qpg-prev" onclick="qPagePrev()"><i class="fa fa-chevron-left"></i></button>
-      <div id="qpg-info" style="font-size:12px;color:var(--text2)">Page 1/1</div>
-      <button class="btn btn-secondary btn-sm" id="qpg-next" onclick="qPageNext()"><i class="fa fa-chevron-right"></i></button>
-    </div>
-  </div>
-
-  <!-- Mobile cards -->
-  <div class="mobile-cards" id="quotes-cards"></div>
-
-  <!-- Desktop table -->
-  <div class="desktop-table table-wrap">
-    <div id="quotes-table"></div>
-  </div>
-</div>
-
-<!-- NEW QUOTATION MODAL -->
-<div class="overlay" id="modal-quotation">
-  <div class="modal" style="max-width:680px">
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title" id="modal-quotation-title">New Quotation</div>
-      <button class="modal-close" onclick="closeModal('modal-quotation')"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Quotation Ref</label>
-          <input id="qf-ref" class="form-control" placeholder="e.g. QUO-2026-001">
-        </div>
-        <div class="form-group">
-          <label>Mode</label>
-          <select id="qf-mode" class="form-control">
-            <option>Ocean</option><option>Air</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Client</label>
-          <input id="qf-client" class="form-control" placeholder="Company name">
-        </div>
-        <div class="form-group">
-          <label>Client Email</label>
-          <input id="qf-email" class="form-control" type="email" placeholder="client@example.com">
-        </div>
-        <div class="form-group">
-          <label>Carrier</label>
-          <input id="qf-carrier" class="form-control" placeholder="CMA, MSC..." list="carrier-list">
-        </div>
-        <div class="form-group">
-          <label>Incoterm 2020</label>
-          <select id="qf-incoterm" class="form-control">
-            <option value="">Select</option>
-            <option>EXW</option><option>FCA</option><option>CPT</option><option>CIP</option>
-            <option>DAP</option><option>DPU</option><option>DDP</option>
-            <option>FAS</option><option>FOB</option><option>CFR</option><option>CIF</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>POL</label>
-          <input id="qf-pol" class="form-control" placeholder="SHANGHAI" list="port-list">
-        </div>
-        <div class="form-group">
-          <label>POD</label>
-          <input id="qf-pod" class="form-control" placeholder="CASABLANCA" list="port-list">
-        </div>
-        <div class="form-group">
-          <label>ETD</label>
-          <input id="qf-etd" class="form-control" type="date">
-        </div>
-        <div class="form-group">
-          <label>ETA</label>
-          <input id="qf-eta" class="form-control" type="date">
-        </div>
-        <div class="form-group">
-          <label>Booking No</label>
-          <input id="qf-booking" class="form-control" placeholder="MRO1002308">
-        </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select id="qf-status" class="form-control">
-            <option>Pending</option>
-            <option>Approved</option>
-            <option>Declined</option>
-            <option>Sailing</option>
-            <option>Transit</option>
-            <option>Arrived</option>
-            <option>Delivered</option>
-            <option>Delayed</option>
-          </select>
-        </div>
-        <div class="form-group full">
-          <label>Notes</label>
-          <textarea id="qf-note" class="form-control" placeholder="Internal notes about this quotation"></textarea>
-        </div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-quotation')">Cancel</button>
-      <button class="btn btn-primary" style="flex:2" id="qbtn-save" onclick="saveQuotation()">
-        <i class="fa fa-floppy-disk"></i> Save Quotation
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- APPROVE / DECLINE CONFIRM MODAL -->
-<div class="overlay" id="modal-qaction">
-  <div class="modal" style="max-width:400px">
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title" id="qaction-title">Approve Quotation</div>
-      <button class="modal-close" onclick="closeModal('modal-qaction')"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <p id="qaction-msg" style="font-size:14px;color:var(--text2);margin:0 0 12px"></p>
-      <textarea id="qaction-note" class="form-control" placeholder="Optional note / reason..." rows="3"></textarea>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-qaction')">Cancel</button>
-      <button class="btn btn-primary" style="flex:2" id="qaction-confirm-btn" onclick="confirmQAction()">Confirm</button>
-    </div>
-  </div>
-</div>
-
-
-
-<!-- ═══════ JS ═══════ -->
 
 
 <!-- ═══════ QUOTATION MODAL ═══════ -->
@@ -1238,7 +1060,7 @@ textarea.form-control{resize:none;min-height:72px}
       </div>
 
       <!-- Containers -->
-      <div style="margin-top:16px">
+      <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <div style="font-size:13px;font-weight:700;color:var(--text1)"><i class="fa fa-box" style="color:var(--accent);margin-right:6px"></i>Containers</div>
           <span id="qcont-teu-badge" style="font-size:11px;color:var(--accent);font-weight:700;display:none"></span>
@@ -1257,7 +1079,7 @@ textarea.form-control{resize:none;min-height:72px}
       </div>
 
       <!-- Charges -->
-      <div style="margin-top:16px">
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap">
           <div style="font-size:13px;font-weight:700;color:var(--text1)"><i class="fa fa-list-ul" style="color:var(--accent);margin-right:6px"></i>Charges</div>
           <div style="display:flex;gap:5px;flex-wrap:wrap">
@@ -1271,12 +1093,12 @@ textarea.form-control{resize:none;min-height:72px}
           </div>
         </div>
         <div id="qcharges-list"><div style="font-size:12px;color:var(--text3);padding:4px 0">No charges added yet.</div></div>
-        <div id="qcharges-total" style="display:none;margin-top:8px;padding:8px 12px;background:var(--bg3);border-radius:8px;display:flex;justify-content:flex-end;gap:16px;font-size:13px;font-weight:600"></div>
+        <div id="qcharges-total" style="display:none;margin-top:8px;padding:8px 12px;background:var(--bg3);border-radius:8px;justify-content:flex-end;gap:16px;font-size:13px;font-weight:600"></div>
       </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-quotation')">Cancel</button>
-      <button class="btn btn-secondary" style="flex:1" id="qbtn-pdf" onclick="downloadQuotationPDF(window._qEditId)" style="display:none"><i class="fa fa-file-pdf"></i> PDF</button>
+      <button class="btn btn-secondary" style="flex:1;display:none" id="qbtn-pdf" onclick="downloadQuotationPDF(window._qEditId)"><i class="fa fa-file-pdf"></i> PDF</button>
       <button class="btn btn-primary" style="flex:2" id="qbtn-save" onclick="saveQuotation()"><i class="fa fa-floppy-disk"></i> Save Quotation</button>
     </div>
   </div>
@@ -1300,6 +1122,16 @@ textarea.form-control{resize:none;min-height:72px}
     </div>
   </div>
 </div>
+
+<script>
+window.onerror=function(m,s,l,c,e){
+  var b=document.getElementById('_err_banner');
+  if(!b){b=document.createElement('div');b.id='_err_banner';
+    b.style='position:fixed;top:0;left:0;right:0;background:#dc2626;color:#fff;padding:10px 14px;z-index:99999;font-size:13px;font-family:monospace;word-break:break-all';
+    document.body.appendChild(b);}
+  b.textContent='JS ERROR: '+m+' (line '+l+')';
+};
+</script>
 
 <script>
 let _pgPage=1, _pgSize=20, _pgShips=[];
@@ -1662,7 +1494,7 @@ async function saveShipment(){
     toast('Invalid client email address','error'); return;
   }
   if(_emailEl) _emailEl.style.border='';
-  // allow saving without email
+  /* email optional - skip block */
   const btn=document.getElementById('btn-save');
   btn.innerHTML='<span class="spinner"></span> Saving…'; btn.disabled=true;
   const g=id=>{ const el=document.getElementById(id); return el?el.value.trim()||null:null; };
@@ -3245,49 +3077,63 @@ function _confirmReject() {
 let qPage=1, qSize=20, qShips=[], qEditId=null, qActionId=null, qActionType=null;
 
 
-/* ════════════════════════════════════════════════
-   QUOTATION MODULE
-════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   QUOTATION MODULE — complete rewrite
+═══════════════════════════════════════════ */
 window._qEditId = null;
 window._qActionId = null;
 window._qActionType = 'approve';
-let _qRows = [], _qPage = 1, _qPageSize = 20;
-let _qContainers = [], _qCharges = [];
-const _TEU = {"20GP":1,"20RF":1,"40GP":2,"40HC":2,"40RF":2,"45HC":2};
+let _qRows=[], _qPage=1, _qPageSize=20;
+let _qContainers=[], _qCharges=[];
+const _TEU_MAP={"20GP":1,"20RF":1,"40GP":2,"40HC":2,"40RF":2,"45HC":2};
 
-function fmtD(d){ return d ? d.toString().split('T')[0] : ''; }
+function fmtD(d){ return d ? String(d).split('T')[0] : ''; }
 
-function _qStatusBadge(s){
-  const m = {Pending:'pending',Approved:'delivered',Declined:'delayed',Sailing:'sailing',Transit:'transit',Arrived:'arrived',Delivered:'delivered',Delayed:'delayed'};
+function _qSBadge(s){
+  const m={Pending:'pending',Approved:'delivered',Declined:'delayed',Sailing:'sailing',Transit:'transit',Arrived:'arrived',Delivered:'delivered',Delayed:'delayed'};
   return `<span class="badge badge-${m[s]||'pending'}">${s||'Pending'}</span>`;
 }
-function _qModeBadge(m){ return `<span class="badge badge-mode badge-m-${(m||'Ocean').toLowerCase()}">${m||'Ocean'}</span>`; }
+function _qMBadge(m){ return `<span class="badge badge-mode badge-m-${(m||'Ocean').toLowerCase()}">${m||'Ocean'}</span>`; }
 
-/* ── Containers ── */
-function _qRenderContainers(){
-  const w = document.getElementById('qcont-list'); if(!w) return;
-  if(!_qContainers.length){ w.innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px 0">No containers added yet.</div>'; const b=document.getElementById('qcont-teu-badge'); if(b) b.style.display='none'; return; }
+/* containers */
+function _qRenderCont(){
+  const w=document.getElementById('qcont-list'); if(!w) return;
+  if(!_qContainers.length){
+    w.innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px 0">No containers added yet.</div>';
+    const b=document.getElementById('qcont-teu-badge'); if(b)b.style.display='none'; return;
+  }
   let total=0;
-  w.innerHTML = _qContainers.map((c,i)=>{ const teu=(_TEU[c.ctype]||0)*c.qty; total+=teu; return `<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);padding:8px 12px;border-radius:8px"><span style="flex:1;font-size:13px;font-weight:600;color:var(--text1)">${c.qty}× ${c.ctype}</span><span style="font-size:11px;color:var(--text2)">${teu} TEU</span><button type="button" class="btn btn-danger btn-sm btn-icon" onclick="_qRmCont(${i})"><i class="fa fa-trash"></i></button></div>`; }).join('');
-  const b=document.getElementById('qcont-teu-badge'); if(b){ b.style.display='inline'; b.textContent=`Total: ${total} TEU`; }
+  w.innerHTML=_qContainers.map((c,i)=>{
+    const teu=(_TEU_MAP[c.ctype]||0)*c.qty; total+=teu;
+    return `<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);padding:8px 12px;border-radius:8px;margin-bottom:4px">
+      <span style="flex:1;font-size:13px;font-weight:600;color:var(--text1)">${c.qty}× ${c.ctype}</span>
+      <span style="font-size:11px;color:var(--text2)">${teu} TEU</span>
+      <button type="button" class="btn btn-danger btn-sm btn-icon" onclick="_qRmCont(${i})"><i class="fa fa-trash"></i></button>
+    </div>`;
+  }).join('');
+  const b=document.getElementById('qcont-teu-badge');
+  if(b){b.style.display='inline';b.textContent=`Total: ${total} TEU`;}
 }
 function qAddContainer(){
   const qty=parseInt(document.getElementById('qcont-qty')?.value,10);
   const ctype=document.getElementById('qcont-type')?.value;
-  if(!qty||!ctype||ctype==='Type'){ toast('Select quantity and type','error'); return; }
+  if(!qty||!ctype||ctype===''||ctype==='Type'){toast('Select quantity and type','error');return;}
   _qContainers.push({qty,ctype});
   document.getElementById('qcont-qty').value='';
   document.getElementById('qcont-type').value='';
-  _qRenderContainers();
+  _qRenderCont();
 }
-function _qRmCont(i){ _qContainers.splice(i,1); _qRenderContainers(); }
+function _qRmCont(i){_qContainers.splice(i,1);_qRenderCont();}
 
-/* ── Charges ── */
+/* charges */
 function _qRenderCharges(){
   const w=document.getElementById('qcharges-list'); if(!w) return;
-  if(!_qCharges.length){ w.innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px 0">No charges added yet.</div>'; const t=document.getElementById('qcharges-total'); if(t) t.style.display='none'; return; }
-  w.innerHTML = _qCharges.map((c,i)=>`
-    <div style="display:grid;grid-template-columns:2fr 90px 72px 1.2fr 32px;gap:5px;align-items:center;background:var(--bg3);padding:7px 10px;border-radius:8px;margin-bottom:4px">
+  if(!_qCharges.length){
+    w.innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px 0">No charges added yet.</div>';
+    const t=document.getElementById('qcharges-total'); if(t)t.style.display='none'; return;
+  }
+  w.innerHTML=_qCharges.map((c,i)=>`
+    <div style="display:grid;grid-template-columns:2fr 90px 68px 1.2fr 32px;gap:5px;align-items:center;background:var(--bg3);padding:7px 10px;border-radius:8px;margin-bottom:4px">
       <input class="form-control" style="font-size:12px;padding:5px 8px" placeholder="Charge name" value="${c.name||''}" oninput="_qCharges[${i}].name=this.value">
       <input class="form-control" style="font-size:12px;padding:5px 8px" placeholder="Amount" type="number" min="0" step="0.01" value="${c.amount||''}" oninput="_qCharges[${i}].amount=this.value;_qUpdateTotal()">
       <select class="form-control" style="font-size:12px;padding:5px 4px" onchange="_qCharges[${i}].currency=this.value;_qUpdateTotal()">
@@ -3304,18 +3150,18 @@ function qAddCharge(name){
   _qCharges.push({name,amount:'',currency:document.getElementById('qf-currency')?.value||'USD',unit:'Per BL'});
   _qRenderCharges();
 }
-function _qRmCharge(i){ _qCharges.splice(i,1); _qRenderCharges(); }
+function _qRmCharge(i){_qCharges.splice(i,1);_qRenderCharges();}
 function _qUpdateTotal(){
   const totals={};
-  _qCharges.forEach(c=>{ const a=parseFloat(c.amount); if(!isNaN(a)&&a>0) totals[c.currency||'USD']=(totals[c.currency||'USD']||0)+a; });
+  _qCharges.forEach(c=>{const a=parseFloat(c.amount);if(!isNaN(a)&&a>0)totals[c.currency||'USD']=(totals[c.currency||'USD']||0)+a;});
   const w=document.getElementById('qcharges-total'); if(!w) return;
   const keys=Object.keys(totals);
-  if(!keys.length){ w.style.display='none'; return; }
+  if(!keys.length){w.style.display='none';return;}
   w.style.display='flex';
-  w.innerHTML='<span style="color:var(--text2);font-weight:500;margin-right:8px">Total:</span>'+keys.map(k=>`<span style="color:var(--accent)">${totals[k].toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} ${k}</span>`).join('<span style="margin:0 6px;color:var(--text3)">+</span>');
+  w.innerHTML='<span style="color:var(--text2);font-weight:500;margin-right:8px">Total:</span>'+
+    keys.map(k=>`<span style="color:var(--accent)">${totals[k].toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})} ${k}</span>`).join('<span style="margin:0 6px;color:var(--text3)">+</span>');
 }
 
-/* ── Auto ref ── */
 async function _qLoadRef(){
   try{
     const r=await apiFetch('/api/quotations/next-ref');
@@ -3323,37 +3169,36 @@ async function _qLoadRef(){
     if(el&&!window._qEditId) el.value=r.ref||'';
   }catch(e){
     const el=document.getElementById('qf-ref');
-    if(el&&!el.value){ const y=new Date().getFullYear(); el.value=`QUO-${y}-${String(Date.now()).slice(-3)}`; }
+    if(el&&!el.value){const y=new Date().getFullYear();el.value=`QUO-${y}-${String(Date.now()).slice(-3)}`;}
   }
 }
 
-/* ── Open / Reset ── */
 async function openNewQuotation(){
   window._qEditId=null; _qContainers=[]; _qCharges=[];
-  _qRenderContainers(); _qRenderCharges();
+  _qRenderCont(); _qRenderCharges();
   document.getElementById('modal-quotation-title').textContent='New Quotation';
-  ['qf-ref','qf-client','qf-email','qf-carrier','qf-pol','qf-pod','qf-validity','qf-transit','qf-note'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  const m=document.getElementById('qf-mode'); if(m) m.value='Ocean';
-  const s=document.getElementById('qf-status'); if(s) s.value='Pending';
-  const inc=document.getElementById('qf-incoterm'); if(inc) inc.value='';
-  const cu=document.getElementById('qf-currency'); if(cu) cu.value='USD';
-  const pdfBtn=document.getElementById('qbtn-pdf'); if(pdfBtn) pdfBtn.style.display='none';
+  ['qf-ref','qf-client','qf-email','qf-carrier','qf-pol','qf-pod','qf-validity','qf-transit','qf-note']
+    .forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const m=document.getElementById('qf-mode');if(m)m.value='Ocean';
+  const s=document.getElementById('qf-status');if(s)s.value='Pending';
+  const inc=document.getElementById('qf-incoterm');if(inc)inc.value='';
+  const cu=document.getElementById('qf-currency');if(cu)cu.value='USD';
+  const pdfBtn=document.getElementById('qbtn-pdf');if(pdfBtn)pdfBtn.style.display='none';
   await _qLoadRef();
   openModal('modal-quotation');
 }
 
-/* ── Save ── */
 async function saveQuotation(){
   const gv=id=>(document.getElementById(id)?.value||'').trim();
   let ref=gv('qf-ref');
-  if(!ref){ await _qLoadRef(); ref=gv('qf-ref'); }
-  if(!ref){ toast('Unable to generate ref','error'); return; }
+  if(!ref){await _qLoadRef();ref=gv('qf-ref');}
+  if(!ref){toast('Cannot generate ref','error');return;}
   const btn=document.getElementById('qbtn-save');
-  btn.innerHTML='<span class="spinner"></span> Saving…'; btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span> Saving…';btn.disabled=true;
   const data={
-    ref, client:gv('qf-client'), clientemail:gv('qf-email'),
-    carrier:gv('qf-carrier'), pol:gv('qf-pol'), pod:gv('qf-pod'), note:gv('qf-note'),
-    validitydate:gv('qf-validity'), transitdays:gv('qf-transit'),
+    ref,client:gv('qf-client'),clientemail:gv('qf-email'),
+    carrier:gv('qf-carrier'),pol:gv('qf-pol'),pod:gv('qf-pod'),note:gv('qf-note'),
+    validitydate:gv('qf-validity'),transitdays:gv('qf-transit'),
     mode:document.getElementById('qf-mode')?.value||'Ocean',
     status:document.getElementById('qf-status')?.value||'Pending',
     incoterm:document.getElementById('qf-incoterm')?.value||null,
@@ -3365,105 +3210,99 @@ async function saveQuotation(){
     if(window._qEditId) await apiFetch(`/api/quotations/${window._qEditId}`,{method:'PATCH',body:JSON.stringify(data)});
     else await apiFetch('/api/quotations',{method:'POST',body:JSON.stringify(data)});
     toast(window._qEditId?'Quotation updated ✅':'Quotation created ✅','success');
-    closeModal('modal-quotation'); loadQuotations();
-  }catch(e){ toast('❌ '+e.message,'error'); console.error(e); }
-  btn.innerHTML='<i class="fa fa-floppy-disk"></i> Save Quotation'; btn.disabled=false;
+    closeModal('modal-quotation');loadQuotations();
+  }catch(e){toast('❌ '+e.message,'error');console.error(e);}
+  btn.innerHTML='<i class="fa fa-floppy-disk"></i> Save Quotation';btn.disabled=false;
 }
 
-/* ── Edit ── */
 async function editQuotation(id){
-  window._qEditId=id; _qContainers=[]; _qCharges=[];
+  window._qEditId=id;_qContainers=[];_qCharges=[];
   try{
     const s=await apiFetch(`/api/quotations/${id}`);
     document.getElementById('modal-quotation-title').textContent='Edit Quotation';
     const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||'';};
-    set('qf-ref',s.ref); set('qf-client',s.client); set('qf-email',s.clientemail);
-    set('qf-carrier',s.carrier); set('qf-pol',s.pol); set('qf-pod',s.pod);
-    set('qf-validity',s.validitydate); set('qf-transit',s.transitdays); set('qf-note',s.note);
-    const m=document.getElementById('qf-mode'); if(m) m.value=s.mode||'Ocean';
-    const st=document.getElementById('qf-status'); if(st) st.value=s.status||'Pending';
-    const inc=document.getElementById('qf-incoterm'); if(inc) inc.value=s.incoterm||'';
-    const cu=document.getElementById('qf-currency'); if(cu) cu.value=s.currency||'USD';
+    set('qf-ref',s.ref);set('qf-client',s.client);set('qf-email',s.clientemail);
+    set('qf-carrier',s.carrier);set('qf-pol',s.pol);set('qf-pod',s.pod);
+    set('qf-validity',s.validitydate);set('qf-transit',s.transitdays);set('qf-note',s.note);
+    const m=document.getElementById('qf-mode');if(m)m.value=s.mode||'Ocean';
+    const st=document.getElementById('qf-status');if(st)st.value=s.status||'Pending';
+    const inc=document.getElementById('qf-incoterm');if(inc)inc.value=s.incoterm||'';
+    const cu=document.getElementById('qf-currency');if(cu)cu.value=s.currency||'USD';
     _qContainers=(s.containers||[]).map(c=>({qty:c.qty,ctype:c.ctype}));
     _qCharges=(s.charges||[]).map(c=>({name:c.name,amount:c.amount||'',currency:c.currency||'USD',unit:c.unit||'Per BL'}));
-    _qRenderContainers(); _qRenderCharges();
-    const pdfBtn=document.getElementById('qbtn-pdf'); if(pdfBtn) pdfBtn.style.display='';
+    _qRenderCont();_qRenderCharges();
+    const pdfBtn=document.getElementById('qbtn-pdf');if(pdfBtn)pdfBtn.style.display='';
     openModal('modal-quotation');
-  }catch(e){ toast(e.message,'error'); }
+  }catch(e){toast(e.message,'error');}
 }
 
-/* ── Delete ── */
 async function deleteQuotation(id){
-  if(!confirm('Delete this quotation?')) return;
-  try{ await apiFetch(`/api/quotations/${id}`,{method:'DELETE'}); toast('Deleted','success'); loadQuotations(); }
-  catch(e){ toast(e.message,'error'); }
+  if(!confirm('Delete this quotation?'))return;
+  try{await apiFetch(`/api/quotations/${id}`,{method:'DELETE'});toast('Deleted','success');loadQuotations();}
+  catch(e){toast(e.message,'error');}
 }
 
-/* ── PDF ── */
 async function downloadQuotationPDF(id){
-  if(!id) return;
+  if(!id)return;
   try{
     const res=await fetch(`/api/quotations/${id}/pdf`,{headers:{'Authorization':'Bearer '+(localStorage.getItem('fttoken')||'')}});
-    if(!res.ok) throw new Error('PDF failed');
-    const blob=await res.blob(); const url=URL.createObjectURL(blob);
-    const a=document.createElement('a'); a.href=url; a.download=`quotation_${id}.pdf`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    if(!res.ok)throw new Error('PDF failed');
+    const blob=await res.blob();const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=`quotation_${id}.pdf`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
     toast('PDF downloaded','success');
-  }catch(e){ toast(e.message||'PDF error','error'); }
+  }catch(e){toast(e.message||'PDF error','error');}
 }
 
-/* ── Approve / Decline ── */
 function openQAction(id,type){
-  window._qActionId=id; window._qActionType=type;
+  window._qActionId=id;window._qActionType=type;
   const isApp=type==='approve';
   document.getElementById('qaction-title').textContent=isApp?'Approve Quotation':'Decline Quotation';
   document.getElementById('qaction-msg').textContent=isApp?'Confirm approval — status will be set to Approved.':'Confirm decline — status will be set to Declined.';
   const btn=document.getElementById('qaction-confirm-btn');
-  btn.className=isApp?'btn btn-primary':'btn btn-danger'; btn.style.flex='2';
+  btn.className=isApp?'btn btn-primary':'btn btn-danger';btn.style.flex='2';
   btn.textContent=isApp?'Approve':'Decline';
   document.getElementById('qaction-note').value='';
   openModal('modal-qaction');
 }
 async function confirmQAction(){
-  if(!window._qActionId) return;
+  if(!window._qActionId)return;
   const status=window._qActionType==='approve'?'Approved':'Declined';
   const note=document.getElementById('qaction-note')?.value||'';
   try{
     await apiFetch(`/api/quotations/${window._qActionId}`,{method:'PATCH',body:JSON.stringify({status,note})});
-    toast(status,'success'); closeModal('modal-qaction'); loadQuotations();
-  }catch(e){ toast(e.message,'error'); }
+    toast(status,'success');closeModal('modal-qaction');loadQuotations();
+  }catch(e){toast(e.message,'error');}
 }
 
-/* ── Action buttons ── */
 function _qActionBtns(s){
   const canApp=s.status==='Pending';
   const canDec=s.status==='Pending'||s.status==='Approved';
-  return (canApp?`<button class="btn btn-sm" style="background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);font-size:11px;padding:4px 10px" onclick="event.stopPropagation();openQAction(${s.id},'approve')"><i class="fa fa-circle-check"></i> Approve</button>`:'')
-    +(canDec?`<button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);font-size:11px;padding:4px 10px" onclick="event.stopPropagation();openQAction(${s.id},'decline')"><i class="fa fa-circle-xmark"></i> Decline</button>`:'')
+  return (canApp?`<button class="btn btn-sm" style="background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openQAction(${s.id},'approve')"><i class="fa fa-circle-check"></i> Approve</button>`:'')
+    +(canDec?`<button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);font-size:11px;padding:4px 8px" onclick="event.stopPropagation();openQAction(${s.id},'decline')"><i class="fa fa-circle-xmark"></i> Decline</button>`:'')
     +`<button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();downloadQuotationPDF(${s.id})" title="PDF"><i class="fa fa-file-pdf"></i></button>`
-    +`<button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editQuotation(${s.id})" title="Edit"><i class="fa fa-pen"></i></button>`
-    +`<button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteQuotation(${s.id})" title="Delete"><i class="fa fa-trash"></i></button>`;
+    +`<button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editQuotation(${s.id})"><i class="fa fa-pen"></i></button>`
+    +`<button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteQuotation(${s.id})"><i class="fa fa-trash"></i></button>`;
 }
 
-/* ── Render ── */
-function _qSlice(){ const p=Math.max(1,Math.ceil(_qRows.length/_qPageSize)); if(_qPage>p)_qPage=p; const s=(_qPage-1)*_qPageSize; return{pages:p,rows:_qRows.slice(s,s+_qPageSize)}; }
-function qPagePrev(){ _qPage=Math.max(1,_qPage-1); _qRenderQ(); }
-function qPageNext(){ const p=Math.max(1,Math.ceil(_qRows.length/_qPageSize)); _qPage=Math.min(p,_qPage+1); _qRenderQ(); }
+function _qSlice(){const p=Math.max(1,Math.ceil(_qRows.length/_qPageSize));if(_qPage>p)_qPage=p;const s=(_qPage-1)*_qPageSize;return{pages:p,rows:_qRows.slice(s,s+_qPageSize)};}
+function qPagePrev(){_qPage=Math.max(1,_qPage-1);_qRenderQ();}
+function qPageNext(){const p=Math.max(1,Math.ceil(_qRows.length/_qPageSize));_qPage=Math.min(p,_qPage+1);_qRenderQ();}
 
 function _qRenderQ(){
   const cards=document.getElementById('quotes-cards');
   const table=document.getElementById('quotes-table');
   const {pages,rows}=_qSlice();
-  const lbl=document.getElementById('q-count-label'); if(lbl) lbl.textContent=`${_qRows.length} quotation${_qRows.length!==1?'s':''}`;
-  const info=document.getElementById('qpg-info'); if(info) info.textContent=`Page ${_qPage}/${pages}`;
-  const prev=document.getElementById('qpg-prev'); if(prev) prev.disabled=_qPage<=1;
-  const next=document.getElementById('qpg-next'); if(next) next.disabled=_qPage>=pages;
+  const lbl=document.getElementById('q-count-label');if(lbl)lbl.textContent=`${_qRows.length} quotation${_qRows.length!==1?'s':''}`;
+  const info=document.getElementById('qpg-info');if(info)info.textContent=`Page ${_qPage}/${pages}`;
+  const prev=document.getElementById('qpg-prev');if(prev)prev.disabled=_qPage<=1;
+  const next=document.getElementById('qpg-next');if(next)next.disabled=_qPage>=pages;
   const empty=`<div class="empty"><div class="empty-icon">📄</div><div class="empty-title">No quotations</div><div class="empty-sub">Tap New Quotation to get started</div></div>`;
   if(cards) cards.innerHTML=!rows.length?empty:rows.map(s=>`
     <div class="ship-card" onclick="editQuotation(${s.id})">
       <div class="ship-card-head">
         <div><div class="ship-ref">${s.ref||''}</div><div class="ship-sub">${s.client||''}</div></div>
-        ${_qStatusBadge(s.status)}
+        ${_qSBadge(s.status)}
       </div>
       <div class="ship-card-body" style="grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
         <div><div class="ship-field-label">POL</div><div class="ship-field-value">${s.pol||'—'}</div></div>
@@ -3474,7 +3313,7 @@ function _qRenderQ(){
         <div><div class="ship-field-label">Charges</div><div class="ship-field-value">${(s.charges||[]).length} item${(s.charges||[]).length!==1?'s':''}</div></div>
       </div>
       <div class="ship-card-foot" style="margin-top:10px">
-        <div>${_qModeBadge(s.mode)}</div>
+        <div>${_qMBadge(s.mode)}</div>
         <div class="ship-actions" onclick="event.stopPropagation()">${_qActionBtns(s)}</div>
       </div>
     </div>`).join('');
@@ -3482,35 +3321,32 @@ function _qRenderQ(){
     <th>Ref</th><th>Client</th><th>Mode</th><th>POL → POD</th><th>Validity</th><th>Transit</th><th>Currency</th><th>Charges</th><th>Status</th><th></th>
   </tr></thead><tbody>${rows.map(s=>`
     <tr class="clickable" onclick="editQuotation(${s.id})">
-      <td class="ref-cell">${s.ref||''}</td>
-      <td>${s.client||''}</td>
-      <td>${_qModeBadge(s.mode)}</td>
+      <td class="ref-cell">${s.ref||''}</td><td>${s.client||''}</td>
+      <td>${_qMBadge(s.mode)}</td>
       <td style="font-size:12px;color:var(--text2)">${[s.pol,s.pod].filter(Boolean).join(' → ')}</td>
       <td style="font-size:12px">${fmtD(s.validitydate)||'—'}</td>
       <td style="font-size:12px">${s.transitdays?s.transitdays+' d':'—'}</td>
       <td style="font-size:12px">${s.currency||'USD'}</td>
       <td style="font-size:12px">${(s.charges||[]).length} item${(s.charges||[]).length!==1?'s':''}</td>
-      <td>${_qStatusBadge(s.status)}</td>
+      <td>${_qSBadge(s.status)}</td>
       <td><div class="actions" onclick="event.stopPropagation()">${_qActionBtns(s)}</div></td>
     </tr>`).join('')}</tbody></table>`;
 }
 
-/* ── Load ── */
 async function loadQuotations(){
   try{
     const status=document.getElementById('qfil-status')?.value||'';
     const mode=document.getElementById('qfil-mode')?.value||'';
     const q=document.getElementById('qsearch')?.value||'';
     const rows=await apiFetch(`/api/quotations?status=${encodeURIComponent(status)}&mode=${encodeURIComponent(mode)}&q=${encodeURIComponent(q)}`);
-    _qRows=rows||[]; _qPage=1; _qRenderQ();
-    const bs={};
-    _qRows.forEach(x=>bs[x.status]=(bs[x.status]||0)+1);
+    _qRows=rows||[];_qPage=1;_qRenderQ();
+    const bs={};_qRows.forEach(x=>bs[x.status]=(bs[x.status]||0)+1);
     const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v||0;};
-    se('q-total',_qRows.length); se('q-pending',bs['Pending']||0);
-    se('q-approved',bs['Approved']||0); se('q-declined',bs['Declined']||0);
+    se('q-total',_qRows.length);se('q-pending',bs['Pending']||0);
+    se('q-approved',bs['Approved']||0);se('q-declined',bs['Declined']||0);
     se('q-transit',(bs['Sailing']||0)+(bs['Transit']||0));
     se('q-ocean',_qRows.filter(x=>(x.mode||'Ocean')==='Ocean').length);
-  }catch(e){ toast(e.message,'error'); }
+  }catch(e){toast(e.message,'error');}
 }
 
 </script>
@@ -3520,3 +3356,4 @@ async function loadQuotations(){
 <datalist id="carrier-list"></datalist>
 </body>
   </html>
+
