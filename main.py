@@ -14,13 +14,6 @@ from database import run_migrations
 run_migrations()
 
 app = FastAPI(title="FreightTrack Pro")
-
-try:
-    from quotations_router import router as quot_router
-    app.include_router(quot_router)
-except Exception as _qe:
-    import logging as _log
-    _log.getLogger("uvicorn").warning(f"Quotation router error: {_qe}")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def get_db():
@@ -85,23 +78,12 @@ async def create_shipment(request: Request, db: Session = Depends(get_db), curre
         raise HTTPException(400, "Reference is required")
     if crud.get_shipment(db, ref):
         raise HTTPException(400, "Reference already exists")
-    s = schemas.ShipmentCreate(
-        ref=ref,
-        ref2=body.get("ref2") or None,
-        booking_no=body.get("booking_no") or None,
-        mode=body.get("mode") or "Ocean",
-        carrier=body.get("carrier") or None,
-        client=body.get("client") or None,
-        client_email=body.get("client_email") or None,
-        note=body.get("note") or None,
-        pol=body.get("pol") or None,
-        pod=body.get("pod") or None,
-        etd=body.get("etd") or None,
-        eta=body.get("eta") or None,
-        quotation_number=body.get("quotation_number") or None,
-        status=body.get("status") or "Pending",
-        vessel=body.get("vessel") or None,
-    )
+    allowed_c = set(schemas.ShipmentCreate.model_fields.keys())
+    s_data = {k: (v if v != "" else None) for k, v in body.items() if k in allowed_c}
+    s_data["ref"] = ref
+    s_data.setdefault("mode", "Ocean")
+    s_data.setdefault("status", "Pending")
+    s = schemas.ShipmentCreate(**s_data)
     ship = crud.create_shipment(db, s)
     return ship
 
@@ -112,9 +94,11 @@ def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_cu
     return s
 
 @app.put("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
-async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db)):
+async def update_shipment(sid: int, request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
     body = await request.json()
-    data = schemas.ShipmentUpdate(**{k: v or None for k, v in body.items() if v is not None})
+    allowed = set(schemas.ShipmentUpdate.model_fields.keys())
+    filtered = {k: (v if v != "" else None) for k, v in body.items() if k in allowed}
+    data = schemas.ShipmentUpdate(**filtered)
     s = crud.update_shipment(db, sid, data)
     if not s: raise HTTPException(404, "Not found")
     return s
@@ -524,9 +508,37 @@ def t49_debug(db: Session = Depends(get_db)):
     ]
     return result
 
-
-
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.getenv("PORT", "8000"))
+    port = int(os.getenv("PORT","8000"))
     uvicorn.run("main:app", host="0.0.0.0", port=port)
+
+
+@app.post("/api/seed-samples")
+def seed_samples(db: Session = Depends(get_db), current=Depends(get_current_user)):
+    """Seed 15 realistic sample shipments for testing."""
+    samples=[
+        {"ref":"FT-2026-001","mode":"Ocean","carrier":"MSC","client":"Maroc Textiles","shipper":"Guangzhou Mills","consignee":"Maroc Textiles SARL","pol":"Shanghai","pod":"Casablanca","etd":"2026-01-05","eta":"2026-02-10","status":"Delivered","direction":"Import","incoterm":"FOB","booking_no":"MSC1234567","vessel":"MSC DIANA"},
+        {"ref":"FT-2026-002","mode":"Ocean","carrier":"CMA CGM","client":"Atlas Pharma","shipper":"Atlas Pharma","consignee":"Lyon Distrib","pol":"Casablanca","pod":"Marseille","etd":"2026-01-12","eta":"2026-01-18","status":"Delivered","direction":"Export","incoterm":"CIF","vessel":"CMA CGM BELEM"},
+        {"ref":"FT-2026-003","mode":"Air","carrier":"Royal Air Maroc","client":"TechImport MA","shipper":"Shenzhen Electronics","consignee":"TechImport MA","pol":"Hong Kong","pod":"Casablanca","etd":"2026-01-20","eta":"2026-01-21","status":"Delivered","direction":"Import","incoterm":"EXW"},
+        {"ref":"FT-2026-004","mode":"Ocean","carrier":"Maersk","client":"Maroc Textiles","shipper":"Maroc Textiles","consignee":"Hamburg Buyer GmbH","pol":"Casablanca","pod":"Hamburg","etd":"2026-01-25","eta":"2026-02-15","status":"Delivered","direction":"Export","incoterm":"FOB","vessel":"MAERSK ELBA"},
+        {"ref":"FT-2026-005","mode":"Ocean","carrier":"MSC","client":"Casa Ceramics","shipper":"Valencia Ceramics","consignee":"Casa Ceramics","pol":"Valencia","pod":"Casablanca","etd":"2026-02-01","eta":"2026-02-08","status":"Delivered","direction":"Import","incoterm":"CFR","vessel":"MSC ANNA"},
+        {"ref":"FT-2026-006","mode":"Ocean","carrier":"COSCO","client":"Atlas Pharma","shipper":"Tianjin Chem","consignee":"Atlas Pharma","pol":"Tianjin","pod":"Casablanca","etd":"2026-02-05","eta":"2026-03-18","status":"Delayed","direction":"Import","incoterm":"CIF","vessel":"COSCO ARIES"},
+        {"ref":"FT-2026-007","mode":"Ocean","carrier":"CMA CGM","client":"Sahara Foods","shipper":"Sahara Foods SA","consignee":"Rotterdam Buyer","pol":"Agadir","pod":"Rotterdam","etd":"2026-02-10","eta":"2026-02-20","status":"Delivered","direction":"Export","incoterm":"FOB","vessel":"CMA CGM TAGE"},
+        {"ref":"FT-2026-008","mode":"Air","carrier":"Air France Cargo","client":"TechImport MA","shipper":"Paris Supplier","consignee":"TechImport MA","pol":"Paris CDG","pod":"Casablanca","etd":"2026-02-14","eta":"2026-02-14","status":"Delivered","direction":"Import","incoterm":"DAP"},
+        {"ref":"FT-2026-009","mode":"Ocean","carrier":"Maersk","client":"Casa Ceramics","shipper":"Casa Ceramics","consignee":"Antwerp Buyer","pol":"Casablanca","pod":"Antwerp","etd":"2026-02-18","eta":"2026-03-01","status":"Sailing","direction":"Export","incoterm":"CIF","vessel":"MAERSK COPENHAGEN"},
+        {"ref":"FT-2026-010","mode":"Ocean","carrier":"MSC","client":"Maroc Textiles","shipper":"Chennai Mills","consignee":"Maroc Textiles","pol":"Chennai","pod":"Casablanca","etd":"2026-02-20","eta":"2026-03-25","status":"In Transit","direction":"Import","incoterm":"FOB","vessel":"MSC ROMA"},
+        {"ref":"FT-2026-011","mode":"Ocean","carrier":"Hapag-Lloyd","client":"Sahara Foods","shipper":"Sahara Foods","consignee":"Barcelona Buyer","pol":"Casablanca","pod":"Barcelona","etd":"2026-02-25","eta":"2026-03-05","status":"Arrived","direction":"Export","incoterm":"EXW","vessel":"ALGECIRAS EXPRESS"},
+        {"ref":"FT-2026-012","mode":"Air","carrier":"Lufthansa Cargo","client":"Atlas Pharma","shipper":"Frankfurt Pharma","consignee":"Atlas Pharma","pol":"Frankfurt","pod":"Casablanca","etd":"2026-03-01","eta":"2026-03-02","status":"Delivered","direction":"Import","incoterm":"DDP"},
+        {"ref":"FT-2026-013","mode":"Ocean","carrier":"CMA CGM","client":"Maroc Textiles","shipper":"Istanbul Fabric","consignee":"Maroc Textiles","pol":"Istanbul","pod":"Casablanca","etd":"2026-03-03","eta":"2026-03-10","status":"Pending","direction":"Import","incoterm":"CFR","vessel":"CMA CGM TAGE"},
+        {"ref":"FT-2026-014","mode":"Ocean","carrier":"COSCO","client":"Casa Ceramics","shipper":"Casa Ceramics","consignee":"Shanghai Buyer","pol":"Casablanca","pod":"Shanghai","etd":"2026-03-05","eta":"2026-04-10","status":"Booked","direction":"Export","incoterm":"FOB"},
+        {"ref":"FT-2026-015","mode":"Ocean","carrier":"MSC","client":"TechImport MA","shipper":"Ningbo Tech","consignee":"TechImport MA","pol":"Ningbo","pod":"Casablanca","etd":"2026-03-06","eta":"2026-04-15","status":"Confirmed","direction":"Import","incoterm":"EXW","vessel":"MSC FIAMMETTA"},
+    ]
+    allowed={c.name for c in models.Shipment.__table__.columns}
+    added=0
+    for s in samples:
+        if not db.query(models.Shipment).filter(models.Shipment.ref==s["ref"]).first():
+            db.add(models.Shipment(**{k:v for k,v in s.items() if k in allowed})); added+=1
+    db.commit()
+    return {"added":added,"message":f"Seeded {added} sample shipments"}
+
