@@ -139,20 +139,12 @@ async def create_q(request:Request, db:Session=Depends(get_db), _=Depends(get_cu
                  :vd, :td, :status, :note, :cur, :now, :now)
             RETURNING id
         """), {
-            "ref": ref,
-            "mode": body.get("mode", "Ocean"),
-            "client": body.get("client"),
-            "ce": body.get("clientemail"),
-            "carrier": body.get("carrier"),
-            "pol": body.get("pol"),
-            "pod": body.get("pod"),
-            "inc": body.get("incoterm"),
-            "vd": body.get("validitydate"),
-            "td": body.get("transitdays"),
-            "status": body.get("status", "Pending"),
-            "note": body.get("note"),
-            "cur": body.get("currency", "USD"),
-            "now": now
+            "ref":ref, "mode":body.get("mode","Ocean"), "client":body.get("client"),
+            "ce":body.get("clientemail"), "carrier":body.get("carrier"),
+            "pol":body.get("pol"), "pod":body.get("pod"), "inc":body.get("incoterm"),
+            "vd":body.get("validitydate"), "td":body.get("transitdays"),
+            "status":body.get("status","Pending"), "note":body.get("note"),
+            "cur":body.get("currency","USD"), "now":now
         }).fetchone()
         qid = row[0]
         _write_children(db, qid, body)
@@ -178,13 +170,13 @@ async def update_q(qid:int, request:Request, db:Session=Depends(get_db), _=Depen
                 transit_days=:td, status=:status, note=:note, currency=:cur, updated_at=:now
             WHERE id=:id
         """), {
-            "mode": body.get("mode","Ocean"), "client": body.get("client"),
-            "ce": body.get("clientemail"), "carrier": body.get("carrier"),
-            "pol": body.get("pol"), "pod": body.get("pod"),
-            "inc": body.get("incoterm"), "vd": body.get("validitydate"),
-            "td": body.get("transitdays"), "status": body.get("status","Pending"),
-            "note": body.get("note"), "cur": body.get("currency","USD"),
-            "now": now, "id": qid
+            "mode":body.get("mode","Ocean"), "client":body.get("client"),
+            "ce":body.get("clientemail"), "carrier":body.get("carrier"),
+            "pol":body.get("pol"), "pod":body.get("pod"),
+            "inc":body.get("incoterm"), "vd":body.get("validitydate"),
+            "td":body.get("transitdays"), "status":body.get("status","Pending"),
+            "note":body.get("note"), "cur":body.get("currency","USD"),
+            "now":now, "id":qid
         })
         _write_children(db, qid, body)
         r = db.execute(text(
@@ -227,7 +219,7 @@ def quotation_pdf(qid:int, db:Session=Depends(get_db), _=Depends(get_current_use
         ts = ParagraphStyle('t', parent=styles['Heading1'], alignment=TA_CENTER, textColor=colors.HexColor('#21808D'), fontSize=18)
         hs = ParagraphStyle('h', parent=styles['Heading2'], textColor=colors.HexColor('#21808D'), fontSize=11)
         story = [Paragraph('FREIGHT QUOTATION', ts), Spacer(1,4*mm),
-                 Paragraph(f'<b>Ref:</b> {s["ref"]} &nbsp; <b>Valid:</b> {s["validitydate"] or "N/A"} &nbsp; <b>Transit:</b> {s["transitdays"] or "N/A"} days', styles['Normal']),
+                 Paragraph(f'Ref: {s["ref"]} | Valid: {s["validitydate"] or "N/A"} | Transit: {s["transitdays"] or "N/A"} days', styles['Normal']),
                  Spacer(1,4*mm), Paragraph('SHIPMENT DETAILS', hs)]
         info = Table([
             ['Client', s['client'] or 'N/A', 'Mode', s['mode'] or 'N/A'],
@@ -235,11 +227,7 @@ def quotation_pdf(qid:int, db:Session=Depends(get_db), _=Depends(get_current_use
             ['Carrier', s['carrier'] or 'N/A', 'Currency', s['currency'] or 'USD'],
             ['Incoterm', s['incoterm'] or 'N/A', 'Status', s['status'] or 'Pending']
         ], colWidths=[28*mm,62*mm,28*mm,62*mm])
-        info.setStyle(TableStyle([
-            ('GRID',(0,0),(-1,-1),.5,colors.grey),
-            ('BACKGROUND',(0,0),(0,-1),colors.whitesmoke),
-            ('BACKGROUND',(2,0),(2,-1),colors.whitesmoke)
-        ]))
+        info.setStyle(TableStyle([('GRID',(0,0),(-1,-1),.5,colors.grey),('BACKGROUND',(0,0),(0,-1),colors.whitesmoke),('BACKGROUND',(2,0),(2,-1),colors.whitesmoke)]))
         story.append(info)
         if s['containers']:
             story += [Spacer(1,4*mm), Paragraph('CONTAINERS', hs)]
@@ -251,16 +239,16 @@ def quotation_pdf(qid:int, db:Session=Depends(get_db), _=Depends(get_current_use
         totals = {}
         for c in s['charges']:
             ch_rows.append([c['name'], c['amount'] or '0', c['currency'] or 'USD', c['unit'] or ''])
-            try: totals[c['currency'] or 'USD'] = totals.get(c['currency'] or 'USD',0) + float(c['amount'] or 0)
+            try: totals[c['currency'] or 'USD'] = totals.get(c['currency'] or 'USD',0)+float(c['amount'] or 0)
             except: pass
-        if len(ch_rows)==1: ch_rows.append(['No charges','0',s['currency'] or 'USD',''])
+        if len(ch_rows)==1: ch_rows.append(['No charges','—',s['currency'] or 'USD',''])
         ch = Table(ch_rows, colWidths=[80*mm,30*mm,30*mm,40*mm])
         ch.setStyle(TableStyle([('GRID',(0,0),(-1,-1),.5,colors.grey),('BACKGROUND',(0,0),(-1,0),colors.HexColor('#21808D')),('TEXTCOLOR',(0,0),(-1,0),colors.white)]))
         story.append(ch)
-        if totals: story += [Spacer(1,3*mm), Paragraph('<b>Total: </b>'+' + '.join([f'{v:,.2f} {k}' for k,v in totals.items()]), styles['Normal'])]
+        if totals: story += [Spacer(1,3*mm), Paragraph('Total: '+' + '.join([f'{v:,.2f} {k}' for k,v in totals.items()]), styles['Normal'])]
         if s['note']: story += [Spacer(1,4*mm), Paragraph('NOTES', hs), Paragraph((s['note'] or '').replace('\n','<br/>'), styles['Normal'])]
         doc.build(story); buf.seek(0)
         return Response(content=buf.getvalue(), media_type='application/pdf',
                         headers={'Content-Disposition': f'attachment; filename=quotation_{s["ref"]}.pdf'})
     except ImportError:
-        raise HTTPException(500, "reportlab not installed — run: pip install reportlab")
+        raise HTTPException(500, "reportlab not installed")
