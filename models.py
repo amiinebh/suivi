@@ -81,23 +81,3 @@ class AlertLog(Base):
     sent_date = Column(String, nullable=False)    # ISO date "2026-03-01"
     created_at = Column(String, default=lambda: datetime.utcnow().isoformat())
 
-
-
-class Quotation(Base):
-    __tablename__ = "quotations"
-    id = Column(Integer, primary_key=True, index=True)
-    ref = Column(String, unique=True, index=True, nullable=False)
-    mode = Column(String, default="Ocean")
-    client = Column(String, nullable=True)
-    client_email = Column(String, nullable=True)
-    carrier = Column(String, nullable=True)
-    pol = Column(String, nullable=True)
-    pod = Column(String, nullable=True)
-    incoterm = Column(String, nullable=True)
-    validity_date = Column(String, nullable=True)
-    transit_days = Column(String, nullable=True)
-    status = Column(String, default="Pending")
-    note = Column(Text, nullable=True)
-    currency = Column(String, default="USD")
-    created_at = Column(String, nullable=True)
-    updated_at = Column(String, nullable=True)
