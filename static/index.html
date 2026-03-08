@@ -921,7 +921,6 @@ textarea.form-control{resize:none;min-height:72px}
 
 
 <script>
-// ══════ AUTH — must load before main script ══════
 const TOKEN_KEY = "ft_token";
 const USER_KEY  = "ft_user";
 
@@ -938,15 +937,15 @@ async function syncMe(){
     const me=await r.json();
     localStorage.setItem(USER_KEY,JSON.stringify({role:me.role,name:me.name}));
     return me;
-  }catch(e){return null;}
+  }catch(e){ return null; }
 }
 
 function doLogout(){
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
-  location.reload();
+  const ls=document.getElementById("login-screen");
+  if(ls) ls.style.display="flex";
 }
-
 window.doLogout = doLogout;
 
 function showApp(){
@@ -991,7 +990,6 @@ window.addEventListener("DOMContentLoaded",async()=>{
   }
 });
 </script>
-
 <script>
 let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, allShipments=[];
