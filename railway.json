@@ -1,1 +1,6 @@
-{"build":{"builder":"NIXPACKS"},"deploy":{"startCommand":"python main.py","restartPolicyType":"ON_FAILURE"}}
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "deploy": {
+    "startCommand": "uvicorn main:app --host 0.0.0.0 --port $PORT"
+  }
+}
