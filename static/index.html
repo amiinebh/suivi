@@ -448,6 +448,13 @@ textarea.form-control{resize:none;min-height:72px}
 </style>
 </head>
 <body>
+<script>
+window.doLogout = function () {
+  localStorage.removeItem('ft_token');
+  localStorage.removeItem('ft_user');
+  location.reload();
+};
+</script>
   <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;
     background:#0a0f1e;align-items:center;justify-content:center">
     <div style="background:#1a2240;border:1px solid #2a3a5c;border-radius:20px;
@@ -1167,42 +1174,6 @@ function _renderDetail(s){
       document.getElementById("detail-containers-section").style.display="block";
     } else {
       document.getElementById("detail-containers-section").style.display="none";
-    }
-  }
-</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
-    ].filter(Boolean).join('');
-    infoChips.style.display = infoChips.innerHTML ? 'flex' : 'none';
-  }
-
-  const ha=document.getElementById("detail-portal-href");
-  const infoChips = document.getElementById("detail-info-chips");
-  if(infoChips){
-    infoChips.innerHTML = [
-      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:4px 8px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:4px 8px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
-      (s.containers && s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:4px 8px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : ''
-    ].filter(Boolean).join('');
-  }
-  const contSection = document.getElementById("detail-containers-section");
-  const contList = document.getElementById("detail-containers-list");
-  if(contSection && contList){
-    if(s.containers && s.containers.length){
-      contSection.style.display = 'block';
-      contList.innerHTML = s.containers.map(c=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:600;color:var(--text1)">${c.container_no||c.size_type||'Container'}</div>
-          <div style="font-size:11px;color:var(--text2)">${c.size_type||''}</div>
-        </div>`).join('');
-    } else {
-      contSection.style.display = 'none';
-      contList.innerHTML = '';
     }
   }
   if(ha) ha.href="/track/"+(s.ref||"");
