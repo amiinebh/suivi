@@ -932,7 +932,7 @@ window.doLogout = function () {
 const TOKEN_KEY="ft_token", USER_KEY="ft_user";
 function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
-function isAdmin(){ return (getUser()||{}).role==="admin"; }
+function isAdmin(){ const r = (getUser()||{}).role; return r && r.toLowerCase()==="admin"; }
 
 async function doLogin(){
   const email=document.getElementById("login-email").value.trim();
@@ -1297,6 +1297,7 @@ function showPage(id,el){
   const titles={dashboard:'Overview',shipments:'Shipments'};
   document.getElementById('page-title').textContent=titles[id]||id;
   if(id==='shipments') loadShipments();
+  if(window.innerWidth <= 768 && typeof closeSidebar === 'function') closeSidebar();
   if(id==='analytics') loadAnalytics();
   if(id==='alerts') loadAlerts();
   if(id==='dashboard') setTimeout(bindOverviewCards,250);
