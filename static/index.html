@@ -921,6 +921,394 @@ textarea.form-control{resize:none;min-height:72px}
 
 
 <script>
+// ═══ AUTH ════════════════════════════════════════════════════
+const TOKEN_KEY="ft_token", USER_KEY="ft_user";
+function getToken(){ return localStorage.getItem(TOKEN_KEY); }
+function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
+function isAdmin(){ return (getUser()||{}).role==="admin"; }
+
+async function doLogin(){
+  const email=document.getElementById("login-email").value.trim();
+  const pw=document.getElementById("login-password").value;
+  const err=document.getElementById("login-error");
+  const btn=document.getElementById("login-btn");
+  err.style.display="none";
+  if(!email||!pw){ err.textContent="Enter email and password"; err.style.display="block"; return; }
+  btn.textContent="Signing in…"; btn.disabled=true;
+  try{
+    const r=await fetch("/api/auth/login",{method:"POST",
+      headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,password:pw})});
+    const d=await r.json();
+    if(!r.ok){ err.textContent=d.detail||"Invalid credentials"; err.style.display="block"; return; }
+    localStorage.setItem(TOKEN_KEY,d.access_token);
+    localStorage.setItem(USER_KEY,JSON.stringify({role:d.role,name:d.name}));
+    showApp();
+  } catch(e){ err.textContent="Network error. Try again."; err.style.display="block"; }
+  finally{ btn.textContent="Sign In →"; btn.disabled=false; }
+}
+
+document.addEventListener("keydown",e=>{
+  const ls=document.getElementById("login-screen");
+  if(e.key==="Enter"&&ls&&ls.style.display!=="none") doLogin();
+});
+
+function showApp(){
+  const ls=document.getElementById("login-screen");
+  if(ls) ls.style.display="none";
+  const user=getUser();
+  document.querySelectorAll(".admin-only").forEach(el=>{
+    el.style.display=isAdmin()?(el.className.indexOf("nav-section")>=0?"block":el.className.indexOf("nav-item")>=0||el.className.indexOf("bnav-item")>=0?"flex":""):"none";
+  });
+  const sn=document.getElementById("sidebar-user-name");
+  if(sn) sn.textContent=user?.name||"User";
+  const sr=document.getElementById("sidebar-user-role");
+  if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
+  const av=document.getElementById("sidebar-avatar");
+  if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
+  if(typeof loadDashboard==="function") loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
+}
+
+function doLogout(){
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  const ls=document.getElementById("login-screen");
+  if(ls) ls.style.display="flex";
+  ["login-email","login-password"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+}
+
+window.addEventListener("DOMContentLoaded",()=>{
+  if(getToken()) showApp();
+  else{ const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
+});
+
+// ═══ CHANGE PASSWORD ═════════════════════════════════════════
+async function doChangePassword(){
+  const old_pw=document.getElementById("cpw-old").value;
+  const new_pw=document.getElementById("cpw-new").value;
+  const confirm=document.getElementById("cpw-confirm").value;
+  const msg=document.getElementById("cpw-msg");
+  function showMsg(txt,ok){
+    msg.textContent=txt; msg.style.display="block";
+    msg.style.background=ok?"rgba(34,197,94,.1)":"rgba(239,68,68,.1)";
+    msg.style.border="1px solid "+(ok?"rgba(34,197,94,.3)":"rgba(239,68,68,.3)");
+    msg.style.color=ok?"#16a34a":"#ef4444";
+  }
+  if(!old_pw||!new_pw||!confirm){ showMsg("All fields are required",false); return; }
+  if(new_pw.length<6){ showMsg("New password must be at least 6 characters",false); return; }
+  if(new_pw!==confirm){ showMsg("Passwords do not match",false); return; }
+  try{
+    await apiFetch("/api/auth/change-password",{method:"POST",
+      body:JSON.stringify({old_password:old_pw,new_password:new_pw})});
+    showMsg("✅ Password updated successfully!",true);
+    setTimeout(()=>{ closeModal("modal-change-pw");
+      ["cpw-old","cpw-new","cpw-confirm"].forEach(id=>document.getElementById(id).value="");
+      msg.style.display="none"; },1800);
+  } catch(e){ showMsg(e.message||"Error updating password",false); }
+}
+
+// ═══ BULK IMPORT ═════════════════════════════════════════════
+let _bulkFile=null;
+function bulkFileSelected(file){
+  _bulkFile=file;
+  const sel=document.getElementById("bulk-selected");
+  const btn=document.getElementById("bulk-upload-btn");
+  const res=document.getElementById("bulk-result");
+  res.style.display="none";
+  if(!file){ sel.style.display="none"; if(btn) btn.style.display="none"; return; }
+  sel.innerHTML=`<i class="fa fa-file-excel" style="color:#22c55e"></i> <strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB)`;
+  sel.style.display="block";
+  if(btn) btn.style.display="";
+}
+
+async function doBulkUpload(){
+  if(!_bulkFile) return;
+  const btn=document.getElementById("bulk-upload-btn");
+  const res=document.getElementById("bulk-result");
+  if(btn){ btn.disabled=true; btn.textContent="Importing…"; }
+  const fd=new FormData(); fd.append("file",_bulkFile);
+  try{
+    const token=getToken();
+    const r=await fetch("/api/shipments/bulk-import",{method:"POST",
+      headers:token?{"Authorization":"Bearer "+token}:{}, body:fd});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||"Import failed");
+    res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#16a34a";
+    res.innerHTML=`✅ <strong>${d.created}</strong> created, <strong>${d.skipped}</strong> skipped`
+      +(d.errors?.length?`<br>⚠️ ${d.errors.length} error(s)`:"");
+    _bulkFile=null; if(btn) btn.style.display="none";
+    if(typeof loadShipments==="function") loadShipments();
+  } catch(e){
+    res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444";
+    res.textContent="❌ "+e.message;
+  }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa fa-upload"></i> Import'; } }
+}
+
+// ═══ USER MANAGEMENT ═════════════════════════════════════════
+async function loadUsers(){
+  const list=document.getElementById("users-list");
+  if(!list) return;
+  list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text2)"><i class="fa fa-spinner fa-spin"></i> Loading…</div>';
+  try{
+    const users=await apiFetch("/api/users");
+    if(!users.length){
+      list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px">👥</div>No team members yet</div>';
+      return;
+    }
+    list.innerHTML=users.map(u=>`
+      <div class="shipment-card" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:12px 14px">
+        <div style="width:40px;height:40px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,${u.role==='admin'?'#6c63ff,#4f8ef7':'#4f8ef7,#22c55e'});display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff">
+          ${(u.name||"U")[0].toUpperCase()}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.email}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <span class="badge ${u.role==='admin'?'badge-blue':'badge-green'}" style="font-size:10px">${u.role==='admin'?'👑 Admin':'🎧 CS'}</span>
+          <span class="badge ${u.is_active?'badge-green':'badge-red'}" style="font-size:10px">${u.is_active?'Active':'Inactive'}</span>
+        </div>
+        ${u.role!=='admin'?`<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <button onclick="toggleUser(${u.id})" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px">${u.is_active?'🔒 Disable':'🔓 Enable'}</button>
+          <button onclick="deleteUser(${u.id})" class="btn btn-danger btn-sm" style="font-size:10px;padding:3px 8px">🗑 Delete</button>
+        </div>`:""}
+      </div>`).join("");
+  } catch(e){ list.innerHTML=`<div style="color:#ef4444;padding:20px;text-align:center">Error: ${e.message}</div>`; }
+}
+
+function openNewUserModal(){
+  _resetContainerForm();
+  ["nu-name","nu-email","nu-pw"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+  const r=document.getElementById("nu-role"); if(r) r.value="cs";
+  const e=document.getElementById("nu-error"); if(e) e.style.display="none";
+  openModal("modal-add-user");
+}
+
+async function createUser(){
+  const name=document.getElementById("nu-name").value.trim();
+  const email=document.getElementById("nu-email").value.trim();
+  const pw=document.getElementById("nu-pw").value;
+  const role=document.getElementById("nu-role").value;
+  const err=document.getElementById("nu-error");
+  err.style.display="none";
+  if(!name||!email||!pw){ err.textContent="All fields are required"; err.style.display="block"; return; }
+  if(pw.length<6){ err.textContent="Password must be at least 6 characters"; err.style.display="block"; return; }
+  try{
+    await apiFetch("/api/users",{method:"POST",body:JSON.stringify({name,email,password:pw,role})});
+    closeModal("modal-add-user"); loadUsers(); showToast("User created","success");
+  } catch(e){ err.textContent=e.message||"Error creating user"; err.style.display="block"; }
+}
+
+async function toggleUser(id){
+  try{ await apiFetch(`/api/users/${id}/toggle`,{method:"PATCH"}); loadUsers(); }
+  catch(e){ showToast("Error: "+e.message,"error"); }
+}
+
+async function deleteUser(id){
+  if(!await _confirm("Delete this user permanently?")) return;
+  try{ await apiFetch(`/api/users/${id}`,{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
+  catch(e){ showToast("Error: "+e.message,"error"); }
+}
+
+// ═══ SHIPMENT DETAIL ═════════════════════════════════════════
+let _detailId=null;
+
+async function openDetail(id){
+  _detailId=id;
+  showPage("detail",null);
+  document.getElementById("detail-ref").textContent="Loading…";
+  document.getElementById("detail-sub").textContent="";
+  document.getElementById("detail-status-badge").innerHTML="";
+  ["detail-pol","detail-pod","detail-etd","detail-eta"].forEach(i=>{
+    const el=document.getElementById(i); if(el) el.textContent="—";
+  });
+  document.getElementById("detail-events-list").innerHTML="";
+  document.getElementById("detail-comments-list").innerHTML="";
+  document.getElementById("detail-info-chips").innerHTML="";
+  document.getElementById("detail-no-events").style.display="none";
+  switchDTab("timeline");
+  try{
+    const s=await apiFetch(`/api/shipments/${id}`);
+    _renderDetail(s);
+  } catch(e){ document.getElementById("detail-ref").textContent="Error: "+e.message; }
+}
+
+function _renderDetail(s){
+  document.getElementById("detail-ref").textContent=s.ref||"—";
+  document.getElementById("detail-sub").textContent=[s.booking_no,s.carrier].filter(Boolean).join(" · ")||"No container/carrier info";
+  document.getElementById("detail-status-badge").innerHTML=typeof statusBadge==="function"?statusBadge(s.status):`<span>${s.status}</span>`;
+  document.getElementById("detail-pol").textContent=s.pol||"—";
+  document.getElementById("detail-pod").textContent=s.pod||"—";
+  document.getElementById("detail-etd").textContent=s.etd||"—";
+  document.getElementById("detail-eta").textContent=s.eta||"—";
+  
+  const infoChips = document.getElementById("detail-info-chips");
+  if(infoChips){
+    infoChips.innerHTML = [
+      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
+      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
+      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:6px 10px">👤 <b>Client:</b> ${s.client}</div>` : '',
+      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:6px 10px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
+      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
+      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:6px 10px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
+    ].filter(Boolean).join('');
+  }
+
+  // Containers list
+  const contList = document.getElementById("detail-containers-list");
+  if(contList){
+    if(s.containers && s.containers.length){
+      contList.innerHTML = s.containers.map(c=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:600;color:var(--text1)">${c.container_no||c.size_type||'Container'}</div>
+          <div class="badge badge-gray" style="font-size:11px">${c.size_type||'—'}</div>
+        </div>
+      `).join('');
+      document.getElementById("detail-containers-section").style.display="block";
+    } else {
+      document.getElementById("detail-containers-section").style.display="none";
+    }
+  }
+</div>` : '',
+      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
+      s.client     ? `<div class="badge badge-blue" style="font-size:12px">👤 <b>Client:</b> ${s.client}</div>` : '',
+      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
+      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
+    ].filter(Boolean).join('');
+    infoChips.style.display = infoChips.innerHTML ? 'flex' : 'none';
+  }
+
+  const ha=document.getElementById("detail-portal-href");
+  const infoChips = document.getElementById("detail-info-chips");
+  if(infoChips){
+    infoChips.innerHTML = [
+      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
+      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
+      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:4px 8px">👤 <b>Client:</b> ${s.client}</div>` : '',
+      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:4px 8px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
+      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
+      (s.containers && s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:4px 8px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : ''
+    ].filter(Boolean).join('');
+  }
+  const contSection = document.getElementById("detail-containers-section");
+  const contList = document.getElementById("detail-containers-list");
+  if(contSection && contList){
+    if(s.containers && s.containers.length){
+      contSection.style.display = 'block';
+      contList.innerHTML = s.containers.map(c=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:13px;font-weight:600;color:var(--text1)">${c.container_no||c.size_type||'Container'}</div>
+          <div style="font-size:11px;color:var(--text2)">${c.size_type||''}</div>
+        </div>`).join('');
+    } else {
+      contSection.style.display = 'none';
+      contList.innerHTML = '';
+    }
+  }
+  if(ha) ha.href="/track/"+(s.ref||"");
+
+  // Timeline
+  const evList=document.getElementById("detail-events-list");
+  const noEv=document.getElementById("detail-no-events");
+  const evts=(s.events||[]).slice().reverse();
+  if(!evts.length){ evList.innerHTML=""; noEv.style.display="block"; }
+  else{
+    noEv.style.display="none";
+    evList.innerHTML=evts.map((e,i)=>`
+      <div class="timeline-item">
+        <div class="tl-dot ${i===0?"latest":""}">${i===0?"🚢":"📍"}</div>
+        <div class="tl-content">
+          <div class="tl-time">${e.timestamp||""}</div>
+          <div class="tl-label">${e.description||e.status||"Update"}</div>
+          ${e.location?`<div class="tl-loc">📌 ${e.location}</div>`:""}
+        </div>
+      </div>`).join("");
+  }
+
+  // Comments
+  const cList=document.getElementById("detail-comments-list");
+  const comments=s.comments||[];
+  cList.innerHTML=!comments.length
+    ?'<div style="text-align:center;padding:20px;color:var(--text2);font-size:12px">No notes yet</div>'
+    :comments.map(c=>`
+      <div class="comment-bubble">
+        <span class="comment-author">${c.author||"Agent"}</span>
+        <span class="comment-time">${c.timestamp||""}</span>
+        <div class="comment-text">${c.text||""}</div>
+      </div>`).join("");
+
+  // Info chips
+  const chips=[
+    {l:"Reference",v:s.ref},{l:"Container/AWB",v:s.ref2||"—"},
+    {l:"Mode",v:s.mode||"—"},{l:"Carrier",v:s.carrier||"—"},
+    {l:"Vessel",v:s.vessel||"—"},{l:"Status",v:s.status||"—"},
+    {l:"ETD",v:s.etd||"—"},{l:"ETA",v:s.eta||"—"},
+    {l:"Client",v:s.client||"—",full:true},
+    {l:"Client Email",v:s.client_email||"—",full:true},
+    {l:"Booking No.",v:s.booking_no||"—"},
+    {l:"Note",v:s.note||"—",full:true},
+    {l:"Last Synced",v:s.last_tracked||"Never"},
+  ];
+  document.getElementById("detail-info-chips").innerHTML=chips.map(c=>
+    `<div class="info-chip${c.full?" full":""}"><div class="chip-label">${c.l}</div><div class="chip-value">${c.v}</div></div>`
+  ).join("");
+}
+
+function switchDTab(tab){
+  ["timeline","notes","info"].forEach(t=>{
+    const p=document.getElementById("dtab-"+t);
+    const b=document.getElementById("dtab-btn-"+t);
+    if(p) p.style.display=t===tab?"block":"none";
+    if(b) b.classList.toggle("active",t===tab);
+  });
+}
+
+async function submitComment(){
+  const txt=document.getElementById("detail-comment-text");
+  if(!txt||!txt.value.trim()) return;
+  const user=getUser();
+  try{
+    await apiFetch(`/api/shipments/${_detailId}/comments`,{method:"POST",
+      body:JSON.stringify({author:user?.name||"Agent",text:txt.value.trim()})});
+    txt.value="";
+    const s=await apiFetch(`/api/shipments/${_detailId}`);
+    _renderDetail(s); switchDTab("notes"); showToast("Note added","success");
+  } catch(e){ showToast("Error: "+e.message,"error"); }
+}
+
+async function syncDetail(){
+  if(!_detailId) return;
+  const btn=document.getElementById("detail-sync-btn");
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa fa-rotate fa-spin"></i>'; }
+  try{
+    await apiFetch(`/api/shipments/${_detailId}/track`,{method:"POST"});
+    const s=await apiFetch(`/api/shipments/${_detailId}`);
+    _renderDetail(s); showToast("Synced","success");
+  } catch(e){ showToast("Sync error: "+e.message,"error"); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa fa-rotate"></i>'; } }
+}
+
+function copyPortalLink(){
+  const a=document.getElementById("detail-portal-href");
+  if(!a) return;
+  const url=window.location.origin+a.getAttribute("href");
+  navigator.clipboard.writeText(url)
+    .then(()=>showToast("Link copied!","success"))
+    .catch(()=>{ prompt("Copy this link:",url); });
+}
+
+function showToast(msg,type){
+  let wrap=document.getElementById("toast-wrap");
+  if(!wrap){ wrap=document.createElement("div"); wrap.id="toast-wrap";
+    wrap.style.cssText="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none";
+    document.body.appendChild(wrap); }
+  const t=document.createElement("div");
+  t.style.cssText="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;color:var(--text1);box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;white-space:nowrap";
+  t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"✅":"❌"}</span>${msg}`;
+  wrap.appendChild(t); setTimeout(()=>t.remove(),2800);
+}
+</script>
+<script>
 let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, allShipments=[];
 
@@ -1748,394 +2136,6 @@ loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFil
 </div>
 
 
-<script>
-// ═══ AUTH ════════════════════════════════════════════════════
-const TOKEN_KEY="ft_token", USER_KEY="ft_user";
-function getToken(){ return localStorage.getItem(TOKEN_KEY); }
-function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
-function isAdmin(){ return (getUser()||{}).role==="admin"; }
-
-async function doLogin(){
-  const email=document.getElementById("login-email").value.trim();
-  const pw=document.getElementById("login-password").value;
-  const err=document.getElementById("login-error");
-  const btn=document.getElementById("login-btn");
-  err.style.display="none";
-  if(!email||!pw){ err.textContent="Enter email and password"; err.style.display="block"; return; }
-  btn.textContent="Signing in…"; btn.disabled=true;
-  try{
-    const r=await fetch("/api/auth/login",{method:"POST",
-      headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,password:pw})});
-    const d=await r.json();
-    if(!r.ok){ err.textContent=d.detail||"Invalid credentials"; err.style.display="block"; return; }
-    localStorage.setItem(TOKEN_KEY,d.access_token);
-    localStorage.setItem(USER_KEY,JSON.stringify({role:d.role,name:d.name}));
-    showApp();
-  } catch(e){ err.textContent="Network error. Try again."; err.style.display="block"; }
-  finally{ btn.textContent="Sign In →"; btn.disabled=false; }
-}
-
-document.addEventListener("keydown",e=>{
-  const ls=document.getElementById("login-screen");
-  if(e.key==="Enter"&&ls&&ls.style.display!=="none") doLogin();
-});
-
-function showApp(){
-  const ls=document.getElementById("login-screen");
-  if(ls) ls.style.display="none";
-  const user=getUser();
-  document.querySelectorAll(".admin-only").forEach(el=>{
-    el.style.display=isAdmin()?(el.className.indexOf("nav-section")>=0?"block":el.className.indexOf("nav-item")>=0||el.className.indexOf("bnav-item")>=0?"flex":""):"none";
-  });
-  const sn=document.getElementById("sidebar-user-name");
-  if(sn) sn.textContent=user?.name||"User";
-  const sr=document.getElementById("sidebar-user-role");
-  if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
-  const av=document.getElementById("sidebar-avatar");
-  if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
-  if(typeof loadDashboard==="function") loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
-}
-
-function doLogout(){
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
-  const ls=document.getElementById("login-screen");
-  if(ls) ls.style.display="flex";
-  ["login-email","login-password"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
-}
-
-window.addEventListener("DOMContentLoaded",()=>{
-  if(getToken()) showApp();
-  else{ const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
-});
-
-// ═══ CHANGE PASSWORD ═════════════════════════════════════════
-async function doChangePassword(){
-  const old_pw=document.getElementById("cpw-old").value;
-  const new_pw=document.getElementById("cpw-new").value;
-  const confirm=document.getElementById("cpw-confirm").value;
-  const msg=document.getElementById("cpw-msg");
-  function showMsg(txt,ok){
-    msg.textContent=txt; msg.style.display="block";
-    msg.style.background=ok?"rgba(34,197,94,.1)":"rgba(239,68,68,.1)";
-    msg.style.border="1px solid "+(ok?"rgba(34,197,94,.3)":"rgba(239,68,68,.3)");
-    msg.style.color=ok?"#16a34a":"#ef4444";
-  }
-  if(!old_pw||!new_pw||!confirm){ showMsg("All fields are required",false); return; }
-  if(new_pw.length<6){ showMsg("New password must be at least 6 characters",false); return; }
-  if(new_pw!==confirm){ showMsg("Passwords do not match",false); return; }
-  try{
-    await apiFetch("/api/auth/change-password",{method:"POST",
-      body:JSON.stringify({old_password:old_pw,new_password:new_pw})});
-    showMsg("✅ Password updated successfully!",true);
-    setTimeout(()=>{ closeModal("modal-change-pw");
-      ["cpw-old","cpw-new","cpw-confirm"].forEach(id=>document.getElementById(id).value="");
-      msg.style.display="none"; },1800);
-  } catch(e){ showMsg(e.message||"Error updating password",false); }
-}
-
-// ═══ BULK IMPORT ═════════════════════════════════════════════
-let _bulkFile=null;
-function bulkFileSelected(file){
-  _bulkFile=file;
-  const sel=document.getElementById("bulk-selected");
-  const btn=document.getElementById("bulk-upload-btn");
-  const res=document.getElementById("bulk-result");
-  res.style.display="none";
-  if(!file){ sel.style.display="none"; if(btn) btn.style.display="none"; return; }
-  sel.innerHTML=`<i class="fa fa-file-excel" style="color:#22c55e"></i> <strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB)`;
-  sel.style.display="block";
-  if(btn) btn.style.display="";
-}
-
-async function doBulkUpload(){
-  if(!_bulkFile) return;
-  const btn=document.getElementById("bulk-upload-btn");
-  const res=document.getElementById("bulk-result");
-  if(btn){ btn.disabled=true; btn.textContent="Importing…"; }
-  const fd=new FormData(); fd.append("file",_bulkFile);
-  try{
-    const token=getToken();
-    const r=await fetch("/api/shipments/bulk-import",{method:"POST",
-      headers:token?{"Authorization":"Bearer "+token}:{}, body:fd});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.detail||"Import failed");
-    res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#16a34a";
-    res.innerHTML=`✅ <strong>${d.created}</strong> created, <strong>${d.skipped}</strong> skipped`
-      +(d.errors?.length?`<br>⚠️ ${d.errors.length} error(s)`:"");
-    _bulkFile=null; if(btn) btn.style.display="none";
-    if(typeof loadShipments==="function") loadShipments();
-  } catch(e){
-    res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444";
-    res.textContent="❌ "+e.message;
-  }
-  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa fa-upload"></i> Import'; } }
-}
-
-// ═══ USER MANAGEMENT ═════════════════════════════════════════
-async function loadUsers(){
-  const list=document.getElementById("users-list");
-  if(!list) return;
-  list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text2)"><i class="fa fa-spinner fa-spin"></i> Loading…</div>';
-  try{
-    const users=await apiFetch("/api/users");
-    if(!users.length){
-      list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px">👥</div>No team members yet</div>';
-      return;
-    }
-    list.innerHTML=users.map(u=>`
-      <div class="shipment-card" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:12px 14px">
-        <div style="width:40px;height:40px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,${u.role==='admin'?'#6c63ff,#4f8ef7':'#4f8ef7,#22c55e'});display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff">
-          ${(u.name||"U")[0].toUpperCase()}
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.email}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
-          <span class="badge ${u.role==='admin'?'badge-blue':'badge-green'}" style="font-size:10px">${u.role==='admin'?'👑 Admin':'🎧 CS'}</span>
-          <span class="badge ${u.is_active?'badge-green':'badge-red'}" style="font-size:10px">${u.is_active?'Active':'Inactive'}</span>
-        </div>
-        ${u.role!=='admin'?`<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-          <button onclick="toggleUser(${u.id})" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px">${u.is_active?'🔒 Disable':'🔓 Enable'}</button>
-          <button onclick="deleteUser(${u.id})" class="btn btn-danger btn-sm" style="font-size:10px;padding:3px 8px">🗑 Delete</button>
-        </div>`:""}
-      </div>`).join("");
-  } catch(e){ list.innerHTML=`<div style="color:#ef4444;padding:20px;text-align:center">Error: ${e.message}</div>`; }
-}
-
-function openNewUserModal(){
-  _resetContainerForm();
-  ["nu-name","nu-email","nu-pw"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
-  const r=document.getElementById("nu-role"); if(r) r.value="cs";
-  const e=document.getElementById("nu-error"); if(e) e.style.display="none";
-  openModal("modal-add-user");
-}
-
-async function createUser(){
-  const name=document.getElementById("nu-name").value.trim();
-  const email=document.getElementById("nu-email").value.trim();
-  const pw=document.getElementById("nu-pw").value;
-  const role=document.getElementById("nu-role").value;
-  const err=document.getElementById("nu-error");
-  err.style.display="none";
-  if(!name||!email||!pw){ err.textContent="All fields are required"; err.style.display="block"; return; }
-  if(pw.length<6){ err.textContent="Password must be at least 6 characters"; err.style.display="block"; return; }
-  try{
-    await apiFetch("/api/users",{method:"POST",body:JSON.stringify({name,email,password:pw,role})});
-    closeModal("modal-add-user"); loadUsers(); showToast("User created","success");
-  } catch(e){ err.textContent=e.message||"Error creating user"; err.style.display="block"; }
-}
-
-async function toggleUser(id){
-  try{ await apiFetch(`/api/users/${id}/toggle`,{method:"PATCH"}); loadUsers(); }
-  catch(e){ showToast("Error: "+e.message,"error"); }
-}
-
-async function deleteUser(id){
-  if(!await _confirm("Delete this user permanently?")) return;
-  try{ await apiFetch(`/api/users/${id}`,{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
-  catch(e){ showToast("Error: "+e.message,"error"); }
-}
-
-// ═══ SHIPMENT DETAIL ═════════════════════════════════════════
-let _detailId=null;
-
-async function openDetail(id){
-  _detailId=id;
-  showPage("detail",null);
-  document.getElementById("detail-ref").textContent="Loading…";
-  document.getElementById("detail-sub").textContent="";
-  document.getElementById("detail-status-badge").innerHTML="";
-  ["detail-pol","detail-pod","detail-etd","detail-eta"].forEach(i=>{
-    const el=document.getElementById(i); if(el) el.textContent="—";
-  });
-  document.getElementById("detail-events-list").innerHTML="";
-  document.getElementById("detail-comments-list").innerHTML="";
-  document.getElementById("detail-info-chips").innerHTML="";
-  document.getElementById("detail-no-events").style.display="none";
-  switchDTab("timeline");
-  try{
-    const s=await apiFetch(`/api/shipments/${id}`);
-    _renderDetail(s);
-  } catch(e){ document.getElementById("detail-ref").textContent="Error: "+e.message; }
-}
-
-function _renderDetail(s){
-  document.getElementById("detail-ref").textContent=s.ref||"—";
-  document.getElementById("detail-sub").textContent=[s.booking_no,s.carrier].filter(Boolean).join(" · ")||"No container/carrier info";
-  document.getElementById("detail-status-badge").innerHTML=typeof statusBadge==="function"?statusBadge(s.status):`<span>${s.status}</span>`;
-  document.getElementById("detail-pol").textContent=s.pol||"—";
-  document.getElementById("detail-pod").textContent=s.pod||"—";
-  document.getElementById("detail-etd").textContent=s.etd||"—";
-  document.getElementById("detail-eta").textContent=s.eta||"—";
-  
-  const infoChips = document.getElementById("detail-info-chips");
-  if(infoChips){
-    infoChips.innerHTML = [
-      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:6px 10px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:6px 10px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
-      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:6px 10px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
-    ].filter(Boolean).join('');
-  }
-
-  // Containers list
-  const contList = document.getElementById("detail-containers-list");
-  if(contList){
-    if(s.containers && s.containers.length){
-      contList.innerHTML = s.containers.map(c=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:600;color:var(--text1)">${c.container_no||c.size_type||'Container'}</div>
-          <div class="badge badge-gray" style="font-size:11px">${c.size_type||'—'}</div>
-        </div>
-      `).join('');
-      document.getElementById("detail-containers-section").style.display="block";
-    } else {
-      document.getElementById("detail-containers-section").style.display="none";
-    }
-  }
-</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
-    ].filter(Boolean).join('');
-    infoChips.style.display = infoChips.innerHTML ? 'flex' : 'none';
-  }
-
-  const ha=document.getElementById("detail-portal-href");
-  const infoChips = document.getElementById("detail-info-chips");
-  if(infoChips){
-    infoChips.innerHTML = [
-      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:4px 8px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:4px 8px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
-      (s.containers && s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:4px 8px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : ''
-    ].filter(Boolean).join('');
-  }
-  const contSection = document.getElementById("detail-containers-section");
-  const contList = document.getElementById("detail-containers-list");
-  if(contSection && contList){
-    if(s.containers && s.containers.length){
-      contSection.style.display = 'block';
-      contList.innerHTML = s.containers.map(c=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:600;color:var(--text1)">${c.container_no||c.size_type||'Container'}</div>
-          <div style="font-size:11px;color:var(--text2)">${c.size_type||''}</div>
-        </div>`).join('');
-    } else {
-      contSection.style.display = 'none';
-      contList.innerHTML = '';
-    }
-  }
-  if(ha) ha.href="/track/"+(s.ref||"");
-
-  // Timeline
-  const evList=document.getElementById("detail-events-list");
-  const noEv=document.getElementById("detail-no-events");
-  const evts=(s.events||[]).slice().reverse();
-  if(!evts.length){ evList.innerHTML=""; noEv.style.display="block"; }
-  else{
-    noEv.style.display="none";
-    evList.innerHTML=evts.map((e,i)=>`
-      <div class="timeline-item">
-        <div class="tl-dot ${i===0?"latest":""}">${i===0?"🚢":"📍"}</div>
-        <div class="tl-content">
-          <div class="tl-time">${e.timestamp||""}</div>
-          <div class="tl-label">${e.description||e.status||"Update"}</div>
-          ${e.location?`<div class="tl-loc">📌 ${e.location}</div>`:""}
-        </div>
-      </div>`).join("");
-  }
-
-  // Comments
-  const cList=document.getElementById("detail-comments-list");
-  const comments=s.comments||[];
-  cList.innerHTML=!comments.length
-    ?'<div style="text-align:center;padding:20px;color:var(--text2);font-size:12px">No notes yet</div>'
-    :comments.map(c=>`
-      <div class="comment-bubble">
-        <span class="comment-author">${c.author||"Agent"}</span>
-        <span class="comment-time">${c.timestamp||""}</span>
-        <div class="comment-text">${c.text||""}</div>
-      </div>`).join("");
-
-  // Info chips
-  const chips=[
-    {l:"Reference",v:s.ref},{l:"Container/AWB",v:s.ref2||"—"},
-    {l:"Mode",v:s.mode||"—"},{l:"Carrier",v:s.carrier||"—"},
-    {l:"Vessel",v:s.vessel||"—"},{l:"Status",v:s.status||"—"},
-    {l:"ETD",v:s.etd||"—"},{l:"ETA",v:s.eta||"—"},
-    {l:"Client",v:s.client||"—",full:true},
-    {l:"Client Email",v:s.client_email||"—",full:true},
-    {l:"Booking No.",v:s.booking_no||"—"},
-    {l:"Note",v:s.note||"—",full:true},
-    {l:"Last Synced",v:s.last_tracked||"Never"},
-  ];
-  document.getElementById("detail-info-chips").innerHTML=chips.map(c=>
-    `<div class="info-chip${c.full?" full":""}"><div class="chip-label">${c.l}</div><div class="chip-value">${c.v}</div></div>`
-  ).join("");
-}
-
-function switchDTab(tab){
-  ["timeline","notes","info"].forEach(t=>{
-    const p=document.getElementById("dtab-"+t);
-    const b=document.getElementById("dtab-btn-"+t);
-    if(p) p.style.display=t===tab?"block":"none";
-    if(b) b.classList.toggle("active",t===tab);
-  });
-}
-
-async function submitComment(){
-  const txt=document.getElementById("detail-comment-text");
-  if(!txt||!txt.value.trim()) return;
-  const user=getUser();
-  try{
-    await apiFetch(`/api/shipments/${_detailId}/comments`,{method:"POST",
-      body:JSON.stringify({author:user?.name||"Agent",text:txt.value.trim()})});
-    txt.value="";
-    const s=await apiFetch(`/api/shipments/${_detailId}`);
-    _renderDetail(s); switchDTab("notes"); showToast("Note added","success");
-  } catch(e){ showToast("Error: "+e.message,"error"); }
-}
-
-async function syncDetail(){
-  if(!_detailId) return;
-  const btn=document.getElementById("detail-sync-btn");
-  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa fa-rotate fa-spin"></i>'; }
-  try{
-    await apiFetch(`/api/shipments/${_detailId}/track`,{method:"POST"});
-    const s=await apiFetch(`/api/shipments/${_detailId}`);
-    _renderDetail(s); showToast("Synced","success");
-  } catch(e){ showToast("Sync error: "+e.message,"error"); }
-  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa fa-rotate"></i>'; } }
-}
-
-function copyPortalLink(){
-  const a=document.getElementById("detail-portal-href");
-  if(!a) return;
-  const url=window.location.origin+a.getAttribute("href");
-  navigator.clipboard.writeText(url)
-    .then(()=>showToast("Link copied!","success"))
-    .catch(()=>{ prompt("Copy this link:",url); });
-}
-
-function showToast(msg,type){
-  let wrap=document.getElementById("toast-wrap");
-  if(!wrap){ wrap=document.createElement("div"); wrap.id="toast-wrap";
-    wrap.style.cssText="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none";
-    document.body.appendChild(wrap); }
-  const t=document.createElement("div");
-  t.style.cssText="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;color:var(--text1);box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;white-space:nowrap";
-  t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"✅":"❌"}</span>${msg}`;
-  wrap.appendChild(t); setTimeout(()=>t.remove(),2800);
-}
-</script>
 
 
 <!-- FILES BOTTOM SHEET -->
