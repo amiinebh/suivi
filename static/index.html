@@ -982,7 +982,9 @@ textarea.form-control{resize:none;min-height:72px}
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
+
+// ═══ CHART.JS (loaded externally) ═══
+
 // ═══ AUTH ════════════════════════════════════════════════════
 const TOKEN_KEY="ft_token";
 const USER_KEY="ft_user";
@@ -1016,8 +1018,6 @@ function showApp(){
   if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
   const av=document.getElementById("sidebar-avatar");
   if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
-  if(typeof loadDashboard==="function") loadDashboard(); 
-  setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
 }
 
 function doLogout(){
@@ -1027,6 +1027,40 @@ function doLogout(){
   if(ls){ ls.style.display="flex"; }
 }
 
+async function doLogin(){
+  const email=document.getElementById("login-email").value.trim();
+  const pw=document.getElementById("login-password").value;
+  const btn=document.getElementById("login-btn");
+  const err=document.getElementById("login-error");
+
+  if(!email||!pw){ 
+    err.textContent="Email and password required"; 
+    err.style.display="block"; 
+    return; 
+  }
+
+  btn.textContent="Signing in…"; btn.disabled=true; err.style.display="none";
+
+  try{
+    const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,pw})});
+    const d=await r.json();
+    if(!r.ok){
+      err.textContent = d.detail || "Invalid email or password";
+      err.style.display = "block"; 
+      return;
+    }
+    localStorage.setItem(TOKEN_KEY, d.access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify({role:d.role, name:d.name}));
+    showApp();
+  }catch(e){
+    err.textContent = "Network error — please try again";
+    err.style.display = "block";
+  } finally {
+    btn.textContent = "Sign In →"; btn.disabled = false;
+  }
+}
+
+// ═══ STARTUP ═══
 window.addEventListener("DOMContentLoaded",async()=>{
   if(getToken()){
     await syncMe();
@@ -1036,6 +1070,6 @@ window.addEventListener("DOMContentLoaded",async()=>{
     if(ls) ls.style.display="flex";
   }
 });
-</script>
+
 </body>>
   </html>
