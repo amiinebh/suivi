@@ -446,6 +446,19 @@ textarea.form-control{resize:none;min-height:72px}
 #bulk-drop-zone:hover{border-color:var(--accent)!important;background:var(--bg3)}
 
 </style>
+
+<style>
+.modal,.modal-content,.page,.content,.app-container,.main-content{pointer-events:auto !important;touch-action:auto !important;}
+.modal-backdrop,.backdrop,.overlay.blocking{pointer-events:none !important;}
+.ship-tab,.btn,.nav-item,button,a,input,select,textarea,label{pointer-events:auto !important;}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.modal-backdrop,.backdrop,.overlay.blocking').forEach(el=>el.style.pointerEvents='none');
+  document.querySelectorAll('.ship-tab,.btn,.nav-item,button,a,input,select,textarea,label').forEach(el=>el.style.pointerEvents='auto');
+});
+</script>
+
 </head>
 <body>
   <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;
@@ -940,7 +953,7 @@ function showPage(id,el){
   if(id==='shipments') loadShipments();
   if(id==='analytics') loadAnalytics();
   if(id==='alerts') loadAlerts();
-  if(id==='dashboard') setTimeout(bindOverviewCards,250);
+  if(id==='dashboard') setTimeout(bindOverviewCards,150);
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -1046,42 +1059,31 @@ function applyShipmentStatusFilter(status){
   if(typeof loadShipments==='function') loadShipments();
 }
 function bindOverviewCards(){
-  console.log('[FREIGHT] Binding overview cards...');
-  setTimeout(()=>{
-    const cards=document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,.overview-stat');
-    console.log('[FREIGHT] Found',cards.length,'potential cards');
-    cards.forEach((el,i)=>{
-      const text=(el.textContent||'').toLowerCase().replace(/\s+/g,' ');
-      let status=null;
-      if(/\bdelayed\b/.test(text)) status='Delayed';
-      else if(/\bpending\b/.test(text)) status='Pending';
-      else if(/\bdelivered\b|\barrived\b/.test(text)) status='Delivered';
-      else if(/\bin transit\b|\bsailing\b|\bactive\b/.test(text)) status='In Transit';
-      if(status){
-        el.style.cursor='pointer';
-        el.style.transition='transform 0.2s';
-        el.onmouseenter=()=>el.style.transform='scale(1.02)';
-        el.onmouseleave=()=>el.style.transform='scale(1)';
-        el.onclick=(e)=>{
-          e.preventDefault();e.stopPropagation();
-          console.log('[FREIGHT] Card clicked, filter:',status);
-          applyShipmentStatusFilter(status);
-        };
-        console.log('[FREIGHT] Card',i,'bound to status:',status);
-      }
-    });
-  },300);
-}
-  const cards=[...document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,button,div')];
-  cards.forEach(el=>{
-    const t=(el.textContent||'').replace(/\s+/g,' ').trim();
-    if(!t) return;
-    if(/\bDelayed\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('Delayed'); }
-    else if(/\b(Pending|Booked|Confirmed)\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('Pending'); }
-    else if(/\b(Delivered|Arrived|Discharged|Done)\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('Delivered'); }
-    else if(/\b(Sailing|In Transit|Transit|Active)\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('In Transit'); }
+  const cards=document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,.overview-stat,[data-status-card]');
+  cards.forEach((el)=>{
+    const text=(el.textContent||'').toLowerCase().replace(/\s+/g,' ');
+    let status=null;
+    if(/\bdelayed\b/.test(text)) status='Delayed';
+    else if(/\bpending\b/.test(text)) status='Pending';
+    else if(/\bdelivered\b|\bdone\b|\barrived\b/.test(text)) status='Delivered';
+    else if(/\bin transit\b|\bsailing\b|\bactive\b/.test(text)) status='In Transit';
+    if(status && !el.dataset.boundStatusCard){
+      el.dataset.boundStatusCard='1';
+      el.style.cursor='pointer';
+      const handler=function(e){ e.preventDefault(); e.stopPropagation(); applyShipmentStatusFilter(status); };
+      el.addEventListener('click', handler, {passive:false});
+      el.addEventListener('touchend', handler, {passive:false});
+    }
   });
-  window._overviewFilterApplied=true;
+}
+
+function applyShipmentStatusFilter(status){
+  if(typeof showPage==='function') showPage('shipments');
+  setTimeout(()=>{
+    const s=document.getElementById('search-status') || document.getElementById('status-filter') || document.querySelector('select[id*="status"]');
+    if(s) s.value=status;
+    if(typeof loadShipments==='function') loadShipments();
+  },150);
 }
 
 function statusBadge(s){
@@ -1221,8 +1223,8 @@ function renderTable(ships){
 
 /* ── Dashboard ── */
 async function loadDashboard(){
-  setTimeout(()=>{bindOverviewCards();console.log("[FREIGHT] Dashboard loaded, cards bound");},500);
-  setTimeout(bindOverviewCards,400);
+  setTimeout(bindOverviewCards,150);
+  
   try{
     const stats=await apiFetch('/api/stats');
     const bs=stats.by_status||{};
@@ -1397,7 +1399,7 @@ async function saveShipment(){
     if(r&&r.id){
       try{await _saveContainers(r.id);}catch(e){console.warn('containers:',e);}
       toast(editId?'Shipment updated':'Shipment added','success');
-      closeModal('modal-add'); loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200); loadShipments();
+      closeModal('modal-add'); loadDashboard(); setTimeout(attachOverviewFilters,200); loadShipments();
     } else { toast('Unexpected server response','error'); }
   }catch(e){ toast(e.message,'error'); console.error('saveShipment:',e); }
   btn.innerHTML='<i class="fa fa-floppy-disk"></i> Save Shipment'; btn.disabled=false;
@@ -1442,7 +1444,7 @@ async function deleteShipment(sid){
     await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
     toast('Deleted','success'); closeModal('modal-detail');
     initTheme();
-loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200); loadShipments();
+loadDashboard(); setTimeout(attachOverviewFilters,200); loadShipments();
   }catch(e){ toast(e.message,'error'); }
 }
 
@@ -1650,7 +1652,7 @@ function initTheme(){
 
 /* ── Init ── */
 initTheme();
-loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
+loadDashboard(); setTimeout(attachOverviewFilters,200);
 </script>
 
 <script>
@@ -2041,7 +2043,7 @@ function showApp(){
   if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
   const av=document.getElementById("sidebar-avatar");
   if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
-  if(typeof loadDashboard==="function") loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
+  if(typeof loadDashboard==="function") loadDashboard(); setTimeout(attachOverviewFilters,200);
 }
 
 function doLogout(){
@@ -2796,7 +2798,20 @@ async function generateReport(){
 }
 .modal-shipment label{color:#cbd5e1 !important;font-weight:500;}
 .modal-shipment .form-group h3,.modal-shipment .form-group h4{color:#e5e7eb !important;}
-</style></head><body>
+</style>
+<style>
+.modal,.modal-content,.page,.content,.app-container,.main-content{pointer-events:auto !important;touch-action:auto !important;}
+.modal-backdrop,.backdrop,.overlay.blocking{pointer-events:none !important;}
+.ship-tab,.btn,.nav-item,button,a,input,select,textarea,label{pointer-events:auto !important;}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.modal-backdrop,.backdrop,.overlay.blocking').forEach(el=>el.style.pointerEvents='none');
+  document.querySelectorAll('.ship-tab,.btn,.nav-item,button,a,input,select,textarea,label').forEach(el=>el.style.pointerEvents='auto');
+});
+</script>
+
+</head><body>
 
     <div class="page-header">
       <div>
