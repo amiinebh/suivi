@@ -446,6 +446,151 @@ textarea.form-control{resize:none;min-height:72px}
 #bulk-drop-zone:hover{border-color:var(--accent)!important;background:var(--bg3)}
 
 </style>
+
+<style id="ft-modern-theme-overlay">
+:root{
+  --ft-bg:#0b1220;
+  --ft-panel:#111827;
+  --ft-panel-2:#0f172a;
+  --ft-border:rgba(148,163,184,.16);
+  --ft-text:#e5eefb;
+  --ft-muted:#94a3b8;
+  --ft-accent:#14b8a6;
+  --ft-accent-2:#38bdf8;
+  --ft-shadow:0 12px 36px rgba(2,6,23,.28);
+  --ft-radius:18px;
+}
+body{
+  background:
+    radial-gradient(1200px 600px at 0% 0%, rgba(56,189,248,.10), transparent 55%),
+    radial-gradient(1000px 520px at 100% 0%, rgba(20,184,166,.09), transparent 48%),
+    linear-gradient(180deg,#0b1220 0%,#0f172a 52%,#111827 100%) !important;
+  color:var(--ft-text) !important;
+}
+.card,.stat-card,.kpi-card,.metric-card,.panel,.modal-content,.sheet,.dialog,.table-wrap,.chart-card,.widget,.box{
+  background:linear-gradient(180deg, rgba(17,24,39,.92) 0%, rgba(15,23,42,.94) 100%) !important;
+  border:1px solid var(--ft-border) !important;
+  border-radius:var(--ft-radius) !important;
+  box-shadow:var(--ft-shadow) !important;
+  backdrop-filter:blur(10px);
+  transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.card:hover,.stat-card:hover,.kpi-card:hover,.metric-card:hover,.chart-card:hover,.widget:hover{
+  transform:translateY(-2px);
+  border-color:rgba(45,212,191,.30) !important;
+  box-shadow:0 18px 42px rgba(2,6,23,.34), 0 0 0 1px rgba(20,184,166,.06) inset !important;
+}
+button,.btn,a.btn{
+  transition:transform .18s ease, box-shadow .18s ease, filter .18s ease, background .18s ease;
+}
+button:hover,.btn:hover,a.btn:hover{
+  transform:translateY(-1px);
+}
+button:active,.btn:active,a.btn:active{
+  transform:translateY(0) scale(.985);
+}
+button.primary,.btn-primary,.primary-btn,.action-primary,[class*="primary"]{
+  background:linear-gradient(135deg,var(--ft-accent) 0%, #0ea5a4 55%, var(--ft-accent-2) 100%) !important;
+  color:white !important;
+  border:none !important;
+  box-shadow:0 10px 22px rgba(20,184,166,.24) !important;
+}
+input,select,textarea{
+  background:rgba(15,23,42,.78) !important;
+  color:var(--ft-text) !important;
+  border:1px solid rgba(148,163,184,.18) !important;
+  border-radius:14px !important;
+  transition:border-color .18s ease, box-shadow .18s ease, transform .12s ease;
+}
+input:focus,select:focus,textarea:focus{
+  outline:none !important;
+  border-color:rgba(45,212,191,.62) !important;
+  box-shadow:0 0 0 4px rgba(20,184,166,.12) !important;
+}
+.modal-content,.dialog,[role="dialog"]{
+  animation:ftModalIn .24s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes ftModalIn{
+  from{opacity:0;transform:translateY(12px) scale(.985)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.ship-form-tabs,.shipment-form-tabs,.tabs-row,.modal-tabs,.form-tabs,.ship-tabs{
+  display:flex !important;
+  gap:10px !important;
+  flex-wrap:wrap !important;
+  align-items:center !important;
+  margin:10px 0 14px !important;
+  padding:4px 0 !important;
+}
+.ship-form-tabs button,.shipment-form-tabs button,.tabs-row button,.modal-tabs button,.form-tabs button,.ship-tabs button,button.ship-tab,button[data-tab]{
+  appearance:none !important;
+  border:1px solid rgba(148,163,184,.18) !important;
+  background:linear-gradient(180deg,rgba(30,41,59,.92) 0%, rgba(15,23,42,.96) 100%) !important;
+  color:#cbd5e1 !important;
+  border-radius:999px !important;
+  padding:11px 16px !important;
+  font-size:14px !important;
+  font-weight:700 !important;
+  letter-spacing:.01em;
+  position:relative;
+  overflow:hidden;
+}
+.ship-form-tabs button::before,.shipment-form-tabs button::before,.tabs-row button::before,.modal-tabs button::before,.form-tabs button::before,.ship-tabs button::before,button.ship-tab::before,button[data-tab]::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent);
+  transform:translateX(-120%);
+}
+.ship-form-tabs button:hover::before,.shipment-form-tabs button:hover::before,.tabs-row button:hover::before,.modal-tabs button:hover::before,.form-tabs button:hover::before,.ship-tabs button:hover::before,button.ship-tab:hover::before,button[data-tab]:hover::before{
+  animation:ftShine .9s ease;
+}
+@keyframes ftShine{to{transform:translateX(120%)}}
+.ship-form-tabs button:hover,.shipment-form-tabs button:hover,.tabs-row button:hover,.modal-tabs button:hover,.form-tabs button:hover,.ship-tabs button:hover,button.ship-tab:hover,button[data-tab]:hover{
+  border-color:rgba(45,212,191,.42) !important;
+  color:#fff !important;
+  box-shadow:0 8px 22px rgba(15,23,42,.26) !important;
+}
+.ship-form-tabs button.active,.shipment-form-tabs button.active,.tabs-row button.active,.modal-tabs button.active,.form-tabs button.active,.ship-tabs button.active,button.ship-tab.active,button[data-tab].active,
+.ship-form-tabs button[aria-selected="true"],.shipment-form-tabs button[aria-selected="true"],.tabs-row button[aria-selected="true"],.modal-tabs button[aria-selected="true"],.form-tabs button[aria-selected="true"],.ship-tabs button[aria-selected="true"],button.ship-tab[aria-selected="true"],button[data-tab][aria-selected="true"]{
+  background:linear-gradient(135deg,#14b8a6 0%, #06b6d4 100%) !important;
+  color:#fff !important;
+  border-color:transparent !important;
+  box-shadow:0 12px 28px rgba(20,184,166,.28) !important;
+}
+.table-wrap table,.table-container table,table{
+  border-collapse:separate !important;
+  border-spacing:0 8px !important;
+}
+.table-wrap tbody tr,.table-container tbody tr,tbody tr{
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.table-wrap tbody tr:hover,.table-container tbody tr:hover,tbody tr:hover{
+  transform:translateY(-1px);
+}
+</style>
+<script id="ft-modern-theme-overlay-script">
+(function(){
+  function patchShipmentTabs(){
+    var scopes=[].slice.call(document.querySelectorAll('.modal,.modal-content,.dialog,[role="dialog"],body'));
+    scopes.forEach(function(scope){
+      var buttons=[].slice.call(scope.querySelectorAll('button,[role="tab"]'));
+      var tabBtns=buttons.filter(function(btn){
+        var t=(btn.textContent||'').trim().toLowerCase();
+        return ['general','parties','cargo','dates'].indexOf(t)>=0;
+      });
+      if(tabBtns.length<3) return;
+      var parent=tabBtns[0].parentElement;
+      if(parent) parent.classList.add('ship-form-tabs');
+      tabBtns.forEach(function(btn){ btn.classList.add('ship-tab'); });
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(patchShipmentTabs,300); setTimeout(patchShipmentTabs,900); });
+  window.addEventListener('load', function(){ setTimeout(patchShipmentTabs,300); setTimeout(patchShipmentTabs,1200); });
+  document.addEventListener('click', function(){ setTimeout(patchShipmentTabs,120); });
+})();
+</script>
+
 </head>
 <body>
   <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;
@@ -2711,7 +2856,152 @@ async function generateReport(){
 .ship-tab-panel{display:none;}.ship-tab-panel.active{display:block;}
 .ship-tab-dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--border,#475569);background:transparent;cursor:pointer;padding:0;transition:all .2s;}
 .ship-tab-dot.active{background:var(--accent,#14b8a6);border-color:var(--accent,#14b8a6);}
-</style></head><body>
+</style>
+<style id="ft-modern-theme-overlay">
+:root{
+  --ft-bg:#0b1220;
+  --ft-panel:#111827;
+  --ft-panel-2:#0f172a;
+  --ft-border:rgba(148,163,184,.16);
+  --ft-text:#e5eefb;
+  --ft-muted:#94a3b8;
+  --ft-accent:#14b8a6;
+  --ft-accent-2:#38bdf8;
+  --ft-shadow:0 12px 36px rgba(2,6,23,.28);
+  --ft-radius:18px;
+}
+body{
+  background:
+    radial-gradient(1200px 600px at 0% 0%, rgba(56,189,248,.10), transparent 55%),
+    radial-gradient(1000px 520px at 100% 0%, rgba(20,184,166,.09), transparent 48%),
+    linear-gradient(180deg,#0b1220 0%,#0f172a 52%,#111827 100%) !important;
+  color:var(--ft-text) !important;
+}
+.card,.stat-card,.kpi-card,.metric-card,.panel,.modal-content,.sheet,.dialog,.table-wrap,.chart-card,.widget,.box{
+  background:linear-gradient(180deg, rgba(17,24,39,.92) 0%, rgba(15,23,42,.94) 100%) !important;
+  border:1px solid var(--ft-border) !important;
+  border-radius:var(--ft-radius) !important;
+  box-shadow:var(--ft-shadow) !important;
+  backdrop-filter:blur(10px);
+  transition:transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.card:hover,.stat-card:hover,.kpi-card:hover,.metric-card:hover,.chart-card:hover,.widget:hover{
+  transform:translateY(-2px);
+  border-color:rgba(45,212,191,.30) !important;
+  box-shadow:0 18px 42px rgba(2,6,23,.34), 0 0 0 1px rgba(20,184,166,.06) inset !important;
+}
+button,.btn,a.btn{
+  transition:transform .18s ease, box-shadow .18s ease, filter .18s ease, background .18s ease;
+}
+button:hover,.btn:hover,a.btn:hover{
+  transform:translateY(-1px);
+}
+button:active,.btn:active,a.btn:active{
+  transform:translateY(0) scale(.985);
+}
+button.primary,.btn-primary,.primary-btn,.action-primary,[class*="primary"]{
+  background:linear-gradient(135deg,var(--ft-accent) 0%, #0ea5a4 55%, var(--ft-accent-2) 100%) !important;
+  color:white !important;
+  border:none !important;
+  box-shadow:0 10px 22px rgba(20,184,166,.24) !important;
+}
+input,select,textarea{
+  background:rgba(15,23,42,.78) !important;
+  color:var(--ft-text) !important;
+  border:1px solid rgba(148,163,184,.18) !important;
+  border-radius:14px !important;
+  transition:border-color .18s ease, box-shadow .18s ease, transform .12s ease;
+}
+input:focus,select:focus,textarea:focus{
+  outline:none !important;
+  border-color:rgba(45,212,191,.62) !important;
+  box-shadow:0 0 0 4px rgba(20,184,166,.12) !important;
+}
+.modal-content,.dialog,[role="dialog"]{
+  animation:ftModalIn .24s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes ftModalIn{
+  from{opacity:0;transform:translateY(12px) scale(.985)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.ship-form-tabs,.shipment-form-tabs,.tabs-row,.modal-tabs,.form-tabs,.ship-tabs{
+  display:flex !important;
+  gap:10px !important;
+  flex-wrap:wrap !important;
+  align-items:center !important;
+  margin:10px 0 14px !important;
+  padding:4px 0 !important;
+}
+.ship-form-tabs button,.shipment-form-tabs button,.tabs-row button,.modal-tabs button,.form-tabs button,.ship-tabs button,button.ship-tab,button[data-tab]{
+  appearance:none !important;
+  border:1px solid rgba(148,163,184,.18) !important;
+  background:linear-gradient(180deg,rgba(30,41,59,.92) 0%, rgba(15,23,42,.96) 100%) !important;
+  color:#cbd5e1 !important;
+  border-radius:999px !important;
+  padding:11px 16px !important;
+  font-size:14px !important;
+  font-weight:700 !important;
+  letter-spacing:.01em;
+  position:relative;
+  overflow:hidden;
+}
+.ship-form-tabs button::before,.shipment-form-tabs button::before,.tabs-row button::before,.modal-tabs button::before,.form-tabs button::before,.ship-tabs button::before,button.ship-tab::before,button[data-tab]::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.10), transparent);
+  transform:translateX(-120%);
+}
+.ship-form-tabs button:hover::before,.shipment-form-tabs button:hover::before,.tabs-row button:hover::before,.modal-tabs button:hover::before,.form-tabs button:hover::before,.ship-tabs button:hover::before,button.ship-tab:hover::before,button[data-tab]:hover::before{
+  animation:ftShine .9s ease;
+}
+@keyframes ftShine{to{transform:translateX(120%)}}
+.ship-form-tabs button:hover,.shipment-form-tabs button:hover,.tabs-row button:hover,.modal-tabs button:hover,.form-tabs button:hover,.ship-tabs button:hover,button.ship-tab:hover,button[data-tab]:hover{
+  border-color:rgba(45,212,191,.42) !important;
+  color:#fff !important;
+  box-shadow:0 8px 22px rgba(15,23,42,.26) !important;
+}
+.ship-form-tabs button.active,.shipment-form-tabs button.active,.tabs-row button.active,.modal-tabs button.active,.form-tabs button.active,.ship-tabs button.active,button.ship-tab.active,button[data-tab].active,
+.ship-form-tabs button[aria-selected="true"],.shipment-form-tabs button[aria-selected="true"],.tabs-row button[aria-selected="true"],.modal-tabs button[aria-selected="true"],.form-tabs button[aria-selected="true"],.ship-tabs button[aria-selected="true"],button.ship-tab[aria-selected="true"],button[data-tab][aria-selected="true"]{
+  background:linear-gradient(135deg,#14b8a6 0%, #06b6d4 100%) !important;
+  color:#fff !important;
+  border-color:transparent !important;
+  box-shadow:0 12px 28px rgba(20,184,166,.28) !important;
+}
+.table-wrap table,.table-container table,table{
+  border-collapse:separate !important;
+  border-spacing:0 8px !important;
+}
+.table-wrap tbody tr,.table-container tbody tr,tbody tr{
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.table-wrap tbody tr:hover,.table-container tbody tr:hover,tbody tr:hover{
+  transform:translateY(-1px);
+}
+</style>
+<script id="ft-modern-theme-overlay-script">
+(function(){
+  function patchShipmentTabs(){
+    var scopes=[].slice.call(document.querySelectorAll('.modal,.modal-content,.dialog,[role="dialog"],body'));
+    scopes.forEach(function(scope){
+      var buttons=[].slice.call(scope.querySelectorAll('button,[role="tab"]'));
+      var tabBtns=buttons.filter(function(btn){
+        var t=(btn.textContent||'').trim().toLowerCase();
+        return ['general','parties','cargo','dates'].indexOf(t)>=0;
+      });
+      if(tabBtns.length<3) return;
+      var parent=tabBtns[0].parentElement;
+      if(parent) parent.classList.add('ship-form-tabs');
+      tabBtns.forEach(function(btn){ btn.classList.add('ship-tab'); });
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(patchShipmentTabs,300); setTimeout(patchShipmentTabs,900); });
+  window.addEventListener('load', function(){ setTimeout(patchShipmentTabs,300); setTimeout(patchShipmentTabs,1200); });
+  document.addEventListener('click', function(){ setTimeout(patchShipmentTabs,120); });
+})();
+</script>
+
+</head><body>
 
     <div class="page-header">
       <div>
