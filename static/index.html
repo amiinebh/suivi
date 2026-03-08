@@ -445,16 +445,6 @@ textarea.form-control{resize:none;min-height:72px}
 .comment-text{font-size:12px;color:var(--text1);margin-top:4px;line-height:1.5}
 #bulk-drop-zone:hover{border-color:var(--accent)!important;background:var(--bg3)}
 
-
-/* Ship form tabs */
-.ship-tabs{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid #253041;background:#0f172a;overflow-x:auto;}
-.ship-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #334155;border-radius:10px;background:#1e293b;color:#cbd5e1;font-weight:600;cursor:pointer;}
-.ship-tab:hover{border-color:#14b8a6;color:#ffffff;}
-.ship-tab.active{background:#14b8a6;color:#ffffff;border-color:#14b8a6;}
-.ship-tab-panel{display:none;}
-.ship-tab-panel.active{display:block;}
-.ship-tab-dot{width:8px;height:8px;border-radius:50%;border:2px solid #64748b;background:transparent;}
-.ship-tab-dot.active{background:#14b8a6;border-color:#14b8a6;}
 </style>
 </head>
 <body>
@@ -2876,17 +2866,7 @@ async function generateReport(){
         .section{box-shadow:none;border:1px solid #e8eef6}
         .page-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
       }
-    
-/* Ship form tabs */
-.ship-tabs{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid #253041;background:#0f172a;overflow-x:auto;}
-.ship-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #334155;border-radius:10px;background:#1e293b;color:#cbd5e1;font-weight:600;cursor:pointer;}
-.ship-tab:hover{border-color:#14b8a6;color:#ffffff;}
-.ship-tab.active{background:#14b8a6;color:#ffffff;border-color:#14b8a6;}
-.ship-tab-panel{display:none;}
-.ship-tab-panel.active{display:block;}
-.ship-tab-dot{width:8px;height:8px;border-radius:50%;border:2px solid #64748b;background:transparent;}
-.ship-tab-dot.active{background:#14b8a6;border-color:#14b8a6;}
-</style></head><body>
+    </style></head><body>
 
     <div class="page-header">
       <div>
@@ -2993,6 +2973,84 @@ async function generateReport(){
     <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
+
+
+<script>
+(function(){
+  function ensureImportButton(){
+    var fileInput = document.querySelector('input[type="file"]');
+    if(!fileInput) return;
+    if(document.getElementById('excel-upload-btn')) return;
+    var btn = document.createElement('button');
+    btn.id = 'excel-upload-btn';
+    btn.type = 'button';
+    btn.textContent = 'Upload Excel';
+    btn.style.marginLeft = '10px';
+    btn.style.padding = '10px 14px';
+    btn.style.borderRadius = '10px';
+    btn.style.border = '1px solid #14b8a6';
+    btn.style.background = '#14b8a6';
+    btn.style.color = '#fff';
+    btn.style.cursor = 'pointer';
+    btn.onclick = async function(){
+      var f = fileInput.files && fileInput.files[0];
+      if(!f){ alert('Choose an Excel file first.'); return; }
+      var fd = new FormData();
+      fd.append('file', f);
+      try{
+        var res = await fetch('/api/import-shipments', { method:'POST', body:fd });
+        if(!res.ok){
+          var t = await res.text();
+          alert('Import failed: ' + t);
+          return;
+        }
+        alert('Import completed successfully.');
+        if(typeof loadShipments==='function') loadShipments();
+      }catch(err){ alert('Import error: ' + err.message); }
+    };
+    fileInput.insertAdjacentElement('afterend', btn);
+  }
+  document.addEventListener('change', function(e){
+    if(e.target && e.target.matches('input[type="file"]')) ensureImportButton();
+  });
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(ensureImportButton, 600); });
+  window.addEventListener('load', function(){ setTimeout(ensureImportButton, 900); });
+})();
+</script>
+
+
+<script>
+(function(){
+  function setShipStatus(status){
+    if(typeof showPage==='function') showPage('shipments');
+    setTimeout(function(){
+      var sel = document.getElementById('search-status') || document.getElementById('status-filter') || document.querySelector('select[id*="status"]');
+      if(sel) sel.value = status;
+      if(typeof loadShipments==='function') loadShipments();
+    }, 180);
+  }
+  function bindOverviewCards(){
+    var cards = Array.from(document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,.overview-stat,div'));
+    cards.forEach(function(el){
+      if(el.dataset && el.dataset.statusBound==='1') return;
+      var t = (el.textContent || '').replace(/\s+/g,' ').trim().toLowerCase();
+      var status = null;
+      if(/delayed/.test(t)) status='Delayed';
+      else if(/pending/.test(t)) status='Pending';
+      else if(/done|delivered|arrived/.test(t)) status='Delivered';
+      else if(/transit|in transit|sailing|active/.test(t)) status='In Transit';
+      if(!status) return;
+      if(el.dataset) el.dataset.statusBound='1';
+      el.style.cursor='pointer';
+      var handler = function(e){ e.preventDefault(); e.stopPropagation(); setShipStatus(status); };
+      el.addEventListener('click', handler, {passive:false});
+      el.addEventListener('touchend', handler, {passive:false});
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(bindOverviewCards, 400); });
+  window.addEventListener('load', function(){ setTimeout(bindOverviewCards, 700); });
+})();
+</script>
 
 </body>></html>`;
 
@@ -3346,5 +3404,83 @@ async function loadQuotations(){
 <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
+
+<script>
+(function(){
+  function ensureImportButton(){
+    var fileInput = document.querySelector('input[type="file"]');
+    if(!fileInput) return;
+    if(document.getElementById('excel-upload-btn')) return;
+    var btn = document.createElement('button');
+    btn.id = 'excel-upload-btn';
+    btn.type = 'button';
+    btn.textContent = 'Upload Excel';
+    btn.style.marginLeft = '10px';
+    btn.style.padding = '10px 14px';
+    btn.style.borderRadius = '10px';
+    btn.style.border = '1px solid #14b8a6';
+    btn.style.background = '#14b8a6';
+    btn.style.color = '#fff';
+    btn.style.cursor = 'pointer';
+    btn.onclick = async function(){
+      var f = fileInput.files && fileInput.files[0];
+      if(!f){ alert('Choose an Excel file first.'); return; }
+      var fd = new FormData();
+      fd.append('file', f);
+      try{
+        var res = await fetch('/api/import-shipments', { method:'POST', body:fd });
+        if(!res.ok){
+          var t = await res.text();
+          alert('Import failed: ' + t);
+          return;
+        }
+        alert('Import completed successfully.');
+        if(typeof loadShipments==='function') loadShipments();
+      }catch(err){ alert('Import error: ' + err.message); }
+    };
+    fileInput.insertAdjacentElement('afterend', btn);
+  }
+  document.addEventListener('change', function(e){
+    if(e.target && e.target.matches('input[type="file"]')) ensureImportButton();
+  });
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(ensureImportButton, 600); });
+  window.addEventListener('load', function(){ setTimeout(ensureImportButton, 900); });
+})();
+</script>
+
+
+<script>
+(function(){
+  function setShipStatus(status){
+    if(typeof showPage==='function') showPage('shipments');
+    setTimeout(function(){
+      var sel = document.getElementById('search-status') || document.getElementById('status-filter') || document.querySelector('select[id*="status"]');
+      if(sel) sel.value = status;
+      if(typeof loadShipments==='function') loadShipments();
+    }, 180);
+  }
+  function bindOverviewCards(){
+    var cards = Array.from(document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,.overview-stat,div'));
+    cards.forEach(function(el){
+      if(el.dataset && el.dataset.statusBound==='1') return;
+      var t = (el.textContent || '').replace(/\s+/g,' ').trim().toLowerCase();
+      var status = null;
+      if(/delayed/.test(t)) status='Delayed';
+      else if(/pending/.test(t)) status='Pending';
+      else if(/done|delivered|arrived/.test(t)) status='Delivered';
+      else if(/transit|in transit|sailing|active/.test(t)) status='In Transit';
+      if(!status) return;
+      if(el.dataset) el.dataset.statusBound='1';
+      el.style.cursor='pointer';
+      var handler = function(e){ e.preventDefault(); e.stopPropagation(); setShipStatus(status); };
+      el.addEventListener('click', handler, {passive:false});
+      el.addEventListener('touchend', handler, {passive:false});
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(bindOverviewCards, 400); });
+  window.addEventListener('load', function(){ setTimeout(bindOverviewCards, 700); });
+})();
+</script>
+
 </body>
   </html>
