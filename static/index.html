@@ -921,6 +921,67 @@ textarea.form-control{resize:none;min-height:72px}
 
 
 <script>
+// ═══ AUTH ════════════════════════════════════════════════════
+const TOKEN_KEY="ft_token", USER_KEY="ft_user";
+function getToken(){ return localStorage.getItem(TOKEN_KEY); }
+function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
+function isAdmin(){ return (getUser()||{}).role==="admin"; }
+
+async function doLogin(){
+  const email=document.getElementById("login-email").value.trim();
+  const pw=document.getElementById("login-password").value;
+  const err=document.getElementById("login-error");
+  const btn=document.getElementById("login-btn");
+  err.style.display="none";
+  if(!email||!pw){ err.textContent="Enter email and password"; err.style.display="block"; return; }
+  btn.textContent="Signing in…"; btn.disabled=true;
+  try{
+    const r=await fetch("/api/auth/login",{method:"POST",
+      headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,password:pw})});
+    const d=await r.json();
+    if(!r.ok){ err.textContent=d.detail||"Invalid credentials"; err.style.display="block"; return; }
+    localStorage.setItem(TOKEN_KEY,d.access_token);
+    localStorage.setItem(USER_KEY,JSON.stringify({role:d.role,name:d.name}));
+    showApp();
+  } catch(e){ err.textContent="Network error. Try again."; err.style.display="block"; }
+  finally{ btn.textContent="Sign In →"; btn.disabled=false; }
+}
+
+document.addEventListener("keydown",e=>{
+  const ls=document.getElementById("login-screen");
+  if(e.key==="Enter"&&ls&&ls.style.display!=="none") doLogin();
+});
+
+function showApp(){
+  const ls=document.getElementById("login-screen");
+  if(ls) ls.style.display="none";
+  const user=getUser();
+  document.querySelectorAll(".admin-only").forEach(el=>{
+    el.style.display=isAdmin()?el.dataset.display||"":"none";
+  });
+  const sn=document.getElementById("sidebar-user-name");
+  if(sn) sn.textContent=user?.name||"User";
+  const sr=document.getElementById("sidebar-user-role");
+  if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
+  const av=document.getElementById("sidebar-avatar");
+  if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
+  if(typeof loadDashboard==="function") loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
+}
+
+function doLogout(){
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  const ls=document.getElementById("login-screen");
+  if(ls) ls.style.display="flex";
+  ["login-email","login-password"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+}
+
+window.addEventListener("DOMContentLoaded",()=>{
+  if(getToken()) showApp();
+  else{ const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
+});
+</script>
+<script>
 let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, allShipments=[];
 
@@ -1611,203 +1672,7 @@ function initTheme(){
 initTheme();
 loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
 </script>
-
-
-
-<!-- ═══════ ADD USER MODAL ═══════ -->
-<div class="overlay" id="modal-add-user">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">➕ Add Team Member</div>
-      <button class="modal-close" onclick="closeModal('modal-add-user')">
-        <i class="fa fa-xmark"></i>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Full Name <span style="color:#ef4444">*</span></label>
-          <input id="nu-name" class="form-control" type="text" placeholder="e.g. Sara Dupont"/>
-        </div>
-        <div class="form-group">
-          <label>Email Address <span style="color:#ef4444">*</span></label>
-          <input id="nu-email" class="form-control" type="email" placeholder="sara@company.com"/>
-        </div>
-        <div class="form-group">
-          <label>Password <span style="color:#ef4444">*</span></label>
-          <input id="nu-pw" class="form-control" type="password" placeholder="Minimum 6 characters"/>
-        </div>
-        <div class="form-group">
-          <label>Role</label>
-          <select id="nu-role" class="form-control">
-            <option value="cs">🎧 CS Agent — create, track & delete shipments</option>
-            <option value="admin">👑 Admin — full access incl. KPI & team</option>
-          </select>
-        </div>
-      </div>
-      <div id="nu-error" style="display:none;margin-top:10px;padding:10px 12px;
-        background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
-        border-radius:8px;font-size:12px;color:#ef4444"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
-      <button class="btn btn-primary" onclick="createUser()">
-        <i class="fa fa-check"></i> Create User
-      </button>
-    </div>
-  </div>
-</div>
-
-
-<!-- CHANGE PASSWORD -->
-<div class="overlay" id="modal-change-pw">
-  <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">🔐 Change Password</div>
-      <button class="modal-close" onclick="closeModal('modal-change-pw')"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group full"><label>Current Password</label>
-          <input id="cpw-old" class="form-control" type="password" placeholder="Current password"/></div>
-        <div class="form-group full"><label>New Password</label>
-          <input id="cpw-new" class="form-control" type="password" placeholder="Min 6 characters"/></div>
-        <div class="form-group full"><label>Confirm New Password</label>
-          <input id="cpw-confirm" class="form-control" type="password" placeholder="Repeat new password"/></div>
-      </div>
-      <div id="cpw-msg" style="display:none;margin-top:8px;padding:10px 12px;border-radius:8px;font-size:12px"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-change-pw')">Cancel</button>
-      <button class="btn btn-primary" onclick="doChangePassword()"><i class="fa fa-check"></i> Update</button>
-    </div>
-  </div>
-</div>
-<!-- BULK IMPORT -->
-<div class="overlay" id="modal-bulk-import">
-  <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">📥 Bulk Import</div>
-      <button class="modal-close" onclick="closeModal('modal-bulk-import')"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2)">
-        <strong style="color:var(--text1)">Excel columns (row 1 = headers):</strong>
-        <code style="display:block;margin-top:4px;font-size:11px">ref · ref2 · mode · carrier · client · client_email · pol · pod · booking_no</code>
-        <div style="margin-top:6px">Only <strong>ref</strong> is required.</div>
-      </div>
-      <div id="bulk-drop-zone" onclick="document.getElementById('bulk-file').click()"
-        style="border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:.2s">
-        <i class="fa fa-file-excel" style="font-size:30px;color:#22c55e;display:block;margin-bottom:8px"></i>
-        <div style="font-size:13px;font-weight:600;color:var(--text1)">Drop .xlsx here</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px">or click to browse</div>
-      </div>
-      <input id="bulk-file" type="file" accept=".xlsx" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
-      <div id="bulk-selected" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px"></div>
-      <div id="bulk-result" style="display:none;margin-top:10px;padding:12px;border-radius:8px;font-size:13px"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-bulk-import')">Close</button>
-      <button class="btn btn-primary" id="bulk-upload-btn" style="display:none" onclick="doBulkUpload()">
-        <i class="fa fa-upload"></i> Import
-      </button>
-    </div>
-  </div>
-</div>
-<!-- ADD USER -->
-<div class="overlay" id="modal-add-user">
-  <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">➕ Add Team Member</div>
-      <button class="modal-close" onclick="closeModal('modal-add-user')"><i class="fa fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group full"><label>Full Name <span style="color:#ef4444">*</span></label>
-          <input id="nu-name" class="form-control" type="text" placeholder="e.g. Sara Dupont"/></div>
-        <div class="form-group full"><label>Email <span style="color:#ef4444">*</span></label>
-          <input id="nu-email" class="form-control" type="email" placeholder="sara@company.com"/></div>
-        <div class="form-group full"><label>Password <span style="color:#ef4444">*</span></label>
-          <input id="nu-pw" class="form-control" type="password" placeholder="Min 6 characters"/></div>
-        <div class="form-group full"><label>Role</label>
-          <select id="nu-role" class="form-control">
-            <option value="cs">🎧 CS Agent</option>
-            <option value="admin">👑 Admin</option>
-          </select>
-        </div>
-      </div>
-      <div id="nu-error" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(239,68,68,.1);
-        border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:12px;color:#ef4444"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
-      <button class="btn btn-primary" onclick="createUser()"><i class="fa fa-check"></i> Create</button>
-    </div>
-  </div>
-</div>
-
-
 <script>
-// ═══ AUTH ════════════════════════════════════════════════════
-const TOKEN_KEY="ft_token", USER_KEY="ft_user";
-function getToken(){ return localStorage.getItem(TOKEN_KEY); }
-function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
-function isAdmin(){ return (getUser()||{}).role==="admin"; }
-
-async function doLogin(){
-  const email=document.getElementById("login-email").value.trim();
-  const pw=document.getElementById("login-password").value;
-  const err=document.getElementById("login-error");
-  const btn=document.getElementById("login-btn");
-  err.style.display="none";
-  if(!email||!pw){ err.textContent="Enter email and password"; err.style.display="block"; return; }
-  btn.textContent="Signing in…"; btn.disabled=true;
-  try{
-    const r=await fetch("/api/auth/login",{method:"POST",
-      headers:{"Content-Type":"application/json"}, body:JSON.stringify({email,password:pw})});
-    const d=await r.json();
-    if(!r.ok){ err.textContent=d.detail||"Invalid credentials"; err.style.display="block"; return; }
-    localStorage.setItem(TOKEN_KEY,d.access_token);
-    localStorage.setItem(USER_KEY,JSON.stringify({role:d.role,name:d.name}));
-    showApp();
-  } catch(e){ err.textContent="Network error. Try again."; err.style.display="block"; }
-  finally{ btn.textContent="Sign In →"; btn.disabled=false; }
-}
-
-document.addEventListener("keydown",e=>{
-  const ls=document.getElementById("login-screen");
-  if(e.key==="Enter"&&ls&&ls.style.display!=="none") doLogin();
-});
-
-function showApp(){
-  const ls=document.getElementById("login-screen");
-  if(ls) ls.style.display="none";
-  const user=getUser();
-  document.querySelectorAll(".admin-only").forEach(el=>{
-    el.style.display=isAdmin()?el.dataset.display||"":"none";
-  });
-  const sn=document.getElementById("sidebar-user-name");
-  if(sn) sn.textContent=user?.name||"User";
-  const sr=document.getElementById("sidebar-user-role");
-  if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
-  const av=document.getElementById("sidebar-avatar");
-  if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
-  if(typeof loadDashboard==="function") loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
-}
-
-function doLogout(){
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
-  const ls=document.getElementById("login-screen");
-  if(ls) ls.style.display="flex";
-  ["login-email","login-password"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
-}
-
-window.addEventListener("DOMContentLoaded",()=>{
-  if(getToken()) showApp();
-  else{ const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
-});
 
 // ═══ CHANGE PASSWORD ═════════════════════════════════════════
 async function doChangePassword(){
@@ -2135,6 +2000,7 @@ function showToast(msg,type){
   t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"✅":"❌"}</span>${msg}`;
   wrap.appendChild(t); setTimeout(()=>t.remove(),2800);
 }
+</script>
 </script>
 
 
