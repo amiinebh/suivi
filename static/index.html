@@ -921,6 +921,78 @@ textarea.form-control{resize:none;min-height:72px}
 
 
 <script>
+// ══════ AUTH — must load before main script ══════
+const TOKEN_KEY = "ft_token";
+const USER_KEY  = "ft_user";
+
+function getToken(){ return localStorage.getItem(TOKEN_KEY); }
+function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
+function isAdmin(){ const r=(getUser()||{}).role; return r && r.toLowerCase()==="admin"; }
+
+async function syncMe(){
+  const token=getToken();
+  if(!token) return null;
+  try{
+    const r=await fetch("/api/auth/me",{headers:{"Authorization":"Bearer "+token}});
+    if(!r.ok) return null;
+    const me=await r.json();
+    localStorage.setItem(USER_KEY,JSON.stringify({role:me.role,name:me.name}));
+    return me;
+  }catch(e){return null;}
+}
+
+function doLogout(){
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  location.reload();
+}
+
+window.doLogout = doLogout;
+
+function showApp(){
+  const ls=document.getElementById("login-screen");
+  if(ls) ls.style.display="none";
+  const user=getUser();
+  document.querySelectorAll(".admin-only").forEach(el=>{
+    const isNav = el.classList.contains("nav-item")||el.classList.contains("bnav-item");
+    const isSec = el.classList.contains("nav-section");
+    el.style.display = isAdmin() ? (isSec?"block":isNav?"flex":"") : "none";
+  });
+  const sn=document.getElementById("sidebar-user-name"); if(sn) sn.textContent=user?.name||"User";
+  const sr=document.getElementById("sidebar-user-role"); if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
+  const av=document.getElementById("sidebar-avatar");   if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
+}
+
+async function doLogin(){
+  const email=document.getElementById("login-email").value.trim();
+  const pw=document.getElementById("login-password").value;
+  const btn=document.getElementById("login-btn");
+  const err=document.getElementById("login-error");
+  if(!email||!pw){ err.textContent="Email and password required"; err.style.display="block"; return; }
+  btn.textContent="Signing in…"; btn.disabled=true; err.style.display="none";
+  try{
+    const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,pw})});
+    const d=await r.json();
+    if(!r.ok){ err.textContent=d.detail||"Invalid credentials"; err.style.display="block"; return; }
+    localStorage.setItem(TOKEN_KEY,d.access_token);
+    localStorage.setItem(USER_KEY,JSON.stringify({role:d.role,name:d.name}));
+    showApp();
+  }catch(e){ err.textContent="Network error"; err.style.display="block"; }
+  finally{ btn.textContent="Sign In →"; btn.disabled=false; }
+}
+
+window.addEventListener("DOMContentLoaded",async()=>{
+  if(getToken()){
+    await syncMe();
+    showApp();
+  } else {
+    const ls=document.getElementById("login-screen");
+    if(ls) ls.style.display="flex";
+  }
+});
+</script>
+
+<script>
 let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, allShipments=[];
 
@@ -1623,7 +1695,7 @@ function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){
   try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
 }
-function isAdmin(){ const r=(getUser()||{}).role; return r && r.toLowerCase()==="admin"; }
+function isAdmin(){ return (getUser()||{}).role === "admin"; }
 
 function authFetch(url, opts={}){
   opts.headers = opts.headers || {};
@@ -1666,7 +1738,7 @@ async function doLogin(){
     }
     localStorage.setItem(TOKEN_KEY, d.access_token);
     localStorage.setItem(USER_KEY, JSON.stringify({role:d.role, name:d.name}));
-    /* showApp moved to DOMContentLoaded */
+    showApp();
   } catch(e){
     err.textContent = "Network error — please try again";
     err.style.display = "block";
@@ -1702,9 +1774,9 @@ function doLogout(){
   if(ls){ ls.style.display = "flex"; }
 }
 
-window.addEventListener("DOMContentLoaded", async () => {
-  if(getToken()){ await syncMe(); showApp(); }
-  else { const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
+window.addEventListener("DOMContentLoaded", () => {
+  if(getToken()){ showApp(); }
+  else {
     const ls = document.getElementById("login-screen");
     if(ls) ls.style.display = "flex";
   }
@@ -1960,18 +2032,7 @@ async function deleteUser(id){
 const TOKEN_KEY="ft_token", USER_KEY="ft_user";
 function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
-async function syncMe(){
-  const token=getToken();
-  if(!token) return null;
-  try{
-    const r=await fetch('/api/auth/me',{headers:{"Authorization":"Bearer "+token}});
-    if(!r.ok) return null;
-    const me=await r.json();
-    localStorage.setItem(USER_KEY,JSON.stringify({role:me.role,name:me.name}));
-    return me;
-  }catch(e){return null;}
-}
-function isAdmin(){ const r=(getUser()||{}).role; return r && r.toLowerCase()==="admin"; }
+function isAdmin(){ return (getUser()||{}).role==="admin"; }
 
 async function doLogin(){
   const email=document.getElementById("login-email").value.trim();
@@ -2022,8 +2083,8 @@ function doLogout(){
   ["login-email","login-password"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
 }
 
-window.addEventListener("DOMContentLoaded",async()=>{
-  if(getToken()){ await syncMe(); showApp(); }
+window.addEventListener("DOMContentLoaded",()=>{
+  if(getToken()) showApp();
   else{ const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
 });
 
