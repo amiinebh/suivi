@@ -921,76 +921,6 @@ textarea.form-control{resize:none;min-height:72px}
 
 
 <script>
-const TOKEN_KEY = "ft_token";
-const USER_KEY  = "ft_user";
-
-function getToken(){ return localStorage.getItem(TOKEN_KEY); }
-function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
-function isAdmin(){ const r=(getUser()||{}).role; return r && r.toLowerCase()==="admin"; }
-
-async function syncMe(){
-  const token=getToken();
-  if(!token) return null;
-  try{
-    const r=await fetch("/api/auth/me",{headers:{"Authorization":"Bearer "+token}});
-    if(!r.ok) return null;
-    const me=await r.json();
-    localStorage.setItem(USER_KEY,JSON.stringify({role:me.role,name:me.name}));
-    return me;
-  }catch(e){ return null; }
-}
-
-function doLogout(){
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
-  const ls=document.getElementById("login-screen");
-  if(ls) ls.style.display="flex";
-}
-window.doLogout = doLogout;
-
-function showApp(){
-  const ls=document.getElementById("login-screen");
-  if(ls) ls.style.display="none";
-  const user=getUser();
-  document.querySelectorAll(".admin-only").forEach(el=>{
-    const isNav = el.classList.contains("nav-item")||el.classList.contains("bnav-item");
-    const isSec = el.classList.contains("nav-section");
-    el.style.display = isAdmin() ? (isSec?"block":isNav?"flex":"") : "none";
-  });
-  const sn=document.getElementById("sidebar-user-name"); if(sn) sn.textContent=user?.name||"User";
-  const sr=document.getElementById("sidebar-user-role"); if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
-  const av=document.getElementById("sidebar-avatar");   if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
-}
-
-async function doLogin(){
-  const email=document.getElementById("login-email").value.trim();
-  const pw=document.getElementById("login-password").value;
-  const btn=document.getElementById("login-btn");
-  const err=document.getElementById("login-error");
-  if(!email||!pw){ err.textContent="Email and password required"; err.style.display="block"; return; }
-  btn.textContent="Signing in…"; btn.disabled=true; err.style.display="none";
-  try{
-    const r=await fetch("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password:pw})});
-    const d=await r.json();
-    if(!r.ok){ err.textContent=d.detail||"Invalid credentials"; err.style.display="block"; return; }
-    localStorage.setItem(TOKEN_KEY,d.access_token);
-    localStorage.setItem(USER_KEY,JSON.stringify({role:d.role,name:d.name}));
-    showApp();
-  }catch(e){ err.textContent="Network error"; err.style.display="block"; }
-  finally{ btn.textContent="Sign In →"; btn.disabled=false; }
-}
-
-window.addEventListener("DOMContentLoaded",async()=>{
-  if(getToken()){
-    await syncMe();
-    showApp();
-  } else {
-    const ls=document.getElementById("login-screen");
-    if(ls) ls.style.display="flex";
-  }
-});
-</script>
-<script>
 let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, allShipments=[];
 
@@ -2100,7 +2030,7 @@ async function doChangePassword(){
   }
   if(!old_pw||!new_pw||!confirm){ showMsg("All fields are required",false); return; }
   if(new_pw.length<6){ showMsg("New password must be at least 6 characters",false); return; }
-  if(new_pw!==confirm){ showMsg("Passwords do not match",false); return; }
+function isAdmin(){ const r=(getUser()||{}).role; return r && r.toLowerCase()==="admin"; }
   try{
     await apiFetch("/api/auth/change-password",{method:"POST",
       body:JSON.stringify({old_password:old_pw,new_password:new_pw})});
@@ -2132,7 +2062,7 @@ async function doBulkUpload(){
   if(btn){ btn.disabled=true; btn.textContent="Importing…"; }
   const fd=new FormData(); fd.append("file",_bulkFile);
   try{
-    const token=getToken();
+    el.style.display=isAdmin()?(el.classList.contains("nav-section")?"block":el.classList.contains("nav-item")||el.classList.contains("bnav-item")?"flex":""):"none";
     const r=await fetch("/api/shipments/bulk-import",{method:"POST",
       headers:token?{"Authorization":"Bearer "+token}:{}, body:fd});
     const d=await r.json();
@@ -2151,10 +2081,25 @@ async function doBulkUpload(){
 
 // ═══ USER MANAGEMENT ═════════════════════════════════════════
 async function loadUsers(){
-  const list=document.getElementById("users-list");
-  if(!list) return;
-  list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text2)"><i class="fa fa-spinner fa-spin"></i> Loading…</div>';
+async function syncMe(){
+  const token=getToken();
+  if(!token) return null;
   try{
+    const r=await fetch("/api/auth/me",{headers:{"Authorization":"Bearer "+token}});
+    if(!r.ok) return null;
+    const me=await r.json();
+    localStorage.setItem(USER_KEY,JSON.stringify({role:me.role,name:me.name}));
+    return me;
+  }catch(e){ return null; }
+}
+
+window.addEventListener("DOMContentLoaded",async()=>{
+  if(getToken()){ await syncMe(); showApp(); }
+  else{ const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
+});
+
+
+
     const users=await apiFetch("/api/users");
     if(!users.length){
       list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px">👥</div>No team members yet</div>';
