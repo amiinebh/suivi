@@ -851,7 +851,7 @@ textarea.form-control{resize:none;min-height:72px}
           <div class="form-group full"><label>Client Email</label><input id="f-client-email" class="form-control" type="email" placeholder="client@company.com"/></div>
           <div class="form-group full"><label>Shipper</label><input id="f-shipper" class="form-control" placeholder="Shipper / Supplier"/></div>
           <div class="form-group full"><label>Consignee</label><input id="f-consignee" class="form-control" placeholder="Consignee name" list="consignee-list"/></div>
-          <div class="form-group full"><label></label><input id="f-quotation-number" class="form-control" placeholder="QUO-2026-001"/></div>
+          <div class="form-group full"><label>Quotation No</label><input id="f-quotation-number" class="form-control" placeholder="QUO-2026-001"/></div>
         </div>
       </div>
       <div class="ship-tab-panel" id="stab-cargo">
@@ -2819,7 +2819,6 @@ async function generateReport(){
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
 
-<script>(function(){function findImportInput(){var a=[].slice.call(document.querySelectorAll('input[type="file"]'));return a[0]||null;}function mountUploadButton(){var input=findImportInput();if(!input||document.getElementById('excel-upload-btn'))return;var btn=document.createElement('button');btn.id='excel-upload-btn';btn.type='button';btn.textContent='Upload Excel';btn.style.marginLeft='10px';btn.onclick=async function(){var f=input.files&&input.files[0];if(!f){alert('Choose an Excel file first.');return;}var fd=new FormData();fd.append('file',f);var token=localStorage.getItem('token')||localStorage.getItem('access_token')||'';var headers=token?{'Authorization':'Bearer '+token}:{};var res=await fetch('/api/shipments/bulk-import',{method:'POST',body:fd,headers:headers});var txt=await res.text();if(!res.ok){alert('Import failed: '+txt);return;}alert('Import completed successfully.');};(input.parentElement||input).appendChild(btn);}document.addEventListener('DOMContentLoaded',function(){setTimeout(mountUploadButton,600);});})();</script>
 </body>></html>`;
 
     const w = window.open('','_blank');
@@ -2978,6 +2977,5 @@ function updateTransitPreview(){
 <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
-<script>(function(){function findImportInput(){var a=[].slice.call(document.querySelectorAll('input[type="file"]'));return a[0]||null;}function mountUploadButton(){var input=findImportInput();if(!input||document.getElementById('excel-upload-btn'))return;var btn=document.createElement('button');btn.id='excel-upload-btn';btn.type='button';btn.textContent='Upload Excel';btn.style.marginLeft='10px';btn.onclick=async function(){var f=input.files&&input.files[0];if(!f){alert('Choose an Excel file first.');return;}var fd=new FormData();fd.append('file',f);var token=localStorage.getItem('token')||localStorage.getItem('access_token')||'';var headers=token?{'Authorization':'Bearer '+token}:{};var res=await fetch('/api/shipments/bulk-import',{method:'POST',body:fd,headers:headers});var txt=await res.text();if(!res.ok){alert('Import failed: '+txt);return;}alert('Import completed successfully.');};(input.parentElement||input).appendChild(btn);}document.addEventListener('DOMContentLoaded',function(){setTimeout(mountUploadButton,600);});})();</script>
 </body>
   </html>
