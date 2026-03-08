@@ -451,8 +451,8 @@ textarea.form-control{resize:none;min-height:72px}
 <script>
 window.doLogout = function () {
   localStorage.removeItem('ft_token');
-  localStorage.removeItem('ft_user');
-  location.reload();
+  localStorage.removeItem("ft_user");
+  location.href = location.pathname + "#login";
 };
 </script>
   <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;
@@ -1300,9 +1300,9 @@ let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, allShipments=[];
 
 /* ── Nav ── */
-function showPage(id,el){ console.log("showPage called with id:", id, "isAdmin:", isAdmin());
-  if((id==="analytics"||id==="users")&&!isAdmin()){id="shipments"; console.log("Redirected to shipments");}
-  if(id==='users') setTimeout(loadUsers,150);
+function showPage(id,el){ console.log("showPage clicked:", id);
+  if((id==="analytics"||id==="users")&&!isAdmin()){id="shipments";}
+  if(id==="users") setTimeout(loadUsers,150);
   // Role guards
   if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
   if(id==='users'){ setTimeout(loadUsers, 150); setBottomNav('users'); }
@@ -1313,10 +1313,10 @@ function showPage(id,el){ console.log("showPage called with id:", id, "isAdmin:"
   const titles={dashboard:'Overview',shipments:'Shipments'};
   document.getElementById('page-title').textContent=titles[id]||id;
   if(id==='shipments') loadShipments();
-  document.getElementById("page-"+id).classList.add("active"); console.log("Activated page-"+id);
+  document.getElementById("page-"+id).classList.add("active");  console.log("Activated page-"+id)
   if(id==='analytics') loadAnalytics();
   if(id==='alerts') loadAlerts();
-  if(typeof loadAnalytics==="function") loadAnalytics(); else console.error("loadAnalytics not defined");
+  if(typeof loadAnalytics==="function") loadAnalytics(); else  else console.error("loadAnalytics not defined")
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -1572,7 +1572,7 @@ async function loadDashboard(){
       <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value">${(stats.by_mode||{}).Ocean||0}</div><div class="stat-label">Ocean</div></div>
     `;
     document.getElementById('nav-count').textContent=stats.total||0;
-  }catch(e){ console.error(e); }
+  }catch(e){  }
   try{
     const ships=await apiFetch('/api/shipments');
     allShipments=ships;
@@ -1594,7 +1594,7 @@ async function loadDashboard(){
         </div></td>
       </tr>`).join('')}</tbody></table>`;
     }
-  }catch(e){ console.error(e); }
+  }catch(e){  }
   // Update alerts badge
   try{ updateAlertsBadge(); }catch(e){}
 }
@@ -1734,7 +1734,7 @@ async function saveShipment(){
       toast(editId?'Shipment updated':'Shipment added','success');
       closeModal('modal-add'); loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200); loadShipments();
     } else { toast('Unexpected server response','error'); }
-  }catch(e){ toast(e.message,'error'); console.error('saveShipment:',e); }
+  }catch(e){ toast(e.message,'error');  console.error('saveShipment:',e)
   btn.innerHTML='<i class="fa fa-floppy-disk"></i> Save Shipment'; btn.disabled=false;
 }
 
@@ -1959,7 +1959,7 @@ async function loadAnalytics(){
       oWrap.innerHTML='<div style="text-align:center;padding:16px;color:var(--green);font-size:13px">🎉 No overdue shipments!</div>';
     }
 
-  } catch(e){ toast('KPI error: '+e.message,'error'); console.error(e); }
+  } catch(e){ toast('KPI error: '+e.message,'error');  console.error(e)
 }
 
 /* ── Theme ── */
