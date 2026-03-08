@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Response, Request, UploadFile, File
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
 from auth import get_current_user, require_admin, hash_password, verify_password, create_token
 from database import SessionLocal, engine, run_migrations
@@ -25,10 +25,22 @@ def get_db():
 
 @app.get("/")
 def root():
+    from fastapi.responses import HTMLResponse
     import pathlib
     html_path = pathlib.Path("static/index.html")
     content = html_path.read_text(encoding="utf-8") if html_path.exists() else "<h1>Loading...</h1>"
     return HTMLResponse(content=content)
+
+@app.get("/track/{ref}")
+def client_portal(ref: str):
+    return FileResponse("static/portal/index.html")
+
+@app.get("/api/portal/{ref}")
+def portal_data(ref: str, db: Session = Depends(get_db)):
+    s = crud.get_shipment(db, ref)
+    if not s:
+        raise HTTPException(404, "Shipment not found")
+    return {"ref": s.ref, "ref2": s.ref2, "mode": s.mode, "carrier": s.carrier, "vessel": s.vessel, "pol": s.pol, "pod": s.pod, "etd": s.etd, "eta": s.eta, "status": s.status, "client": s.client, "last_tracked": s.last_tracked, "events": [{"timestamp": e.timestamp, "location": e.location, "description": e.description, "status": e.status} for e in sorted(s.events, key=lambda x: x.timestamp, reverse=True)]}
 
 @app.get("/api/shipments", response_model=list[schemas.ShipmentOut])
 def list_shipments(q:str="", search:str="", status:str="", mode:str="", db:Session=Depends(get_db), current=Depends(get_current_user)):
@@ -88,7 +100,9 @@ def export_xlsx(search:str="", status:str="", mode:str="", db:Session=Depends(ge
 def kpi_report(db: Session = Depends(get_db)):
     k = crud.get_kpis(db)
     total = k.get("total", 0)
-    insights = [f"Network volume stands at {total} shipments."] if total else []
+    insights = []
+    if total:
+        insights.append(f"Network volume stands at {total} shipments.")
     return {"kpis": k, "insights": insights}
 
 @app.get("/api/kpis")
@@ -97,7 +111,14 @@ def get_kpis_compat(db: Session = Depends(get_db)):
 
 @app.get("/api/stats")
 def get_stats_compat(db: Session = Depends(get_db)):
-    return crud.get_stats(db)
+    k = crud.get_kpis(db)
+    by_status = k.get("by_status", {})
+    return {
+        "total": k.get("total", 0),
+        "by_status": by_status,
+        "by_mode": {},
+        "delayed_count": by_status.get("Delayed", 0)
+    }
 
 @app.get("/api/health")
 def health(db: Session = Depends(get_db)):
@@ -138,7 +159,7 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
             continue
         try:
             from datetime import datetime
-            s = models.Shipment(ref=ref, ref2=row_data.get("container/awb", "") or row_data.get("ref2", ""), booking_no=row_data.get("booking no", "") or row_data.get("booking_no", ""), mode=row_data.get("mode", "Ocean"), direction=row_data.get("direction", ""), carrier=row_data.get("carrier", ""), vessel=row_data.get("vessel", ""), client=row_data.get("client", ""), client_email=row_data.get("client email", "") or row_data.get("client_email", ""), shipper=row_data.get("shipper", ""), consignee=row_data.get("consignee", ""), incoterm=row_data.get("incoterm", ""), agent=row_data.get("agent", ""), pol=row_data.get("pol", ""), pod=row_data.get("pod", ""), etd=row_data.get("etd", ""), eta=row_data.get("eta", ""), status=row_data.get("status", "") or "Pending", stuffing_date=row_data.get("stuffing date", "") or row_data.get("stuffing_date", ""), notes=row_data.get("notes", "") or row_data.get("note", ""))
+            s = models.Shipment(ref=ref, ref2=row_data.get("container/awb", "") or row_data.get("ref2", ""), booking_no=row_data.get("booking no", "") or row_data.get("booking_no", ""), mode=row_data.get("mode", "Ocean"), direction=row_data.get("direction", ""), carrier=row_data.get("carrier", ""), vessel=row_data.get("vessel", ""), client=row_data.get("client", ""), client_email=row_data.get("client email", "") or row_data.get("client_email", ""), shipper=row_data.get("shipper", ""), consignee=row_data.get("consignee", ""), incoterm=row_data.get("incoterm", ""), agent=row_data.get("agent", ""), pol=row_data.get("pol", ""), pod=row_data.get("pod", ""), etd=row_data.get("etd", ""), eta=row_data.get("eta", ""), status=row_data.get("status", "") or "Pending", stuffing_date=row_data.get("stuffing date", "") or row_data.get("stuffing_date", ""), notes=row_data.get("notes", "") or row_data.get("note", ""), created_at=datetime.utcnow().isoformat())
             db.add(s)
             db.commit()
             created.append(ref)
@@ -146,6 +167,49 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
             db.rollback()
             errors.append({"ref": ref, "error": str(e)})
     return {"created": len(created), "skipped": len(skipped), "errors": errors, "refs_created": created}
+
+
+@app.get("/api/users", response_model=list[schemas.UserOut])
+def list_users(db: Session = Depends(get_db), current=Depends(get_current_user)):
+    from models import User
+    return db.query(User).order_by(User.id).all()
+
+@app.post("/api/users", response_model=schemas.UserOut)
+def create_user(body: schemas.UserCreate, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    from models import User
+    if (current or {}).get("role") != "admin":
+        raise HTTPException(403, "Admin only")
+    if db.query(User).filter(User.email == body.email).first():
+        raise HTTPException(400, "Email already exists")
+    user = User(email=body.email, name=body.name, role=body.role, hashed_pw=hash_password(body.password), is_active=True)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+@app.patch("/api/users/{uid}/toggle")
+def toggle_user(uid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    from models import User
+    if (current or {}).get("role") != "admin":
+        raise HTTPException(403, "Admin only")
+    user = db.query(User).filter(User.id == uid).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    user.is_active = not user.is_active
+    db.commit()
+    return {"ok": True, "is_active": user.is_active}
+
+@app.delete("/api/users/{uid}")
+def delete_user(uid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    from models import User
+    if (current or {}).get("role") != "admin":
+        raise HTTPException(403, "Admin only")
+    user = db.query(User).filter(User.id == uid).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    db.delete(user)
+    db.commit()
+    return {"ok": True}
 
 @app.on_event("startup")
 def on_startup():
