@@ -1020,6 +1020,20 @@ function generateNextRef(){
 
 window._overviewFilterApplied=false;
 function applyShipmentStatusFilter(status){
+  console.log('[FREIGHT] Applying filter:',status);
+  const ss=document.getElementById('search-status')||document.querySelector('select[id*="status"]');
+  if(ss){
+    ss.value=status;
+    console.log('[FREIGHT] Status dropdown set to:',status);
+  }
+  showPage('shipments');
+  setTimeout(()=>{
+    if(typeof loadShipments==='function'){
+      loadShipments();
+      console.log('[FREIGHT] Shipments reloaded with filter');
+    }
+  },100);
+}
   const ss=document.getElementById('search-status') || document.getElementById('status-filter');
   if(ss){ ss.value=status; }
   const page=document.getElementById('page-shipments');
@@ -1032,6 +1046,32 @@ function applyShipmentStatusFilter(status){
   if(typeof loadShipments==='function') loadShipments();
 }
 function bindOverviewCards(){
+  console.log('[FREIGHT] Binding overview cards...');
+  setTimeout(()=>{
+    const cards=document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,.overview-stat');
+    console.log('[FREIGHT] Found',cards.length,'potential cards');
+    cards.forEach((el,i)=>{
+      const text=(el.textContent||'').toLowerCase().replace(/\s+/g,' ');
+      let status=null;
+      if(/\bdelayed\b/.test(text)) status='Delayed';
+      else if(/\bpending\b/.test(text)) status='Pending';
+      else if(/\bdelivered\b|\barrived\b/.test(text)) status='Delivered';
+      else if(/\bin transit\b|\bsailing\b|\bactive\b/.test(text)) status='In Transit';
+      if(status){
+        el.style.cursor='pointer';
+        el.style.transition='transform 0.2s';
+        el.onmouseenter=()=>el.style.transform='scale(1.02)';
+        el.onmouseleave=()=>el.style.transform='scale(1)';
+        el.onclick=(e)=>{
+          e.preventDefault();e.stopPropagation();
+          console.log('[FREIGHT] Card clicked, filter:',status);
+          applyShipmentStatusFilter(status);
+        };
+        console.log('[FREIGHT] Card',i,'bound to status:',status);
+      }
+    });
+  },300);
+}
   const cards=[...document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,button,div')];
   cards.forEach(el=>{
     const t=(el.textContent||'').replace(/\s+/g,' ').trim();
@@ -1181,6 +1221,7 @@ function renderTable(ships){
 
 /* ── Dashboard ── */
 async function loadDashboard(){
+  setTimeout(()=>{bindOverviewCards();console.log("[FREIGHT] Dashboard loaded, cards bound");},500);
   setTimeout(bindOverviewCards,400);
   try{
     const stats=await apiFetch('/api/stats');
@@ -2703,14 +2744,58 @@ async function generateReport(){
       }
     
 /* Ship form tabs */
-.modal-shipment{max-height:92vh;display:flex;flex-direction:column;background:var(--card-bg,#111827);color:var(--text,#e5e7eb);}
-.ship-tabs{display:flex;padding:6px 12px;background:var(--panel-bg,#0f172a);border-bottom:1px solid var(--border,#253041);flex-shrink:0;overflow-x:auto;gap:8px;}
-.ship-tab{background:var(--panel-2,#111827);border:1px solid var(--border,#253041);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;color:var(--muted,#94a3b8);cursor:pointer;white-space:nowrap;transition:all .2s;box-shadow:none;}
-.ship-tab:hover{color:var(--text,#e5e7eb);border-color:var(--accent,#14b8a6);}
-.ship-tab.active{color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--accent,#14b8a6) 30%, #1f2937),color-mix(in srgb,var(--accent,#14b8a6) 12%, #111827));border-color:var(--accent,#14b8a6);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent,#14b8a6) 35%, transparent) inset;}
-.ship-tab-panel{display:none;}.ship-tab-panel.active{display:block;}
-.ship-tab-dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--border,#475569);background:transparent;cursor:pointer;padding:0;transition:all .2s;}
-.ship-tab-dot.active{background:var(--accent,#14b8a6);border-color:var(--accent,#14b8a6);}
+.modal-shipment .modal-content{background:#1a202c !important;color:#e5e7eb !important;}
+.ship-tabs{
+  display:flex;padding:8px 16px;
+  background:#0f172a !important;
+  border-bottom:1px solid #2d3748 !important;
+  flex-shrink:0;overflow-x:auto;gap:6px;margin:0;
+}
+.ship-tab{
+  background:#1e293b !important;
+  border:1px solid #334155 !important;
+  border-radius:8px;padding:10px 16px;
+  font-size:13px;font-weight:600;
+  color:#94a3b8 !important;
+  cursor:pointer;white-space:nowrap;
+  transition:all 0.2s ease;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.ship-tab:hover{
+  background:#2d3748 !important;
+  color:#cbd5e1 !important;
+  border-color:#38b2ac !important;
+}
+.ship-tab.active{
+  background:linear-gradient(135deg,#14b8a6,#0d9488) !important;
+  color:#ffffff !important;
+  border-color:#14b8a6 !important;
+  box-shadow:0 0 0 3px rgba(20,184,166,0.2) !important;
+}
+.ship-tab-panel{display:none;padding:20px 16px;background:#1a202c !important;}
+.ship-tab-panel.active{display:block;}
+.ship-tab-dots{display:flex;gap:6px;justify-content:center;padding:8px 0;background:#0f172a !important;}
+.ship-tab-dot{
+  width:10px;height:10px;border-radius:50%;
+  border:2px solid #475569;background:transparent;
+  cursor:pointer;transition:all 0.2s;
+}
+.ship-tab-dot.active{
+  background:#14b8a6;border-color:#14b8a6;
+  box-shadow:0 0 0 2px rgba(20,184,166,0.3);
+}
+
+.modal-shipment input,.modal-shipment select,.modal-shipment textarea{
+  background:#1e293b !important;
+  border:1px solid #334155 !important;
+  color:#e5e7eb !important;
+}
+.modal-shipment input:focus,.modal-shipment select:focus,.modal-shipment textarea:focus{
+  border-color:#14b8a6 !important;
+  box-shadow:0 0 0 3px rgba(20,184,166,0.15) !important;
+}
+.modal-shipment label{color:#cbd5e1 !important;font-weight:500;}
+.modal-shipment .form-group h3,.modal-shipment .form-group h4{color:#e5e7eb !important;}
 </style></head><body>
 
     <div class="page-header">
