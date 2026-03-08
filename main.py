@@ -168,6 +168,49 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
             errors.append({"ref": ref, "error": str(e)})
     return {"created": len(created), "skipped": len(skipped), "errors": errors, "refs_created": created}
 
+
+@app.get("/api/users", response_model=list[schemas.UserOut])
+def list_users(db: Session = Depends(get_db), current=Depends(get_current_user)):
+    from models import User
+    return db.query(User).order_by(User.id).all()
+
+@app.post("/api/users", response_model=schemas.UserOut)
+def create_user(body: schemas.UserCreate, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    from models import User
+    if (current or {}).get("role") != "admin":
+        raise HTTPException(403, "Admin only")
+    if db.query(User).filter(User.email == body.email).first():
+        raise HTTPException(400, "Email already exists")
+    user = User(email=body.email, name=body.name, role=body.role, hashed_pw=hash_password(body.password), is_active=True)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+@app.patch("/api/users/{uid}/toggle")
+def toggle_user(uid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    from models import User
+    if (current or {}).get("role") != "admin":
+        raise HTTPException(403, "Admin only")
+    user = db.query(User).filter(User.id == uid).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    user.is_active = not user.is_active
+    db.commit()
+    return {"ok": True, "is_active": user.is_active}
+
+@app.delete("/api/users/{uid}")
+def delete_user(uid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    from models import User
+    if (current or {}).get("role") != "admin":
+        raise HTTPException(403, "Admin only")
+    user = db.query(User).filter(User.id == uid).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    db.delete(user)
+    db.commit()
+    return {"ok": True}
+
 @app.on_event("startup")
 def on_startup():
     db = SessionLocal()
