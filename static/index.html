@@ -2703,14 +2703,14 @@ async function generateReport(){
       }
     
 /* Ship form tabs */
-.modal-shipment{max-height:92vh;display:flex;flex-direction:column;background:var(--card-bg,#111827);color:var(--text,#e5e7eb);}
-.ship-tabs{display:flex;padding:6px 12px;background:var(--panel-bg,#0f172a);border-bottom:1px solid var(--border,#253041);flex-shrink:0;overflow-x:auto;gap:8px;}
-.ship-tab{background:var(--panel-2,#111827);border:1px solid var(--border,#253041);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;color:var(--muted,#94a3b8);cursor:pointer;white-space:nowrap;transition:all .2s;box-shadow:none;}
-.ship-tab:hover{color:var(--text,#e5e7eb);border-color:var(--accent,#14b8a6);}
-.ship-tab.active{color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--accent,#14b8a6) 30%, #1f2937),color-mix(in srgb,var(--accent,#14b8a6) 12%, #111827));border-color:var(--accent,#14b8a6);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent,#14b8a6) 35%, transparent) inset;}
-.ship-tab-panel{display:none;}.ship-tab-panel.active{display:block;}
-.ship-tab-dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--border,#475569);background:transparent;cursor:pointer;padding:0;transition:all .2s;}
-.ship-tab-dot.active{background:var(--accent,#14b8a6);border-color:var(--accent,#14b8a6);}
+.ship-tabs{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid #253041;background:#0f172a;overflow-x:auto;}
+.ship-tab{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #334155;border-radius:10px;background:#1e293b;color:#cbd5e1;font-weight:600;cursor:pointer;}
+.ship-tab:hover{border-color:#14b8a6;color:#ffffff;}
+.ship-tab.active{background:#14b8a6;color:#ffffff;border-color:#14b8a6;}
+.ship-tab-panel{display:none;}
+.ship-tab-panel.active{display:block;}
+.ship-tab-dot{width:8px;height:8px;border-radius:50%;border:2px solid #64748b;background:transparent;}
+.ship-tab-dot.active{background:#14b8a6;border-color:#14b8a6;}
 </style></head><body>
 
     <div class="page-header">
@@ -2818,6 +2818,100 @@ async function generateReport(){
     <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
+
+
+<script>
+(function(){
+  function getToken(){ return localStorage.getItem('token') || localStorage.getItem('access_token') || ''; }
+  function authHeaders(){ var t=getToken(); return t ? {'Authorization':'Bearer '+t} : {}; }
+  function findImportInput(){
+    var inputs=[].slice.call(document.querySelectorAll('input[type="file"]'));
+    return inputs.find(function(el){
+      var txt=((el.closest('section,div,form,.modal,.page')||document.body).textContent||'').toLowerCase();
+      return txt.indexOf('import')>=0 || txt.indexOf('excel')>=0 || txt.indexOf('upload')>=0;
+    }) || inputs[0] || null;
+  }
+  function mountUploadButton(){
+    var input=findImportInput();
+    if(!input || document.getElementById('excel-upload-btn')) return;
+    var btn=document.createElement('button');
+    btn.id='excel-upload-btn';
+    btn.type='button';
+    btn.textContent='Upload Excel';
+    btn.style.marginLeft='10px';
+    btn.style.padding='10px 14px';
+    btn.style.borderRadius='10px';
+    btn.style.border='1px solid #14b8a6';
+    btn.style.background='#14b8a6';
+    btn.style.color='#fff';
+    btn.style.cursor='pointer';
+    btn.onclick=async function(){
+      var f=input.files&&input.files[0];
+      if(!f){ alert('Choose an Excel file first.'); return; }
+      var fd=new FormData();
+      fd.append('file', f);
+      try{
+        var res=await fetch('/api/shipments/bulk-import', {method:'POST', body:fd, headers:authHeaders()});
+        var txt=await res.text();
+        if(!res.ok){ alert('Import failed: '+txt); return; }
+        alert('Import completed successfully.');
+        if(typeof loadShipments==='function') loadShipments();
+        if(typeof loadKpis==='function') loadKpis();
+      }catch(err){ alert('Import error: '+err.message); }
+    };
+    (input.parentElement||input).appendChild(btn);
+  }
+  function applyShipmentStatus(status){
+    if(typeof showPage==='function') showPage('shipments');
+    setTimeout(function(){
+      var sel=document.getElementById('search-status')||document.getElementById('status-filter')||document.querySelector('select[id*="status"]');
+      if(sel) sel.value=status;
+      if(typeof loadShipments==='function') loadShipments();
+    },180);
+  }
+  function bindCards(){
+    var root=document.getElementById('page-dashboard')||document.body;
+    var nodes=[].slice.call(root.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,.overview-stat,div'));
+    nodes.forEach(function(el){
+      if(el.dataset&&el.dataset.boundStatusCard==='1') return;
+      var t=(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+      var status=null;
+      if(/^delayed$/.test(t)||/ delayed /.test(' '+t+' ')) status='Delayed';
+      else if(/^pending$/.test(t)||/ pending /.test(' '+t+' ')) status='Pending';
+      else if(/^done$/.test(t)||/ delivered | arrived /.test(' '+t+' ')) status='Delivered';
+      else if(/^transit$/.test(t)||/ in transit | sailing | active /.test(' '+t+' ')) status='In Transit';
+      if(!status) return;
+      if(el.dataset) el.dataset.boundStatusCard='1';
+      el.style.cursor='pointer';
+      var h=function(e){ e.preventDefault(); e.stopPropagation(); applyShipmentStatus(status); };
+      el.addEventListener('click', h, {passive:false});
+      el.addEventListener('touchend', h, {passive:false});
+    });
+  }
+  function patchExport(){
+    if(document.getElementById('export-xlsx-btn-patched')) return;
+    var candidates=[].slice.call(document.querySelectorAll('button,a'));
+    var btn=candidates.find(function(el){ return /export xlsx/i.test((el.textContent||'').trim()); });
+    if(!btn) return;
+    btn.id='export-xlsx-btn-patched';
+    btn.addEventListener('click', async function(e){
+      e.preventDefault();
+      try{
+        var res=await fetch('/api/export/xlsx', {headers:authHeaders()});
+        if(!res.ok){ alert('Export failed with status '+res.status); return; }
+        var blob=await res.blob();
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement('a');
+        a.href=url; a.download='shipments.xlsx'; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+      }catch(err){ alert('Export error: '+err.message); }
+    }, true);
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(mountUploadButton,600); setTimeout(bindCards,500); setTimeout(patchExport,700); });
+  window.addEventListener('load', function(){ setTimeout(mountUploadButton,900); setTimeout(bindCards,900); setTimeout(patchExport,900); });
+  document.addEventListener('change', function(e){ if(e.target&&e.target.matches('input[type="file"]')) mountUploadButton(); });
+})();
+</script>
 
 </body>></html>`;
 
@@ -2977,5 +3071,99 @@ function updateTransitPreview(){
 <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
+
+<script>
+(function(){
+  function getToken(){ return localStorage.getItem('token') || localStorage.getItem('access_token') || ''; }
+  function authHeaders(){ var t=getToken(); return t ? {'Authorization':'Bearer '+t} : {}; }
+  function findImportInput(){
+    var inputs=[].slice.call(document.querySelectorAll('input[type="file"]'));
+    return inputs.find(function(el){
+      var txt=((el.closest('section,div,form,.modal,.page')||document.body).textContent||'').toLowerCase();
+      return txt.indexOf('import')>=0 || txt.indexOf('excel')>=0 || txt.indexOf('upload')>=0;
+    }) || inputs[0] || null;
+  }
+  function mountUploadButton(){
+    var input=findImportInput();
+    if(!input || document.getElementById('excel-upload-btn')) return;
+    var btn=document.createElement('button');
+    btn.id='excel-upload-btn';
+    btn.type='button';
+    btn.textContent='Upload Excel';
+    btn.style.marginLeft='10px';
+    btn.style.padding='10px 14px';
+    btn.style.borderRadius='10px';
+    btn.style.border='1px solid #14b8a6';
+    btn.style.background='#14b8a6';
+    btn.style.color='#fff';
+    btn.style.cursor='pointer';
+    btn.onclick=async function(){
+      var f=input.files&&input.files[0];
+      if(!f){ alert('Choose an Excel file first.'); return; }
+      var fd=new FormData();
+      fd.append('file', f);
+      try{
+        var res=await fetch('/api/shipments/bulk-import', {method:'POST', body:fd, headers:authHeaders()});
+        var txt=await res.text();
+        if(!res.ok){ alert('Import failed: '+txt); return; }
+        alert('Import completed successfully.');
+        if(typeof loadShipments==='function') loadShipments();
+        if(typeof loadKpis==='function') loadKpis();
+      }catch(err){ alert('Import error: '+err.message); }
+    };
+    (input.parentElement||input).appendChild(btn);
+  }
+  function applyShipmentStatus(status){
+    if(typeof showPage==='function') showPage('shipments');
+    setTimeout(function(){
+      var sel=document.getElementById('search-status')||document.getElementById('status-filter')||document.querySelector('select[id*="status"]');
+      if(sel) sel.value=status;
+      if(typeof loadShipments==='function') loadShipments();
+    },180);
+  }
+  function bindCards(){
+    var root=document.getElementById('page-dashboard')||document.body;
+    var nodes=[].slice.call(root.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,.overview-stat,div'));
+    nodes.forEach(function(el){
+      if(el.dataset&&el.dataset.boundStatusCard==='1') return;
+      var t=(el.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+      var status=null;
+      if(/^delayed$/.test(t)||/ delayed /.test(' '+t+' ')) status='Delayed';
+      else if(/^pending$/.test(t)||/ pending /.test(' '+t+' ')) status='Pending';
+      else if(/^done$/.test(t)||/ delivered | arrived /.test(' '+t+' ')) status='Delivered';
+      else if(/^transit$/.test(t)||/ in transit | sailing | active /.test(' '+t+' ')) status='In Transit';
+      if(!status) return;
+      if(el.dataset) el.dataset.boundStatusCard='1';
+      el.style.cursor='pointer';
+      var h=function(e){ e.preventDefault(); e.stopPropagation(); applyShipmentStatus(status); };
+      el.addEventListener('click', h, {passive:false});
+      el.addEventListener('touchend', h, {passive:false});
+    });
+  }
+  function patchExport(){
+    if(document.getElementById('export-xlsx-btn-patched')) return;
+    var candidates=[].slice.call(document.querySelectorAll('button,a'));
+    var btn=candidates.find(function(el){ return /export xlsx/i.test((el.textContent||'').trim()); });
+    if(!btn) return;
+    btn.id='export-xlsx-btn-patched';
+    btn.addEventListener('click', async function(e){
+      e.preventDefault();
+      try{
+        var res=await fetch('/api/export/xlsx', {headers:authHeaders()});
+        if(!res.ok){ alert('Export failed with status '+res.status); return; }
+        var blob=await res.blob();
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement('a');
+        a.href=url; a.download='shipments.xlsx'; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+      }catch(err){ alert('Export error: '+err.message); }
+    }, true);
+  }
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(mountUploadButton,600); setTimeout(bindCards,500); setTimeout(patchExport,700); });
+  window.addEventListener('load', function(){ setTimeout(mountUploadButton,900); setTimeout(bindCards,900); setTimeout(patchExport,900); });
+  document.addEventListener('change', function(e){ if(e.target&&e.target.matches('input[type="file"]')) mountUploadButton(); });
+})();
+</script>
+
 </body>
   </html>
