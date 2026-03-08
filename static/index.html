@@ -1623,7 +1623,7 @@ function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){
   try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
 }
-function isAdmin(){ return (getUser()||{}).role === "admin"; }
+function isAdmin(){ const r=(getUser()||{}).role; return r && r.toLowerCase()==="admin"; }
 
 function authFetch(url, opts={}){
   opts.headers = opts.headers || {};
@@ -1666,7 +1666,7 @@ async function doLogin(){
     }
     localStorage.setItem(TOKEN_KEY, d.access_token);
     localStorage.setItem(USER_KEY, JSON.stringify({role:d.role, name:d.name}));
-    showApp();
+    /* showApp moved to DOMContentLoaded */
   } catch(e){
     err.textContent = "Network error — please try again";
     err.style.display = "block";
@@ -1702,9 +1702,9 @@ function doLogout(){
   if(ls){ ls.style.display = "flex"; }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  if(getToken()){ showApp(); }
-  else {
+window.addEventListener("DOMContentLoaded", async () => {
+  if(getToken()){ await syncMe(); showApp(); }
+  else { const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
     const ls = document.getElementById("login-screen");
     if(ls) ls.style.display = "flex";
   }
@@ -1960,7 +1960,18 @@ async function deleteUser(id){
 const TOKEN_KEY="ft_token", USER_KEY="ft_user";
 function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
-function isAdmin(){ return (getUser()||{}).role==="admin"; }
+async function syncMe(){
+  const token=getToken();
+  if(!token) return null;
+  try{
+    const r=await fetch('/api/auth/me',{headers:{"Authorization":"Bearer "+token}});
+    if(!r.ok) return null;
+    const me=await r.json();
+    localStorage.setItem(USER_KEY,JSON.stringify({role:me.role,name:me.name}));
+    return me;
+  }catch(e){return null;}
+}
+function isAdmin(){ const r=(getUser()||{}).role; return r && r.toLowerCase()==="admin"; }
 
 async function doLogin(){
   const email=document.getElementById("login-email").value.trim();
@@ -2011,8 +2022,8 @@ function doLogout(){
   ["login-email","login-password"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
 }
 
-window.addEventListener("DOMContentLoaded",()=>{
-  if(getToken()) showApp();
+window.addEventListener("DOMContentLoaded",async()=>{
+  if(getToken()){ await syncMe(); showApp(); }
   else{ const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
 });
 
