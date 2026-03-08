@@ -970,7 +970,7 @@ async function doLogin(){
   if(!email||!pw){ err.textContent="Email and password required"; err.style.display="block"; return; }
   btn.textContent="Signing in…"; btn.disabled=true; err.style.display="none";
   try{
-    const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,pw})});
+    const r=await fetch("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,pw})});
     const d=await r.json();
     if(!r.ok){ err.textContent=d.detail||"Invalid credentials"; err.style.display="block"; return; }
     localStorage.setItem(TOKEN_KEY,d.access_token);
