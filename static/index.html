@@ -931,8 +931,8 @@ window.doLogout = function () {
 // ═══ AUTH ════════════════════════════════════════════════════
 const TOKEN_KEY="ft_token", USER_KEY="ft_user";
 function getToken(){ return localStorage.getItem(TOKEN_KEY); }
-function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
-function isAdmin(){ const r = (getUser()||{}).role; return r && r.toLowerCase()==="admin"; }
+function getUser(){ try{ const stored = localStorage.getItem(USER_KEY); console.log("USER_KEY:", USER_KEY, "stored:", stored); return JSON.parse(stored||"null"); }catch(e){ console.error("getUser error:", e); return null; } }
+function isAdmin(){ const u = getUser(); console.log("isAdmin user:", u); const r=(u||{}).role; return r && r.toLowerCase()==="admin"; }
 
 async function doLogin(){
   const email=document.getElementById("login-email").value.trim();
@@ -988,9 +988,9 @@ async function syncMe(){
   if(!token) return null;
   try{
     const r=await fetch('/api/auth/me',{headers:{'Authorization':'Bearer '+token}});
-    if(!r.ok) return null;
+    const me=await r.json(); console.log("syncMe got:", me);
     const me=await r.json();
-    localStorage.setItem(USER_KEY,JSON.stringify({role:me.role,name:me.name}));
+    localStorage.setItem(USER_KEY,JSON.stringify({role:me.role,name:me.name})); console.log("saved new user data");
     return me;
   }catch(e){ return null; }
 }
@@ -1300,8 +1300,8 @@ let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, allShipments=[];
 
 /* ── Nav ── */
-function showPage(id,el){
-  if((id==='analytics'||id==='users')&&!isAdmin()){id='shipments';}
+function showPage(id,el){ console.log("showPage called with id:", id, "isAdmin:", isAdmin());
+  if((id==="analytics"||id==="users")&&!isAdmin()){id="shipments"; console.log("Redirected to shipments");}
   if(id==='users') setTimeout(loadUsers,150);
   // Role guards
   if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
@@ -1313,10 +1313,10 @@ function showPage(id,el){
   const titles={dashboard:'Overview',shipments:'Shipments'};
   document.getElementById('page-title').textContent=titles[id]||id;
   if(id==='shipments') loadShipments();
-  if(window.innerWidth <= 768 && typeof closeSidebar === 'function') closeSidebar();
+  document.getElementById("page-"+id).classList.add("active"); console.log("Activated page-"+id);
   if(id==='analytics') loadAnalytics();
   if(id==='alerts') loadAlerts();
-  if(id==='dashboard') setTimeout(bindOverviewCards,250);
+  if(typeof loadAnalytics==="function") loadAnalytics(); else console.error("loadAnalytics not defined");
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
