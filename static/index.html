@@ -983,9 +983,25 @@ function doLogout(){
   ["login-email","login-password"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
 }
 
-window.addEventListener("DOMContentLoaded",()=>{
-  if(getToken()) showApp();
-  else{ const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
+async function syncMe(){
+  const token=getToken();
+  if(!token) return null;
+  try{
+    const r=await fetch('/api/auth/me',{headers:{'Authorization':'Bearer '+token}});
+    if(!r.ok) return null;
+    const me=await r.json();
+    localStorage.setItem(USER_KEY,JSON.stringify({role:me.role,name:me.name}));
+    return me;
+  }catch(e){ return null; }
+}
+window.addEventListener("DOMContentLoaded",async()=>{
+  if(getToken()){
+    const me = await syncMe();
+    showApp();  // re-run with fresh data
+  } else {
+    const ls=document.getElementById("login-screen");
+    if(ls) ls.style.display="flex";
+  }
 });
 
 // ═══ CHANGE PASSWORD ═════════════════════════════════════════
