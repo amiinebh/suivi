@@ -2819,6 +2819,49 @@ async function generateReport(){
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
 
+
+<script id="ft-admin-fix">
+(function(){
+  function forceAdminVisibility(){
+    var user = null;
+    try { user = JSON.parse(localStorage.getItem('ft_user') || 'null'); } catch(e){}
+    var isAdmin = user && user.role === 'admin';
+    document.querySelectorAll('.admin-only').forEach(function(el){
+      if(isAdmin){
+        // restore proper display based on element type
+        var tag = el.tagName.toLowerCase();
+        var cls = el.className || '';
+        if(cls.indexOf('nav-section') >= 0){
+          el.style.display = 'block';
+        } else if(cls.indexOf('nav-item') >= 0 || cls.indexOf('bnav-item') >= 0){
+          el.style.display = 'flex';
+        } else {
+          el.style.display = el.dataset.display || '';
+        }
+      } else {
+        el.style.display = 'none';
+      }
+    });
+  }
+
+  // Run after both DOMContentLoaded and any login event
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(forceAdminVisibility, 300);
+    setTimeout(forceAdminVisibility, 1000);
+  });
+
+  // Intercept localStorage writes to ft_user to catch login events
+  var _origSetItem = localStorage.setItem.bind(localStorage);
+  localStorage.setItem = function(key, value){
+    _origSetItem(key, value);
+    if(key === 'ft_user'){
+      setTimeout(forceAdminVisibility, 100);
+      setTimeout(forceAdminVisibility, 400);
+    }
+  };
+})();
+</script>
+
 </body>></html>`;
 
     const w = window.open('','_blank');
