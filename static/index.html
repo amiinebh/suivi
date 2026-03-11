@@ -18,7 +18,8 @@
   --green:#22c55e;--green2:#16a34a;--green-glow:rgba(34,197,94,.14);
   --blue:#3b82f6;--yellow:#f59e0b;--red:#ef4444;--cyan:#06b6d4;--purple:#a855f7;--orange:#f97316;
   --radius:4px;--radius-sm:4px;--radius-lg:6px;
-  --sidebar-w:52px;--sidebar-exp:216px;
+  --sidebar-w:52px;
+  --sidebar-expanded-w:220px;--sidebar-exp:216px;
   --t:.18s cubic-bezier(.4,0,.2,1);
   --accent:var(--green);
   --fs-base:14px;--fs-sm:12px;--fs-xs:11px;
@@ -52,6 +53,19 @@ code,pre,.mono{font-family:'Geist Mono',monospace;letter-spacing:0}
 #app{display:flex;height:100vh;overflow:hidden}
 /* SIDEBAR */
 .sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width var(--t);overflow:hidden;position:relative;z-index:100;flex-shrink:0}
+/* Sidebar expanded state */
+.sidebar.expanded{width:var(--sidebar-expanded-w);min-width:var(--sidebar-expanded-w);}
+.sidebar.expanded .logo-text{opacity:1;width:auto;}
+.sidebar.expanded .logo-sub{opacity:1;width:auto;}
+.sidebar.expanded .nav-section{opacity:1;height:auto;margin:8px 0 4px 10px;}
+.sidebar.expanded .nav-item span,.sidebar.expanded .nav-item .nav-badge{opacity:1;width:auto;overflow:visible;}
+.sidebar.expanded .user-info{opacity:1;}
+.sidebar.expanded .nav-item{padding:10px 12px;justify-content:flex-start;gap:10px;}
+.sidebar.expanded .nav-item i{min-width:18px;}
+.sidebar-toggle-btn{position:absolute;bottom:14px;right:-12px;width:24px;height:24px;background:var(--bg2);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;font-size:12px;color:var(--text2);}
+.sidebar-toggle-btn:hover{background:var(--bg3,var(--bg2));color:var(--text1);}
+@media(max-width:768px){.sidebar.expanded{width:220px;}}
+
 @media(min-width:769px){.sidebar:hover{width:var(--sidebar-exp)}}
 .sidebar.mobile-open{width:var(--sidebar-exp)!important}
 .sidebar-logo{height:56px;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--border);flex-shrink:0;overflow:hidden;white-space:nowrap}
@@ -288,6 +302,13 @@ textarea.form-control{resize:vertical;min-height:72px}
 .toast{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:9px 14px;font-size:var(--fs-sm);font-weight:500;color:var(--text1);display:flex;align-items:center;gap:9px;box-shadow:var(--shadow);animation:fadeUp .2s ease;transition:opacity .4s;min-width:180px}
 .toast svg,.toast i{width:14px;height:14px;font-size:14px}
 .toast.success i,.toast.success svg{color:var(--green)}.toast.error i,.toast.error svg{color:var(--red)}.toast.info i,.toast.info svg{color:var(--blue)}
+
+/* Collapsed sidebar: hide text, show only icons */
+.sidebar .logo-text,.sidebar .logo-sub,.sidebar .nav-section{opacity:0;width:0;overflow:hidden;transition:opacity var(--t),width var(--t);}
+.sidebar .nav-item{padding:10px 0;justify-content:center;}
+.sidebar .nav-item span:not(.nav-badge),.sidebar .nav-badge{opacity:0;width:0;overflow:hidden;transition:opacity var(--t);}
+.sidebar .user-info{opacity:0;transition:opacity var(--t);}
+
 /* BOTTOM NAV */
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--bg2);border-top:1px solid var(--border);padding:5px 0}
 .bottom-nav-items{display:flex;justify-content:space-around}
@@ -431,10 +452,13 @@ textarea.form-control{resize:vertical;min-height:72px}
   <i class="hgi hgi-stroke hgi-add-01"></i>
 </button>
 
-<div id="app">
+<div id="app" style="display:none">
 <!-- ═══════ SIDEBAR (desktop) ═══════ -->
 <nav class="sidebar">
-  <div class="sidebar-logo">
+  <div class="sidebar-logo" style="position:relative">
+  <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">
+    <i class="hgi hgi-stroke hgi-menu-01" id="sidebar-toggle-icon"></i>
+  </button>
     <div class="logo-icon"><i class="hgi hgi-stroke hgi-ship"></i></div>
     <div><div class="logo-text">FreightTrack</div><div class="logo-sub">Pro Dashboard</div></div>
   </div>
@@ -940,7 +964,23 @@ let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, allShipments=[];
 
 /* ── Nav ── */
+
+function toggleSidebar(){
+  const sidebar = document.querySelector('.sidebar');
+  const icon = document.getElementById('sidebar-toggle-icon');
+  if(!sidebar) return;
+  sidebar.classList.toggle('expanded');
+  const isExp = sidebar.classList.contains('expanded');
+  if(icon){
+    icon.className = isExp 
+      ? 'hgi hgi-stroke hgi-arrow-left-01' 
+      : 'hgi hgi-stroke hgi-menu-01';
+  }
+  localStorage.setItem('sidebarExpanded', isExp ? '1' : '0');
+}
+
 function showPage(id,el){
+  if(!localStorage.getItem("ft_token")){ doLogout(); return; }
   if((id==='analytics'||id==='users')&&!isAdmin()){id='shipments';}
   if(id==='users') setTimeout(loadUsers,150);
   // Role guards
@@ -965,6 +1005,7 @@ function setBottomNav(id){
 /* ── API ── */
 async function apiFetch(url,options={}){
   const token = localStorage.getItem("ft_token");
+  if(!token){ doLogout(); throw new Error('Not authenticated'); }
   const h={'Content-Type':'application/json','Accept':'application/json'};
   if(token) h['Authorization'] = 'Bearer ' + token;
   let res;
@@ -1629,9 +1670,12 @@ async function doLogin(){
       err.textContent = d.detail || "Invalid email or password";
       err.style.display = "block"; return;
     }
+    const role = d.role || (d.user && d.user.role) || 'agent';
+    const name = d.name || (d.user && d.user.name) || 'User';
     localStorage.setItem(TOKEN_KEY, d.access_token);
-    localStorage.setItem(USER_KEY, JSON.stringify({role:d.role, name:d.name}));
+    localStorage.setItem(USER_KEY, JSON.stringify({role: role, name: name}));
     showApp();
+    loadDashboard();
   } catch(e){
     err.textContent = "Network error — please try again";
     err.style.display = "block";
@@ -1648,6 +1692,8 @@ document.addEventListener("keydown", e => {
 function showApp(){
   const ls = document.getElementById("login-screen");
   if(ls) ls.style.display = "none";
+  const app = document.getElementById("app");
+  if(app) app.style.display = "flex";
   const user = getUser();
   document.querySelectorAll(".admin-only").forEach(el => {
     el.style.display = isAdmin() ? "" : "none";
@@ -1674,10 +1720,19 @@ function showApp(){
 
 
 window.addEventListener("DOMContentLoaded", () => {
-  if(getToken()){ showApp(); }
-  else {
+  if(getToken()){
+    showApp();
+    loadDashboard();
+    // Restore sidebar state
+    if(localStorage.getItem('sidebarExpanded')==='1'){
+      const sb=document.querySelector('.sidebar');
+      if(sb) sb.classList.add('expanded');
+    }
+  } else {
     const ls = document.getElementById("login-screen");
-    if(ls) ls.style.display = "flex";
+    if(ls){ ls.style.display = "flex"; }
+    const app = document.getElementById("app");
+    if(app){ app.style.display = "none"; }
   }
 });
 
@@ -1844,9 +1899,20 @@ function showApp(){
 function doLogout(){
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
-  const ls=document.getElementById("login-screen");
-  if(ls) ls.style.display="flex";
-  ["login-email","login-password"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+  // Hide app, show login
+  const ls = document.getElementById("login-screen");
+  if(ls){ ls.style.display = "flex"; }
+  const app = document.getElementById("app");
+  if(app){ app.style.display = "none"; }
+  // Close any open dropdowns/modals
+  const pd = document.getElementById("profile-dropdown");
+  if(pd) pd.classList.remove("open");
+  document.querySelectorAll(".modal.active").forEach(m => m.classList.remove("active"));
+  document.querySelectorAll(".overlay.active").forEach(o => o.classList.remove("active"));
+  // Clear form fields
+  ["login-email","login-password"].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value="";
+  });
 }
 
 window.addEventListener("DOMContentLoaded",()=>{
@@ -2452,7 +2518,7 @@ function toggleProfileDropdown(){
 }
 
 function updateUserUI(){
-  const raw=localStorage.getItem('user')||sessionStorage.getItem('user')||'{}';
+  const raw=localStorage.getItem('ft_user')||localStorage.getItem('user')||sessionStorage.getItem('user')||'{}';
   let user={};
   try{user=JSON.parse(raw);}catch(e){}
   const isAdm=()=>(user?.role||'').toLowerCase()==='admin';
