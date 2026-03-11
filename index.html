@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>FreightTrack Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.hugeicons.com/font/hgi-stroke-rounded.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -446,116 +446,9 @@ textarea.form-control{resize:none;min-height:72px}
 #bulk-drop-zone:hover{border-color:var(--accent)!important;background:var(--bg3)}
 
 </style>
-<style id="ft-theme-v4">
-/* ── Body gradient (dark) ── */
-[data-theme="dark"] body {
-  background:
-    radial-gradient(ellipse 1000px 420px at 0% 0%, rgba(56,189,248,.07), transparent 55%),
-    radial-gradient(ellipse 800px 380px at 100% 0%, rgba(20,184,166,.06), transparent 48%),
-    linear-gradient(180deg,#080e1a 0%,#0b1220 46%,#0f172a 100%) !important;
-}
-
-/* ── Modal entrance animation ── */
-.overlay.open > .modal-content,
-.overlay.open > * > .modal-content {
-  animation: ftModalIn .24s cubic-bezier(.18,.85,.22,1.0) both;
-}
-@keyframes ftModalIn {
-  from { opacity:0; transform:translateY(12px) scale(.986); }
-  to   { opacity:1; transform:translateY(0) scale(1); }
-}
-
-/* ── Input focus ring ── */
-input:not([type=checkbox]):not([type=radio]):focus,
-select:focus, textarea:focus {
-  outline:none !important;
-  border-color:rgba(20,184,166,.60) !important;
-  box-shadow:0 0 0 4px rgba(20,184,166,.10) !important;
-}
-
-/* ── Ship tabs container ── */
-.ship-tabs {
-  background:var(--bg2) !important;
-  border-bottom:1px solid var(--border) !important;
-  padding:8px 14px !important;
-  gap:10px !important;
-}
-
-/* ── Ship tab inactive ── */
-.ship-tab {
-  background:var(--bg3) !important;
-  border:1px solid var(--border) !important;
-  border-radius:999px !important;
-  color:var(--text2) !important;
-  padding:10px 16px !important;
-  font-size:14px !important;
-  font-weight:700 !important;
-  overflow:hidden !important;
-  position:relative !important;
-  transition:color .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease !important;
-}
-.ship-tab:hover {
-  color:var(--text) !important;
-  border-color:var(--accent) !important;
-  box-shadow:0 4px 14px rgba(0,0,0,.15) !important;
-}
-
-/* ── Ship tab active ── */
-.ship-tab.active {
-  background:linear-gradient(135deg,#14b8a6 0%,#06b6d4 100%) !important;
-  border-color:transparent !important;
-  color:#fff !important;
-  box-shadow:0 8px 22px rgba(20,184,166,.28) !important;
-}
-
-/* ── Tab panel animation ── */
-.ship-tab-panel { display:none; }
-.ship-tab-panel.active {
-  display:block;
-  animation: ftFadeSlide .18s ease both;
-}
-@keyframes ftFadeSlide {
-  from { opacity:.3; transform:translateY(4px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-
-/* ── Tab dots ── */
-.ship-tab-dot {
-  width:10px !important;
-  height:10px !important;
-  border-radius:50% !important;
-  border:2px solid var(--border) !important;
-  background:transparent !important;
-  transition:background .18s, border-color .18s, transform .18s !important;
-}
-.ship-tab-dot:hover { transform:scale(1.3) !important; }
-.ship-tab-dot.active {
-  background:var(--accent) !important;
-  border-color:transparent !important;
-  box-shadow:0 0 0 3px rgba(20,184,166,.20) !important;
-}
-
-/* ── Button transitions (safe — no pointer-events impact) ── */
-.btn {
-  transition:opacity .15s ease !important;
-}
-.btn:hover { opacity:.88 !important; }
-.btn:active { opacity:.72 !important; }
-
-/* ── Shine effect on ship-tab hover ── */
-.ship-tab::after {
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
-  transform:translateX(-110%);
-  pointer-events:none;
-}
-.ship-tab:hover::after { animation:ftShine .6s ease forwards; }
-@keyframes ftShine { to { transform:translateX(110%); } }
-</style>
 </head>
 <body>
+<script>var _formContainers = [];</script>
   <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;
     background:#0a0f1e;align-items:center;justify-content:center">
     <div style="background:#1a2240;border:1px solid #2a3a5c;border-radius:20px;
@@ -597,7 +490,7 @@ select:focus, textarea:focus {
 
 <!-- FAB for mobile -->
 <button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
-  <i class="fa fa-plus"></i>
+  <i class="hgi hgi-stroke hgi-add-01"></i>
 </button>
 
 <div class="app">
@@ -610,30 +503,33 @@ select:focus, textarea:focus {
   <div class="nav">
     <div class="nav-section">Main</div>
     <div class="nav-item active" onclick="showPage('dashboard',this)">
-      <i class="fa fa-chart-pie"></i> Overview
+      <i class="hgi hgi-stroke hgi-pie-chart"></i> Overview
     </div>
     <div class="nav-item" onclick="showPage('shipments',this)">
-      <i class="fa fa-boxes-stacked"></i> Shipments
+      <i class="hgi hgi-stroke hgi-package-01"></i> Shipments
       <span class="nav-badge" id="nav-count">0</span>
+    </div>
+    <div class="nav-item" onclick="showPage('quotes',this)">
+      <i class="hgi hgi-stroke hgi-file-01"></i> Quotations
     </div>
     <div class="nav-section">Analytics</div>
     <div class="nav-item admin-only" onclick="showPage('analytics',this)">
-      <i class="fa fa-chart-line"></i> KPI & Charts
+      <i class="hgi hgi-stroke hgi-chart-line-data-01"></i> KPI & Charts
     </div>
     <div class="nav-section admin-only">Team</div>
     <div class="nav-item admin-only" onclick="showPage('users',this)">
-      <i class="fa fa-users"></i> Team Members
+      <i class="hgi hgi-stroke hgi-user-group"></i> Team Members
     </div>
     <div class="nav-section">Tools</div>
     <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts">
-      <i class="fa fa-bell"></i> Alerts
+      <i class="hgi hgi-stroke hgi-notification-01"></i> Alerts
       <span class="nav-badge" id="alerts-badge" style="display:none">0</span>
     </div>
     <div class="nav-item" onclick="exportXLSX()">
-      <i class="fa fa-file-excel"></i> Export XLSX
+      <i class="hgi hgi-stroke hgi-file-spreadsheet"></i> Export XLSX
     </div>
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')">
-      <i class="fa fa-file-import" style="color:#22c55e"></i> Import XLSX
+      <i class="hgi hgi-stroke hgi-file-upload-02" style="color:#22c55e"></i> Import XLSX
     </div>
 
   </div>
@@ -656,7 +552,7 @@ select:focus, textarea:focus {
   <div class="topbar">
     <div class="topbar-title" id="page-title">Overview</div>
     <div class="search-box">
-      <i class="fa fa-magnifying-glass"></i>
+      <i class="hgi hgi-stroke hgi-search-01"></i>
       <input id="global-search" placeholder="Search…" oninput="onSearch(this.value)"/>
     </div>
     <div class="topbar-actions-desktop" style="display:flex;gap:8px;align-items:center">
@@ -664,7 +560,7 @@ select:focus, textarea:focus {
         🌙
       </button>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()">
-        <i class="fa fa-plus"></i> New
+        <i class="hgi hgi-stroke hgi-add-01"></i> New
       </button>
     </div>
   </div>
@@ -675,18 +571,18 @@ select:focus, textarea:focus {
     <!-- ─── DASHBOARD ─── -->
     <div class="page active" id="page-dashboard">
       <div class="stats-grid" id="stats-grid">
-        <div class="stat-card"><div class="stat-icon blue"><i class="fa fa-ship"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:32px"></div><div class="stat-label">Total</div></div>
-        <div class="stat-card"><div class="stat-icon orange"><i class="fa fa-anchor"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Transit</div></div>
-        <div class="stat-card"><div class="stat-icon green"><i class="fa fa-check"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Done</div></div>
-        <div class="stat-card"><div class="stat-icon red"><i class="fa fa-warning"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Delayed</div></div>
-        <div class="stat-card"><div class="stat-icon cyan"><i class="fa fa-clock"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Pending</div></div>
-        <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Ocean</div></div>
+        <div class="stat-card"><div class="stat-icon blue"><i class="hgi hgi-stroke hgi-ship"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:32px"></div><div class="stat-label">Total</div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="hgi hgi-stroke hgi-anchor"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Transit</div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="hgi hgi-stroke hgi-checkmark-01"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Done</div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="hgi hgi-stroke hgi-alert-02"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Delayed</div></div>
+        <div class="stat-card"><div class="stat-icon cyan"><i class="hgi hgi-stroke hgi-clock-01"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="hgi hgi-stroke hgi-wave"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Ocean</div></div>
       </div>
 
       <div class="section-header">
         <div class="section-title">Recent Shipments</div>
         <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null);setBottomNav('shipments')">
-          View All <i class="fa fa-arrow-right"></i>
+          View All <i class="hgi hgi-stroke hgi-arrow-right-01"></i>
         </button>
       </div>
       <div class="mobile-cards" id="recent-cards"></div>
@@ -714,15 +610,15 @@ select:focus, textarea:focus {
           <option>FAS</option><option>FOB</option><option>CFR</option><option>CIF</option>
         </select>
         <button class="btn btn-primary btn-sm topbar-actions-desktop" onclick="exportXLSX()">
-          <i class="fa fa-download"></i> Export
+          <i class="hgi hgi-stroke hgi-download-02"></i> Export
         </button>
       </div>
       <div id="ship-count-label" style="font-size:12px;color:var(--text2);margin-bottom:10px"></div>
       <div id="pager" style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin:10px 0;flex-wrap:wrap">
         <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn btn-secondary btn-sm" id="pg-prev" onclick="pagePrev()"><i class="fa fa-chevron-left"></i></button>
+          <button class="btn btn-secondary btn-sm" id="pg-prev" onclick="pagePrev()"><i class="hgi hgi-stroke hgi-arrow-left-01"></i></button>
           <div id="pg-info" style="font-size:12px;color:var(--text2)">Page 1/1</div>
-          <button class="btn btn-secondary btn-sm" id="pg-next" onclick="pageNext()"><i class="fa fa-chevron-right"></i></button>
+          <button class="btn btn-secondary btn-sm" id="pg-next" onclick="pageNext()"><i class="hgi hgi-stroke hgi-arrow-right-01"></i></button>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <div style="font-size:12px;color:var(--text2)">Rows:</div>
@@ -746,7 +642,7 @@ select:focus, textarea:focus {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div style="font-size:16px;font-weight:700">📊 KPI &amp; Analytics</div>
         <button id="report-btn" class="btn btn-primary btn-sm" onclick="generateReport()">
-          <i class="fa fa-file-lines"></i> Generate Report
+          <i class="hgi hgi-stroke hgi-file-01"></i> Generate Report
         </button>
       </div>
       <div class="kpi-grid" id="kpi-cards">
@@ -757,26 +653,26 @@ select:focus, textarea:focus {
       </div>
       <div class="charts-grid">
         <div class="chart-card">
-          <div class="chart-title"><i class="fa fa-chart-pie"></i> Status Distribution</div>
+          <div class="chart-title"><i class="hgi hgi-stroke hgi-pie-chart"></i> Status Distribution</div>
           <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-title"><i class="fa fa-chart-bar"></i> Monthly Volume</div>
+          <div class="chart-title"><i class="hgi hgi-stroke hgi-chart-bar-01"></i> Monthly Volume</div>
           <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
         </div>
       </div>
       <div class="charts-grid">
         <div class="chart-card">
-          <div class="chart-title"><i class="fa fa-ship"></i> Top Carriers</div>
+          <div class="chart-title"><i class="hgi hgi-stroke hgi-ship"></i> Top Carriers</div>
           <div class="bar-list" id="bar-carriers"></div>
         </div>
         <div class="chart-card">
-          <div class="chart-title"><i class="fa fa-user"></i> Top Clients</div>
+          <div class="chart-title"><i class="hgi hgi-stroke hgi-user"></i> Top Clients</div>
           <div class="bar-list" id="bar-clients"></div>
         </div>
       </div>
       <div class="chart-card" style="margin-bottom:16px">
-        <div class="chart-title"><i class="fa fa-triangle-exclamation" style="color:var(--red)"></i> Overdue Shipments</div>
+        <div class="chart-title"><i class="hgi hgi-stroke hgi-alert-02" style="color:var(--red)"></i> Overdue Shipments</div>
         <div class="overdue-list" id="overdue-list">
           <div style="color:var(--text2);font-size:13px;text-align:center;padding:16px">Loading…</div>
         </div>
@@ -792,7 +688,7 @@ select:focus, textarea:focus {
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Manage your CS team access</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-user')" style="gap:6px">
-          <i class="fa fa-user-plus"></i> Add User
+          <i class="hgi hgi-stroke hgi-user-add-01"></i> Add User
         </button>
       </div>
       <div id="users-list">
@@ -811,7 +707,7 @@ select:focus, textarea:focus {
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments requiring your attention</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="loadAlerts()">
-          <i class="fa fa-rotate"></i> Refresh
+          <i class="hgi hgi-stroke hgi-refresh"></i> Refresh
         </button>
       </div>
       <div id="alerts-list">
@@ -826,7 +722,7 @@ select:focus, textarea:focus {
     <div class="page" id="page-detail">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
         <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null)" style="padding:6px 10px">
-          <i class="fa fa-arrow-left"></i>
+          <i class="hgi hgi-stroke hgi-arrow-left-01"></i>
         </button>
         <div style="flex:1;min-width:0">
           <div id="detail-ref" style="font-size:15px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
@@ -834,7 +730,7 @@ select:focus, textarea:focus {
         </div>
         <div id="detail-status-badge"></div>
         <button class="btn btn-primary btn-sm" onclick="syncDetail()" id="detail-sync-btn" style="padding:6px 10px;flex-shrink:0">
-          <i class="fa fa-rotate"></i>
+          <i class="hgi hgi-stroke hgi-refresh"></i>
         </button>
       </div>
       <div class="shipment-card" style="margin-bottom:14px;padding:12px 14px">
@@ -845,7 +741,7 @@ select:focus, textarea:focus {
           </div>
           <div style="flex:2;display:flex;align-items:center;gap:3px">
             <div style="flex:1;height:2px;background:var(--accent);border-radius:2px"></div>
-            <i class="fa fa-ship" style="color:var(--accent);font-size:14px"></i>
+            <i class="hgi hgi-stroke hgi-ship" style="color:var(--accent);font-size:14px"></i>
             <div style="flex:1;height:2px;background:var(--border);border-radius:2px"></div>
           </div>
           <div style="flex:1;text-align:center">
@@ -873,19 +769,19 @@ select:focus, textarea:focus {
           <textarea id="detail-comment-text" class="form-control" rows="2"
             style="resize:none;margin-bottom:8px" placeholder="Write an internal note…"></textarea>
           <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="submitComment()">
-            <i class="fa fa-paper-plane"></i> Add Note
+            <i class="hgi hgi-stroke hgi-sent"></i> Add Note
           </button>
         </div>
       </div>
       
       <div style="margin-top:12px;background:var(--bg3);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px">
-        <i class="fa fa-link" style="color:var(--accent);font-size:13px"></i>
+        <i class="hgi hgi-stroke hgi-link-01" style="color:var(--accent);font-size:13px"></i>
         <div style="flex:1;font-size:11px;color:var(--text2)">Client tracking link</div>
         <button class="btn btn-ghost btn-sm" onclick="copyPortalLink()" style="font-size:11px;padding:4px 10px">
-          <i class="fa fa-copy"></i> Copy
+          <i class="hgi hgi-stroke hgi-copy-01"></i> Copy
         </button>
         <a id="detail-portal-href" href="#" target="_blank" class="btn btn-ghost btn-sm"
-          style="font-size:11px;padding:4px 10px"><i class="fa fa-arrow-up-right-from-square"></i></a>
+          style="font-size:11px;padding:4px 10px"><i class="hgi hgi-stroke hgi-arrow-up-right-01"></i></a>
       </div>
     </div>
 
@@ -897,109 +793,160 @@ select:focus, textarea:focus {
 <nav class="bottom-nav">
   <div class="bottom-nav-items">
     <button class="bnav-item active" id="bnav-dashboard" onclick="showPage('dashboard',null);setBottomNav('dashboard')">
-      <i class="fa fa-chart-pie"></i><span>Overview</span>
+      <i class="hgi hgi-stroke hgi-pie-chart"></i><span>Overview</span>
     </button>
     <button class="bnav-item" id="bnav-shipments" onclick="showPage('shipments',null);setBottomNav('shipments')">
-      <i class="fa fa-boxes-stacked"></i><span>Shipments</span>
+      <i class="hgi hgi-stroke hgi-package-01"></i><span>Shipments</span>
     </button>
+  <button class="bnav-item" id="bnav-quotes" onclick="showPage('quotes',null);setBottomNav('quotes')"><i class="hgi hgi-stroke hgi-file-01"></i><span>Quotes</span></button>
     <button class="bnav-item admin-only" id="bnav-analytics" onclick="showPage('analytics',null);setBottomNav('analytics')">
-      <i class="fa fa-chart-line"></i><span>KPIs</span>
+      <i class="hgi hgi-stroke hgi-chart-line-data-01"></i><span>KPIs</span>
     </button>
     <button class="bnav-item admin-only" id="bnav-users" onclick="showPage('users',null);setBottomNav('users')">
-      <i class="fa fa-users"></i><span>Team</span>
+      <i class="hgi hgi-stroke hgi-user-group"></i><span>Team</span>
     </button>
     
     
     <button class="bnav-item" id="bnav-alerts" onclick="showPage('alerts',null);setBottomNav('alerts')">
-      <i class="fa fa-bell"></i><span>Alerts</span>
+      <i class="hgi hgi-stroke hgi-notification-01"></i><span>Alerts</span>
     </button>
     <button class="bnav-item" id="bnav-export" onclick="openFilesSheet()">
-      <i class="fa fa-file-arrow-down"></i><span>Files</span>
+      <i class="hgi hgi-stroke hgi-file-download-02"></i><span>Files</span>
     </button>
     <button class="bnav-item" id="bnav-theme" onclick="toggleTheme()">
-      <i class="fa fa-circle-half-stroke"></i><span>Theme</span>
+      <i class="hgi hgi-stroke hgi-moon-02"></i><span>Theme</span>
     </button>
   </div>
 </nav>
 
 <!-- ═══════ ADD/EDIT MODAL ═══════ -->
 <div class="overlay" id="modal-add">
-  <div class="modal modal-shipment">
+  <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-head">
       <div class="modal-title" id="modal-add-title">New Shipment</div>
-      <button class="modal-close" onclick="closeModal('modal-add')"><i class="fa fa-xmark"></i></button>
+      <button class="modal-close" onclick="closeModal('modal-add')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
     </div>
-    <div class="ship-tabs">
-      <button class="ship-tab active" onclick="switchShipTabIdx(0)"><i class="fa fa-ship"></i> General</button>
-      <button class="ship-tab" onclick="switchShipTabIdx(1)"><i class="fa fa-users"></i> Parties</button>
-      <button class="ship-tab" onclick="switchShipTabIdx(2)"><i class="fa fa-box"></i> Cargo</button>
-      <button class="ship-tab" onclick="switchShipTabIdx(3)"><i class="fa fa-calendar-days"></i> Dates</button>
-    </div>
-    <div class="modal-body" style="padding-top:8px;flex:1;overflow-y:auto">
-      <div class="ship-tab-panel active" id="stab-general">
-        <div class="form-grid">
-          <div class="form-group"><label>Reference *</label><input id="f-ref" class="form-control" placeholder="FT-2026-001" autocomplete="off"/></div>
-          <div class="form-group"><label>Mode</label><select id="f-mode" class="form-control" onchange="onModeChange()"><option>Ocean</option><option>Air</option><option>Road</option><option>Rail</option></select></div>
-          <div class="form-group"><label>Carrier</label><input id="f-carrier" class="form-control" placeholder="MSC, Maersk, CMA..." list="carrier-list"/></div>
-          <div class="form-group"><label>Vessel / Flight</label><input id="f-vessel" class="form-control" placeholder="MSC DIANA"/></div>
-          <div class="form-group"><label>Container / AWB</label><input id="f-ref2" class="form-control" placeholder="MSCU1234567"/></div>
-          <div class="form-group"><label>Booking No</label><input id="f-booking" class="form-control" placeholder="MSC1234567"/></div>
-          <div class="form-group"><label>Direction</label><select id="f-direction" class="form-control"><option value="">-- Select --</option><option>Import</option><option>Export</option></select></div>
-          <div class="form-group"><label>Incoterm</label><select id="f-incoterm" class="form-control"><option value="">-- Select --</option><option>EXW</option><option>FCA</option><option>CPT</option><option>CIP</option><option>DAP</option><option>DPU</option><option>DDP</option><option>FAS</option><option>FOB</option><option>CFR</option><option>CIF</option></select></div>
-          <div class="form-group"><label>POL</label><input id="f-pol" class="form-control" placeholder="Shanghai" list="port-list"/></div>
-          <div class="form-group"><label>POD</label><input id="f-pod" class="form-control" placeholder="Casablanca" list="port-list"/></div>
-          <div class="form-group"><label>Status</label><select id="f-status" class="form-control"><option>Pending</option><option>Booked</option><option>Confirmed</option><option>Loading</option><option>On Board</option><option>Sailing</option><option>In Transit</option><option>Arrived</option><option>Discharged</option><option>Delivered</option><option>Delayed</option></select></div>
-          <div class="form-group"><label>Agent</label><input id="f-agent" class="form-control" placeholder="Local agent"/></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Reference *</label>
+          <input id="f-ref" class="form-control" placeholder="e.g. AQUA034"/>
         </div>
-      </div>
-      <div class="ship-tab-panel" id="stab-parties">
-        <div class="form-grid">
-          <div class="form-group full"><label>Client / Customer</label><input id="f-client" class="form-control" placeholder="Client company"/></div>
-          <div class="form-group full"><label>Client Email</label><input id="f-client-email" class="form-control" type="email" placeholder="client@company.com"/></div>
-          <div class="form-group full"><label>Shipper</label><input id="f-shipper" class="form-control" placeholder="Shipper / Supplier"/></div>
-          <div class="form-group full"><label>Consignee</label><input id="f-consignee" class="form-control" placeholder="Consignee name" list="consignee-list"/></div>
-          <div class="form-group full"><label>Quotation No</label><input id="f-quotation-number" class="form-control" placeholder="QUO-2026-001"/></div>
+        <div class="form-group">
+          <label>Mode</label>
+          <select id="f-mode" class="form-control"><option>Ocean</option><option>Air</option></select>
         </div>
-      </div>
-      <div class="ship-tab-panel" id="stab-cargo">
-        <div class="form-grid">
-          <div class="form-group full" id="containers-section">
-            <label style="display:flex;align-items:center;justify-content:space-between"><span>Containers</span><span id="teu-total-badge" style="font-size:11px;color:var(--accent);font-weight:700;display:none"></span></label>
-            <div style="display:flex;gap:8px;margin-bottom:8px">
-              <input id="new-cont-qty" class="form-control" type="number" min="1" max="99" placeholder="Qty" style="width:70px;flex-shrink:0"/>
-              <select id="new-cont-type" class="form-control" style="flex:1"><option value="">Type</option><option value="20GP">20GP (1 TEU)</option><option value="40GP">40GP (2 TEU)</option><option value="40HC">40HC (2 TEU)</option><option value="40RF">40RF (2 TEU)</option><option value="20RF">20RF (1 TEU)</option><option value="45HC">45HC (2 TEU)</option><option value="LCL">LCL</option></select>
-              <button type="button" class="btn btn-primary btn-sm" onclick="addContainerRow()" style="flex-shrink:0;padding:0 14px"><i class="fa fa-plus"></i></button>
-            </div>
-            <div id="containers-list" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div class="form-group">
+          <label>Container / AWB</label>
+          <input id="f-ref2" class="form-control" placeholder="MSCU1234567"/>
+        </div>
+        <div class="form-group">
+          <label>Booking No</label>
+          <input id="f-booking" class="form-control" placeholder="MRO1002308"/>
+        </div>
+        <div class="form-group">
+          <label>Carrier</label>
+          <input id="f-carrier" class="form-control" placeholder="CMA, MSC…" list="carrier-list"/>
+        </div>
+
+        <div class="form-group">
+          <label>Shipper</label>
+          <input id="f-shipper" class="form-control" placeholder="Shipper Name"/>
+        </div>
+        <div class="form-group">
+          <label>Consignee</label>
+          <input id="f-consignee" class="form-control" placeholder="Consignee Name" list="consignee-list"/>
+        </div>
+        <div class="form-group">
+          <label>Incoterm (2020)</label>
+          <select id="f-incoterm" class="form-control">
+            <option value="">— Select —</option>
+            <option>EXW</option>
+            <option>FCA</option>
+            <option>CPT</option>
+            <option>CIP</option>
+            <option>DAP</option>
+            <option>DPU</option>
+            <option>DDP</option>
+            <option>FAS</option>
+            <option>FOB</option>
+            <option>CFR</option>
+            <option>CIF</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Client</label>
+          <input id="f-client" class="form-control" placeholder="Company name"/>
+        </div>
+        <div class="form-group full">
+          <label>Client Email</label>
+          <input id="f-client-email" class="form-control" type="email" placeholder="client@example.com" oninput="validateEmailField(this)"/>
+          <div id="f-client-email-msg" style="font-size:11px;margin-top:4px;display:none"></div>
+        </div>
+        <div class="form-group">
+          <label>POL</label>
+          <input id="f-pol" class="form-control" placeholder="SHANGHAI" list="port-list"/>
+        </div>
+        <div class="form-group">
+          <label>POD</label>
+          <input id="f-pod" class="form-control" placeholder="CASABLANCA" list="port-list"/>
+        </div>
+        <div class="form-group">
+          <label>ETD</label>
+          <input id="f-etd" class="form-control" type="date"/>
+        </div>
+        <div class="form-group">
+          <label>ETA</label>
+          <input id="f-eta" class="form-control" type="date"/>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="f-status" class="form-control">
+            <option>Pending</option><option>Sailing</option><option>Transit</option>
+            <option>Arrived</option><option>Discharged</option><option>Delivered</option><option>Delayed</option>
+          </select>
+        </div>
+        <div class="form-group full" id="containers-section">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>🗃 Containers</span>
+            <span id="teu-total-badge" style="font-size:11px;color:var(--accent);font-weight:700;display:none"></span>
+          </label>
+          <!-- Add container line -->
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input id="new-cont-qty" class="form-control" type="number" min="1" max="99" placeholder="Qty" style="width:70px;flex-shrink:0"/>
+            <select id="new-cont-type" class="form-control" style="flex:1">
+              <option value="">Type</option>
+              <option value="20GP">20GP (1 TEU)</option>
+              <option value="40GP">40GP (2 TEU)</option>
+              <option value="40HC">40HC (2 TEU)</option>
+              <option value="40RF">40RF (2 TEU)</option>
+              <option value="20RF">20RF (1 TEU)</option>
+              <option value="45HC">45HC (2 TEU)</option>
+            </select>
+            <button type="button" class="btn btn-primary btn-sm" onclick="addContainerRow()" style="flex-shrink:0;padding:0 16px">
+              <i class="hgi hgi-stroke hgi-add-01"></i> Add
+            </button>
           </div>
-          <div class="form-group full" id="stuffing-date-group" style="display:none"><label>Stuffing Date (EXW)</label><input id="f-stuffing-date" class="form-control" type="date"/></div>
-          <div class="form-group full"><label>Notes</label><textarea id="f-note" class="form-control" rows="3" placeholder="Internal notes..."></textarea></div>
+          <!-- Container list -->
+          <div id="containers-list" style="display:flex;flex-direction:column;gap:6px"></div>
         </div>
-      </div>
-      <div class="ship-tab-panel" id="stab-dates">
-        <div class="form-grid">
-          <div class="form-group full"><label>ETD -- Est. Departure</label><input id="f-etd" class="form-control" type="date" oninput="updateTransitPreview()"/></div>
-          <div class="form-group full"><label>ETA -- Est. Arrival</label><input id="f-eta" class="form-control" type="date" oninput="updateTransitPreview()"/></div>
-          <div class="form-group full"><div id="transit-preview" style="padding:14px;background:var(--bg2,#f4f6f8);border-radius:10px;font-size:13px;color:var(--text2,#888);text-align:center;min-height:48px">Set ETD &amp; ETA to calculate transit days</div></div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="f-note" class="form-control" placeholder="Internal notes…"></textarea>
         </div>
       </div>
     </div>
-    <div class="modal-foot" style="flex-direction:column;gap:8px">
-      <div style="display:flex;gap:8px;justify-content:center">
-        <button class="ship-tab-dot active" id="tdot-0" onclick="switchShipTabIdx(0)"></button>
-        <button class="ship-tab-dot" id="tdot-1" onclick="switchShipTabIdx(1)"></button>
-        <button class="ship-tab-dot" id="tdot-2" onclick="switchShipTabIdx(2)"></button>
-        <button class="ship-tab-dot" id="tdot-3" onclick="switchShipTabIdx(3)"></button>
-      </div>
-      <div style="display:flex;gap:8px;width:100%">
-        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-add')">Cancel</button>
-        <button class="btn btn-primary" style="flex:2" id="btn-save" onclick="saveShipment()"><i class="fa fa-floppy-disk"></i> Save Shipment</button>
-      </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-add')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" id="btn-save" onclick="saveShipment()">
+        <i class="hgi hgi-stroke hgi-floppy-disk"></i> Save Shipment
+      </button>
     </div>
   </div>
 </div>
 
+<!-- ═══════ DETAIL MODAL ═══════ -->
 <div class="overlay" id="modal-detail">
   <div class="modal detail-modal">
     <div class="modal-handle"></div>
@@ -1009,25 +956,201 @@ select:focus, textarea:focus {
         <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="modal-close" onclick="closeModal('modal-detail')"><i class="fa fa-xmark"></i></button>
+        <button class="modal-close" onclick="closeModal('modal-detail')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
       </div>
     </div>
     <div class="modal-body" id="detail-body"></div>
     <div class="modal-foot" id="detail-foot">
       <button class="btn btn-secondary" style="flex:1" onclick="editFromDetail()">
-        <i class="fa fa-pen"></i> Edit
+        <i class="hgi hgi-stroke hgi-pencil-edit-01"></i> Edit
       </button>
       <button class="btn btn-primary" style="flex:1" onclick="openEmailPreview()" id="btn-send-email">
-        <i class="fa fa-envelope"></i> Email
+        <i class="hgi hgi-stroke hgi-mail-01"></i> Email
       </button>
       <button class="btn btn-danger" style="flex:1" onclick="deleteFromDetail()">
-        <i class="fa fa-trash"></i> Delete
+        <i class="hgi hgi-stroke hgi-delete-02"></i> Delete
       </button>
     </div>
   </div>
 </div>
 
 
+<!-- QUOTES PAGE -->
+<div class="page" id="page-quotes">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div>
+      <div style="font-size:16px;font-weight:700">Quotations</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">Create, review and approve freight quotations</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="openNewQuotation()" style="gap:6px">
+      <i class="hgi hgi-stroke hgi-add-01"></i> New Quotation
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid" style="margin-bottom:16px">
+    <div class="stat-card"><div class="stat-icon blue"><i class="hgi hgi-stroke hgi-file-01"></i></div><div class="stat-value" id="q-total">-</div><div class="stat-label">Total</div></div>
+    <div class="stat-card"><div class="stat-icon yellow"><i class="hgi hgi-stroke hgi-clock-01"></i></div><div class="stat-value" id="q-pending">-</div><div class="stat-label">Pending</div></div>
+    <div class="stat-card"><div class="stat-icon green"><i class="hgi hgi-stroke hgi-checkmark-circle-02"></i></div><div class="stat-value" id="q-approved">-</div><div class="stat-label">Approved</div></div>
+    <div class="stat-card"><div class="stat-icon red"><i class="hgi hgi-stroke hgi-cancel-circle"></i></div><div class="stat-value" id="q-declined">-</div><div class="stat-label">Declined</div></div>
+    <div class="stat-card"><div class="stat-icon cyan"><i class="hgi hgi-stroke hgi-ship"></i></div><div class="stat-value" id="q-transit">-</div><div class="stat-label">In Transit</div></div>
+    <div class="stat-card"><div class="stat-icon purple"><i class="hgi hgi-stroke hgi-wave"></i></div><div class="stat-value" id="q-ocean">-</div><div class="stat-label">Ocean</div></div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-row" style="margin-bottom:12px">
+    <select class="filter" id="qfil-status" onchange="loadQuotations()">
+      <option value="">All Status</option>
+      <option>Pending</option>
+      <option>Approved</option>
+      <option>Declined</option>
+      <option>Sailing</option>
+      <option>Transit</option>
+      <option>Arrived</option>
+      <option>Delivered</option>
+      <option>Delayed</option>
+    </select>
+    <select class="filter" id="qfil-mode" onchange="loadQuotations()">
+      <option value="">All Modes</option>
+      <option>Ocean</option>
+      <option>Air</option>
+    </select>
+    <button class="btn btn-ghost btn-sm topbar-actions-desktop" onclick="exportXLSX()">
+      <i class="hgi hgi-stroke hgi-download-02"></i> Export
+    </button>
+  </div>
+
+  <!-- Count + Pager -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+    <div id="q-count-label" style="font-size:12px;color:var(--text2)"></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-secondary btn-sm" id="qpg-prev" onclick="qPagePrev()"><i class="hgi hgi-stroke hgi-arrow-left-01"></i></button>
+      <div id="qpg-info" style="font-size:12px;color:var(--text2)">Page 1/1</div>
+      <button class="btn btn-secondary btn-sm" id="qpg-next" onclick="qPageNext()"><i class="hgi hgi-stroke hgi-arrow-right-01"></i></button>
+    </div>
+  </div>
+
+  <!-- Mobile cards -->
+  <div class="mobile-cards" id="quotes-cards"></div>
+
+  <!-- Desktop table -->
+  <div class="desktop-table table-wrap">
+    <div id="quotes-table"></div>
+  </div>
+</div>
+
+<!-- NEW QUOTATION MODAL -->
+<div class="overlay" id="modal-quotation">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title" id="modal-quotation-title">New Quotation</div>
+      <button class="modal-close" onclick="closeModal('modal-quotation')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Quotation Ref</label>
+          <input id="qf-ref" class="form-control" placeholder="e.g. QUO-2026-001">
+        </div>
+        <div class="form-group">
+          <label>Mode</label>
+          <select id="qf-mode" class="form-control">
+            <option>Ocean</option><option>Air</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Client</label>
+          <input id="qf-client" class="form-control" placeholder="Company name">
+        </div>
+        <div class="form-group">
+          <label>Client Email</label>
+          <input id="qf-email" class="form-control" type="email" placeholder="client@example.com">
+        </div>
+        <div class="form-group">
+          <label>Carrier</label>
+          <input id="qf-carrier" class="form-control" placeholder="CMA, MSC..." list="carrier-list">
+        </div>
+        <div class="form-group">
+          <label>Incoterm 2020</label>
+          <select id="qf-incoterm" class="form-control">
+            <option value="">Select</option>
+            <option>EXW</option><option>FCA</option><option>CPT</option><option>CIP</option>
+            <option>DAP</option><option>DPU</option><option>DDP</option>
+            <option>FAS</option><option>FOB</option><option>CFR</option><option>CIF</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>POL</label>
+          <input id="qf-pol" class="form-control" placeholder="SHANGHAI" list="port-list">
+        </div>
+        <div class="form-group">
+          <label>POD</label>
+          <input id="qf-pod" class="form-control" placeholder="CASABLANCA" list="port-list">
+        </div>
+        <div class="form-group">
+          <label>ETD</label>
+          <input id="qf-etd" class="form-control" type="date">
+        </div>
+        <div class="form-group">
+          <label>ETA</label>
+          <input id="qf-eta" class="form-control" type="date">
+        </div>
+        <div class="form-group">
+          <label>Booking No</label>
+          <input id="qf-booking" class="form-control" placeholder="MRO1002308">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="qf-status" class="form-control">
+            <option>Pending</option>
+            <option>Approved</option>
+            <option>Declined</option>
+            <option>Sailing</option>
+            <option>Transit</option>
+            <option>Arrived</option>
+            <option>Delivered</option>
+            <option>Delayed</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="qf-note" class="form-control" placeholder="Internal notes about this quotation"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-quotation')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" id="qbtn-save" onclick="saveQuotation()">
+        <i class="hgi hgi-stroke hgi-floppy-disk"></i> Save Quotation
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- APPROVE / DECLINE CONFIRM MODAL -->
+<div class="overlay" id="modal-qaction">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title" id="qaction-title">Approve Quotation</div>
+      <button class="modal-close" onclick="closeModal('modal-qaction')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
+    </div>
+    <div class="modal-body">
+      <p id="qaction-msg" style="font-size:14px;color:var(--text2);margin:0 0 12px"></p>
+      <textarea id="qaction-note" class="form-control" placeholder="Optional note / reason..." rows="3"></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-qaction')">Cancel</button>
+      <button class="btn btn-primary" style="flex:2" id="qaction-confirm-btn" onclick="confirmQAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ═══════ JS ═══════ -->
 <script>
 let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, allShipments=[];
@@ -1043,12 +1166,12 @@ function showPage(id,el){
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el) el.classList.add('active');
-  const titles={dashboard:'Overview',shipments:'Shipments'};
+  const titles={dashboard:'Overview',quotes:'Quotations',shipments:'Shipments'};
   document.getElementById('page-title').textContent=titles[id]||id;
   if(id==='shipments') loadShipments();
+  if(id==='quotes') loadQuotations();
   if(id==='analytics') loadAnalytics();
   if(id==='alerts') loadAlerts();
-  if(id==='dashboard') setTimeout(bindOverviewCards,250);
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -1075,10 +1198,10 @@ async function apiFetch(url,options={}){
 
 /* ── Toast ── */
 function toast(msg,type='info'){
-  const icons={success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info'};
+  const icons={success:'hgi hgi-stroke hgi-checkmark-circle-02',error:'hgi hgi-stroke hgi-cancel-circle',info:'hgi hgi-stroke hgi-information-circle'};
   const t=document.createElement('div');
   t.className=`toast ${type}`;
-  t.innerHTML=`<i class="fa ${icons[type]}"></i><span>${msg}</span>`;
+  t.innerHTML=`<i class="${icons[type]}"></i><span>${msg}</span>`;
   document.getElementById('toast-wrap').appendChild(t);
   setTimeout(()=>t.style.opacity='0',3500);
   setTimeout(()=>t.remove(),3800);
@@ -1093,65 +1216,14 @@ document.querySelectorAll('.overlay').forEach(o=>{
 
 /* ── Helpers ── */
 function resetForm(){
-  ['f-ref','f-ref2','f-booking','f-carrier','f-vessel','f-shipper','f-consignee',
-   'f-client','f-client-email','f-pol','f-pod','f-etd','f-eta','f-note',
-   'f-agent','f-stuffing-date','f-quotation-number']
-    .forEach(id=>{const el=document.getElementById(id);if(el) el.value='';});
+  ['f-ref','f-ref2','f-booking','f-carrier','f-shipper','f-consignee','f-incoterm','f-client','f-client-email','f-pol','f-pod','f-etd','f-eta','f-note']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   _resetContainerForm();
-  const fm=document.getElementById('f-mode');if(fm) fm.value='Ocean';
-  const fs=document.getElementById('f-status');if(fs) fs.value='Pending';
-  const fd=document.getElementById('f-direction');if(fd) fd.value='';
-  const fi=document.getElementById('f-incoterm');if(fi) fi.value='';
+  const fm=document.getElementById('f-mode'); if(fm) fm.value='Ocean';
+  const fs=document.getElementById('f-status'); if(fs) fs.value='Pending';
   document.getElementById('modal-add-title').textContent='New Shipment';
-  const fr=document.getElementById('f-ref'); if(fr) fr.value=generateNextRef();
   editId=null;
-  if(typeof switchShipTabIdx==='function') switchShipTabIdx(0);
-  if(typeof updateTransitPreview==='function') updateTransitPreview();
-  if(typeof onModeChange==='function') onModeChange();
 }
-
-
-function filterShipmentsByStatus(status){
-  const ss=document.getElementById('search-status');
-  if(ss) ss.value=status||'All Status';
-  showPage('shipments', document.querySelector('.nav-item[onclick*="shipments"]'));
-  setBottomNav && setBottomNav('shipments');
-  loadShipments();
-}
-function generateNextRef(){
-  const d=new Date();
-  const y=d.getFullYear();
-  const n=String(Date.now()).slice(-6);
-  return `FT-${y}-${n}`;
-}
-
-
-window._overviewFilterApplied=false;
-function applyShipmentStatusFilter(status){
-  const ss=document.getElementById('search-status') || document.getElementById('status-filter');
-  if(ss){ ss.value=status; }
-  const page=document.getElementById('page-shipments');
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  if(page) page.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const shipNav=[...document.querySelectorAll('.nav-item')].find(n => /Shipments/i.test(n.textContent||''));
-  if(shipNav) shipNav.classList.add('active');
-  if(typeof setBottomNav==='function') setBottomNav('shipments');
-  if(typeof loadShipments==='function') loadShipments();
-}
-function bindOverviewCards(){
-  const cards=[...document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,button,div')];
-  cards.forEach(el=>{
-    const t=(el.textContent||'').replace(/\s+/g,' ').trim();
-    if(!t) return;
-    if(/\bDelayed\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('Delayed'); }
-    else if(/\b(Pending|Booked|Confirmed)\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('Pending'); }
-    else if(/\b(Delivered|Arrived|Discharged|Done)\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('Delivered'); }
-    else if(/\b(Sailing|In Transit|Transit|Active)\b/i.test(t)) { el.style.cursor='pointer'; el.onclick=()=>applyShipmentStatusFilter('In Transit'); }
-  });
-  window._overviewFilterApplied=true;
-}
-
 function statusBadge(s){
   const m={Pending:'pending',Sailing:'sailing',Transit:'transit',Arrived:'arrived',
     Delivered:'delivered',Delayed:'delayed',Discharged:'discharged'};
@@ -1244,15 +1316,15 @@ function renderCards(ships,containerId='ship-cards'){
       </div>
       <div class="ship-card-foot">
         <div style="font-size:11px;color:var(--text2)">
-          <i class="fa fa-clock" style="margin-right:4px"></i>
-          ${s.last_tracked?'<i class="fa fa-rotate" style="font-size:10px;margin-right:3px"></i>Updated '+fmt(s.last_tracked):''}
+          <i class="hgi hgi-stroke hgi-clock-01" style="margin-right:4px"></i>
+          ${s.last_tracked?'<i class="hgi hgi-stroke hgi-refresh" style="font-size:10px;margin-right:3px"></i>Updated '+fmt(s.last_tracked):''}
         </div>
         <div class="ship-actions" onclick="event.stopPropagation()">
           <button class="btn btn-secondary btn-sm btn-icon" onclick="editShipment(${s.id})" title="Edit">
-            <i class="fa fa-pen"></i>
+            <i class="hgi hgi-stroke hgi-pencil-edit-01"></i>
           </button>
           <button class="btn btn-danger btn-sm btn-icon" onclick="deleteShipment(${s.id})" title="Delete">
-            <i class="fa fa-trash"></i>
+            <i class="hgi hgi-stroke hgi-delete-02"></i>
           </button>
         </div>
       </div>
@@ -1281,27 +1353,26 @@ function renderTable(ships){
     <td><span class="badge badge-blue" style="font-size:11px">${s.teu?s.teu+' TEU':'—'}</span></td>
     <td>${statusBadge(s.status)}</td>
     <td><div class="actions">
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="fa fa-pen"></i></button>
-      <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="fa fa-trash"></i></button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="hgi hgi-stroke hgi-pencil-edit-01"></i></button>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="hgi hgi-stroke hgi-delete-02"></i></button>
     </div></td>
   </tr>`).join('')}</tbody></table>`;
 }
 
 /* ── Dashboard ── */
 async function loadDashboard(){
-  setTimeout(bindOverviewCards,400);
   try{
     const stats=await apiFetch('/api/stats');
     const bs=stats.by_status||{};
     const transit=(bs.Sailing||0)+(bs.Transit||0);
     const done=(bs.Delivered||0)+(bs.Arrived||0)+(bs.Discharged||0);
     document.getElementById('stats-grid').innerHTML=`
-      <div class="stat-card"><div class="stat-icon blue"><i class="fa fa-ship"></i></div><div class="stat-value">${stats.total||0}</div><div class="stat-label">Total</div></div>
-      <div class="stat-card"><div class="stat-icon orange"><i class="fa fa-anchor"></i></div><div class="stat-value">${transit}</div><div class="stat-label">Transit</div></div>
-      <div class="stat-card"><div class="stat-icon green"><i class="fa fa-check-circle"></i></div><div class="stat-value">${done}</div><div class="stat-label">Done</div></div>
-      <div class="stat-card"><div class="stat-icon red"><i class="fa fa-triangle-exclamation"></i></div><div class="stat-value">${stats.delayed_count||0}</div><div class="stat-label">Delayed</div></div>
-      <div class="stat-card"><div class="stat-icon cyan"><i class="fa fa-clock"></i></div><div class="stat-value">${bs.Pending||0}</div><div class="stat-label">Pending</div></div>
-      <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value">${(stats.by_mode||{}).Ocean||0}</div><div class="stat-label">Ocean</div></div>
+      <div class="stat-card"><div class="stat-icon blue"><i class="hgi hgi-stroke hgi-ship"></i></div><div class="stat-value">${stats.total||0}</div><div class="stat-label">Total</div></div>
+      <div class="stat-card"><div class="stat-icon orange"><i class="hgi hgi-stroke hgi-anchor"></i></div><div class="stat-value">${transit}</div><div class="stat-label">Transit</div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="hgi hgi-stroke hgi-checkmark-circle-02"></i></div><div class="stat-value">${done}</div><div class="stat-label">Done</div></div>
+      <div class="stat-card"><div class="stat-icon red"><i class="hgi hgi-stroke hgi-alert-02"></i></div><div class="stat-value">${stats.delayed_count||0}</div><div class="stat-label">Delayed</div></div>
+      <div class="stat-card"><div class="stat-icon cyan"><i class="hgi hgi-stroke hgi-clock-01"></i></div><div class="stat-value">${bs.Pending||0}</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="hgi hgi-stroke hgi-wave"></i></div><div class="stat-value">${(stats.by_mode||{}).Ocean||0}</div><div class="stat-label">Ocean</div></div>
     `;
     document.getElementById('nav-count').textContent=stats.total||0;
   }catch(e){ console.error(e); }
@@ -1321,8 +1392,8 @@ async function loadDashboard(){
         <td style="font-size:11px">${s.pol||'—'} → ${s.pod||'—'}</td>
         <td>${modeBadge(s.mode)}</td><td>${fmt(s.eta)}</td><td>${statusBadge(s.status)}</td>
         <td><div class="actions">
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="fa fa-pen"></i></button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="fa fa-trash"></i></button>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="hgi hgi-stroke hgi-pencil-edit-01"></i></button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="hgi hgi-stroke hgi-delete-02"></i></button>
         </div></td>
       </tr>`).join('')}</tbody></table>`;
     }
@@ -1383,7 +1454,7 @@ async function openDetail(sid){
           <div class="detail-label">Client Tracking Link</div>
           <div class="detail-value">
             <span class="copy-link" onclick="copyLink('${trackLink}')">
-              <i class="fa fa-link"></i> Copy link
+              <i class="hgi hgi-stroke hgi-link-01"></i> Copy link
             </span>
           </div>
         </div>
@@ -1391,7 +1462,7 @@ async function openDetail(sid){
       </div>
       ${s.events&&s.events.length?`
         <div style="font-size:13px;font-weight:700;margin-bottom:10px">
-          <i class="fa fa-timeline" style="color:var(--accent);margin-right:6px"></i>Events
+          <i class="hgi hgi-stroke hgi-time-schedule" style="color:var(--accent);margin-right:6px"></i>Events
         </div>
         <div class="events-list">
           ${s.events.slice(0,6).map(e=>`
@@ -1432,44 +1503,42 @@ function formatCarrier(name){
 
 async function saveShipment(){
   const ref=(document.getElementById('f-ref')?.value||'').trim();
-  if(!ref){ const fr=document.getElementById('f-ref'); if(fr) fr.value=generateNextRef(); }
-  const ref2v=(document.getElementById('f-ref')?.value||'').trim();
-  if(!ref2v){ toast('Reference is required','error'); switchShipTabIdx(0); return; }
-  const emailEl=document.getElementById('f-client-email');
-  const emailVal=(emailEl?.value||'').trim();
-  if(emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)){
-    if(emailEl) emailEl.style.border='2px solid var(--red)';
-    toast('Invalid email address','error'); switchShipTabIdx(1); return;
+  if(!ref){ toast('Reference is required','error'); return; }
+  const _emailEl=document.getElementById('f-client-email');
+  const _emailVal=(_emailEl?.value||'').trim();
+  if(_emailVal && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(_emailVal)){
+    if(_emailEl) _emailEl.style.border='2px solid var(--red)';
+    if(_emailEl) _emailEl.focus();
+    toast('Invalid client email address','error'); return;
   }
-  if(emailEl) emailEl.style.border='';
+  if(_emailEl) _emailEl.style.border='';
+  if(!_emailVal){
+    if(!await _confirm('No client email entered. Email alerts will not be sent.\n\nContinue anyway?')) return;
+  }
   const btn=document.getElementById('btn-save');
-  btn.innerHTML='<span class="spinner"></span> Saving...'; btn.disabled=true;
-  const g=id=>{const el=document.getElementById(id);return el?(el.value.trim()||null):null;};
-  const sv=id=>{const el=document.getElementById(id);return el?(el.value||null):null;};
-  const data={
-    ref: ref2v,ref2:g('f-ref2'),booking_no:g('f-booking'),
-    mode:sv('f-mode')||'Ocean',carrier:g('f-carrier'),vessel:g('f-vessel'),
-    direction:sv('f-direction')||null,incoterm:sv('f-incoterm')||null,
-    pol:g('f-pol'),pod:g('f-pod'),status:sv('f-status')||'Pending',
-    client:g('f-client'),client_email:emailVal||null,
-    shipper:g('f-shipper'),consignee:g('f-consignee'),
-    agent:g('f-agent'),stuffing_date:g('f-stuffing-date'),
-    quotation_number:g('f-quotation-number'),
-    etd:g('f-etd'),eta:g('f-eta'),note:g('f-note'),
-  };
+  btn.innerHTML='<span class="spinner"></span> Saving…'; btn.disabled=true;
+  const g=id=>{ const el=document.getElementById(id); return el?el.value.trim()||null:null; };
+  const totalTeuNow=_formContainers.reduce((a,c)=>a+(c.teu_total||0),0);
+  const data={ref,ref2:g('f-ref2'),booking_no:g('f-booking'),
+    mode:document.getElementById('f-mode')?.value||'Ocean',
+    carrier:formatCarrier(g('f-carrier')),shipper:g('f-shipper'),consignee:g('f-consignee'),incoterm:g('f-incoterm'),client:g('f-client'),client_email:g('f-client-email'),
+    pol:g('f-pol'),pod:g('f-pod'),etd:g('f-etd'),eta:g('f-eta'),
+    status:document.getElementById('f-status')?.value||'Pending',note:g('f-note'),
+    teu:totalTeuNow||null};
   try{
     let r;
     if(editId) r=await apiFetch(`/api/shipments/${editId}`,{method:'PATCH',body:JSON.stringify(data)});
     else r=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
     if(r&&r.id){
-      try{await _saveContainers(r.id);}catch(e){console.warn('containers:',e);}
-      toast(editId?'Shipment updated':'Shipment added','success');
-      closeModal('modal-add'); loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200); loadShipments();
-    } else { toast('Unexpected server response','error'); }
-  }catch(e){ toast(e.message,'error'); console.error('saveShipment:',e); }
-  btn.innerHTML='<i class="fa fa-floppy-disk"></i> Save Shipment'; btn.disabled=false;
+      try{ await _saveContainers(r.id); } catch(e){}
+      // teu already included in main save payload above
+      toast(editId?'Updated ✅':'Added ✅','success');
+      closeModal('modal-add'); initTheme();
+loadDashboard(); loadShipments();
+    } else toast('Unexpected response','error');
+  }catch(e){ toast('❌ '+e.message,'error'); console.error(e); }
+  btn.innerHTML='<i class="hgi hgi-stroke hgi-floppy-disk"></i> Save Shipment'; btn.disabled=false;
 }
-
 
 /* ── Edit ── */
 async function editShipment(sid){
@@ -1477,30 +1546,29 @@ async function editShipment(sid){
     const s=await apiFetch(`/api/shipments/${sid}`);
     editId=sid;
     document.getElementById('modal-add-title').textContent='Edit Shipment';
-    const set=(id,v)=>{const el=document.getElementById(id);if(el) el.value=v||'';};
-    set('f-ref',s.ref);set('f-ref2',s.ref2);set('f-booking',s.booking_no);
-    set('f-carrier',s.carrier);set('f-vessel',s.vessel);
-    set('f-pol',s.pol);set('f-pod',s.pod);
-    set('f-etd',s.etd?s.etd.split('T')[0]:'');set('f-eta',s.eta?s.eta.split('T')[0]:'');
-    set('f-client',s.client);set('f-client-email',s.client_email);
-    set('f-shipper',s.shipper);set('f-consignee',s.consignee);
-    set('f-agent',s.agent);set('f-stuffing-date',s.stuffing_date);
-    set('f-quotation-number',s.quotation_number);set('f-note',s.note||s.notes||'');
-    const setSel=(id,v)=>{const el=document.getElementById(id);if(el&&v){for(let o of el.options){if(o.value===v||o.text===v){o.selected=true;break;}}}};
-    setSel('f-mode',s.mode||'Ocean');setSel('f-status',s.status||'Pending');
-    setSel('f-direction',s.direction||'');setSel('f-incoterm',s.incoterm||'');
-    const _cm={};
-    (s.containers||[]).forEach(c=>{
-      const t=c.size_type||'?';
-      if(!_cm[t]) _cm[t]={size_type:t,qty:0,teu_each:_teuFromType(t),teu_total:0,fromDB:true,dbIds:[]};
-      _cm[t].qty++;_cm[t].teu_total+=_teuFromType(t);_cm[t].dbIds.push(c.id);
+    const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
+    set('f-ref',s.ref); set('f-ref2',s.ref2); set('f-booking',s.booking_no);
+    set('f-carrier',s.carrier); set('f-shipper',s.shipper); set('f-consignee',s.consignee); set('f-incoterm',s.incoterm); set('f-client',s.client);
+    set('f-client-email',s.client_email); set('f-pol',s.pol); set('f-pod',s.pod);
+    set('f-etd',s.etd?s.etd.split('T')[0]:''); set('f-eta',s.eta?s.eta.split('T')[0]:'');
+    set('f-note',s.note);
+    const fm=document.getElementById('f-mode'); if(fm) fm.value=s.mode||'Ocean';
+    const fs=document.getElementById('f-status'); if(fs) fs.value=s.status||'Pending';
+    // Reset + load existing containers grouped by type
+    const _rawConts = (s.containers||[]);
+    const _cMerged = {};
+    _rawConts.forEach(c => {
+      const t = c.size_type||'?';
+      if(!_cMerged[t]) _cMerged[t] = {size_type:t, qty:0, teu_each:_teuFromType(t), teu_total:0, fromDB:true, dbIds:[]};
+      _cMerged[t].qty++;
+      _cMerged[t].teu_total += _teuFromType(t);
+      _cMerged[t].dbIds.push(c.id);
     });
-    _formContainers=Object.values(_cm);
-    _renderContainerList();updateTransitPreview();onModeChange();switchShipTabIdx(0);
+    _formContainers = Object.values(_cMerged);
+    _renderContainerList();
     openModal('modal-add');
   }catch(e){ toast(e.message,'error'); }
 }
-
 
 /* ── Delete ── */
 async function deleteShipment(sid){
@@ -1509,7 +1577,7 @@ async function deleteShipment(sid){
     await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
     toast('Deleted','success'); closeModal('modal-detail');
     initTheme();
-loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200); loadShipments();
+loadDashboard(); loadShipments();
   }catch(e){ toast(e.message,'error'); }
 }
 
@@ -1522,7 +1590,7 @@ async function trackOne(){
     await apiFetch(`/api/shipments/${currentDetailId}/track`,{method:'POST'});
     toast('Tracking updated!','success'); openDetail(currentDetailId);
   }catch(e){ toast(e.message,'error'); }
-  btn.innerHTML='<i class="fa fa-rotate"></i> Track'; btn.disabled=false;
+  btn.innerHTML='<i class="hgi hgi-stroke hgi-refresh"></i> Track'; btn.disabled=false;
 }
 async function trackAll(){
   toast('Syncing…','info');
@@ -1549,16 +1617,6 @@ function chartTextColor(){ return isDark()?'#8892b0':'#5a6a8a'; }
 function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)'; }
 
 /* ── KPI Page ── */
-
-function attachOverviewFilters(){
-  document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card').forEach(el=>{
-    const t=(el.textContent||'').trim();
-    if(/Delayed/i.test(t)) el.onclick=()=>filterShipmentsByStatus('Delayed');
-    else if(/Delivered|Arrived|Discharged/i.test(t)) el.onclick=()=>filterShipmentsByStatus('Delivered');
-    else if(/Pending|Booked|Confirmed/i.test(t)) el.onclick=()=>filterShipmentsByStatus('Pending');
-  });
-}
-
 async function loadAnalytics(){
   try{
     const k = await apiFetch('/api/kpis');
@@ -1717,7 +1775,7 @@ function initTheme(){
 
 /* ── Init ── */
 initTheme();
-loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
+loadDashboard();
 </script>
 
 <script>
@@ -1824,7 +1882,7 @@ window.addEventListener("DOMContentLoaded", () => {
 async function loadUsers(){
   const list = document.getElementById("users-list");
   if(!list) return;
-  list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)"><i class="fa fa-spinner fa-spin" style="font-size:24px"></i><div style="margin-top:12px;font-size:13px">Loading team…</div></div>';
+  list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)"><i class="hgi hgi-stroke hgi-loading-03" style="font-size:24px"></i><div style="margin-top:12px;font-size:13px">Loading team…</div></div>';
   try{
     const users = await apiFetch("/api/users");
     if(!users.length){
@@ -1869,7 +1927,7 @@ async function loadUsers(){
             <div style="flex:1;min-width:0">
               <div style="font-size:14px;font-weight:700;color:var(--text1)">${u.name}</div>
               <div style="font-size:12px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-                <i class="fa fa-envelope" style="font-size:10px;margin-right:4px"></i>${u.email}
+                <i class="hgi hgi-stroke hgi-mail-01" style="font-size:10px;margin-right:4px"></i>${u.email}
               </div>
               <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
                 <span class="badge ${u.role==='admin'?'badge-sailing':'badge-arrived'}" style="font-size:10px">
@@ -1887,14 +1945,14 @@ async function loadUsers(){
                 <i class="fa ${u.is_active?'fa-lock':'fa-lock-open'}"></i> ${u.is_active?'Disable':'Enable'}
               </button>
               <button onclick="deleteUser(${u.id})" class="btn btn-danger btn-sm" style="font-size:11px;gap:5px;padding:5px 10px">
-                <i class="fa fa-trash"></i> Delete
+                <i class="hgi hgi-stroke hgi-delete-02"></i> Delete
               </button>
             </div>`:'<div style="padding:4px 8px;font-size:11px;color:var(--text3)">Owner</div>'}
           </div>
         </div>`).join('')}
     `;
   } catch(e){
-    list.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center;font-size:13px"><i class="fa fa-circle-xmark"></i> ${e.message}</div>`;
+    list.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center;font-size:13px"><i class="hgi hgi-stroke hgi-cancel-circle"></i> ${e.message}</div>`;
   }
 }
 
@@ -1936,7 +1994,7 @@ async function deleteUser(id){
     <div class="modal-head">
       <div class="modal-title">➕ Add Team Member</div>
       <button class="modal-close" onclick="closeModal('modal-add-user')">
-        <i class="fa fa-xmark"></i>
+        <i class="hgi hgi-stroke hgi-cancel-01"></i>
       </button>
     </div>
     <div class="modal-body">
@@ -1968,7 +2026,7 @@ async function deleteUser(id){
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
       <button class="btn btn-primary" onclick="createUser()">
-        <i class="fa fa-check"></i> Create User
+        <i class="hgi hgi-stroke hgi-checkmark-01"></i> Create User
       </button>
     </div>
   </div>
@@ -1980,7 +2038,7 @@ async function deleteUser(id){
   <div class="modal"><div class="modal-handle"></div>
     <div class="modal-head">
       <div class="modal-title">🔐 Change Password</div>
-      <button class="modal-close" onclick="closeModal('modal-change-pw')"><i class="fa fa-xmark"></i></button>
+      <button class="modal-close" onclick="closeModal('modal-change-pw')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
@@ -1995,7 +2053,7 @@ async function deleteUser(id){
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('modal-change-pw')">Cancel</button>
-      <button class="btn btn-primary" onclick="doChangePassword()"><i class="fa fa-check"></i> Update</button>
+      <button class="btn btn-primary" onclick="doChangePassword()"><i class="hgi hgi-stroke hgi-checkmark-01"></i> Update</button>
     </div>
   </div>
 </div>
@@ -2004,7 +2062,7 @@ async function deleteUser(id){
   <div class="modal"><div class="modal-handle"></div>
     <div class="modal-head">
       <div class="modal-title">📥 Bulk Import</div>
-      <button class="modal-close" onclick="closeModal('modal-bulk-import')"><i class="fa fa-xmark"></i></button>
+      <button class="modal-close" onclick="closeModal('modal-bulk-import')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
     </div>
     <div class="modal-body">
       <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2)">
@@ -2014,7 +2072,7 @@ async function deleteUser(id){
       </div>
       <div id="bulk-drop-zone" onclick="document.getElementById('bulk-file').click()"
         style="border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:.2s">
-        <i class="fa fa-file-excel" style="font-size:30px;color:#22c55e;display:block;margin-bottom:8px"></i>
+        <i class="hgi hgi-stroke hgi-file-spreadsheet" style="font-size:30px;color:#22c55e;display:block;margin-bottom:8px"></i>
         <div style="font-size:13px;font-weight:600;color:var(--text1)">Drop .xlsx here</div>
         <div style="font-size:11px;color:var(--text2);margin-top:4px">or click to browse</div>
       </div>
@@ -2025,7 +2083,7 @@ async function deleteUser(id){
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('modal-bulk-import')">Close</button>
       <button class="btn btn-primary" id="bulk-upload-btn" style="display:none" onclick="doBulkUpload()">
-        <i class="fa fa-upload"></i> Import
+        <i class="hgi hgi-stroke hgi-upload-02"></i> Import
       </button>
     </div>
   </div>
@@ -2035,7 +2093,7 @@ async function deleteUser(id){
   <div class="modal"><div class="modal-handle"></div>
     <div class="modal-head">
       <div class="modal-title">➕ Add Team Member</div>
-      <button class="modal-close" onclick="closeModal('modal-add-user')"><i class="fa fa-xmark"></i></button>
+      <button class="modal-close" onclick="closeModal('modal-add-user')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
@@ -2057,7 +2115,7 @@ async function deleteUser(id){
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
-      <button class="btn btn-primary" onclick="createUser()"><i class="fa fa-check"></i> Create</button>
+      <button class="btn btn-primary" onclick="createUser()"><i class="hgi hgi-stroke hgi-checkmark-01"></i> Create</button>
     </div>
   </div>
 </div>
@@ -2108,7 +2166,7 @@ function showApp(){
   if(sr) sr.textContent=isAdmin()?"Admin":"CS Agent";
   const av=document.getElementById("sidebar-avatar");
   if(av) av.textContent=(user?.name||"U")[0].toUpperCase();
-  if(typeof loadDashboard==="function") loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200);
+  if(typeof loadDashboard==="function") loadDashboard();
 }
 
 function doLogout(){
@@ -2158,7 +2216,7 @@ function bulkFileSelected(file){
   const res=document.getElementById("bulk-result");
   res.style.display="none";
   if(!file){ sel.style.display="none"; if(btn) btn.style.display="none"; return; }
-  sel.innerHTML=`<i class="fa fa-file-excel" style="color:#22c55e"></i> <strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB)`;
+  sel.innerHTML=`<i class="hgi hgi-stroke hgi-file-spreadsheet" style="color:#22c55e"></i> <strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB)`;
   sel.style.display="block";
   if(btn) btn.style.display="";
 }
@@ -2184,14 +2242,14 @@ async function doBulkUpload(){
     res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444";
     res.textContent="❌ "+e.message;
   }
-  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa fa-upload"></i> Import'; } }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="hgi hgi-stroke hgi-upload-02"></i> Import'; } }
 }
 
 // ═══ USER MANAGEMENT ═════════════════════════════════════════
 async function loadUsers(){
   const list=document.getElementById("users-list");
   if(!list) return;
-  list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text2)"><i class="fa fa-spinner fa-spin"></i> Loading…</div>';
+  list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text2)"><i class="hgi hgi-stroke hgi-loading-03"></i> Loading…</div>';
   try{
     const users=await apiFetch("/api/users");
     if(!users.length){
@@ -2422,13 +2480,13 @@ async function submitComment(){
 async function syncDetail(){
   if(!_detailId) return;
   const btn=document.getElementById("detail-sync-btn");
-  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa fa-rotate fa-spin"></i>'; }
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="hgi hgi-stroke hgi-refresh"></i>'; }
   try{
     await apiFetch(`/api/shipments/${_detailId}/track`,{method:"POST"});
     const s=await apiFetch(`/api/shipments/${_detailId}`);
     _renderDetail(s); showToast("Synced","success");
   } catch(e){ showToast("Sync error: "+e.message,"error"); }
-  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa fa-rotate"></i>'; } }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="hgi hgi-stroke hgi-refresh"></i>'; } }
 }
 
 function copyPortalLink(){
@@ -2467,13 +2525,13 @@ function showToast(msg,type){
           font-family:inherit;text-align:left">
         <div style="width:42px;height:42px;border-radius:10px;background:rgba(34,197,94,.15);
           display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <i class="fa fa-download" style="color:#22c55e;font-size:18px"></i>
+          <i class="hgi hgi-stroke hgi-download-02" style="color:#22c55e;font-size:18px"></i>
         </div>
         <div>
           <div style="font-size:14px;font-weight:600;color:var(--text1)">Export XLSX</div>
           <div style="font-size:11px;color:var(--text2);margin-top:2px">Download shipments as Excel file</div>
         </div>
-        <i class="fa fa-chevron-right" style="color:var(--text3);margin-left:auto"></i>
+        <i class="hgi hgi-stroke hgi-arrow-right-01" style="color:var(--text3);margin-left:auto"></i>
       </button>
       <!-- Import (admin only) -->
       <button id="sheet-import-btn" onclick="openModal('modal-bulk-import');closeModal('sheet-files')"
@@ -2482,13 +2540,13 @@ function showToast(msg,type){
           font-family:inherit;text-align:left;display:none">
         <div style="width:42px;height:42px;border-radius:10px;background:rgba(79,142,247,.15);
           display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <i class="fa fa-upload" style="color:#4f8ef7;font-size:18px"></i>
+          <i class="hgi hgi-stroke hgi-upload-02" style="color:#4f8ef7;font-size:18px"></i>
         </div>
         <div>
           <div style="font-size:14px;font-weight:600;color:var(--text1)">Import XLSX</div>
           <div style="font-size:11px;color:var(--text2);margin-top:2px">Upload Excel to create shipments in bulk</div>
         </div>
-        <i class="fa fa-chevron-right" style="color:var(--text3);margin-left:auto"></i>
+        <i class="hgi hgi-stroke hgi-arrow-right-01" style="color:var(--text3);margin-left:auto"></i>
       </button>
     </div>
   </div>
@@ -2509,12 +2567,12 @@ function openFilesSheet(){
 <div class="overlay" id="modal-email-preview" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center">
   <div class="modal" style="max-width:520px;width:94%;background:var(--card);border-radius:20px;padding:0;overflow:hidden">
     <div style="background:var(--card);padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="fa fa-envelope" style="color:var(--accent);margin-right:8px"></i>Send Email to Client</div>
-      <button onclick="closeEmailModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer"><i class="fa fa-xmark"></i></button>
+      <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="hgi hgi-stroke hgi-mail-01" style="color:var(--accent);margin-right:8px"></i>Send Email to Client</div>
+      <button onclick="closeEmailModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
     </div>
     <div style="padding:16px 20px">
       <div style="font-size:12px;color:var(--text2);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px">
-        <i class="fa fa-circle-info" style="color:var(--accent)"></i>
+        <i class="hgi hgi-stroke hgi-information-circle" style="color:var(--accent)"></i>
         Sending to: <strong id="ep-to-email" style="color:var(--text)">-</strong>
       </div>
       <div style="margin-bottom:12px">
@@ -2525,11 +2583,11 @@ function openFilesSheet(){
         <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Message</label>
         <textarea id="ep-body" rows="9" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;line-height:1.7;resize:vertical;box-sizing:border-box" placeholder="Email body..."></textarea>
       </div>
-      <div style="font-size:11px;color:var(--text3)"><i class="fa fa-circle-info"></i> Shipment details and tracking link are automatically included.</div>
+      <div style="font-size:11px;color:var(--text3)"><i class="hgi hgi-stroke hgi-information-circle"></i> Shipment details and tracking link are automatically included.</div>
     </div>
     <div style="padding:12px 20px 20px;display:flex;gap:10px">
       <button onclick="closeEmailModal()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
-      <button id="btn-confirm-send" onclick="confirmSendEmail()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer"><i class="fa fa-paper-plane"></i> Confirm & Send</button>
+      <button id="btn-confirm-send" onclick="confirmSendEmail()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer"><i class="hgi hgi-stroke hgi-sent"></i> Confirm & Send</button>
     </div>
   </div>
 </div>
@@ -2601,7 +2659,7 @@ async function confirmSendEmail() {
     alert('Failed to send email: ' + e.message);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa fa-paper-plane"></i> Confirm & Send';
+    btn.innerHTML = '<i class="hgi hgi-stroke hgi-sent"></i> Confirm & Send';
   }
 }
 </script>
@@ -2680,7 +2738,7 @@ async function loadEmailLog(sid) {
   try {
     var logs = await apiFetch('/api/shipments/' + sid + '/email-log');
     if (!logs || !logs.length) {
-      container.innerHTML = '<div style="text-align:center;padding:10px;font-size:12px;color:var(--text2);opacity:.6"><i class="fa fa-inbox"></i> No emails sent yet</div>';
+      container.innerHTML = '<div style="text-align:center;padding:10px;font-size:12px;color:var(--text2);opacity:.6"><i class="hgi hgi-stroke hgi-inbox"></i> No emails sent yet</div>';
       if (countEl) countEl.textContent = '';
       return;
     }
@@ -2689,9 +2747,9 @@ async function loadEmailLog(sid) {
       return '<div style="padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;border-left:3px solid var(--accent)">'
         + '<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">' + (l.subject||'—') + '</div>'
         + '<div style="font-size:11px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap">'
-        + '<span><i class="fa fa-paper-plane" style="color:var(--accent)"></i> ' + (l.sent_to||'—') + '</span>'
-        + '<span><i class="fa fa-user" style="color:var(--text3)"></i> ' + (l.sent_by||'System') + '</span>'
-        + '<span><i class="fa fa-clock" style="color:var(--text3)"></i> ' + (l.sent_at?(l.sent_at.substring(0,16).replace('T',' ')):'—') + '</span>'
+        + '<span><i class="hgi hgi-stroke hgi-sent" style="color:var(--accent)"></i> ' + (l.sent_to||'—') + '</span>'
+        + '<span><i class="hgi hgi-stroke hgi-user" style="color:var(--text3)"></i> ' + (l.sent_by||'System') + '</span>'
+        + '<span><i class="hgi hgi-stroke hgi-clock-01" style="color:var(--text3)"></i> ' + (l.sent_at?(l.sent_at.substring(0,16).replace('T',' ')):'—') + '</span>'
         + '</div></div>';
     }).join('');
   } catch(e) {
@@ -2716,7 +2774,7 @@ function validateEmailField(el) {
       <div class="modal-handle"></div>
       <div class="modal-head" style="border-bottom:none">
         <div class="modal-title" id="confirm-msg">Are you sure?</div>
-        <button class="modal-close" onclick="_confirmReject()"><i class="fa fa-xmark"></i></button>
+        <button class="modal-close" onclick="_confirmReject()"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
       </div>
       <div class="modal-foot">
         <button class="btn btn-ghost" style="flex:1" onclick="_confirmReject()">Cancel</button>
@@ -2740,7 +2798,7 @@ async function updateAlertsBadge(){
 /* ── Generate Report ── */
 async function generateReport(){
   const btn = document.getElementById('report-btn');
-  if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa fa-spinner fa-spin"></i> Generating…'; }
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="hgi hgi-stroke hgi-loading-03"></i> Generating…'; }
   try{
     const [ships, stats] = await Promise.all([apiFetch('/api/shipments'), apiFetch('/api/stats')]);
     const today = new Date();
@@ -2809,17 +2867,7 @@ async function generateReport(){
         .section{box-shadow:none;border:1px solid #e8eef6}
         .page-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
       }
-    
-/* Ship form tabs */
-.modal-shipment{max-height:92vh;display:flex;flex-direction:column;background:var(--card-bg,#111827);color:var(--text,#e5e7eb);}
-.ship-tabs{display:flex;padding:6px 12px;background:var(--panel-bg,#0f172a);border-bottom:1px solid var(--border,#253041);flex-shrink:0;overflow-x:auto;gap:8px;}
-.ship-tab{background:var(--panel-2,#111827);border:1px solid var(--border,#253041);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:700;color:var(--muted,#94a3b8);cursor:pointer;white-space:nowrap;transition:all .2s;box-shadow:none;}
-.ship-tab:hover{color:var(--text,#e5e7eb);border-color:var(--accent,#14b8a6);}
-.ship-tab.active{color:#fff;background:linear-gradient(180deg,color-mix(in srgb,var(--accent,#14b8a6) 30%, #1f2937),color-mix(in srgb,var(--accent,#14b8a6) 12%, #111827));border-color:var(--accent,#14b8a6);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent,#14b8a6) 35%, transparent) inset;}
-.ship-tab-panel{display:none;}.ship-tab-panel.active{display:block;}
-.ship-tab-dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--border,#475569);background:transparent;cursor:pointer;padding:0;transition:all .2s;}
-.ship-tab-dot.active{background:var(--accent,#14b8a6);border-color:var(--accent,#14b8a6);}
-</style></head><body>
+    </style></head><body>
 
     <div class="page-header">
       <div>
@@ -2933,12 +2981,12 @@ async function generateReport(){
     w.document.write(reportHtml);
     w.document.close();
   } catch(e){ showToast('Report error: '+e.message,'error'); }
-  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa fa-file-lines"></i> Generate Report'; } }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="hgi hgi-stroke hgi-file-01"></i> Generate Report'; } }
 }
 
 
 /* ── Form Containers ── */
-let _formContainers = []; // [{qty, size_type, teu_each, teu_total}]
+// _formContainers declared globally
 
 function _teuFromType(t){ return t&&t.startsWith('20')?1:t?2:0; }
 
@@ -2994,7 +3042,7 @@ function _renderContainerList(){
         <span style="font-size:11px;color:var(--accent);font-weight:700;margin-left:8px">${c.teu_total} TEU</span>
       </div>
       <button type="button" onclick="${c.fromDB&&c.dbIds?.length?`deleteContainerGroup(${i})`:"removeContainerRow("+i+")"}" class="btn btn-danger btn-sm btn-icon" style="padding:4px 8px">
-        <i class="fa fa-trash"></i>
+        <i class="hgi hgi-stroke hgi-delete-02"></i>
       </button>
     </div>`).join('');
 }
@@ -3048,37 +3096,231 @@ function _confirmReject() {
 // ── QUOTATIONS PAGE ──────────────────────────────────────────────
 let qPage=1, qSize=20, qShips=[], qEditId=null, qActionId=null, qActionType=null;
 
+function openNewQuotation(){
+  qEditId=null;
+  ['qf-ref','qf-client','qf-email','qf-carrier','qf-pol','qf-pod','qf-booking','qf-note'].forEach(id=>{
+    const e=document.getElementById(id); if(e) e.value='';
+  });
+  const m=document.getElementById('qf-mode'); if(m) m.value='Ocean';
+  const s=document.getElementById('qf-status'); if(s) s.value='Pending';
+  const i=document.getElementById('qf-incoterm'); if(i) i.value='';
+  const etd=document.getElementById('qf-etd'); if(etd) etd.value='';
+  const eta=document.getElementById('qf-eta'); if(eta) eta.value='';
+  document.getElementById('modal-quotation-title').textContent='New Quotation';
+  document.getElementById('qbtn-save').innerHTML='<i class="hgi hgi-stroke hgi-floppy-disk"></i> Save Quotation';
+  openModal('modal-quotation');
+}
 
-/* ── Ship form tab system ───────────────────────── */
-const _STABS=['general','parties','cargo','dates'];
-function switchShipTabIdx(idx){
-  if(idx<0||idx>=_STABS.length) return;
-  document.querySelectorAll('.ship-tab-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.ship-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.ship-tab-dot').forEach(d=>d.classList.remove('active'));
-  const panel=document.getElementById('stab-'+_STABS[idx]);
-  if(panel) panel.classList.add('active');
-  const tabs=document.querySelectorAll('.ship-tab');
-  if(tabs[idx]) tabs[idx].classList.add('active');
-  const dot=document.getElementById('tdot-'+idx);
-  if(dot) dot.classList.add('active');
+async function editQuotation(id){
+  qEditId=id;
+  try {
+    const s=await apiFetch(`/api/shipments/${id}`);
+    document.getElementById('modal-quotation-title').textContent='Edit Quotation';
+    const set=(eid,v)=>{const e=document.getElementById(eid);if(e)e.value=v||'';};
+    set('qf-ref',s.ref); set('qf-client',s.client); set('qf-email',s.clientemail);
+    set('qf-carrier',s.carrier); set('qf-pol',s.pol); set('qf-pod',s.pod);
+    set('qf-booking',s.bookingno); set('qf-note',s.note);
+    set('qf-etd',s.etd?s.etd.split('T')[0]:'');
+    set('qf-eta',s.eta?s.eta.split('T')[0]:'');
+    const m=document.getElementById('qf-mode'); if(m) m.value=s.mode||'Ocean';
+    const st=document.getElementById('qf-status'); if(st) st.value=s.status||'Pending';
+    const inc=document.getElementById('qf-incoterm'); if(inc) inc.value=s.incoterm||'';
+    openModal('modal-quotation');
+  } catch(e){ toast(e.message,'error'); }
 }
-function onModeChange(){
-  const mode=document.getElementById('f-mode')?.value||'Ocean';
-  const cs=document.getElementById('containers-section');
-  if(cs) cs.style.display=(mode==='Air'||mode==='Road'||mode==='Rail')?'none':'';
+
+async function saveQuotation(){
+  const gv=id=>document.getElementById(id)?.value.trim()||null;
+  const ref=gv('qf-ref');
+  if(!ref){ toast('Quotation Ref is required','error'); return; }
+  const btn=document.getElementById('qbtn-save');
+  btn.innerHTML='<span class="spinner"></span> Saving';
+  btn.disabled=true;
+  const data={
+    ref, client:gv('qf-client'), clientemail:gv('qf-email'),
+    carrier:gv('qf-carrier'), pol:gv('qf-pol'), pod:gv('qf-pod'),
+    bookingno:gv('qf-booking'), note:gv('qf-note'),
+    etd:gv('qf-etd'), eta:gv('qf-eta'),
+    mode:document.getElementById('qf-mode')?.value||'Ocean',
+    status:document.getElementById('qf-status')?.value||'Pending',
+    incoterm:document.getElementById('qf-incoterm')?.value||null,
+    quotationnumber:ref
+  };
+  try {
+    if(qEditId){
+      await apiFetch(`/api/shipments/${qEditId}`,{method:'PATCH',body:JSON.stringify(data)});
+      toast('Quotation updated','success');
+    } else {
+      await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
+      toast('Quotation created','success');
+    }
+    closeModal('modal-quotation');
+    loadQuotations();
+  } catch(e){ toast(e.message,'error'); }
+  btn.innerHTML='<i class="hgi hgi-stroke hgi-floppy-disk"></i> Save Quotation';
+  btn.disabled=false;
 }
-function updateTransitPreview(){
-  const etd=document.getElementById('f-etd')?.value;
-  const eta=document.getElementById('f-eta')?.value;
-  const el=document.getElementById('transit-preview');
-  if(!el) return;
-  if(etd&&eta){
-    const days=Math.round((new Date(eta)-new Date(etd))/86400000);
-    if(days>0) el.innerHTML='<b style="color:var(--accent);font-size:22px">'+days+'</b> <span style="font-size:14px">transit days</span>';
-    else if(days===0) el.innerHTML='<b>Same day</b> delivery';
-    else el.innerHTML='<span style="color:var(--red)">ETA is before ETD</span>';
-  } else { el.textContent='Set ETD & ETA to calculate transit days'; }
+
+function openQAction(id, type){
+  qActionId=id; qActionType=type;
+  const isApprove=type==='approve';
+  document.getElementById('qaction-title').textContent = isApprove ? '✅ Approve Quotation' : '❌ Decline Quotation';
+  document.getElementById('qaction-msg').textContent   = isApprove
+    ? 'Are you sure you want to approve this quotation? Status will be set to Sailing.'
+    : 'Are you sure you want to decline this quotation? Status will be set to Declined.';
+  const btn=document.getElementById('qaction-confirm-btn');
+  btn.className = isApprove ? 'btn btn-primary' : 'btn btn-danger';
+  btn.style.flex='2';
+  btn.textContent = isApprove ? 'Approve' : 'Decline';
+  document.getElementById('qaction-note').value='';
+  openModal('modal-qaction');
+}
+
+async function confirmQAction(){
+  if(!qActionId||!qActionType) return;
+  const note=document.getElementById('qaction-note').value.trim();
+  const newStatus = qActionType==='approve' ? 'Sailing' : 'Declined';
+  try {
+    await apiFetch(`/api/shipments/${qActionId}`,{method:'PATCH',body:JSON.stringify({status:newStatus,note:note||undefined})});
+    toast(`Quotation ${qActionType==='approve'?'approved':'declined'} successfully`,'success');
+    closeModal('modal-qaction');
+    loadQuotations();
+  } catch(e){ toast(e.message,'error'); }
+}
+
+async function deleteQuotation(id){
+  if(!await _confirm('Delete this quotation? This cannot be undone.')) return;
+  try {
+    await apiFetch(`/api/shipments/${id}`,{method:'DELETE'});
+    toast('Quotation deleted','success');
+    loadQuotations();
+  } catch(e){ toast(e.message,'error'); }
+}
+
+function qPagePrev(){ qPage=Math.max(1,qPage-1); qRenderPage(); }
+function qPageNext(){
+  const pages=Math.max(1,Math.ceil(qShips.length/qSize));
+  qPage=Math.min(pages,qPage+1); qRenderPage();
+}
+
+function qRenderPage(){
+  const total=qShips.length;
+  const pages=Math.max(1,Math.ceil(total/qSize));
+  if(qPage>pages) qPage=pages;
+  const start=(qPage-1)*qSize;
+  const pageShips=qShips.slice(start,start+qSize);
+  const lbl=document.getElementById('q-count-label');
+  if(lbl) lbl.textContent=`${total} quotation${total!==1?'s':''}`;
+  const pi=document.getElementById('qpg-info');
+  if(pi) pi.textContent=`Page ${qPage}/${pages}`;
+  const prev=document.getElementById('qpg-prev');
+  const next=document.getElementById('qpg-next');
+  if(prev) prev.disabled=qPage===1;
+  if(next) next.disabled=qPage>=pages;
+  _qRenderCards(pageShips);
+  _qRenderTable(pageShips);
+}
+
+function _qActionBtns(s){
+  const canApprove = s.status==='Pending';
+  const canDecline = s.status==='Pending'||s.status==='Approved';
+  return `
+    ${canApprove?`<button class="btn btn-sm" style="background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);font-size:11px;padding:4px 10px"
+      onclick="event.stopPropagation();openQAction(${s.id},'approve')" title="Approve">
+      <i class="hgi hgi-stroke hgi-checkmark-circle-02"></i> Approve</button>`:''}
+    ${canDecline?`<button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);font-size:11px;padding:4px 10px"
+      onclick="event.stopPropagation();openQAction(${s.id},'decline')" title="Decline">
+      <i class="hgi hgi-stroke hgi-cancel-circle"></i> Decline</button>`:''}
+    <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editQuotation(${s.id})" title="Edit"><i class="hgi hgi-stroke hgi-pencil-edit-01"></i></button>
+    <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteQuotation(${s.id})" title="Delete"><i class="hgi hgi-stroke hgi-delete-02"></i></button>`;
+}
+
+function _qRenderCards(ships){
+  const wrap=document.getElementById('quotes-cards');
+  if(!wrap) return;
+  if(!ships.length){
+    wrap.innerHTML=`<div class="empty"><div class="empty-icon">📋</div>
+      <div class="empty-title">No quotations found</div>
+      <div class="empty-sub">Tap + New Quotation to create one</div></div>`;
+    return;
+  }
+  wrap.innerHTML=ships.map(s=>`
+    <div class="ship-card" onclick="openDetails(${s.id})">
+      <div class="ship-card-head">
+        <div>
+          <div class="ship-ref">${s.ref}</div>
+          <div class="ship-sub">${s.bookingno||''} ${s.carrier||''}</div>
+        </div>
+        ${statusBadge(s.status)}
+      </div>
+      <div class="ship-card-body" style="grid-template-columns:repeat(2,1fr);gap:10px">
+        <div class="ship-field"><div class="ship-field-label">Client</div><div class="ship-field-value">${s.client||'-'}</div></div>
+        <div class="ship-field"><div class="ship-field-label">Incoterm</div><div class="ship-field-value">${s.incoterm||'-'}</div></div>
+        <div class="ship-field"><div class="ship-field-label">POL</div><div class="ship-field-value">${s.pol||'-'}</div></div>
+        <div class="ship-field"><div class="ship-field-label">POD</div><div class="ship-field-value">${s.pod||'-'}</div></div>
+        <div class="ship-field"><div class="ship-field-label">ETD</div><div class="ship-field-value">${fmtD(s.etd)}</div></div>
+        <div class="ship-field"><div class="ship-field-label">ETA</div><div class="ship-field-value">${fmtD(s.eta)}</div></div>
+      </div>
+      <div class="ship-card-foot">
+        <div style="font-size:11px;color:var(--text2)">${s.mode||'Ocean'}</div>
+        <div class="ship-actions" onclick="event.stopPropagation()">
+          ${_qActionBtns(s)}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function _qRenderTable(ships){
+  const tbl=document.getElementById('quotes-table');
+  if(!tbl) return;
+  if(!ships.length){
+    tbl.innerHTML=`<div class="empty"><div class="empty-icon">📋</div>
+      <div class="empty-title">No quotations found</div></div>`;
+    return;
+  }
+  tbl.innerHTML=`<table><thead><tr>
+    <th>Ref</th><th>Client</th><th>Incoterm</th>
+    <th>POL</th><th>POD</th><th>ETD</th><th>ETA</th>
+    <th>Mode</th><th>Status</th><th>Actions</th>
+  </tr></thead><tbody>${ships.map(s=>`
+    <tr class="clickable" onclick="openDetails(${s.id})">
+      <td class="ref-cell">${s.ref}<br><span style="font-weight:400;color:var(--text2);font-size:11px">${s.bookingno||''}</span></td>
+      <td>${s.client||''}</td>
+      <td>${s.incoterm||''}</td>
+      <td style="font-size:12px;color:var(--text2)">${s.pol||''}</td>
+      <td style="font-size:12px;color:var(--text2)">${s.pod||''}</td>
+      <td style="font-size:12px">${fmtD(s.etd)}</td>
+      <td style="font-size:12px">${fmtD(s.eta)}</td>
+      <td>${modeBadge(s.mode)}</td>
+      <td>${statusBadge(s.status)}</td>
+      <td onclick="event.stopPropagation()">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          ${_qActionBtns(s)}
+        </div>
+      </td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+async function loadQuotations(){
+  const status=document.getElementById('qfil-status')?.value||'';
+  const mode  =document.getElementById('qfil-mode')?.value||'';
+  try {
+    const ships=await apiFetch(`/api/shipments?status=${encodeURIComponent(status)}&mode=${encodeURIComponent(mode)}`);
+    qShips=ships; qPage=1;
+
+    // Stats
+    const bs={},bm={};
+    ships.forEach(s=>{ bs[s.status]=(bs[s.status]||0)+1; bm[s.mode]=(bm[s.mode]||0)+1; });
+    const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    se('q-total',  ships.length);
+    se('q-pending',bs['Pending']||0);
+    se('q-approved',(bs['Sailing']||0)+(bs['Arrived']||0)+(bs['Delivered']||0)+(bs['Discharged']||0)+(bs['Transit']||0));
+    se('q-declined',bs['Declined']||0);
+    se('q-transit',(bs['Sailing']||0)+(bs['Transit']||0));
+    se('q-ocean',  bm['Ocean']||0);
+
+    qRenderPage();
+  } catch(e){ toast(e.message,'error'); }
 }
 
 </script>
