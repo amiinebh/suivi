@@ -318,7 +318,7 @@ textarea.form-control{resize:none;min-height:72px}
 ══════════════════════════════════════ */
 @media(max-width:767px){
   .sidebar{display:none}
-  .bottom-nav{display:flex}
+  .bottom-nav{display:block}
   .btn-fab{display:flex}
   .topbar{padding:0 12px}
   .content{padding:12px 12px 80px}
@@ -446,7 +446,7 @@ textarea.form-control{resize:none;min-height:72px}
 #bulk-drop-zone:hover{border-color:var(--accent)!important;background:var(--bg3)}
 
 
-/* ── Sidebar: icon-only collapsed, expand on hover or .expanded ── */
+/* ── Sidebar collapse: icon-only, expand on hover or .expanded ── */
 .sidebar .logo-text,.sidebar .logo-sub{opacity:0;width:0;overflow:hidden;white-space:nowrap;transition:opacity var(--t),width var(--t)}
 .sidebar .nav-label{opacity:0;width:0;overflow:hidden;white-space:nowrap;transition:opacity var(--t),width var(--t);font-size:var(--fs-sm)}
 .sidebar .nav-section{opacity:0;max-height:0;overflow:hidden;transition:all var(--t)}
@@ -461,8 +461,8 @@ textarea.form-control{resize:none;min-height:72px}
 .sidebar:hover .nav-badge,.sidebar.expanded .nav-badge{opacity:1}
 .sidebar.expanded{width:var(--sidebar-exp)!important;min-width:var(--sidebar-exp)!important}
 .sidebar-logo{cursor:pointer;user-select:none}
-.ti-loader-2{animation:ti-spin 1s linear infinite;display:inline-block}
-@keyframes ti-spin{to{transform:rotate(360deg)}}
+.ti-loader-2,.fa-spin-pulse{animation:ft-spin 1s linear infinite;display:inline-block}
+@keyframes ft-spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -528,7 +528,7 @@ textarea.form-control{resize:none;min-height:72px}
     </div>
     <div class="nav-section">Analytics</div>
     <div class="nav-item admin-only" onclick="showPage('analytics',this)">
-      <i class="fa fa-chart-line"></i><span class="nav-label"> KPI &amp; Charts</span>
+      <i class="fa fa-chart-line"></i><span class="nav-label"> KPI & Charts</span>
     </div>
     <div class="nav-section admin-only">Team</div>
     <div class="nav-item admin-only" onclick="showPage('users',this)">
@@ -543,7 +543,7 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-file-excel"></i><span class="nav-label"> Export XLSX</span>
     </div>
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')">
-      <i class="fa fa-file-import" style="color:#22c55e"></i><span class="nav-label"> Import XLSX</span>
+      <i class="fa fa-file-import" style="color:#22c55e"></i> Import XLSX
     </div>
 
   </div>
@@ -804,7 +804,7 @@ textarea.form-control{resize:none;min-height:72px}
 </div><!-- /app -->
 
 <!-- ═══════ BOTTOM NAV (mobile) ═══════ -->
-<div class="bottom-nav">
+<nav class="bottom-nav">
   <div class="bottom-nav-items">
     <button class="bnav-item active" id="bnav-dashboard" onclick="showPage('dashboard',null);setBottomNav('dashboard')">
       <i class="fa fa-chart-pie"></i><span>Overview</span>
@@ -830,7 +830,7 @@ textarea.form-control{resize:none;min-height:72px}
       <i class="fa fa-circle-half-stroke"></i><span>Theme</span>
     </button>
   </div>
-</div>
+</nav>
 
 <!-- ═══════ ADD/EDIT MODAL ═══════ -->
 <div class="overlay" id="modal-add">
@@ -1642,7 +1642,6 @@ function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){
   try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
 }
-function isAdmin(){ return (getUser()||{}).role === "admin"; }
 
 function authFetch(url, opts={}){
   opts.headers = opts.headers || {};
@@ -1702,7 +1701,8 @@ document.addEventListener("keydown", e => {
 });
 
 function showApp(){
-  var ls=document.getElementById('login-screen'); if(ls) ls.style.display='none';
+  const ls = document.getElementById("login-screen");
+  if(ls) ls.style.display = "none";
   var ap=document.getElementById('app'); if(ap) ap.style.display='flex';
   const user = getUser();
   document.querySelectorAll(".admin-only").forEach(el => {
@@ -1717,7 +1717,7 @@ function showApp(){
 }
 
 function doLogout(){
-  localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); localStorage.removeItem('user');
+  localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY);
   var ls=document.getElementById('login-screen'); if(ls) ls.style.display='flex';
   var ap=document.getElementById('app');           if(ap) ap.style.display='none';
   var pd=document.getElementById('profile-dropdown'); if(pd) pd.classList.remove('open');
@@ -1979,6 +1979,7 @@ async function deleteUser(id){
 const TOKEN_KEY="ft_token", USER_KEY="ft_user";
 function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
+function isAdmin(){ return (getUser()||{}).role==="admin"; }
 
 async function doLogin(){
   const email=document.getElementById("login-email").value.trim();
@@ -1994,8 +1995,10 @@ async function doLogin(){
     const d=await r.json();
     if(!r.ok){ err.textContent=d.detail||"Invalid credentials"; err.style.display="block"; return; }
     localStorage.setItem(TOKEN_KEY,d.access_token);
-    localStorage.setItem(USER_KEY,JSON.stringify({role:d.role,name:d.name}));
-    showApp();
+    var _r=d.role||(d.user&&d.user.role)||'agent';
+    var _n=d.name||(d.user&&d.user.name)||'User';
+    localStorage.setItem(USER_KEY,JSON.stringify({role:_r,name:_n}));
+    showApp(); loadDashboard();
   } catch(e){ err.textContent="Network error. Try again."; err.style.display="block"; }
   finally{ btn.textContent="Sign In →"; btn.disabled=false; }
 }
@@ -2837,7 +2840,7 @@ async function generateReport(){
     <p id="confirm-msg" style="margin:0 0 20px;color:var(--text1);font-size:14px;line-height:1.6;"></p>
     <div style="display:flex;gap:10px;justify-content:center;">
       <button onclick="if(window._confirmRes){window._confirmRes(false);document.getElementById('confirm-modal').style.display='none';}" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text1);cursor:pointer;font-size:13px;">Cancel</button>
-      <button id="confirm-ok-btn" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--accent,var(--green));color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Confirm</button>
+      <button id="confirm-ok-btn" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--green);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Confirm</button>
     </div>
   </div>
 </div>
