@@ -324,6 +324,63 @@ textarea.form-control{resize:vertical;min-height:72px}
 @media(max-width:900px){.dash-grid{grid-template-columns:1fr}.dash-col2{grid-column:span 1}.charts-grid{grid-template-columns:1fr}}
 @media(max-width:768px){.sidebar{display:none}#hamburger-btn{display:flex!important}.bottom-nav{display:block}.content-wrap{padding:12px 12px 76px}.mobile-cards{display:block}.desktop-table{display:none}#stats-grid{grid-template-columns:repeat(2,1fr)}.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}.dash-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.filters-row{gap:5px}.search-wrap{display:none}.topbar-actions-desktop{display:none}#page-title{display:none}.theme-pill{display:none}.detail-grid{grid-template-columns:1fr}.modal-foot{flex-wrap:wrap}.modal-foot .btn{flex:1;justify-content:center}.topbar{padding:0 12px;gap:8px;height:52px}.topbar-brand{font-size:13px}.sidebar.mobile-open{display:flex!important;position:fixed;top:0;left:0;bottom:0;z-index:101;box-shadow:0 0 32px rgba(0,0,0,.7)}.btn-fab{display:flex}}
 @media(max-width:480px){#stats-grid{grid-template-columns:1fr 1fr}.kpi-grid{grid-template-columns:1fr 1fr}.login-card{margin:10px;padding:26px 18px}}
+
+/* PROFILE DROPDOWN in topbar */
+.profile-btn{display:flex;align-items:center;gap:7px;padding:4px 8px 4px 4px;border-radius:var(--radius);background:var(--bg3);border:1px solid var(--border);cursor:pointer;transition:all var(--t);flex-shrink:0}
+.profile-btn:hover{border-color:var(--green)}
+.profile-avatar{width:26px;height:26px;border-radius:var(--radius);background:linear-gradient(135deg,var(--green),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.profile-info{display:flex;flex-direction:column;line-height:1.2}
+.profile-name{font-size:var(--fs-xs);font-weight:600;color:var(--text1)}
+.profile-role{font-size:10px;color:var(--green)}
+.profile-caret{font-size:10px;color:var(--text3);margin-left:2px}
+.profile-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);min-width:180px;box-shadow:var(--shadow);z-index:300;display:none;flex-direction:column;overflow:hidden;animation:fadeUp .15s ease}
+.profile-dropdown.open{display:flex}
+.profile-wrap{position:relative}
+.pd-header{padding:12px 14px;border-bottom:1px solid var(--border)}
+.pd-name{font-size:var(--fs-sm);font-weight:600;color:var(--text1)}
+.pd-role{font-size:10px;color:var(--green);margin-top:2px}
+.pd-item{display:flex;align-items:center;gap:9px;padding:9px 14px;cursor:pointer;font-size:var(--fs-sm);color:var(--text2);transition:all var(--t);border:none;background:none;width:100%;font-family:inherit;text-align:left}
+.pd-item i{width:14px;font-size:14px;color:var(--text3)}
+.pd-item:hover{background:var(--bg3);color:var(--text1)}
+.pd-item:hover i{color:var(--green)}
+.pd-divider{height:1px;background:var(--border);margin:3px 0}
+.pd-item.danger{color:var(--red)}
+.pd-item.danger i{color:var(--red)}
+.pd-item.danger:hover{background:rgba(239,68,68,.08)}
+@media(max-width:768px){.profile-info{display:none}.profile-caret{display:none}}
+
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;display:flex;flex-direction:column;gap:14px}
+
+/* Sidebar compat — old HTML class names mapped to new UI style */
+.sidebar .nav{flex:1;padding:8px 6px;overflow:hidden}
+.nav-section{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.04em;text-transform:uppercase;padding:10px 8px 3px;white-space:nowrap;opacity:0;transition:opacity var(--t)}
+.sidebar:hover .nav-section,.sidebar.mobile-open .nav-section{opacity:1}
+.sidebar .nav-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius);cursor:pointer;font-size:var(--fs-sm);font-weight:500;color:var(--text2);transition:all var(--t);margin-bottom:1px;white-space:nowrap;overflow:hidden;position:relative}
+.sidebar .nav-item i{width:16px;height:16px;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.sidebar .nav-item span.text{opacity:0;transition:opacity var(--t);flex:1;font-size:var(--fs-sm)}
+.sidebar:hover .nav-item span.text,.sidebar.mobile-open .nav-item span.text{opacity:1}
+.sidebar .nav-item:hover{background:var(--bg3);color:var(--text1)}
+.sidebar .nav-item.active{background:var(--bg3);color:var(--text1);border:1px solid var(--border)}
+.sidebar .nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:2px;height:50%;background:var(--green);border-radius:0 2px 2px 0}
+.sidebar .nav-badge{background:var(--green);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;opacity:0;transition:opacity var(--t);flex-shrink:0}
+.sidebar .nav-badge.red{background:var(--red)}
+.sidebar:hover .nav-badge,.sidebar.mobile-open .nav-badge{opacity:1}
+/* sidebar-bottom user avatar compat */
+.sidebar .avatar{width:28px;height:28px;border-radius:var(--radius);flex-shrink:0;background:linear-gradient(135deg,var(--green),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.sidebar .user-info{opacity:0;transition:opacity var(--t);white-space:nowrap;min-width:0}
+.sidebar:hover .user-info,.sidebar.mobile-open .user-info{opacity:1}
+.sidebar .user-info .name{font-size:var(--fs-sm);font-weight:600;color:var(--text1)}
+.sidebar .user-info .role{font-size:10px;color:var(--green);margin-top:1px}
+/* topbar compat */
+.topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0}
+.topbar-title{font-size:var(--fs-sm);font-weight:500;color:var(--text2);flex:1}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:7px 12px;width:210px;transition:border-color var(--t),box-shadow var(--t);flex-shrink:0}
+.search-box:focus-within{border-color:var(--green);box-shadow:0 0 0 2px var(--green-glow)}
+.search-box input{background:none;border:none;outline:none;color:var(--text1);font-size:var(--fs-sm);width:100%;font-family:inherit;letter-spacing:0}
+.search-box input::placeholder{color:var(--text3)}
+.search-box i{color:var(--text3);font-size:14px;flex-shrink:0}
+@media(max-width:768px){.search-box{display:none}.topbar-title{display:block}.topbar{padding:0 12px;gap:8px;height:52px}}
+
 </style>
 <link rel="stylesheet" href="https://cdn.hugeicons.com/font/hgi-stroke-rounded.css">
 </head>
@@ -334,7 +391,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div style="background:#1a2240;border:1px solid #2a3a5c;border-radius:20px;
       padding:36px 28px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.5)">
       <div style="text-align:center;margin-bottom:28px">
-        <div style="font-size:36px;margin-bottom:8px">🚢</div>
+        <div style="font-size:36px;margin-bottom:8px"><i class="hgi hgi-stroke hgi-ship"></i></div>
         <div style="font-size:18px;font-weight:700;color:#e8eaf6">FreightTrack Pro</div>
         <div style="font-size:12px;color:#8892b0;margin-top:4px">Sign in to your account</div>
       </div>
@@ -349,7 +406,7 @@ textarea.form-control{resize:vertical;min-height:72px}
       <div style="margin-bottom:20px">
         <label style="font-size:11px;font-weight:600;color:#8892b0;text-transform:uppercase;
           letter-spacing:.5px;display:block;margin-bottom:5px">Password</label>
-        <input id="login-password" type="password" placeholder="••••••••"
+        <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••"
           style="width:100%;background:#0f1629;border:1px solid #2a3a5c;border-radius:8px;
           padding:11px 13px;color:#e8eaf6;font-size:13px;outline:none;font-family:inherit;
           box-sizing:border-box"/>
@@ -365,7 +422,6 @@ textarea.form-control{resize:vertical;min-height:72px}
       </button>
     </div>
   </div>
-<div id="toast-wrap"></div>
 <div class="version-tag">v27</div>
 
 <!-- FAB for mobile -->
@@ -377,7 +433,7 @@ textarea.form-control{resize:vertical;min-height:72px}
 <!-- ═══════ SIDEBAR (desktop) ═══════ -->
 <nav class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-icon">🚢</div>
+    <div class="logo-icon"><i class="hgi hgi-stroke hgi-ship"></i></div>
     <div><div class="logo-text">FreightTrack</div><div class="logo-sub">Pro Dashboard</div></div>
   </div>
   <div class="nav">
@@ -386,11 +442,8 @@ textarea.form-control{resize:vertical;min-height:72px}
       <i class="hgi hgi-stroke hgi-pie-chart"></i> Overview
     </div>
     <div class="nav-item" onclick="showPage('shipments',this)">
-      <i class="fa fa-boxes-stacked"></i> Shipments
+      <i class="hgi hgi-stroke hgi-package-01"></i> Shipments
       <span class="nav-badge" id="nav-count">0</span>
-    </div>
-    <div class="nav-item" onclick="showPage('quotes',this)">
-      <i class="hgi hgi-stroke hgi-file-01"></i> Quotations
     </div>
     <div class="nav-section">Analytics</div>
     <div class="nav-item admin-only" onclick="showPage('analytics',this)">
@@ -409,20 +462,18 @@ textarea.form-control{resize:vertical;min-height:72px}
       <i class="hgi hgi-stroke hgi-file-spreadsheet"></i> Export XLSX
     </div>
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')">
-      <i class="fa fa-file-import" style="color:#22c55e"></i> Import XLSX
+      <i class="hgi hgi-stroke hgi-file-upload-02" style="color:#22c55e"></i> Import XLSX
     </div>
 
   </div>
   <div class="sidebar-bottom">
-    <div class="sidebar-user">
+    <div class="sidebar-user" onclick="toggleProfileDropdown()" title="Profile">
       <div class="avatar" id="sidebar-avatar">A</div>
       <div class="user-info">
         <div class="name" id="sidebar-user-name">User</div>
         <div class="role" id="sidebar-user-role">CS Agent</div>
       </div>
     </div>
-    <button onclick="openModal('modal-change-pw')" style="margin:6px 12px 4px;width:calc(100% - 24px);font-size:11px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:7px;cursor:pointer;font-family:inherit">🔐 Change Password</button>
-    <button onclick="doLogout()" style="margin:6px 12px 12px;width:calc(100% - 24px);font-size:11px;color:#ef4444;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:7px;cursor:pointer;font-family:inherit;font-weight:600">⬡ Sign Out</button>
   </div>
 </nav>
 
@@ -433,15 +484,43 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="topbar-title" id="page-title">Overview</div>
     <div class="search-box">
       <i class="hgi hgi-stroke hgi-search-01"></i>
-      <input id="global-search" placeholder="Search…" oninput="onSearch(this.value)"/>
+      <input id="global-search" placeholder="Search…" oninput="clearTimeout(window._sT);window._sT=setTimeout(()=>onSearch(this.value),300)"/>
     </div>
     <div class="topbar-actions-desktop" style="display:flex;gap:8px;align-items:center">
-      <button class="btn btn-ghost btn-icon btn-sm" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme" style="font-size:16px">
-        🌙
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="toggleTheme()" title="Toggle theme" id="theme-toggle-btn" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center">
+        <i class="hgi hgi-stroke hgi-moon-02" id="theme-icon" style="font-size:15px"></i>
       </button>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()">
         <i class="hgi hgi-stroke hgi-add-01"></i> New
       </button>
+      <div class="profile-wrap" id="profile-wrap">
+        <button class="profile-btn" onclick="toggleProfileDropdown()" id="profile-btn">
+          <div class="profile-avatar" id="topbar-avatar">A</div>
+          <div class="profile-info">
+            <div class="profile-name" id="topbar-user-name">User</div>
+            <div class="profile-role" id="topbar-user-role">CS Agent</div>
+          </div>
+          <i class="hgi hgi-stroke hgi-arrow-down-01 profile-caret"></i>
+        </button>
+        <div class="profile-dropdown" id="profile-dropdown">
+          <div class="pd-header">
+            <div class="pd-name" id="pd-name">User</div>
+            <div class="pd-role" id="pd-role">CS Agent</div>
+          </div>
+          <button class="pd-item" onclick="toggleTheme();toggleProfileDropdown()">
+            <i class="hgi hgi-stroke hgi-moon-02" id="pd-theme-icon"></i>
+            <span id="pd-theme-label">Dark Mode</span>
+          </button>
+          <div class="pd-divider"></div>
+          <button class="pd-item" onclick="openModal('modal-change-pw');toggleProfileDropdown()">
+            <i class="hgi hgi-stroke hgi-key-01"></i> Change Password
+          </button>
+          <div class="pd-divider"></div>
+          <button class="pd-item danger" onclick="doLogout()">
+            <i class="hgi hgi-stroke hgi-logout-01"></i> Sign Out
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -520,14 +599,14 @@ textarea.form-control{resize:vertical;min-height:72px}
     <!-- ─── ANALYTICS / KPI PAGE ─── -->
     <div class="page" id="page-analytics">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div style="font-size:16px;font-weight:700">📊 KPI &amp; Analytics</div>
+        <div style="font-size:16px;font-weight:700"><i class="hgi hgi-stroke hgi-chart-bar-01"></i> KPI &amp; Analytics</div>
         <button id="report-btn" class="btn btn-primary btn-sm" onclick="generateReport()">
           <i class="hgi hgi-stroke hgi-file-01"></i> Generate Report
         </button>
       </div>
       <div class="kpi-grid" id="kpi-cards">
         <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-value">—</div><div class="kpi-label">Total Shipments</div></div>
-        <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-value">—</div><div class="kpi-label">On-Time Rate</div></div>
+        <div class="kpi-card"><div class="kpi-icon"></div><div class="kpi-value">—</div><div class="kpi-label">On-Time Rate</div></div>
         <div class="kpi-card"><div class="kpi-icon">⚠️</div><div class="kpi-value">—</div><div class="kpi-label">Delay Rate</div></div>
         <div class="kpi-card"><div class="kpi-icon">🕒</div><div class="kpi-value">—</div><div class="kpi-label">Avg Transit Days</div></div>
       </div>
@@ -564,7 +643,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="page" id="page-users">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <div>
-          <div style="font-size:16px;font-weight:700;color:var(--text1)">👥 Team Members</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text1)"><i class="hgi hgi-stroke hgi-user-group"></i> Team Members</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Manage your CS team access</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-user')" style="gap:6px">
@@ -573,7 +652,7 @@ textarea.form-control{resize:vertical;min-height:72px}
       </div>
       <div id="users-list">
         <div style="color:var(--text2);font-size:13px;text-align:center;padding:40px">
-          <div style="font-size:32px;margin-bottom:8px">👥</div>Loading team…
+          <div style="font-size:32px;margin-bottom:8px"><i class="hgi hgi-stroke hgi-user-group"></i></div>Loading team…
         </div>
       </div>
     </div>
@@ -583,7 +662,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="page" id="page-alerts">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div>
-          <div style="font-size:16px;font-weight:700;color:var(--text)">🔔 Alerts</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)"><i class="hgi hgi-stroke hgi-notification-01"></i> Alerts</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments requiring your attention</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="loadAlerts()">
@@ -592,7 +671,7 @@ textarea.form-control{resize:vertical;min-height:72px}
       </div>
       <div id="alerts-list">
         <div style="text-align:center;padding:40px;color:var(--text2);font-size:13px">
-          <div style="font-size:32px;margin-bottom:8px">🔔</div>
+          <div style="font-size:32px;margin-bottom:8px"><i class="hgi hgi-stroke hgi-notification-01"></i></div>
           Loading alerts...
         </div>
       </div>
@@ -676,9 +755,8 @@ textarea.form-control{resize:vertical;min-height:72px}
       <i class="hgi hgi-stroke hgi-pie-chart"></i><span>Overview</span>
     </button>
     <button class="bnav-item" id="bnav-shipments" onclick="showPage('shipments',null);setBottomNav('shipments')">
-      <i class="fa fa-boxes-stacked"></i><span>Shipments</span>
+      <i class="hgi hgi-stroke hgi-package-01"></i><span>Shipments</span>
     </button>
-  <button class="bnav-item" id="bnav-quotes" onclick="showPage('quotes',null);setBottomNav('quotes')"><i class="hgi hgi-stroke hgi-file-01"></i><span>Quotes</span></button>
     <button class="bnav-item admin-only" id="bnav-analytics" onclick="showPage('analytics',null);setBottomNav('analytics')">
       <i class="hgi hgi-stroke hgi-chart-line-data-01"></i><span>KPIs</span>
     </button>
@@ -833,7 +911,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="modal-head">
       <div>
         <div class="modal-title" id="detail-title">Details</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub"></div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub2"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <button class="modal-close" onclick="closeModal('modal-detail')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
@@ -855,182 +933,6 @@ textarea.form-control{resize:vertical;min-height:72px}
 </div>
 
 
-<!-- QUOTES PAGE -->
-<div class="page" id="page-quotes">
-  <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-    <div>
-      <div style="font-size:16px;font-weight:700">Quotations</div>
-      <div style="font-size:12px;color:var(--text2);margin-top:2px">Create, review and approve freight quotations</div>
-    </div>
-    <button class="btn btn-primary btn-sm" onclick="openNewQuotation()" style="gap:6px">
-      <i class="hgi hgi-stroke hgi-add-01"></i> New Quotation
-    </button>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats-grid" style="margin-bottom:16px">
-    <div class="stat-card"><div class="stat-icon blue"><i class="hgi hgi-stroke hgi-file-01"></i></div><div class="stat-value" id="q-total">-</div><div class="stat-label">Total</div></div>
-    <div class="stat-card"><div class="stat-icon yellow"><i class="hgi hgi-stroke hgi-clock-01"></i></div><div class="stat-value" id="q-pending">-</div><div class="stat-label">Pending</div></div>
-    <div class="stat-card"><div class="stat-icon green"><i class="hgi hgi-stroke hgi-checkmark-circle-02"></i></div><div class="stat-value" id="q-approved">-</div><div class="stat-label">Approved</div></div>
-    <div class="stat-card"><div class="stat-icon red"><i class="hgi hgi-stroke hgi-cancel-circle"></i></div><div class="stat-value" id="q-declined">-</div><div class="stat-label">Declined</div></div>
-    <div class="stat-card"><div class="stat-icon cyan"><i class="hgi hgi-stroke hgi-ship"></i></div><div class="stat-value" id="q-transit">-</div><div class="stat-label">In Transit</div></div>
-    <div class="stat-card"><div class="stat-icon purple"><i class="hgi hgi-stroke hgi-wave"></i></div><div class="stat-value" id="q-ocean">-</div><div class="stat-label">Ocean</div></div>
-  </div>
-
-  <!-- Filters -->
-  <div class="filters-row" style="margin-bottom:12px">
-    <select class="filter" id="qfil-status" onchange="loadQuotations()">
-      <option value="">All Status</option>
-      <option>Pending</option>
-      <option>Approved</option>
-      <option>Declined</option>
-      <option>Sailing</option>
-      <option>Transit</option>
-      <option>Arrived</option>
-      <option>Delivered</option>
-      <option>Delayed</option>
-    </select>
-    <select class="filter" id="qfil-mode" onchange="loadQuotations()">
-      <option value="">All Modes</option>
-      <option>Ocean</option>
-      <option>Air</option>
-    </select>
-    <button class="btn btn-ghost btn-sm topbar-actions-desktop" onclick="exportXLSX()">
-      <i class="hgi hgi-stroke hgi-download-02"></i> Export
-    </button>
-  </div>
-
-  <!-- Count + Pager -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-    <div id="q-count-label" style="font-size:12px;color:var(--text2)"></div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn btn-secondary btn-sm" id="qpg-prev" onclick="qPagePrev()"><i class="hgi hgi-stroke hgi-arrow-left-01"></i></button>
-      <div id="qpg-info" style="font-size:12px;color:var(--text2)">Page 1/1</div>
-      <button class="btn btn-secondary btn-sm" id="qpg-next" onclick="qPageNext()"><i class="hgi hgi-stroke hgi-arrow-right-01"></i></button>
-    </div>
-  </div>
-
-  <!-- Mobile cards -->
-  <div class="mobile-cards" id="quotes-cards"></div>
-
-  <!-- Desktop table -->
-  <div class="desktop-table table-wrap">
-    <div id="quotes-table"></div>
-  </div>
-</div>
-
-<!-- NEW QUOTATION MODAL -->
-<div class="overlay" id="modal-quotation">
-  <div class="modal" style="max-width:680px">
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title" id="modal-quotation-title">New Quotation</div>
-      <button class="modal-close" onclick="closeModal('modal-quotation')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Quotation Ref</label>
-          <input id="qf-ref" class="form-control" placeholder="e.g. QUO-2026-001">
-        </div>
-        <div class="form-group">
-          <label>Mode</label>
-          <select id="qf-mode" class="form-control">
-            <option>Ocean</option><option>Air</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Client</label>
-          <input id="qf-client" class="form-control" placeholder="Company name">
-        </div>
-        <div class="form-group">
-          <label>Client Email</label>
-          <input id="qf-email" class="form-control" type="email" placeholder="client@example.com">
-        </div>
-        <div class="form-group">
-          <label>Carrier</label>
-          <input id="qf-carrier" class="form-control" placeholder="CMA, MSC..." list="carrier-list">
-        </div>
-        <div class="form-group">
-          <label>Incoterm 2020</label>
-          <select id="qf-incoterm" class="form-control">
-            <option value="">Select</option>
-            <option>EXW</option><option>FCA</option><option>CPT</option><option>CIP</option>
-            <option>DAP</option><option>DPU</option><option>DDP</option>
-            <option>FAS</option><option>FOB</option><option>CFR</option><option>CIF</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>POL</label>
-          <input id="qf-pol" class="form-control" placeholder="SHANGHAI" list="port-list">
-        </div>
-        <div class="form-group">
-          <label>POD</label>
-          <input id="qf-pod" class="form-control" placeholder="CASABLANCA" list="port-list">
-        </div>
-        <div class="form-group">
-          <label>ETD</label>
-          <input id="qf-etd" class="form-control" type="date">
-        </div>
-        <div class="form-group">
-          <label>ETA</label>
-          <input id="qf-eta" class="form-control" type="date">
-        </div>
-        <div class="form-group">
-          <label>Booking No</label>
-          <input id="qf-booking" class="form-control" placeholder="MRO1002308">
-        </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select id="qf-status" class="form-control">
-            <option>Pending</option>
-            <option>Approved</option>
-            <option>Declined</option>
-            <option>Sailing</option>
-            <option>Transit</option>
-            <option>Arrived</option>
-            <option>Delivered</option>
-            <option>Delayed</option>
-          </select>
-        </div>
-        <div class="form-group full">
-          <label>Notes</label>
-          <textarea id="qf-note" class="form-control" placeholder="Internal notes about this quotation"></textarea>
-        </div>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-quotation')">Cancel</button>
-      <button class="btn btn-primary" style="flex:2" id="qbtn-save" onclick="saveQuotation()">
-        <i class="hgi hgi-stroke hgi-floppy-disk"></i> Save Quotation
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- APPROVE / DECLINE CONFIRM MODAL -->
-<div class="overlay" id="modal-qaction">
-  <div class="modal" style="max-width:400px">
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title" id="qaction-title">Approve Quotation</div>
-      <button class="modal-close" onclick="closeModal('modal-qaction')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
-    </div>
-    <div class="modal-body">
-      <p id="qaction-msg" style="font-size:14px;color:var(--text2);margin:0 0 12px"></p>
-      <textarea id="qaction-note" class="form-control" placeholder="Optional note / reason..." rows="3"></textarea>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-qaction')">Cancel</button>
-      <button class="btn btn-primary" style="flex:2" id="qaction-confirm-btn" onclick="confirmQAction()">Confirm</button>
-    </div>
-  </div>
-</div>
-
-
-
-<!-- ═══════ JS ═══════ -->
 <script>
 let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, allShipments=[];
@@ -1046,10 +948,9 @@ function showPage(id,el){
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el) el.classList.add('active');
-  const titles={dashboard:'Overview',quotes:'Quotations',shipments:'Shipments'};
+  const titles={dashboard:'Overview',shipments:'Shipments'};
   document.getElementById('page-title').textContent=titles[id]||id;
   if(id==='shipments') loadShipments();
-  if(id==='quotes') loadQuotations();
   if(id==='analytics') loadAnalytics();
   if(id==='alerts') loadAlerts();
 }
@@ -1353,7 +1254,7 @@ async function openDetail(sid){
             </div>`).join('')}
         </div>`:``}
     `;
-  }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
+  }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${escHtml(e.message)}</p>`; }
 }
 
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
@@ -1398,7 +1299,7 @@ async function saveShipment(){
   const btn=document.getElementById('btn-save');
   btn.innerHTML='<span class="spinner"></span> Saving…'; btn.disabled=true;
   const g=id=>{ const el=document.getElementById(id); return el?el.value.trim()||null:null; };
-  const totalTeuNow=_formContainers.reduce((a,c)=>a+(c.teu_total||0),0);
+  const totalTeuNow=formContainers.reduce((a,c)=>a+(c.teu_total||0),0);
   const data={ref,ref2:g('f-ref2'),booking_no:g('f-booking'),
     mode:document.getElementById('f-mode')?.value||'Ocean',
     carrier:formatCarrier(g('f-carrier')),shipper:g('f-shipper'),consignee:g('f-consignee'),incoterm:g('f-incoterm'),client:g('f-client'),client_email:g('f-client-email'),
@@ -1407,16 +1308,16 @@ async function saveShipment(){
     teu:totalTeuNow||null};
   try{
     let r;
-    if(editId) r=await apiFetch(`/api/shipments/${editId}`,{method:'PATCH',body:JSON.stringify(data)});
+    if(editId) r=await apiFetch(`/api/shipments/${editId}`,{method:'PUT',body:JSON.stringify(data)});
     else r=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
     if(r&&r.id){
       try{ await _saveContainers(r.id); } catch(e){}
       // teu already included in main save payload above
-      toast(editId?'Updated ✅':'Added ✅','success');
+      toast(editId?'Updated ':'Added ','success');
       closeModal('modal-add'); initTheme();
 loadDashboard(); loadShipments();
     } else toast('Unexpected response','error');
-  }catch(e){ toast('❌ '+e.message,'error'); console.error(e); }
+  }catch(e){ toast(' '+e.message,'error'); console.error(e); }
   btn.innerHTML='<i class="hgi hgi-stroke hgi-floppy-disk"></i> Save Shipment'; btn.disabled=false;
 }
 
@@ -1444,7 +1345,7 @@ async function editShipment(sid){
       _cMerged[t].teu_total += _teuFromType(t);
       _cMerged[t].dbIds.push(c.id);
     });
-    _formContainers = Object.values(_cMerged);
+    formContainers = Object.values(_cMerged);
     _renderContainerList();
     openModal('modal-add');
   }catch(e){ toast(e.message,'error'); }
@@ -1452,16 +1353,17 @@ async function editShipment(sid){
 
 /* ── Delete ── */
 async function deleteShipment(sid){
-  if(!await _confirm('Delete this shipment?')) return;
+  if(!await _confirm('Delete this shipment? Cannot be undone.')) return;
+  const btns=document.querySelectorAll(`[onclick*="deleteShipment(${sid})"]`);
+  btns.forEach(b=>{b.disabled=true;b.innerHTML='<span class="spinner"></span>';});
   try{
     await apiFetch(`/api/shipments/${sid}`,{method:'DELETE'});
-    toast('Deleted','success'); closeModal('modal-detail');
-    initTheme();
-loadDashboard(); loadShipments();
-  }catch(e){ toast(e.message,'error'); }
+    toast('Deleted','success');
+    loadDashboard();loadShipments();
+  }catch(e){toast(e.message,'error');}
+  finally{btns.forEach(b=>{b.disabled=false;b.innerHTML='<i class="hgi hgi-stroke hgi-delete-02"></i>';});}
 }
 
-/* ── Track ── */
 async function trackOne(){
   if(!currentDetailId) return;
   const btn=document.getElementById('detail-track-btn');
@@ -1477,9 +1379,17 @@ async function trackAll(){
   try{ await apiFetch('/api/track-all',{method:'POST'}); toast('Sync started!','success'); }
   catch(e){ toast(e.message,'error'); }
 }
-function exportXLSX(){
-  const token=localStorage.getItem('ft_token')||'';
-  window.open('/api/export/xlsx?token='+encodeURIComponent(token),'_blank');
+async function exportXLSX(){
+  try{
+    const res=await fetch('/api/export/xlsx',{headers:{'Authorization':'Bearer '+(localStorage.getItem('ft_token')||'')}});
+    if(!res.ok) throw new Error('Export failed: '+res.status);
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download='shipments_'+new Date().toISOString().slice(0,10)+'.xlsx';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  }catch(e){toast(e.message,'error');}
 }
 
 
@@ -1510,7 +1420,7 @@ async function loadAnalytics(){
         <div class="kpi-sub neutral">All time</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon">✅</div>
+        <div class="kpi-icon"></div>
         <div class="kpi-value" style="color:var(--green)">${k.on_time_rate}%</div>
         <div class="kpi-label">On-Time Rate</div>
         <div class="kpi-sub ${k.on_time_rate>=80?'good':'bad'}">${k.on_time_rate>=80?'🟢 Good':'🔴 Needs attention'}</div>
@@ -1639,10 +1549,17 @@ function toggleTheme(){
   const next = current === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
   localStorage.setItem('theme', next);
-  const btn = document.getElementById('theme-toggle');
-  if(btn) btn.textContent = next === 'dark' ? '🌙' : '☀️';
-  const bnav = document.getElementById('bnav-theme');
-  if(bnav) bnav.querySelector('span').textContent = next === 'dark' ? 'Light' : 'Dark';
+  // topbar icon
+  const ti=document.getElementById('theme-icon');
+  if(ti){ ti.className = next==='dark' ? 'hgi hgi-stroke hgi-moon-02' : 'hgi hgi-stroke hgi-sun-01'; }
+  // dropdown label
+  const pdl=document.getElementById('pd-theme-label');
+  if(pdl) pdl.textContent = next==='dark' ? 'Dark Mode' : 'Light Mode';
+  const pdi=document.getElementById('pd-theme-icon');
+  if(pdi) pdi.className = next==='dark' ? 'hgi hgi-stroke hgi-moon-02' : 'hgi hgi-stroke hgi-sun-01';
+  // bottom nav
+  const bnav=document.getElementById('bnav-theme');
+  if(bnav){ const sp=bnav.querySelector('span'); if(sp) sp.textContent=next==='dark'?'Light':'Dark'; }
 }
 function initTheme(){
   const saved = localStorage.getItem('theme') || 'dark';
@@ -1669,7 +1586,7 @@ function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){
   try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
 }
-function isAdmin(){ return (getUser()||{}).role === "admin"; }
+).role === "admin"; }
 
 function authFetch(url, opts={}){
   opts.headers = opts.headers || {};
@@ -1739,6 +1656,17 @@ function showApp(){
   if(r) r.textContent = isAdmin() ? "Admin" : "CS Agent";
   const a = document.getElementById("sidebar-avatar");
   if(a) a.textContent = (user?.name||"U")[0].toUpperCase();
+  // topbar profile
+  const ta=document.getElementById('topbar-avatar');
+  if(ta) ta.textContent=(user?.name||'U')[0].toUpperCase();
+  const tn=document.getElementById('topbar-user-name');
+  if(tn) tn.textContent=user?.name||'User';
+  const tr=document.getElementById('topbar-user-role');
+  if(tr) tr.textContent=isAdmin()?'Admin':'CS Agent';
+  const pn=document.getElementById('pd-name');
+  if(pn) pn.textContent=user?.name||'User';
+  const pr=document.getElementById('pd-role');
+  if(pr) pr.textContent=isAdmin()?'Admin':'CS Agent';
 }
 
 function doLogout(){
@@ -1766,7 +1694,7 @@ async function loadUsers(){
   try{
     const users = await apiFetch("/api/users");
     if(!users.length){
-      list.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">👥</div><div style="font-size:15px;font-weight:700">No team members yet</div><div style="font-size:13px;margin-top:6px">Add your first CS agent above</div></div>';
+      list.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px"><i class="hgi hgi-stroke hgi-user-group"></i></div><div style="font-size:15px;font-weight:700">No team members yet</div><div style="font-size:13px;margin-top:6px">Add your first CS agent above</div></div>';
       return;
     }
     // Stats bar
@@ -1822,7 +1750,7 @@ async function loadUsers(){
             ${u.role!=='admin'?`
             <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
               <button onclick="toggleUser(${u.id})" class="btn btn-ghost btn-sm" style="font-size:11px;gap:5px;padding:5px 10px">
-                <i class="fa ${u.is_active?'fa-lock':'fa-lock-open'}"></i> ${u.is_active?'Disable':'Enable'}
+                <i class="hgi hgi-stroke ${u.is_active?'hgi-lock':'hgi-unlock-01'}"></i> ${u.is_active?'Disable':'Enable'}
               </button>
               <button onclick="deleteUser(${u.id})" class="btn btn-danger btn-sm" style="font-size:11px;gap:5px;padding:5px 10px">
                 <i class="hgi hgi-stroke hgi-delete-02"></i> Delete
@@ -1832,7 +1760,7 @@ async function loadUsers(){
         </div>`).join('')}
     `;
   } catch(e){
-    list.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center;font-size:13px"><i class="hgi hgi-stroke hgi-cancel-circle"></i> ${e.message}</div>`;
+    list.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center;font-size:13px"><i class="hgi hgi-stroke hgi-cancel-circle"></i> ${escHtml(e.message)}</div>`;
   }
 }
 
@@ -1860,150 +1788,17 @@ async function toggleUser(id){
 }
 
 async function deleteUser(id){
-  if(!await _confirm("Delete this user permanently?")) return;
-  const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
-  if(r.ok) loadUsers();
+  if(!await _confirm('Delete this user? Cannot be undone.')) return;
+  const btns=document.querySelectorAll(`[onclick*="deleteUser(${id})"]`);
+  btns.forEach(b=>{b.disabled=true;b.innerHTML='<span class="spinner"></span>';});
+  try{
+    await apiFetch(`/api/users/${id}`,{method:'DELETE'});
+    toast('Deleted','success');
+    loadUsers();
+  }catch(e){toast(e.message,'error');}
+  finally{btns.forEach(b=>{b.disabled=false;b.innerHTML='<i class="hgi hgi-stroke hgi-delete-02"></i>';});}
 }
-</script>
 
-
-<!-- ═══════ ADD USER MODAL ═══════ -->
-<div class="overlay" id="modal-add-user">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">➕ Add Team Member</div>
-      <button class="modal-close" onclick="closeModal('modal-add-user')">
-        <i class="hgi hgi-stroke hgi-cancel-01"></i>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Full Name <span style="color:#ef4444">*</span></label>
-          <input id="nu-name" class="form-control" type="text" placeholder="e.g. Sara Dupont"/>
-        </div>
-        <div class="form-group">
-          <label>Email Address <span style="color:#ef4444">*</span></label>
-          <input id="nu-email" class="form-control" type="email" placeholder="sara@company.com"/>
-        </div>
-        <div class="form-group">
-          <label>Password <span style="color:#ef4444">*</span></label>
-          <input id="nu-pw" class="form-control" type="password" placeholder="Minimum 6 characters"/>
-        </div>
-        <div class="form-group">
-          <label>Role</label>
-          <select id="nu-role" class="form-control">
-            <option value="cs">🎧 CS Agent — create, track & delete shipments</option>
-            <option value="admin">👑 Admin — full access incl. KPI & team</option>
-          </select>
-        </div>
-      </div>
-      <div id="nu-error" style="display:none;margin-top:10px;padding:10px 12px;
-        background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
-        border-radius:8px;font-size:12px;color:#ef4444"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
-      <button class="btn btn-primary" onclick="createUser()">
-        <i class="hgi hgi-stroke hgi-checkmark-01"></i> Create User
-      </button>
-    </div>
-  </div>
-</div>
-
-
-<!-- CHANGE PASSWORD -->
-<div class="overlay" id="modal-change-pw">
-  <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">🔐 Change Password</div>
-      <button class="modal-close" onclick="closeModal('modal-change-pw')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group full"><label>Current Password</label>
-          <input id="cpw-old" class="form-control" type="password" placeholder="Current password"/></div>
-        <div class="form-group full"><label>New Password</label>
-          <input id="cpw-new" class="form-control" type="password" placeholder="Min 6 characters"/></div>
-        <div class="form-group full"><label>Confirm New Password</label>
-          <input id="cpw-confirm" class="form-control" type="password" placeholder="Repeat new password"/></div>
-      </div>
-      <div id="cpw-msg" style="display:none;margin-top:8px;padding:10px 12px;border-radius:8px;font-size:12px"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-change-pw')">Cancel</button>
-      <button class="btn btn-primary" onclick="doChangePassword()"><i class="hgi hgi-stroke hgi-checkmark-01"></i> Update</button>
-    </div>
-  </div>
-</div>
-<!-- BULK IMPORT -->
-<div class="overlay" id="modal-bulk-import">
-  <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">📥 Bulk Import</div>
-      <button class="modal-close" onclick="closeModal('modal-bulk-import')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
-    </div>
-    <div class="modal-body">
-      <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2)">
-        <strong style="color:var(--text1)">Excel columns (row 1 = headers):</strong>
-        <code style="display:block;margin-top:4px;font-size:11px">ref · ref2 · mode · carrier · client · client_email · pol · pod · booking_no</code>
-        <div style="margin-top:6px">Only <strong>ref</strong> is required.</div>
-      </div>
-      <div id="bulk-drop-zone" onclick="document.getElementById('bulk-file').click()"
-        style="border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:.2s">
-        <i class="hgi hgi-stroke hgi-file-spreadsheet" style="font-size:30px;color:#22c55e;display:block;margin-bottom:8px"></i>
-        <div style="font-size:13px;font-weight:600;color:var(--text1)">Drop .xlsx here</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px">or click to browse</div>
-      </div>
-      <input id="bulk-file" type="file" accept=".xlsx" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
-      <div id="bulk-selected" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px"></div>
-      <div id="bulk-result" style="display:none;margin-top:10px;padding:12px;border-radius:8px;font-size:13px"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-bulk-import')">Close</button>
-      <button class="btn btn-primary" id="bulk-upload-btn" style="display:none" onclick="doBulkUpload()">
-        <i class="hgi hgi-stroke hgi-upload-02"></i> Import
-      </button>
-    </div>
-  </div>
-</div>
-<!-- ADD USER -->
-<div class="overlay" id="modal-add-user">
-  <div class="modal"><div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">➕ Add Team Member</div>
-      <button class="modal-close" onclick="closeModal('modal-add-user')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="form-group full"><label>Full Name <span style="color:#ef4444">*</span></label>
-          <input id="nu-name" class="form-control" type="text" placeholder="e.g. Sara Dupont"/></div>
-        <div class="form-group full"><label>Email <span style="color:#ef4444">*</span></label>
-          <input id="nu-email" class="form-control" type="email" placeholder="sara@company.com"/></div>
-        <div class="form-group full"><label>Password <span style="color:#ef4444">*</span></label>
-          <input id="nu-pw" class="form-control" type="password" placeholder="Min 6 characters"/></div>
-        <div class="form-group full"><label>Role</label>
-          <select id="nu-role" class="form-control">
-            <option value="cs">🎧 CS Agent</option>
-            <option value="admin">👑 Admin</option>
-          </select>
-        </div>
-      </div>
-      <div id="nu-error" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(239,68,68,.1);
-        border:1px solid rgba(239,68,68,.3);border-radius:8px;font-size:12px;color:#ef4444"></div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
-      <button class="btn btn-primary" onclick="createUser()"><i class="hgi hgi-stroke hgi-checkmark-01"></i> Create</button>
-    </div>
-  </div>
-</div>
-
-
-<script>
-// ═══ AUTH ════════════════════════════════════════════════════
-const TOKEN_KEY="ft_token", USER_KEY="ft_user";
 function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
 function isAdmin(){ return (getUser()||{}).role==="admin"; }
@@ -2080,7 +1875,7 @@ async function doChangePassword(){
   try{
     await apiFetch("/api/auth/change-password",{method:"POST",
       body:JSON.stringify({old_password:old_pw,new_password:new_pw})});
-    showMsg("✅ Password updated successfully!",true);
+    showMsg(" Password updated successfully!",true);
     setTimeout(()=>{ closeModal("modal-change-pw");
       ["cpw-old","cpw-new","cpw-confirm"].forEach(id=>document.getElementById(id).value="");
       msg.style.display="none"; },1800);
@@ -2096,7 +1891,7 @@ function bulkFileSelected(file){
   const res=document.getElementById("bulk-result");
   res.style.display="none";
   if(!file){ sel.style.display="none"; if(btn) btn.style.display="none"; return; }
-  sel.innerHTML=`<i class="hgi hgi-stroke hgi-file-spreadsheet" style="color:#22c55e"></i> <strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB)`;
+  sel.innerHTML=`<i class="hgi hgi-stroke hgi-file-spreadsheet" style="color:#22c55e"></i> <strong>${escHtml(file.name)}</strong> (${(file.size/1024).toFixed(1)} KB)`;
   sel.style.display="block";
   if(btn) btn.style.display="";
 }
@@ -2114,13 +1909,13 @@ async function doBulkUpload(){
     const d=await r.json();
     if(!r.ok) throw new Error(d.detail||"Import failed");
     res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#16a34a";
-    res.innerHTML=`✅ <strong>${d.created}</strong> created, <strong>${d.skipped}</strong> skipped`
+    res.innerHTML=` <strong>${d.created}</strong> created, <strong>${d.skipped}</strong> skipped`
       +(d.errors?.length?`<br>⚠️ ${d.errors.length} error(s)`:"");
     _bulkFile=null; if(btn) btn.style.display="none";
     if(typeof loadShipments==="function") loadShipments();
   } catch(e){
     res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444";
-    res.textContent="❌ "+e.message;
+    res.textContent=" "+e.message;
   }
   finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="hgi hgi-stroke hgi-upload-02"></i> Import'; } }
 }
@@ -2133,7 +1928,7 @@ async function loadUsers(){
   try{
     const users=await apiFetch("/api/users");
     if(!users.length){
-      list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px">👥</div>No team members yet</div>';
+      list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px"><i class="hgi hgi-stroke hgi-user-group"></i></div>No team members yet</div>';
       return;
     }
     list.innerHTML=users.map(u=>`
@@ -2154,7 +1949,7 @@ async function loadUsers(){
           <button onclick="deleteUser(${u.id})" class="btn btn-danger btn-sm" style="font-size:10px;padding:3px 8px">🗑 Delete</button>
         </div>`:""}
       </div>`).join("");
-  } catch(e){ list.innerHTML=`<div style="color:#ef4444;padding:20px;text-align:center">Error: ${e.message}</div>`; }
+  } catch(e){ list.innerHTML=`<div style="color:#ef4444;padding:20px;text-align:center">Error: ${escHtml(e.message)}</div>`; }
 }
 
 function openNewUserModal(){
@@ -2230,7 +2025,7 @@ function _renderDetail(s){
       s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
       s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:6px 10px">👤 <b>Client:</b> ${s.client}</div>` : '',
       s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:6px 10px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
+      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px"><i class="hgi hgi-stroke hgi-ship"></i> <b>Mode:</b> ${s.mode}</div>` : '',
       (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:6px 10px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
     ].filter(Boolean).join('');
   }
@@ -2267,7 +2062,7 @@ function _renderDetail(s){
       s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
       s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:4px 8px">👤 <b>Client:</b> ${s.client}</div>` : '',
       s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:4px 8px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
+      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px"><i class="hgi hgi-stroke hgi-ship"></i> <b>Mode:</b> ${s.mode}</div>` : '',
       (s.containers && s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:4px 8px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : ''
     ].filter(Boolean).join('');
   }
@@ -2297,7 +2092,7 @@ function _renderDetail(s){
     noEv.style.display="none";
     evList.innerHTML=evts.map((e,i)=>`
       <div class="timeline-item">
-        <div class="tl-dot ${i===0?"latest":""}">${i===0?"🚢":"📍"}</div>
+        <div class="tl-dot ${i===0?"latest":""}">${i===0?"<i class="hgi hgi-stroke hgi-ship"></i>":"📍"}</div>
         <div class="tl-content">
           <div class="tl-time">${e.timestamp||""}</div>
           <div class="tl-label">${e.description||e.status||"Update"}</div>
@@ -2385,7 +2180,7 @@ function showToast(msg,type){
     document.body.appendChild(wrap); }
   const t=document.createElement("div");
   t.style.cssText="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;color:var(--text1);box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;white-space:nowrap";
-  t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"✅":"❌"}</span>${msg}`;
+  t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"":""}</span>${msg}`;
   wrap.appendChild(t); setTimeout(()=>t.remove(),2800);
 }
 </script>
@@ -2559,7 +2354,7 @@ async function loadAlerts() {
       badge.style.display = alerts.length ? '' : 'none';
     }
     if (!alerts.length) {
-      container.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention right now.</div></div>';
+      container.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px"></div><div style="font-size:15px;font-weight:700;margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention right now.</div></div>';
       return;
     }
     container.innerHTML = alerts.map(function(a) {
@@ -2618,7 +2413,7 @@ async function loadEmailLog(sid) {
   try {
     var logs = await apiFetch('/api/shipments/' + sid + '/email-log');
     if (!logs || !logs.length) {
-      container.innerHTML = '<div style="text-align:center;padding:10px;font-size:12px;color:var(--text2);opacity:.6"><i class="fa fa-inbox"></i> No emails sent yet</div>';
+      container.innerHTML = '<div style="text-align:center;padding:10px;font-size:12px;color:var(--text2);opacity:.6"><i class="hgi hgi-stroke hgi-inbox"></i> No emails sent yet</div>';
       if (countEl) countEl.textContent = '';
       return;
     }
@@ -2646,6 +2441,46 @@ function validateEmailField(el) {
   el.style.border = ok ? '2px solid var(--green)' : '2px solid var(--red)';
   if (msg) { msg.style.display='block'; msg.style.color=ok?'var(--green)':'var(--red)'; msg.textContent=ok?'Valid email':'Invalid format'; }
 }
+
+function toggleProfileDropdown(){
+  const d=document.getElementById('profile-dropdown');
+  const w=document.getElementById('profile-wrap');
+  if(!d) return;
+  d.classList.toggle('open');
+  if(d.classList.contains('open')){
+    setTimeout(()=>document.addEventListener('click',function _close(e){
+      if(!w.contains(e.target)){d.classList.remove('open');document.removeEventListener('click',_close);}
+    }),0);
+  }
+}
+
+function updateUserUI(){
+  const raw=localStorage.getItem('user')||sessionStorage.getItem('user')||'{}';
+  let user={};
+  try{user=JSON.parse(raw);}catch(e){}
+  const isAdm=()=>(user?.role||'').toLowerCase()==='admin';
+  // sidebar
+  const sn=document.getElementById('sidebar-user-name');
+  if(sn) sn.textContent=user?.name||'User';
+  const sr=document.getElementById('sidebar-user-role');
+  if(sr) sr.textContent=isAdm()?'Admin':'CS Agent';
+  const sa=document.getElementById('sidebar-avatar');
+  if(sa) sa.textContent=(user?.name||'U')[0].toUpperCase();
+  // topbar
+  const ta=document.getElementById('topbar-avatar');
+  if(ta) ta.textContent=(user?.name||'U')[0].toUpperCase();
+  const tn=document.getElementById('topbar-user-name');
+  if(tn) tn.textContent=user?.name||'User';
+  const tr=document.getElementById('topbar-user-role');
+  if(tr) tr.textContent=isAdm()?'Admin':'CS Agent';
+  const pn=document.getElementById('pd-name');
+  if(pn) pn.textContent=user?.name||'User';
+  const pr=document.getElementById('pd-role');
+  if(pr) pr.textContent=isAdm()?'Admin':'CS Agent';
+}
+
+
+function escHtml(s){if(s==null)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 </script>
 
   <!-- Confirm Modal -->
@@ -2747,12 +2582,12 @@ async function generateReport(){
         .section{box-shadow:none;border:1px solid #e8eef6}
         .page-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
       }
-    </style><link rel="stylesheet" href="https://cdn.hugeicons.com/font/hgi-stroke-rounded.css">
+    </style>
 </head><body>
 
     <div class="page-header">
       <div>
-        <h1>🚢 FreightTrack Pro — Shipment Report</h1>
+        <h1><i class="hgi hgi-stroke hgi-ship"></i> FreightTrack Pro — Shipment Report</h1>
         <div class="sub">Generated ${today.toLocaleString()} &nbsp;·&nbsp; ${total} shipments &nbsp;·&nbsp; ${totalTeu} TEU total</div>
       </div>
       <button class="print-btn no-print" onclick="window.print()">🖨 Print / Save PDF</button>
@@ -2760,7 +2595,7 @@ async function generateReport(){
 
     <!-- KPI Summary -->
     <div class="section">
-      <div class="section-title">📊 Key Performance Indicators</div>
+      <div class="section-title"><i class="hgi hgi-stroke hgi-chart-bar-01"></i> Key Performance Indicators</div>
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-val">${total}</div><div class="kpi-lbl">Total</div></div>
         <div class="kpi"><div class="kpi-val" style="color:#22c55e">${completed}</div><div class="kpi-lbl">Completed</div></div>
@@ -2784,7 +2619,7 @@ async function generateReport(){
         </tbody></table>
       </div>
       <div class="section">
-        <div class="section-title">🚢 By Carrier</div>
+        <div class="section-title"><i class="hgi hgi-stroke hgi-ship"></i> By Carrier</div>
         <table><thead><tr><th>Carrier</th><th>Shipments</th><th style="width:120px">Share</th></tr></thead><tbody>
           ${carrierRows.length ? carrierRows.map(([c,n])=>`<tr>
             <td style="font-weight:600">${c}</td>
@@ -2867,7 +2702,6 @@ async function generateReport(){
 
 
 /* ── Form Containers ── */
-let _formContainers = []; // [{qty, size_type, teu_each, teu_total}]
 
 function _teuFromType(t){ return t&&t.startsWith('20')?1:t?2:0; }
 
@@ -2878,16 +2712,16 @@ function addContainerRow(){
   if(!type){ showToast('Select container type','error'); return; }
   const teuEach = _teuFromType(type);
   // Merge if same type already exists
-  const existing = _formContainers.find(c=>c.size_type===type);
+  const existing = formContainers.find(c=>c.size_type===type);
   if(existing){ existing.qty+=qty; existing.teu_total=existing.qty*teuEach; }
-  else { _formContainers.push({size_type:type, qty, teu_each:teuEach, teu_total:qty*teuEach}); }
+  else { formContainers.push({size_type:type, qty, teu_each:teuEach, teu_total:qty*teuEach}); }
   const qtyEl=document.getElementById('new-cont-qty'); if(qtyEl) qtyEl.value='';
   const typeEl=document.getElementById('new-cont-type'); if(typeEl) typeEl.value='';
   _renderContainerList();
 }
 
 function removeContainerRow(idx){
-  _formContainers.splice(idx,1);
+  formContainers.splice(idx,1);
   _renderContainerList();
 }
 
@@ -2895,17 +2729,17 @@ function _renderContainerList(){
   const list = document.getElementById('containers-list');
   const badge = document.getElementById('teu-total-badge');
   if(!list) return;
-  const totalTeu = _formContainers.reduce((s,c)=>s+c.teu_total,0);
-  const totalCont = _formContainers.reduce((s,c)=>s+c.qty,0);
+  const totalTeu = formContainers.reduce((s,c)=>s+c.teu_total,0);
+  const totalCont = formContainers.reduce((s,c)=>s+c.qty,0);
   if(badge){ 
     badge.textContent = totalTeu ? totalCont+' container'+(totalCont>1?'s':'')+' · '+totalTeu+' TEU' : ''; 
     badge.style.display = totalTeu?'':'none'; 
   }
-  if(!_formContainers.length){
+  if(!formContainers.length){
     list.innerHTML = '<div style="font-size:12px;color:var(--text2);text-align:center;padding:10px">No containers added yet</div>';
     return;
   }
-  list.innerHTML = _formContainers.map((c,i)=>`
+  list.innerHTML = formContainers.map((c,i)=>`
     <div style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
       <div style="font-size:20px">📦</div>
       
@@ -2929,25 +2763,25 @@ function _renderContainerList(){
 }
 
 function _resetContainerForm(){
-  _formContainers=[];
+  formContainers=[];
   const q=document.getElementById('new-cont-qty'); if(q) q.value='';
   const t=document.getElementById('new-cont-type'); if(t) t.value='';
   _renderContainerList();
 }
 
 async function deleteContainerGroup(idx){
-  const c=_formContainers[idx];
+  const c=formContainers[idx];
   if(c.fromDB&&c.dbIds){
     for(const id of c.dbIds){
       try{ await apiFetch(`/api/containers/${id}`,{method:'DELETE'}); }catch(e){}
     }
   }
-  _formContainers.splice(idx,1);
+  formContainers.splice(idx,1);
   _renderContainerList();
 }
 
 async function _saveContainers(shipmentId){
-  for(const c of _formContainers){
+  for(const c of formContainers){
     if(c.fromDB) continue; // already saved in DB, skip
     for(let i=0;i<c.qty;i++){
       await apiFetch(`/api/shipments/${shipmentId}/containers`,{
@@ -2974,239 +2808,3 @@ function _confirmReject() {
   if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
 }
 
-// ── QUOTATIONS PAGE ──────────────────────────────────────────────
-let qPage=1, qSize=20, qShips=[], qEditId=null, qActionId=null, qActionType=null;
-
-function openNewQuotation(){
-  qEditId=null;
-  ['qf-ref','qf-client','qf-email','qf-carrier','qf-pol','qf-pod','qf-booking','qf-note'].forEach(id=>{
-    const e=document.getElementById(id); if(e) e.value='';
-  });
-  const m=document.getElementById('qf-mode'); if(m) m.value='Ocean';
-  const s=document.getElementById('qf-status'); if(s) s.value='Pending';
-  const i=document.getElementById('qf-incoterm'); if(i) i.value='';
-  const etd=document.getElementById('qf-etd'); if(etd) etd.value='';
-  const eta=document.getElementById('qf-eta'); if(eta) eta.value='';
-  document.getElementById('modal-quotation-title').textContent='New Quotation';
-  document.getElementById('qbtn-save').innerHTML='<i class="hgi hgi-stroke hgi-floppy-disk"></i> Save Quotation';
-  openModal('modal-quotation');
-}
-
-async function editQuotation(id){
-  qEditId=id;
-  try {
-    const s=await apiFetch(`/api/shipments/${id}`);
-    document.getElementById('modal-quotation-title').textContent='Edit Quotation';
-    const set=(eid,v)=>{const e=document.getElementById(eid);if(e)e.value=v||'';};
-    set('qf-ref',s.ref); set('qf-client',s.client); set('qf-email',s.clientemail);
-    set('qf-carrier',s.carrier); set('qf-pol',s.pol); set('qf-pod',s.pod);
-    set('qf-booking',s.bookingno); set('qf-note',s.note);
-    set('qf-etd',s.etd?s.etd.split('T')[0]:'');
-    set('qf-eta',s.eta?s.eta.split('T')[0]:'');
-    const m=document.getElementById('qf-mode'); if(m) m.value=s.mode||'Ocean';
-    const st=document.getElementById('qf-status'); if(st) st.value=s.status||'Pending';
-    const inc=document.getElementById('qf-incoterm'); if(inc) inc.value=s.incoterm||'';
-    openModal('modal-quotation');
-  } catch(e){ toast(e.message,'error'); }
-}
-
-async function saveQuotation(){
-  const gv=id=>document.getElementById(id)?.value.trim()||null;
-  const ref=gv('qf-ref');
-  if(!ref){ toast('Quotation Ref is required','error'); return; }
-  const btn=document.getElementById('qbtn-save');
-  btn.innerHTML='<span class="spinner"></span> Saving';
-  btn.disabled=true;
-  const data={
-    ref, client:gv('qf-client'), clientemail:gv('qf-email'),
-    carrier:gv('qf-carrier'), pol:gv('qf-pol'), pod:gv('qf-pod'),
-    bookingno:gv('qf-booking'), note:gv('qf-note'),
-    etd:gv('qf-etd'), eta:gv('qf-eta'),
-    mode:document.getElementById('qf-mode')?.value||'Ocean',
-    status:document.getElementById('qf-status')?.value||'Pending',
-    incoterm:document.getElementById('qf-incoterm')?.value||null,
-    quotationnumber:ref
-  };
-  try {
-    if(qEditId){
-      await apiFetch(`/api/shipments/${qEditId}`,{method:'PATCH',body:JSON.stringify(data)});
-      toast('Quotation updated','success');
-    } else {
-      await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
-      toast('Quotation created','success');
-    }
-    closeModal('modal-quotation');
-    loadQuotations();
-  } catch(e){ toast(e.message,'error'); }
-  btn.innerHTML='<i class="hgi hgi-stroke hgi-floppy-disk"></i> Save Quotation';
-  btn.disabled=false;
-}
-
-function openQAction(id, type){
-  qActionId=id; qActionType=type;
-  const isApprove=type==='approve';
-  document.getElementById('qaction-title').textContent = isApprove ? '✅ Approve Quotation' : '❌ Decline Quotation';
-  document.getElementById('qaction-msg').textContent   = isApprove
-    ? 'Are you sure you want to approve this quotation? Status will be set to Sailing.'
-    : 'Are you sure you want to decline this quotation? Status will be set to Declined.';
-  const btn=document.getElementById('qaction-confirm-btn');
-  btn.className = isApprove ? 'btn btn-primary' : 'btn btn-danger';
-  btn.style.flex='2';
-  btn.textContent = isApprove ? 'Approve' : 'Decline';
-  document.getElementById('qaction-note').value='';
-  openModal('modal-qaction');
-}
-
-async function confirmQAction(){
-  if(!qActionId||!qActionType) return;
-  const note=document.getElementById('qaction-note').value.trim();
-  const newStatus = qActionType==='approve' ? 'Sailing' : 'Declined';
-  try {
-    await apiFetch(`/api/shipments/${qActionId}`,{method:'PATCH',body:JSON.stringify({status:newStatus,note:note||undefined})});
-    toast(`Quotation ${qActionType==='approve'?'approved':'declined'} successfully`,'success');
-    closeModal('modal-qaction');
-    loadQuotations();
-  } catch(e){ toast(e.message,'error'); }
-}
-
-async function deleteQuotation(id){
-  if(!await _confirm('Delete this quotation? This cannot be undone.')) return;
-  try {
-    await apiFetch(`/api/shipments/${id}`,{method:'DELETE'});
-    toast('Quotation deleted','success');
-    loadQuotations();
-  } catch(e){ toast(e.message,'error'); }
-}
-
-function qPagePrev(){ qPage=Math.max(1,qPage-1); qRenderPage(); }
-function qPageNext(){
-  const pages=Math.max(1,Math.ceil(qShips.length/qSize));
-  qPage=Math.min(pages,qPage+1); qRenderPage();
-}
-
-function qRenderPage(){
-  const total=qShips.length;
-  const pages=Math.max(1,Math.ceil(total/qSize));
-  if(qPage>pages) qPage=pages;
-  const start=(qPage-1)*qSize;
-  const pageShips=qShips.slice(start,start+qSize);
-  const lbl=document.getElementById('q-count-label');
-  if(lbl) lbl.textContent=`${total} quotation${total!==1?'s':''}`;
-  const pi=document.getElementById('qpg-info');
-  if(pi) pi.textContent=`Page ${qPage}/${pages}`;
-  const prev=document.getElementById('qpg-prev');
-  const next=document.getElementById('qpg-next');
-  if(prev) prev.disabled=qPage===1;
-  if(next) next.disabled=qPage>=pages;
-  _qRenderCards(pageShips);
-  _qRenderTable(pageShips);
-}
-
-function _qActionBtns(s){
-  const canApprove = s.status==='Pending';
-  const canDecline = s.status==='Pending'||s.status==='Approved';
-  return `
-    ${canApprove?`<button class="btn btn-sm" style="background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);font-size:11px;padding:4px 10px"
-      onclick="event.stopPropagation();openQAction(${s.id},'approve')" title="Approve">
-      <i class="hgi hgi-stroke hgi-checkmark-circle-02"></i> Approve</button>`:''}
-    ${canDecline?`<button class="btn btn-sm" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);font-size:11px;padding:4px 10px"
-      onclick="event.stopPropagation();openQAction(${s.id},'decline')" title="Decline">
-      <i class="hgi hgi-stroke hgi-cancel-circle"></i> Decline</button>`:''}
-    <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editQuotation(${s.id})" title="Edit"><i class="hgi hgi-stroke hgi-pencil-edit-01"></i></button>
-    <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteQuotation(${s.id})" title="Delete"><i class="hgi hgi-stroke hgi-delete-02"></i></button>`;
-}
-
-function _qRenderCards(ships){
-  const wrap=document.getElementById('quotes-cards');
-  if(!wrap) return;
-  if(!ships.length){
-    wrap.innerHTML=`<div class="empty"><div class="empty-icon">📋</div>
-      <div class="empty-title">No quotations found</div>
-      <div class="empty-sub">Tap + New Quotation to create one</div></div>`;
-    return;
-  }
-  wrap.innerHTML=ships.map(s=>`
-    <div class="ship-card" onclick="openDetails(${s.id})">
-      <div class="ship-card-head">
-        <div>
-          <div class="ship-ref">${s.ref}</div>
-          <div class="ship-sub">${s.bookingno||''} ${s.carrier||''}</div>
-        </div>
-        ${statusBadge(s.status)}
-      </div>
-      <div class="ship-card-body" style="grid-template-columns:repeat(2,1fr);gap:10px">
-        <div class="ship-field"><div class="ship-field-label">Client</div><div class="ship-field-value">${s.client||'-'}</div></div>
-        <div class="ship-field"><div class="ship-field-label">Incoterm</div><div class="ship-field-value">${s.incoterm||'-'}</div></div>
-        <div class="ship-field"><div class="ship-field-label">POL</div><div class="ship-field-value">${s.pol||'-'}</div></div>
-        <div class="ship-field"><div class="ship-field-label">POD</div><div class="ship-field-value">${s.pod||'-'}</div></div>
-        <div class="ship-field"><div class="ship-field-label">ETD</div><div class="ship-field-value">${fmtD(s.etd)}</div></div>
-        <div class="ship-field"><div class="ship-field-label">ETA</div><div class="ship-field-value">${fmtD(s.eta)}</div></div>
-      </div>
-      <div class="ship-card-foot">
-        <div style="font-size:11px;color:var(--text2)">${s.mode||'Ocean'}</div>
-        <div class="ship-actions" onclick="event.stopPropagation()">
-          ${_qActionBtns(s)}
-        </div>
-      </div>
-    </div>`).join('');
-}
-
-function _qRenderTable(ships){
-  const tbl=document.getElementById('quotes-table');
-  if(!tbl) return;
-  if(!ships.length){
-    tbl.innerHTML=`<div class="empty"><div class="empty-icon">📋</div>
-      <div class="empty-title">No quotations found</div></div>`;
-    return;
-  }
-  tbl.innerHTML=`<table><thead><tr>
-    <th>Ref</th><th>Client</th><th>Incoterm</th>
-    <th>POL</th><th>POD</th><th>ETD</th><th>ETA</th>
-    <th>Mode</th><th>Status</th><th>Actions</th>
-  </tr></thead><tbody>${ships.map(s=>`
-    <tr class="clickable" onclick="openDetails(${s.id})">
-      <td class="ref-cell">${s.ref}<br><span style="font-weight:400;color:var(--text2);font-size:11px">${s.bookingno||''}</span></td>
-      <td>${s.client||''}</td>
-      <td>${s.incoterm||''}</td>
-      <td style="font-size:12px;color:var(--text2)">${s.pol||''}</td>
-      <td style="font-size:12px;color:var(--text2)">${s.pod||''}</td>
-      <td style="font-size:12px">${fmtD(s.etd)}</td>
-      <td style="font-size:12px">${fmtD(s.eta)}</td>
-      <td>${modeBadge(s.mode)}</td>
-      <td>${statusBadge(s.status)}</td>
-      <td onclick="event.stopPropagation()">
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          ${_qActionBtns(s)}
-        </div>
-      </td>
-    </tr>`).join('')}</tbody></table>`;
-}
-
-async function loadQuotations(){
-  const status=document.getElementById('qfil-status')?.value||'';
-  const mode  =document.getElementById('qfil-mode')?.value||'';
-  try {
-    const ships=await apiFetch(`/api/shipments?status=${encodeURIComponent(status)}&mode=${encodeURIComponent(mode)}`);
-    qShips=ships; qPage=1;
-
-    // Stats
-    const bs={},bm={};
-    ships.forEach(s=>{ bs[s.status]=(bs[s.status]||0)+1; bm[s.mode]=(bm[s.mode]||0)+1; });
-    const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-    se('q-total',  ships.length);
-    se('q-pending',bs['Pending']||0);
-    se('q-approved',(bs['Sailing']||0)+(bs['Arrived']||0)+(bs['Delivered']||0)+(bs['Discharged']||0)+(bs['Transit']||0));
-    se('q-declined',bs['Declined']||0);
-    se('q-transit',(bs['Sailing']||0)+(bs['Transit']||0));
-    se('q-ocean',  bm['Ocean']||0);
-
-    qRenderPage();
-  } catch(e){ toast(e.message,'error'); }
-}
-
-</script>
-<datalist id="port-list"></datalist>
-<datalist id="consignee-list"></datalist>
-<datalist id="carrier-list"></datalist>
-</body>
-  </html>
