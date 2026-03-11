@@ -1032,7 +1032,7 @@ function applyShipmentStatusFilter(status){
   if(typeof loadShipments==='function') loadShipments();
 }
 function bindOverviewCards(){
-  const cards=[...document.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,button,div')];
+  const dash=document.getElementById('page-dashboard'); if(!dash) return; const cards=[...dash.querySelectorAll('.card,.stat-card,.kpi-card,.metric-card,button,div')];
   cards.forEach(el=>{
     const t=(el.textContent||'').replace(/\s+/g,' ').trim();
     if(!t) return;
@@ -2030,7 +2030,7 @@ async function doChangePassword(){
   }
   if(!old_pw||!new_pw||!confirm){ showMsg("All fields are required",false); return; }
   if(new_pw.length<6){ showMsg("New password must be at least 6 characters",false); return; }
-function isAdmin(){ const r=(getUser()||{}).role; return r && r.toLowerCase()==="admin"; }
+  if(new_pw!==confirm){ showMsg("Passwords do not match",false); return; }
   try{
     await apiFetch("/api/auth/change-password",{method:"POST",
       body:JSON.stringify({old_password:old_pw,new_password:new_pw})});
@@ -2062,7 +2062,7 @@ async function doBulkUpload(){
   if(btn){ btn.disabled=true; btn.textContent="Importing…"; }
   const fd=new FormData(); fd.append("file",_bulkFile);
   try{
-    el.style.display=isAdmin()?(el.classList.contains("nav-section")?"block":el.classList.contains("nav-item")||el.classList.contains("bnav-item")?"flex":""):"none";
+    const token=getToken();
     const r=await fetch("/api/shipments/bulk-import",{method:"POST",
       headers:token?{"Authorization":"Bearer "+token}:{}, body:fd});
     const d=await r.json();
@@ -2081,25 +2081,10 @@ async function doBulkUpload(){
 
 // ═══ USER MANAGEMENT ═════════════════════════════════════════
 async function loadUsers(){
-async function syncMe(){
-  const token=getToken();
-  if(!token) return null;
+  const list=document.getElementById("users-list");
+  if(!list) return;
+  list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text2)"><i class="fa fa-spinner fa-spin"></i> Loading…</div>';
   try{
-    const r=await fetch("/api/auth/me",{headers:{"Authorization":"Bearer "+token}});
-    if(!r.ok) return null;
-    const me=await r.json();
-    localStorage.setItem(USER_KEY,JSON.stringify({role:me.role,name:me.name}));
-    return me;
-  }catch(e){ return null; }
-}
-
-window.addEventListener("DOMContentLoaded",async()=>{
-  if(getToken()){ await syncMe(); showApp(); }
-  else{ const ls=document.getElementById("login-screen"); if(ls) ls.style.display="flex"; }
-});
-
-
-
     const users=await apiFetch("/api/users");
     if(!users.length){
       list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px">👥</div>No team members yet</div>';
