@@ -1,8 +1,9 @@
-from pydantic import BaseModel, field_validator, EmailStr
-from typing import Optional
+from pydantic import BaseModel, field_validator
+from typing import Optional, List
 import re as _re
 
-def _str(max_len: int, val):
+from typing import Optional, List
+(max_len: int, val):
     if val is None: return val
     val = str(val).strip()
     if len(val) > max_len:
@@ -97,3 +98,76 @@ class TokenResponse(BaseModel):
     access_token: str
     role:         str
     name:         str
+
+
+class EventOut(BaseModel):
+    id: int
+    shipment_id: int
+    event_type: str
+    description: Optional[str] = None
+    location: Optional[str] = None
+    event_time: Optional[str] = None
+    created_at: Optional[str] = None
+    class Config:
+        from_attributes = True
+
+class CommentOut(BaseModel):
+    id: int
+    shipment_id: int
+    author: Optional[str] = None
+    body: str
+    created_at: Optional[str] = None
+    class Config:
+        from_attributes = True
+
+class CommentCreate(BaseModel):
+    author: Optional[str] = None
+    body: str
+
+class ContainerOut(BaseModel):
+    id: int
+    shipment_id: int
+    container_no: Optional[str] = None
+    size_type: Optional[str] = None
+    qty: Optional[int] = None
+    teu_each: Optional[float] = None
+    teu_total: Optional[float] = None
+    class Config:
+        from_attributes = True
+
+class ContainerCreate(BaseModel):
+    container_no: Optional[str] = None
+    size_type: Optional[str] = None
+    qty: Optional[int] = None
+    teu_each: Optional[float] = None
+    teu_total: Optional[float] = None
+
+class ShipmentOut(BaseModel):
+    id: int
+    ref: str
+    ref2: Optional[str] = None
+    booking_no: Optional[str] = None
+    mode: str = "Ocean"
+    carrier: Optional[str] = None
+    vessel: Optional[str] = None
+    pol: Optional[str] = None
+    pod: Optional[str] = None
+    eta: Optional[str] = None
+    etd: Optional[str] = None
+    status: str = "Pending"
+    client: Optional[str] = None
+    client_email: Optional[str] = None
+    note: Optional[str] = None
+    notes: Optional[str] = None
+    incoterm: Optional[str] = None
+    teu: Optional[float] = None
+    shipper: Optional[str] = None
+    consignee: Optional[str] = None
+    shipsgo_id: Optional[int] = None
+    last_tracked: Optional[str] = None
+    created_at: Optional[str] = None
+    events: list = []
+    comments: list = []
+    containers: list = []
+    class Config:
+        from_attributes = True
