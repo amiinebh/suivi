@@ -358,7 +358,7 @@ textarea.form-control{resize:vertical;min-height:72px}
 .sidebar .nav-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius);cursor:pointer;font-size:var(--fs-sm);font-weight:500;color:var(--text2);transition:all var(--t);margin-bottom:1px;white-space:nowrap;overflow:hidden;position:relative}
 .sidebar .nav-item i{width:16px;height:16px;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .sidebar .nav-item span.text{opacity:0;transition:opacity var(--t);flex:1;font-size:var(--fs-sm)}
-.sidebar:hover .nav-item span.text,.sidebar.mobile-open .nav-item span.text{opacity:1}
+.sidebar:hover .sidebar.expanded .nav-item span.text{opacity:1}
 .sidebar .nav-item:hover{background:var(--bg3);color:var(--text1)}
 .sidebar .nav-item.active{background:var(--bg3);color:var(--text1);border:1px solid var(--border)}
 .sidebar .nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:2px;height:50%;background:var(--green);border-radius:0 2px 2px 0}
@@ -382,18 +382,27 @@ textarea.form-control{resize:vertical;min-height:72px}
 @media(max-width:768px){.search-box{display:none}.topbar-title{display:block}.topbar{padding:0 12px;gap:8px;height:52px}}
 
 
-.sidebar .logo-text,.sidebar .logo-sub{opacity:0;width:0;overflow:hidden;white-space:nowrap;transition:opacity var(--t),width var(--t);}
-.sidebar .nav-section{opacity:0;height:0;overflow:hidden;margin:0;transition:all var(--t);}
-.sidebar .nav-item{padding:10px 0;justify-content:center;}
-.sidebar .user-info{opacity:0;width:0;overflow:hidden;}
-.sidebar.expanded{width:220px!important;min-width:220px!important;}
-.sidebar.expanded .logo-text,.sidebar.expanded .logo-sub{opacity:1;width:auto;}
-.sidebar.expanded .nav-section{opacity:1;height:auto;margin:8px 0 2px 10px;}
-.sidebar.expanded .nav-item{padding:10px 12px;justify-content:flex-start;gap:10px;}
-.sidebar.expanded .user-info{opacity:1;width:auto;}
-.sidebar-logo{cursor:pointer;user-select:none;}
+/* ── Sidebar collapse: icon-only ── */
+.sidebar .nav-label { display:none; }
+.sidebar .nav-section { display:none; }
+.sidebar .user-info  { display:none; }
+.sidebar .logo-text, .sidebar .logo-sub { display:none; }
+.sidebar .nav-item   { padding:10px 0; justify-content:center; gap:0; }
+.sidebar.expanded    { width:220px!important; min-width:220px!important; }
+.sidebar.expanded .nav-label  { display:inline; }
+.sidebar.expanded .nav-section{ display:block; }
+.sidebar.expanded .user-info  { display:flex; }
+.sidebar.expanded .logo-text,
+.sidebar.expanded .logo-sub   { display:block; }
+.sidebar.expanded .nav-item   { padding:10px 12px; justify-content:flex-start; gap:10px; }
+.sidebar-logo { cursor:pointer; user-select:none; }
+
+
+.ti-loader-2 { animation: ti-spin 1s linear infinite; display:inline-block; }
+@keyframes ti-spin { to { transform:rotate(360deg); } }
+
 </style>
-<link rel="stylesheet" href="https://cdn.hugeicons.com/font/hgi-stroke-rounded.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 </head>
 <body>
 <script>var formContainers = [];</script>
@@ -402,7 +411,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div style="background:#1a2240;border:1px solid #2a3a5c;border-radius:20px;
       padding:36px 28px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.5)">
       <div style="text-align:center;margin-bottom:28px">
-        <div style="font-size:36px;margin-bottom:8px"><i class="hgi hgi-stroke hgi-ship"></i></div>
+        <div style="font-size:36px;margin-bottom:8px"><i class="ti ti-ship"></i></div>
         <div style="font-size:18px;font-weight:700;color:#e8eaf6">FreightTrack Pro</div>
         <div style="font-size:12px;color:#8892b0;margin-top:4px">Sign in to your account</div>
       </div>
@@ -417,7 +426,7 @@ textarea.form-control{resize:vertical;min-height:72px}
       <div style="margin-bottom:20px">
         <label style="font-size:11px;font-weight:600;color:#8892b0;text-transform:uppercase;
           letter-spacing:.5px;display:block;margin-bottom:5px">Password</label>
-        <input id="login-password" type="password" autocomplete="current-password" placeholder="••••••••"
+        <input id="login-password" type="password" placeholder="••••••••"
           style="width:100%;background:#0f1629;border:1px solid #2a3a5c;border-radius:8px;
           padding:11px 13px;color:#e8eaf6;font-size:13px;outline:none;font-family:inherit;
           box-sizing:border-box"/>
@@ -437,43 +446,43 @@ textarea.form-control{resize:vertical;min-height:72px}
 
 <!-- FAB for mobile -->
 <button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
-  <i class="hgi hgi-stroke hgi-add-01"></i>
+  <i class="ti ti-plus"></i>
 </button>
 
 <div id="app" style="display:none">
 <!-- ═══════ SIDEBAR (desktop) ═══════ -->
 <nav class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon"><i class="hgi hgi-stroke hgi-ship"></i></div>
+  <div class="sidebar-logo" onclick="toggleSidebar()" title="Toggle sidebar">
+    <div class="logo-icon"><i class="ti ti-ship"></i></div>
     <div><div class="logo-text">FreightTrack</div><div class="logo-sub">Pro Dashboard</div></div>
   </div>
   <div class="nav">
     <div class="nav-section">Main</div>
     <div class="nav-item active" onclick="showPage('dashboard',this)">
-      <i class="hgi hgi-stroke hgi-pie-chart"></i> Overview
+      <i class="ti ti-chart-pie"></i><span class="nav-label"> Overview</span>
     </div>
     <div class="nav-item" onclick="showPage('shipments',this)">
-      <i class="hgi hgi-stroke hgi-package-01"></i> Shipments
+      <i class="ti ti-package"></i><span class="nav-label"> Shipments</span>
       <span class="nav-badge" id="nav-count">0</span>
     </div>
     <div class="nav-section">Analytics</div>
     <div class="nav-item admin-only" onclick="showPage('analytics',this)">
-      <i class="hgi hgi-stroke hgi-chart-line-data-01"></i> KPI & Charts
+      <i class="ti ti-chart-line"></i><span class="nav-label"> KPI &amp; Charts</span> & Charts
     </div>
     <div class="nav-section admin-only">Team</div>
     <div class="nav-item admin-only" onclick="showPage('users',this)">
-      <i class="hgi hgi-stroke hgi-user-group"></i> Team Members
+      <i class="ti ti-users"></i><span class="nav-label"> Team Members</span> Members
     </div>
     <div class="nav-section">Tools</div>
     <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts">
-      <i class="hgi hgi-stroke hgi-notification-01"></i> Alerts
+      <i class="ti ti-bell"></i><span class="nav-label"> Alerts</span>
       <span class="nav-badge" id="alerts-badge" style="display:none">0</span>
     </div>
     <div class="nav-item" onclick="exportXLSX()">
-      <i class="hgi hgi-stroke hgi-file-spreadsheet"></i> Export XLSX
+      <i class="ti ti-file-spreadsheet"></i> Export XLSX
     </div>
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')">
-      <i class="hgi hgi-stroke hgi-file-upload-02" style="color:#22c55e"></i> Import XLSX
+      <i class="ti ti-file-upload" style="color:#22c55e"></i> Import XLSX
     </div>
 
   </div>
@@ -494,15 +503,15 @@ textarea.form-control{resize:vertical;min-height:72px}
   <div class="topbar">
     <div class="topbar-title" id="page-title">Overview</div>
     <div class="search-box">
-      <i class="hgi hgi-stroke hgi-search-01"></i>
-      <input id="global-search" placeholder="Search…" oninput="clearTimeout(window._sT);window._sT=setTimeout(function(){onSearch(this.value);}.bind(this),300)"/>
+      <i class="ti ti-search"></i>
+      <input id="global-search" placeholder="Search…" oninput="onSearch(this.value)"/>
     </div>
     <div class="topbar-actions-desktop" style="display:flex;gap:8px;align-items:center">
       <button class="btn btn-ghost btn-icon btn-sm" onclick="toggleTheme()" title="Toggle theme" id="theme-toggle-btn" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center">
-        <i class="hgi hgi-stroke hgi-moon-02" id="theme-icon" style="font-size:15px"></i>
+        <i class="ti ti-moon" id="theme-icon" style="font-size:15px"></i>
       </button>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()">
-        <i class="hgi hgi-stroke hgi-add-01"></i> New
+        <i class="ti ti-plus"></i> New
       </button>
       <div class="profile-wrap" id="profile-wrap">
         <button class="profile-btn" onclick="toggleProfileDropdown()" id="profile-btn">
@@ -511,7 +520,7 @@ textarea.form-control{resize:vertical;min-height:72px}
             <div class="profile-name" id="topbar-user-name">User</div>
             <div class="profile-role" id="topbar-user-role">CS Agent</div>
           </div>
-          <i class="hgi hgi-stroke hgi-arrow-down-01 profile-caret"></i>
+          <i class="ti ti-arrow-down profile-caret"></i>
         </button>
         <div class="profile-dropdown" id="profile-dropdown">
           <div class="pd-header">
@@ -519,16 +528,16 @@ textarea.form-control{resize:vertical;min-height:72px}
             <div class="pd-role" id="pd-role">CS Agent</div>
           </div>
           <button class="pd-item" onclick="toggleTheme();toggleProfileDropdown()">
-            <i class="hgi hgi-stroke hgi-moon-02" id="pd-theme-icon"></i>
+            <i class="ti ti-moon" id="pd-theme-icon"></i>
             <span id="pd-theme-label">Dark Mode</span>
           </button>
           <div class="pd-divider"></div>
           <button class="pd-item" onclick="openModal('modal-change-pw');toggleProfileDropdown()">
-            <i class="hgi hgi-stroke hgi-key-01"></i> Change Password
+            <i class="ti ti-key"></i> Change Password
           </button>
           <div class="pd-divider"></div>
           <button class="pd-item danger" onclick="doLogout()">
-            <i class="hgi hgi-stroke hgi-logout-01"></i> Sign Out
+            <i class="ti ti-logout"></i> Sign Out
           </button>
         </div>
       </div>
@@ -541,18 +550,18 @@ textarea.form-control{resize:vertical;min-height:72px}
     <!-- ─── DASHBOARD ─── -->
     <div class="page active" id="page-dashboard">
       <div class="stats-grid" id="stats-grid">
-        <div class="stat-card"><div class="stat-icon blue"><i class="hgi hgi-stroke hgi-ship"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:32px"></div><div class="stat-label">Total</div></div>
-        <div class="stat-card"><div class="stat-icon orange"><i class="hgi hgi-stroke hgi-anchor"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Transit</div></div>
-        <div class="stat-card"><div class="stat-icon green"><i class="hgi hgi-stroke hgi-checkmark-01"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Done</div></div>
-        <div class="stat-card"><div class="stat-icon red"><i class="hgi hgi-stroke hgi-alert-02"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Delayed</div></div>
-        <div class="stat-card"><div class="stat-icon cyan"><i class="hgi hgi-stroke hgi-clock-01"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Pending</div></div>
-        <div class="stat-card"><div class="stat-icon purple"><i class="hgi hgi-stroke hgi-wave"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Ocean</div></div>
+        <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-ship"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:32px"></div><div class="stat-label">Total</div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="ti ti-anchor"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Transit</div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="ti ti-check"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Done</div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="ti ti-alert-triangle"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Delayed</div></div>
+        <div class="stat-card"><div class="stat-icon cyan"><i class="ti ti-clock"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="ti ti-wave-sine"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Ocean</div></div>
       </div>
 
       <div class="section-header">
         <div class="section-title">Recent Shipments</div>
         <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null);setBottomNav('shipments')">
-          View All <i class="hgi hgi-stroke hgi-arrow-right-01"></i>
+          View All <i class="ti ti-arrow-right"></i>
         </button>
       </div>
       <div class="mobile-cards" id="recent-cards"></div>
@@ -580,15 +589,15 @@ textarea.form-control{resize:vertical;min-height:72px}
           <option>FAS</option><option>FOB</option><option>CFR</option><option>CIF</option>
         </select>
         <button class="btn btn-primary btn-sm topbar-actions-desktop" onclick="exportXLSX()">
-          <i class="hgi hgi-stroke hgi-download-02"></i> Export
+          <i class="ti ti-download"></i> Export
         </button>
       </div>
       <div id="ship-count-label" style="font-size:12px;color:var(--text2);margin-bottom:10px"></div>
       <div id="pager" style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin:10px 0;flex-wrap:wrap">
         <div style="display:flex;gap:8px;align-items:center">
-          <button class="btn btn-secondary btn-sm" id="pg-prev" onclick="pagePrev()"><i class="hgi hgi-stroke hgi-arrow-left-01"></i></button>
+          <button class="btn btn-secondary btn-sm" id="pg-prev" onclick="pagePrev()"><i class="ti ti-arrow-left"></i></button>
           <div id="pg-info" style="font-size:12px;color:var(--text2)">Page 1/1</div>
-          <button class="btn btn-secondary btn-sm" id="pg-next" onclick="pageNext()"><i class="hgi hgi-stroke hgi-arrow-right-01"></i></button>
+          <button class="btn btn-secondary btn-sm" id="pg-next" onclick="pageNext()"><i class="ti ti-arrow-right"></i></button>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
           <div style="font-size:12px;color:var(--text2)">Rows:</div>
@@ -610,9 +619,9 @@ textarea.form-control{resize:vertical;min-height:72px}
     <!-- ─── ANALYTICS / KPI PAGE ─── -->
     <div class="page" id="page-analytics">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div style="font-size:16px;font-weight:700"><i class="hgi hgi-stroke hgi-chart-bar-01"></i> KPI &amp; Analytics</div>
+        <div style="font-size:16px;font-weight:700"><i class="ti ti-chart-bar"></i> KPI &amp; Analytics</div>
         <button id="report-btn" class="btn btn-primary btn-sm" onclick="generateReport()">
-          <i class="hgi hgi-stroke hgi-file-01"></i> Generate Report
+          <i class="ti ti-file"></i> Generate Report
         </button>
       </div>
       <div class="kpi-grid" id="kpi-cards">
@@ -623,26 +632,26 @@ textarea.form-control{resize:vertical;min-height:72px}
       </div>
       <div class="charts-grid">
         <div class="chart-card">
-          <div class="chart-title"><i class="hgi hgi-stroke hgi-pie-chart"></i> Status Distribution</div>
+          <div class="chart-title"><i class="ti ti-chart-pie"></i> Status Distribution</div>
           <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-title"><i class="hgi hgi-stroke hgi-chart-bar-01"></i> Monthly Volume</div>
+          <div class="chart-title"><i class="ti ti-chart-bar"></i> Monthly Volume</div>
           <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
         </div>
       </div>
       <div class="charts-grid">
         <div class="chart-card">
-          <div class="chart-title"><i class="hgi hgi-stroke hgi-ship"></i> Top Carriers</div>
+          <div class="chart-title"><i class="ti ti-ship"></i> Top Carriers</div>
           <div class="bar-list" id="bar-carriers"></div>
         </div>
         <div class="chart-card">
-          <div class="chart-title"><i class="hgi hgi-stroke hgi-user"></i> Top Clients</div>
+          <div class="chart-title"><i class="ti ti-user"></i> Top Clients</div>
           <div class="bar-list" id="bar-clients"></div>
         </div>
       </div>
       <div class="chart-card" style="margin-bottom:16px">
-        <div class="chart-title"><i class="hgi hgi-stroke hgi-alert-02" style="color:var(--red)"></i> Overdue Shipments</div>
+        <div class="chart-title"><i class="ti ti-alert-triangle" style="color:var(--red)"></i> Overdue Shipments</div>
         <div class="overdue-list" id="overdue-list">
           <div style="color:var(--text2);font-size:13px;text-align:center;padding:16px">Loading…</div>
         </div>
@@ -654,16 +663,16 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="page" id="page-users">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <div>
-          <div style="font-size:16px;font-weight:700;color:var(--text1)"><i class="hgi hgi-stroke hgi-user-group"></i> Team Members</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text1)"><i class="ti ti-users"></i><span class="nav-label"> Team Members</span> Members</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Manage your CS team access</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-user')" style="gap:6px">
-          <i class="hgi hgi-stroke hgi-user-add-01"></i> Add User
+          <i class="ti ti-user-plus"></i> Add User
         </button>
       </div>
       <div id="users-list">
         <div style="color:var(--text2);font-size:13px;text-align:center;padding:40px">
-          <div style="font-size:32px;margin-bottom:8px"><i class="hgi hgi-stroke hgi-user-group"></i></div>Loading team…
+          <div style="font-size:32px;margin-bottom:8px"><i class="ti ti-users"></i></div>Loading team…
         </div>
       </div>
     </div>
@@ -673,16 +682,16 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="page" id="page-alerts">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div>
-          <div style="font-size:16px;font-weight:700;color:var(--text)"><i class="hgi hgi-stroke hgi-notification-01"></i> Alerts</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)"><i class="ti ti-bell"></i><span class="nav-label"> Alerts</span></div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments requiring your attention</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="loadAlerts()">
-          <i class="hgi hgi-stroke hgi-refresh"></i> Refresh
+          <i class="ti ti-refresh"></i> Refresh
         </button>
       </div>
       <div id="alerts-list">
         <div style="text-align:center;padding:40px;color:var(--text2);font-size:13px">
-          <div style="font-size:32px;margin-bottom:8px"><i class="hgi hgi-stroke hgi-notification-01"></i></div>
+          <div style="font-size:32px;margin-bottom:8px"><i class="ti ti-bell"></i></div>
           Loading alerts...
         </div>
       </div>
@@ -692,7 +701,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="page" id="page-detail">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
         <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null)" style="padding:6px 10px">
-          <i class="hgi hgi-stroke hgi-arrow-left-01"></i>
+          <i class="ti ti-arrow-left"></i>
         </button>
         <div style="flex:1;min-width:0">
           <div id="detail-ref" style="font-size:15px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
@@ -700,7 +709,7 @@ textarea.form-control{resize:vertical;min-height:72px}
         </div>
         <div id="detail-status-badge"></div>
         <button class="btn btn-primary btn-sm" onclick="syncDetail()" id="detail-sync-btn" style="padding:6px 10px;flex-shrink:0">
-          <i class="hgi hgi-stroke hgi-refresh"></i>
+          <i class="ti ti-refresh"></i>
         </button>
       </div>
       <div class="shipment-card" style="margin-bottom:14px;padding:12px 14px">
@@ -711,7 +720,7 @@ textarea.form-control{resize:vertical;min-height:72px}
           </div>
           <div style="flex:2;display:flex;align-items:center;gap:3px">
             <div style="flex:1;height:2px;background:var(--accent);border-radius:2px"></div>
-            <i class="hgi hgi-stroke hgi-ship" style="color:var(--accent);font-size:14px"></i>
+            <i class="ti ti-ship" style="color:var(--accent);font-size:14px"></i>
             <div style="flex:1;height:2px;background:var(--border);border-radius:2px"></div>
           </div>
           <div style="flex:1;text-align:center">
@@ -739,19 +748,19 @@ textarea.form-control{resize:vertical;min-height:72px}
           <textarea id="detail-comment-text" class="form-control" rows="2"
             style="resize:none;margin-bottom:8px" placeholder="Write an internal note…"></textarea>
           <button class="btn btn-primary" style="width:100%;font-size:12px" onclick="submitComment()">
-            <i class="hgi hgi-stroke hgi-sent"></i> Add Note
+            <i class="ti ti-send"></i> Add Note
           </button>
         </div>
       </div>
       
       <div style="margin-top:12px;background:var(--bg3);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px">
-        <i class="hgi hgi-stroke hgi-link-01" style="color:var(--accent);font-size:13px"></i>
+        <i class="ti ti-link" style="color:var(--accent);font-size:13px"></i>
         <div style="flex:1;font-size:11px;color:var(--text2)">Client tracking link</div>
         <button class="btn btn-ghost btn-sm" onclick="copyPortalLink()" style="font-size:11px;padding:4px 10px">
-          <i class="hgi hgi-stroke hgi-copy-01"></i> Copy
+          <i class="ti ti-copy"></i> Copy
         </button>
         <a id="detail-portal-href" href="#" target="_blank" class="btn btn-ghost btn-sm"
-          style="font-size:11px;padding:4px 10px"><i class="hgi hgi-stroke hgi-arrow-up-right-01"></i></a>
+          style="font-size:11px;padding:4px 10px"><i class="ti ti-arrow-up-right"></i></a>
       </div>
     </div>
 
@@ -763,27 +772,27 @@ textarea.form-control{resize:vertical;min-height:72px}
 <div class="bottom-nav">
   <div class="bottom-nav-items">
     <button class="bnav-item active" id="bnav-dashboard" onclick="showPage('dashboard',null);setBottomNav('dashboard')">
-      <i class="hgi hgi-stroke hgi-pie-chart"></i><span>Overview</span>
+      <i class="ti ti-chart-pie"></i><span>Overview</span>
     </button>
     <button class="bnav-item" id="bnav-shipments" onclick="showPage('shipments',null);setBottomNav('shipments')">
-      <i class="hgi hgi-stroke hgi-package-01"></i><span>Shipments</span>
+      <i class="ti ti-package"></i><span>Shipments</span>
     </button>
     <button class="bnav-item admin-only" id="bnav-analytics" onclick="showPage('analytics',null);setBottomNav('analytics')">
-      <i class="hgi hgi-stroke hgi-chart-line-data-01"></i><span>KPIs</span>
+      <i class="ti ti-chart-line"></i><span>KPIs</span>
     </button>
     <button class="bnav-item admin-only" id="bnav-users" onclick="showPage('users',null);setBottomNav('users')">
-      <i class="hgi hgi-stroke hgi-user-group"></i><span>Team</span>
+      <i class="ti ti-users"></i><span>Team</span>
     </button>
     
     
     <button class="bnav-item" id="bnav-alerts" onclick="showPage('alerts',null);setBottomNav('alerts')">
-      <i class="hgi hgi-stroke hgi-notification-01"></i><span>Alerts</span>
+      <i class="ti ti-bell"></i><span>Alerts</span>
     </button>
     <button class="bnav-item" id="bnav-export" onclick="openFilesSheet()">
-      <i class="hgi hgi-stroke hgi-file-download-02"></i><span>Files</span>
+      <i class="ti ti-file-download"></i><span>Files</span>
     </button>
     <button class="bnav-item" id="bnav-theme" onclick="toggleTheme()">
-      <i class="hgi hgi-stroke hgi-moon-02"></i><span>Theme</span>
+      <i class="ti ti-moon"></i><span>Theme</span>
     </button>
   </div>
 </div>
@@ -794,7 +803,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="modal-handle"></div>
     <div class="modal-head">
       <div class="modal-title" id="modal-add-title">New Shipment</div>
-      <button class="modal-close" onclick="closeModal('modal-add')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
+      <button class="modal-close" onclick="closeModal('modal-add')"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
@@ -894,7 +903,7 @@ textarea.form-control{resize:vertical;min-height:72px}
               <option value="45HC">45HC (2 TEU)</option>
             </select>
             <button type="button" class="btn btn-primary btn-sm" onclick="addContainerRow()" style="flex-shrink:0;padding:0 16px">
-              <i class="hgi hgi-stroke hgi-add-01"></i> Add
+              <i class="ti ti-plus"></i> Add
             </button>
           </div>
           <!-- Container list -->
@@ -909,7 +918,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="modal-foot">
       <button class="btn btn-ghost" style="flex:1" onclick="closeModal('modal-add')">Cancel</button>
       <button class="btn btn-primary" style="flex:2" id="btn-save" onclick="saveShipment()">
-        <i class="hgi hgi-stroke hgi-floppy-disk"></i> Save Shipment
+        <i class="ti ti-device-floppy"></i> Save Shipment
       </button>
     </div>
   </div>
@@ -925,19 +934,19 @@ textarea.form-control{resize:vertical;min-height:72px}
         <div style="font-size:11px;color:var(--text2);margin-top:2px" id="detail-sub2"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <button class="modal-close" onclick="closeModal('modal-detail')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
+        <button class="modal-close" onclick="closeModal('modal-detail')"><i class="ti ti-x"></i></button>
       </div>
     </div>
     <div class="modal-body" id="detail-body"></div>
     <div class="modal-foot" id="detail-foot">
       <button class="btn btn-secondary" style="flex:1" onclick="editFromDetail()">
-        <i class="hgi hgi-stroke hgi-pencil-edit-01"></i> Edit
+        <i class="ti ti-pencil"></i> Edit
       </button>
       <button class="btn btn-primary" style="flex:1" onclick="openEmailPreview()" id="btn-send-email">
-        <i class="hgi hgi-stroke hgi-mail-01"></i> Email
+        <i class="ti ti-mail"></i> Email
       </button>
       <button class="btn btn-danger" style="flex:1" onclick="deleteFromDetail()">
-        <i class="hgi hgi-stroke hgi-delete-02"></i> Delete
+        <i class="ti ti-trash"></i> Delete
       </button>
     </div>
   </div>
@@ -976,7 +985,7 @@ function setBottomNav(id){
 
 /* ── API ── */
 async function apiFetch(url,options={}){
-  const token=localStorage.getItem('ft_token');
+  var token=localStorage.getItem('ft_token');
   if(!token){doLogout();throw new Error('Not authenticated');}
   const h={'Content-Type':'application/json','Accept':'application/json'};
   if(token) h['Authorization'] = 'Bearer ' + token;
@@ -994,7 +1003,7 @@ async function apiFetch(url,options={}){
 
 /* ── Toast ── */
 function toast(msg,type='info'){
-  const icons={success:'hgi hgi-stroke hgi-checkmark-circle-02',error:'hgi hgi-stroke hgi-cancel-circle',info:'hgi hgi-stroke hgi-information-circle'};
+  const icons={success:'ti ti-circle-check',error:'ti ti-circle-x',info:'ti ti-info-circle'};
   const t=document.createElement('div');
   t.className=`toast ${type}`;
   t.innerHTML=`<i class="${icons[type]}"></i><span>${msg}</span>`;
@@ -1112,15 +1121,15 @@ function renderCards(ships,containerId='ship-cards'){
       </div>
       <div class="ship-card-foot">
         <div style="font-size:11px;color:var(--text2)">
-          <i class="hgi hgi-stroke hgi-clock-01" style="margin-right:4px"></i>
-          ${s.last_tracked?'<i class="hgi hgi-stroke hgi-refresh" style="font-size:10px;margin-right:3px"></i>Updated '+fmt(s.last_tracked):''}
+          <i class="ti ti-clock" style="margin-right:4px"></i>
+          ${s.last_tracked?'<i class="ti ti-refresh" style="font-size:10px;margin-right:3px"></i>Updated '+fmt(s.last_tracked):''}
         </div>
         <div class="ship-actions" onclick="event.stopPropagation()">
           <button class="btn btn-secondary btn-sm btn-icon" onclick="editShipment(${s.id})" title="Edit">
-            <i class="hgi hgi-stroke hgi-pencil-edit-01"></i>
+            <i class="ti ti-pencil"></i>
           </button>
           <button class="btn btn-danger btn-sm btn-icon" onclick="deleteShipment(${s.id})" title="Delete">
-            <i class="hgi hgi-stroke hgi-delete-02"></i>
+            <i class="ti ti-trash"></i>
           </button>
         </div>
       </div>
@@ -1149,8 +1158,8 @@ function renderTable(ships){
     <td><span class="badge badge-blue" style="font-size:11px">${s.teu?s.teu+' TEU':'—'}</span></td>
     <td>${statusBadge(s.status)}</td>
     <td><div class="actions">
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="hgi hgi-stroke hgi-pencil-edit-01"></i></button>
-      <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="hgi hgi-stroke hgi-delete-02"></i></button>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="ti ti-pencil"></i></button>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="ti ti-trash"></i></button>
     </div></td>
   </tr>`).join('')}</tbody></table>`;
 }
@@ -1163,12 +1172,12 @@ async function loadDashboard(){
     const transit=(bs.Sailing||0)+(bs.Transit||0);
     const done=(bs.Delivered||0)+(bs.Arrived||0)+(bs.Discharged||0);
     document.getElementById('stats-grid').innerHTML=`
-      <div class="stat-card"><div class="stat-icon blue"><i class="hgi hgi-stroke hgi-ship"></i></div><div class="stat-value">${stats.total||0}</div><div class="stat-label">Total</div></div>
-      <div class="stat-card"><div class="stat-icon orange"><i class="hgi hgi-stroke hgi-anchor"></i></div><div class="stat-value">${transit}</div><div class="stat-label">Transit</div></div>
-      <div class="stat-card"><div class="stat-icon green"><i class="hgi hgi-stroke hgi-checkmark-circle-02"></i></div><div class="stat-value">${done}</div><div class="stat-label">Done</div></div>
-      <div class="stat-card"><div class="stat-icon red"><i class="hgi hgi-stroke hgi-alert-02"></i></div><div class="stat-value">${stats.delayed_count||0}</div><div class="stat-label">Delayed</div></div>
-      <div class="stat-card"><div class="stat-icon cyan"><i class="hgi hgi-stroke hgi-clock-01"></i></div><div class="stat-value">${bs.Pending||0}</div><div class="stat-label">Pending</div></div>
-      <div class="stat-card"><div class="stat-icon purple"><i class="hgi hgi-stroke hgi-wave"></i></div><div class="stat-value">${(stats.by_mode||{}).Ocean||0}</div><div class="stat-label">Ocean</div></div>
+      <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-ship"></i></div><div class="stat-value">${stats.total||0}</div><div class="stat-label">Total</div></div>
+      <div class="stat-card"><div class="stat-icon orange"><i class="ti ti-anchor"></i></div><div class="stat-value">${transit}</div><div class="stat-label">Transit</div></div>
+      <div class="stat-card"><div class="stat-icon green"><i class="ti ti-circle-check"></i></div><div class="stat-value">${done}</div><div class="stat-label">Done</div></div>
+      <div class="stat-card"><div class="stat-icon red"><i class="ti ti-alert-triangle"></i></div><div class="stat-value">${stats.delayed_count||0}</div><div class="stat-label">Delayed</div></div>
+      <div class="stat-card"><div class="stat-icon cyan"><i class="ti ti-clock"></i></div><div class="stat-value">${bs.Pending||0}</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card"><div class="stat-icon purple"><i class="ti ti-wave-sine"></i></div><div class="stat-value">${(stats.by_mode||{}).Ocean||0}</div><div class="stat-label">Ocean</div></div>
     `;
     document.getElementById('nav-count').textContent=stats.total||0;
   }catch(e){ console.error(e); }
@@ -1188,8 +1197,8 @@ async function loadDashboard(){
         <td style="font-size:11px">${s.pol||'—'} → ${s.pod||'—'}</td>
         <td>${modeBadge(s.mode)}</td><td>${fmt(s.eta)}</td><td>${statusBadge(s.status)}</td>
         <td><div class="actions">
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="hgi hgi-stroke hgi-pencil-edit-01"></i></button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="hgi hgi-stroke hgi-delete-02"></i></button>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="ti ti-pencil"></i></button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="ti ti-trash"></i></button>
         </div></td>
       </tr>`).join('')}</tbody></table>`;
     }
@@ -1250,7 +1259,7 @@ async function openDetail(sid){
           <div class="detail-label">Client Tracking Link</div>
           <div class="detail-value">
             <span class="copy-link" onclick="copyLink('${trackLink}')">
-              <i class="hgi hgi-stroke hgi-link-01"></i> Copy link
+              <i class="ti ti-link"></i> Copy link
             </span>
           </div>
         </div>
@@ -1258,7 +1267,7 @@ async function openDetail(sid){
       </div>
       ${s.events&&s.events.length?`
         <div style="font-size:13px;font-weight:700;margin-bottom:10px">
-          <i class="hgi hgi-stroke hgi-time-schedule" style="color:var(--accent);margin-right:6px"></i>Events
+          <i class="ti ti-calendar-time" style="color:var(--accent);margin-right:6px"></i>Events
         </div>
         <div class="events-list">
           ${s.events.slice(0,6).map(e=>`
@@ -1309,7 +1318,7 @@ async function saveShipment(){
   }
   if(_emailEl) _emailEl.style.border='';
   if(!_emailVal){
-    if(!await _confirm('No client email entered. Email alerts will not be sent.\n\nContinue anyway?')) return;
+    toast('No client email — email alerts will be skipped','info');
   }
   const btn=document.getElementById('btn-save');
   btn.innerHTML='<span class="spinner"></span> Saving…'; btn.disabled=true;
@@ -1333,7 +1342,7 @@ async function saveShipment(){
 loadDashboard(); loadShipments();
     } else toast('Unexpected response','error');
   }catch(e){ toast(' '+e.message,'error'); console.error(e); }
-  btn.innerHTML='<i class="hgi hgi-stroke hgi-floppy-disk"></i> Save Shipment'; btn.disabled=false;
+  btn.innerHTML='<i class="ti ti-device-floppy"></i> Save Shipment'; btn.disabled=false;
 }
 
 /* ── Edit ── */
@@ -1386,7 +1395,7 @@ async function trackOne(){
     await apiFetch(`/api/shipments/${currentDetailId}/track`,{method:'POST'});
     toast('Tracking updated!','success'); openDetail(currentDetailId);
   }catch(e){ toast(e.message,'error'); }
-  btn.innerHTML='<i class="hgi hgi-stroke hgi-refresh"></i> Track'; btn.disabled=false;
+  btn.innerHTML='<i class="ti ti-refresh"></i> Track'; btn.disabled=false;
 }
 async function trackAll(){
   toast('Syncing…','info');
@@ -1554,12 +1563,12 @@ function toggleTheme(){
   localStorage.setItem('theme', next);
   // topbar icon
   const ti=document.getElementById('theme-icon');
-  if(ti){ ti.className = next==='dark' ? 'hgi hgi-stroke hgi-moon-02' : 'hgi hgi-stroke hgi-sun-01'; }
+  if(ti){ ti.className = next==='dark' ? 'ti ti-moon' : 'ti ti-sun'; }
   // dropdown label
   const pdl=document.getElementById('pd-theme-label');
   if(pdl) pdl.textContent = next==='dark' ? 'Dark Mode' : 'Light Mode';
   const pdi=document.getElementById('pd-theme-icon');
-  if(pdi) pdi.className = next==='dark' ? 'hgi hgi-stroke hgi-moon-02' : 'hgi hgi-stroke hgi-sun-01';
+  if(pdi) pdi.className = next==='dark' ? 'ti ti-moon' : 'ti ti-sun';
   // bottom nav
   const bnav=document.getElementById('bnav-theme');
   if(bnav){ const sp=bnav.querySelector('span'); if(sp) sp.textContent=next==='dark'?'Light':'Dark'; }
@@ -1589,7 +1598,7 @@ function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){
   try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
 }
-).role === "admin"; }
+function isAdmin(){ return (getUser()||{}).role === "admin"; }
 
 function authFetch(url, opts={}){
   opts.headers = opts.headers || {};
@@ -1634,7 +1643,7 @@ async function doLogin(){
     var _r=d.role||(d.user&&d.user.role)||'agent';
     var _n=d.name||(d.user&&d.user.name)||'User';
     localStorage.setItem(USER_KEY,JSON.stringify({role:_r,name:_n}));
-    showApp();loadDashboard();
+    showApp(); loadDashboard();
   } catch(e){
     err.textContent = "Network error — please try again";
     err.style.display = "block";
@@ -1649,8 +1658,8 @@ document.addEventListener("keydown", e => {
 });
 
 function showApp(){
-  const ls=document.getElementById('login-screen');if(ls)ls.style.display='none';
-  var ap=document.getElementById('app');if(ap)ap.style.display='flex';
+  var ls=document.getElementById('login-screen'); if(ls) ls.style.display='none';
+  var ap=document.getElementById('app');           if(ap) ap.style.display='flex';
   const user = getUser();
   document.querySelectorAll(".admin-only").forEach(el => {
     el.style.display = isAdmin() ? "" : "none";
@@ -1674,7 +1683,13 @@ function showApp(){
   if(pr) pr.textContent=isAdmin()?'Admin':'CS Agent';
 }
 
-
+function doLogout(){
+  localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); localStorage.removeItem('user');
+  var ls=document.getElementById('login-screen'); if(ls) ls.style.display='flex';
+  var ap=document.getElementById('app');           if(ap) ap.style.display='none';
+  var pd=document.getElementById('profile-dropdown'); if(pd) pd.classList.remove('open');
+  ['login-email','login-password'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+}
 
 window.addEventListener("DOMContentLoaded",function(){
   if(getToken()){showApp();loadDashboard();if(localStorage.getItem('sidebarExpanded')==='1'){var sb=document.querySelector('.sidebar');if(sb)sb.classList.add('expanded');}}
@@ -1687,11 +1702,11 @@ window.addEventListener("DOMContentLoaded",function(){
 async function loadUsers(){
   const list = document.getElementById("users-list");
   if(!list) return;
-  list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)"><i class="hgi hgi-stroke hgi-loading-03" style="font-size:24px"></i><div style="margin-top:12px;font-size:13px">Loading team…</div></div>';
+  list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)"><i class="ti ti-loader-2" style="font-size:24px"></i><div style="margin-top:12px;font-size:13px">Loading team…</div></div>';
   try{
     const users = await apiFetch("/api/users");
     if(!users.length){
-      list.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px"><i class="hgi hgi-stroke hgi-user-group"></i></div><div style="font-size:15px;font-weight:700">No team members yet</div><div style="font-size:13px;margin-top:6px">Add your first CS agent above</div></div>';
+      list.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px"><i class="ti ti-users"></i></div><div style="font-size:15px;font-weight:700">No team members yet</div><div style="font-size:13px;margin-top:6px">Add your first CS agent above</div></div>';
       return;
     }
     // Stats bar
@@ -1732,7 +1747,7 @@ async function loadUsers(){
             <div style="flex:1;min-width:0">
               <div style="font-size:14px;font-weight:700;color:var(--text1)">${u.name}</div>
               <div style="font-size:12px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-                <i class="hgi hgi-stroke hgi-mail-01" style="font-size:10px;margin-right:4px"></i>${u.email}
+                <i class="ti ti-mail" style="font-size:10px;margin-right:4px"></i>${u.email}
               </div>
               <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
                 <span class="badge ${u.role==='admin'?'badge-sailing':'badge-arrived'}" style="font-size:10px">
@@ -1750,14 +1765,14 @@ async function loadUsers(){
                 <i class="hgi hgi-stroke ${u.is_active?'hgi-lock':'hgi-unlock-01'}"></i> ${u.is_active?'Disable':'Enable'}
               </button>
               <button onclick="deleteUser(${u.id})" class="btn btn-danger btn-sm" style="font-size:11px;gap:5px;padding:5px 10px">
-                <i class="hgi hgi-stroke hgi-delete-02"></i> Delete
+                <i class="ti ti-trash"></i> Delete
               </button>
             </div>`:'<div style="padding:4px 8px;font-size:11px;color:var(--text3)">Owner</div>'}
           </div>
         </div>`).join('')}
     `;
   } catch(e){
-    list.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center;font-size:13px"><i class="hgi hgi-stroke hgi-cancel-circle"></i> ${e.message}</div>`;
+    list.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center;font-size:13px"><i class="ti ti-circle-x"></i> ${e.message}</div>`;
   }
 }
 
@@ -1799,7 +1814,7 @@ async function deleteUser(id){
     <div class="modal-head">
       <div class="modal-title">➕ Add Team Member</div>
       <button class="modal-close" onclick="closeModal('modal-add-user')">
-        <i class="hgi hgi-stroke hgi-cancel-01"></i>
+        <i class="ti ti-x"></i>
       </button>
     </div>
     <div class="modal-body">
@@ -1814,7 +1829,7 @@ async function deleteUser(id){
         </div>
         <div class="form-group">
           <label>Password <span style="color:#ef4444">*</span></label>
-          <input id="nu-pw" class="form-control" type="password" autocomplete="current-password" placeholder="Minimum 6 characters"/>
+          <input id="nu-pw" class="form-control" type="password" placeholder="Minimum 6 characters"/>
         </div>
         <div class="form-group">
           <label>Role</label>
@@ -1831,7 +1846,7 @@ async function deleteUser(id){
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('modal-add-user')">Cancel</button>
       <button class="btn btn-primary" onclick="createUser()">
-        <i class="hgi hgi-stroke hgi-checkmark-01"></i> Create User
+        <i class="ti ti-check"></i> Create User
       </button>
     </div>
   </div>
@@ -1842,23 +1857,23 @@ async function deleteUser(id){
 <div class="overlay" id="modal-change-pw">
   <div class="modal"><div class="modal-handle"></div>
     <div class="modal-head">
-      <div class="modal-title"><i class="hgi hgi-stroke hgi-key-01"></i> Change Password</div>
-      <button class="modal-close" onclick="closeModal('modal-change-pw')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
+      <div class="modal-title"><i class="ti ti-key"></i> Change Password</div>
+      <button class="modal-close" onclick="closeModal('modal-change-pw')"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
       <div class="form-grid">
         <div class="form-group full"><label>Current Password</label>
-          <input id="cpw-old" class="form-control" type="password" autocomplete="current-password" placeholder="Current password"/></div>
+          <input id="cpw-old" class="form-control" type="password" placeholder="Current password"/></div>
         <div class="form-group full"><label>New Password</label>
-          <input id="cpw-new" class="form-control" type="password" autocomplete="current-password" placeholder="Min 6 characters"/></div>
+          <input id="cpw-new" class="form-control" type="password" placeholder="Min 6 characters"/></div>
         <div class="form-group full"><label>Confirm New Password</label>
-          <input id="cpw-confirm" class="form-control" type="password" autocomplete="current-password" placeholder="Repeat new password"/></div>
+          <input id="cpw-confirm" class="form-control" type="password" placeholder="Repeat new password"/></div>
       </div>
       <div id="cpw-msg" style="display:none;margin-top:8px;padding:10px 12px;border-radius:8px;font-size:12px"></div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('modal-change-pw')">Cancel</button>
-      <button class="btn btn-primary" onclick="doChangePassword()"><i class="hgi hgi-stroke hgi-checkmark-01"></i> Update</button>
+      <button class="btn btn-primary" onclick="doChangePassword()"><i class="ti ti-check"></i> Update</button>
     </div>
   </div>
 </div>
@@ -1867,7 +1882,7 @@ async function deleteUser(id){
   <div class="modal"><div class="modal-handle"></div>
     <div class="modal-head">
       <div class="modal-title">📥 Bulk Import</div>
-      <button class="modal-close" onclick="closeModal('modal-bulk-import')"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
+      <button class="modal-close" onclick="closeModal('modal-bulk-import')"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
       <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2)">
@@ -1877,7 +1892,7 @@ async function deleteUser(id){
       </div>
       <div id="bulk-drop-zone" onclick="document.getElementById('bulk-file').click()"
         style="border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:.2s">
-        <i class="hgi hgi-stroke hgi-file-spreadsheet" style="font-size:30px;color:#22c55e;display:block;margin-bottom:8px"></i>
+        <i class="ti ti-file-spreadsheet" style="font-size:30px;color:#22c55e;display:block;margin-bottom:8px"></i>
         <div style="font-size:13px;font-weight:600;color:var(--text1)">Drop .xlsx here</div>
         <div style="font-size:11px;color:var(--text2);margin-top:4px">or click to browse</div>
       </div>
@@ -1888,7 +1903,7 @@ async function deleteUser(id){
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('modal-bulk-import')">Close</button>
       <button class="btn btn-primary" id="bulk-upload-btn" style="display:none" onclick="doBulkUpload()">
-        <i class="hgi hgi-stroke hgi-upload-02"></i> Import
+        <i class="ti ti-upload"></i> Import
       </button>
     </div>
   </div>
@@ -1902,7 +1917,6 @@ async function deleteUser(id){
 const TOKEN_KEY="ft_token", USER_KEY="ft_user";
 function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){ try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; } }
-function isAdmin(){ return (getUser()||{}).role==="admin"; }
 
 async function doLogin(){
   const email=document.getElementById("login-email").value.trim();
@@ -1945,13 +1959,7 @@ function showApp(){
   if(typeof loadDashboard==="function") loadDashboard();
 }
 
-function doLogout(){
-  localStorage.removeItem('ft_token');localStorage.removeItem('ft_user');localStorage.removeItem('user');
-  const ls=document.getElementById('login-screen');if(ls)ls.style.display='flex';
-  const ap=document.getElementById('app');if(ap)ap.style.display='none';
-  const pd=document.getElementById('profile-dropdown');if(pd)pd.classList.remove('open');
-  ['login-email','login-password'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-}
+
 
 window.addEventListener("DOMContentLoaded",()=>{
   if(getToken()) showApp();
@@ -1992,7 +2000,7 @@ function bulkFileSelected(file){
   const res=document.getElementById("bulk-result");
   res.style.display="none";
   if(!file){ sel.style.display="none"; if(btn) btn.style.display="none"; return; }
-  sel.innerHTML=`<i class="hgi hgi-stroke hgi-file-spreadsheet" style="color:#22c55e"></i> <strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB)`;
+  sel.innerHTML=`<i class="ti ti-file-spreadsheet" style="color:#22c55e"></i> <strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB)`;
   sel.style.display="block";
   if(btn) btn.style.display="";
 }
@@ -2018,18 +2026,18 @@ async function doBulkUpload(){
     res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444";
     res.textContent=" "+e.message;
   }
-  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="hgi hgi-stroke hgi-upload-02"></i> Import'; } }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="ti ti-upload"></i> Import'; } }
 }
 
 // ═══ USER MANAGEMENT ═════════════════════════════════════════
 async function loadUsers(){
   const list=document.getElementById("users-list");
   if(!list) return;
-  list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text2)"><i class="hgi hgi-stroke hgi-loading-03"></i> Loading…</div>';
+  list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text2)"><i class="ti ti-loader-2"></i> Loading…</div>';
   try{
     const users=await apiFetch("/api/users");
     if(!users.length){
-      list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px"><i class="hgi hgi-stroke hgi-user-group"></i></div>No team members yet</div>';
+      list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px"><i class="ti ti-users"></i></div>No team members yet</div>';
       return;
     }
     list.innerHTML=users.map(u=>`
@@ -2126,7 +2134,7 @@ function _renderDetail(s){
       s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
       s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:6px 10px">👤 <b>Client:</b> ${s.client}</div>` : '',
       s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:6px 10px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px"><i class="hgi hgi-stroke hgi-ship"></i> <b>Mode:</b> ${s.mode}</div>` : '',
+      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px"><i class="ti ti-ship"></i> <b>Mode:</b> ${s.mode}</div>` : '',
       (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:6px 10px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
     ].filter(Boolean).join('');
   }
@@ -2163,7 +2171,7 @@ function _renderDetail(s){
       s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
       s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:4px 8px">👤 <b>Client:</b> ${s.client}</div>` : '',
       s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:4px 8px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px"><i class="hgi hgi-stroke hgi-ship"></i> <b>Mode:</b> ${s.mode}</div>` : '',
+      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px"><i class="ti ti-ship"></i> <b>Mode:</b> ${s.mode}</div>` : '',
       (s.containers && s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:4px 8px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : ''
     ].filter(Boolean).join('');
   }
@@ -2193,7 +2201,7 @@ function _renderDetail(s){
     noEv.style.display="none";
     evList.innerHTML=evts.map((e,i)=>`
       <div class="timeline-item">
-        <div class="tl-dot ${i===0?"latest":""}">${i===0?"<i class="hgi hgi-stroke hgi-ship"></i>":"📍"}</div>
+        <div class="tl-dot ${i===0?"latest":""}">${i===0?"<i class="ti ti-ship"></i>":"📍"}</div>
         <div class="tl-content">
           <div class="tl-time">${e.timestamp||""}</div>
           <div class="tl-label">${e.description||e.status||"Update"}</div>
@@ -2256,13 +2264,13 @@ async function submitComment(){
 async function syncDetail(){
   if(!_detailId) return;
   const btn=document.getElementById("detail-sync-btn");
-  if(btn){ btn.disabled=true; btn.innerHTML='<i class="hgi hgi-stroke hgi-refresh"></i>'; }
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="ti ti-refresh"></i>'; }
   try{
     await apiFetch(`/api/shipments/${_detailId}/track`,{method:"POST"});
     const s=await apiFetch(`/api/shipments/${_detailId}`);
     _renderDetail(s); showToast("Synced","success");
   } catch(e){ showToast("Sync error: "+e.message,"error"); }
-  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="hgi hgi-stroke hgi-refresh"></i>'; } }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="ti ti-refresh"></i>'; } }
 }
 
 function copyPortalLink(){
@@ -2301,13 +2309,13 @@ function showToast(msg,type){
           font-family:inherit;text-align:left">
         <div style="width:42px;height:42px;border-radius:10px;background:rgba(34,197,94,.15);
           display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <i class="hgi hgi-stroke hgi-download-02" style="color:#22c55e;font-size:18px"></i>
+          <i class="ti ti-download" style="color:#22c55e;font-size:18px"></i>
         </div>
         <div>
           <div style="font-size:14px;font-weight:600;color:var(--text1)">Export XLSX</div>
           <div style="font-size:11px;color:var(--text2);margin-top:2px">Download shipments as Excel file</div>
         </div>
-        <i class="hgi hgi-stroke hgi-arrow-right-01" style="color:var(--text3);margin-left:auto"></i>
+        <i class="ti ti-arrow-right" style="color:var(--text3);margin-left:auto"></i>
       </button>
       <!-- Import (admin only) -->
       <button id="sheet-import-btn" onclick="openModal('modal-bulk-import');closeModal('sheet-files')"
@@ -2316,13 +2324,13 @@ function showToast(msg,type){
           font-family:inherit;text-align:left;display:none">
         <div style="width:42px;height:42px;border-radius:10px;background:rgba(79,142,247,.15);
           display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <i class="hgi hgi-stroke hgi-upload-02" style="color:#4f8ef7;font-size:18px"></i>
+          <i class="ti ti-upload" style="color:#4f8ef7;font-size:18px"></i>
         </div>
         <div>
           <div style="font-size:14px;font-weight:600;color:var(--text1)">Import XLSX</div>
           <div style="font-size:11px;color:var(--text2);margin-top:2px">Upload Excel to create shipments in bulk</div>
         </div>
-        <i class="hgi hgi-stroke hgi-arrow-right-01" style="color:var(--text3);margin-left:auto"></i>
+        <i class="ti ti-arrow-right" style="color:var(--text3);margin-left:auto"></i>
       </button>
     </div>
   </div>
@@ -2343,12 +2351,12 @@ function openFilesSheet(){
 <div class="overlay" id="modal-email-preview" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center">
   <div class="modal" style="max-width:520px;width:94%;background:var(--card);border-radius:20px;padding:0;overflow:hidden">
     <div style="background:var(--card);padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="hgi hgi-stroke hgi-mail-01" style="color:var(--accent);margin-right:8px"></i>Send Email to Client</div>
-      <button onclick="closeEmailModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
+      <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="ti ti-mail" style="color:var(--accent);margin-right:8px"></i>Send Email to Client</div>
+      <button onclick="closeEmailModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer"><i class="ti ti-x"></i></button>
     </div>
     <div style="padding:16px 20px">
       <div style="font-size:12px;color:var(--text2);margin-bottom:14px;padding:8px 12px;background:var(--bg);border-radius:8px">
-        <i class="hgi hgi-stroke hgi-information-circle" style="color:var(--accent)"></i>
+        <i class="ti ti-info-circle" style="color:var(--accent)"></i>
         Sending to: <strong id="ep-to-email" style="color:var(--text)">-</strong>
       </div>
       <div style="margin-bottom:12px">
@@ -2359,11 +2367,11 @@ function openFilesSheet(){
         <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Message</label>
         <textarea id="ep-body" rows="9" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;line-height:1.7;resize:vertical;box-sizing:border-box" placeholder="Email body..."></textarea>
       </div>
-      <div style="font-size:11px;color:var(--text3)"><i class="hgi hgi-stroke hgi-information-circle"></i> Shipment details and tracking link are automatically included.</div>
+      <div style="font-size:11px;color:var(--text3)"><i class="ti ti-info-circle"></i> Shipment details and tracking link are automatically included.</div>
     </div>
     <div style="padding:12px 20px 20px;display:flex;gap:10px">
       <button onclick="closeEmailModal()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
-      <button id="btn-confirm-send" onclick="confirmSendEmail()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer"><i class="hgi hgi-stroke hgi-sent"></i> Confirm & Send</button>
+      <button id="btn-confirm-send" onclick="confirmSendEmail()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer"><i class="ti ti-send"></i> Confirm & Send</button>
     </div>
   </div>
 </div>
@@ -2435,7 +2443,7 @@ async function confirmSendEmail() {
     alert('Failed to send email: ' + e.message);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<i class="hgi hgi-stroke hgi-sent"></i> Confirm & Send';
+    btn.innerHTML = '<i class="ti ti-send"></i> Confirm & Send';
   }
 }
 </script>
@@ -2514,7 +2522,7 @@ async function loadEmailLog(sid) {
   try {
     var logs = await apiFetch('/api/shipments/' + sid + '/email-log');
     if (!logs || !logs.length) {
-      container.innerHTML = '<div style="text-align:center;padding:10px;font-size:12px;color:var(--text2);opacity:.6"><i class="hgi hgi-stroke hgi-inbox"></i> No emails sent yet</div>';
+      container.innerHTML = '<div style="text-align:center;padding:10px;font-size:12px;color:var(--text2);opacity:.6"><i class="ti ti-inbox"></i> No emails sent yet</div>';
       if (countEl) countEl.textContent = '';
       return;
     }
@@ -2523,9 +2531,9 @@ async function loadEmailLog(sid) {
       return '<div style="padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;border-left:3px solid var(--accent)">'
         + '<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">' + (l.subject||'—') + '</div>'
         + '<div style="font-size:11px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap">'
-        + '<span><i class="hgi hgi-stroke hgi-sent" style="color:var(--accent)"></i> ' + (l.sent_to||'—') + '</span>'
-        + '<span><i class="hgi hgi-stroke hgi-user" style="color:var(--text3)"></i> ' + (l.sent_by||'System') + '</span>'
-        + '<span><i class="hgi hgi-stroke hgi-clock-01" style="color:var(--text3)"></i> ' + (l.sent_at?(l.sent_at.substring(0,16).replace('T',' ')):'—') + '</span>'
+        + '<span><i class="ti ti-send" style="color:var(--accent)"></i> ' + (l.sent_to||'—') + '</span>'
+        + '<span><i class="ti ti-user" style="color:var(--text3)"></i> ' + (l.sent_by||'System') + '</span>'
+        + '<span><i class="ti ti-clock" style="color:var(--text3)"></i> ' + (l.sent_at?(l.sent_at.substring(0,16).replace('T',' ')):'—') + '</span>'
         + '</div></div>';
     }).join('');
   } catch(e) {
@@ -2580,8 +2588,6 @@ function updateUserUI(){
   if(pr) pr.textContent=isAdm()?'Admin':'CS Agent';
 }
 
-
-function escHtml(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 </script>
 
   <!-- Confirm Modal -->
@@ -2590,7 +2596,7 @@ function escHtml(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').repla
       <div class="modal-handle"></div>
       <div class="modal-head" style="border-bottom:none">
         <div class="modal-title" id="confirm-msg">Are you sure?</div>
-        <button class="modal-close" onclick="_confirmReject()"><i class="hgi hgi-stroke hgi-cancel-01"></i></button>
+        <button class="modal-close" onclick="_confirmReject()"><i class="ti ti-x"></i></button>
       </div>
       <div class="modal-foot">
         <button class="btn btn-ghost" style="flex:1" onclick="_confirmReject()">Cancel</button>
@@ -2614,7 +2620,7 @@ async function updateAlertsBadge(){
 /* ── Generate Report ── */
 async function generateReport(){
   const btn = document.getElementById('report-btn');
-  if(btn){ btn.disabled=true; btn.innerHTML='<i class="hgi hgi-stroke hgi-loading-03"></i> Generating…'; }
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="ti ti-loader-2"></i> Generating…'; }
   try{
     const [ships, stats] = await Promise.all([apiFetch('/api/shipments'), apiFetch('/api/stats')]);
     const today = new Date();
@@ -2688,7 +2694,7 @@ async function generateReport(){
 
     <div class="page-header">
       <div>
-        <h1><i class="hgi hgi-stroke hgi-ship"></i> FreightTrack Pro — Shipment Report</h1>
+        <h1><i class="ti ti-ship"></i> FreightTrack Pro — Shipment Report</h1>
         <div class="sub">Generated ${today.toLocaleString()} &nbsp;·&nbsp; ${total} shipments &nbsp;·&nbsp; ${totalTeu} TEU total</div>
       </div>
       <button class="print-btn no-print" onclick="window.print()">🖨 Print / Save PDF</button>
@@ -2696,7 +2702,7 @@ async function generateReport(){
 
     <!-- KPI Summary -->
     <div class="section">
-      <div class="section-title"><i class="hgi hgi-stroke hgi-chart-bar-01"></i> Key Performance Indicators</div>
+      <div class="section-title"><i class="ti ti-chart-bar"></i> Key Performance Indicators</div>
       <div class="kpi-grid">
         <div class="kpi"><div class="kpi-val">${total}</div><div class="kpi-lbl">Total</div></div>
         <div class="kpi"><div class="kpi-val" style="color:#22c55e">${completed}</div><div class="kpi-lbl">Completed</div></div>
@@ -2720,7 +2726,7 @@ async function generateReport(){
         </tbody></table>
       </div>
       <div class="section">
-        <div class="section-title"><i class="hgi hgi-stroke hgi-ship"></i> By Carrier</div>
+        <div class="section-title"><i class="ti ti-ship"></i> By Carrier</div>
         <table><thead><tr><th>Carrier</th><th>Shipments</th><th style="width:120px">Share</th></tr></thead><tbody>
           ${carrierRows.length ? carrierRows.map(([c,n])=>`<tr>
             <td style="font-weight:600">${c}</td>
@@ -2792,13 +2798,25 @@ async function generateReport(){
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
 
+
+<!-- Confirm Modal -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:340px;width:90%;text-align:center;">
+    <p id="confirm-msg" style="margin:0 0 20px;color:var(--text1);font-size:14px;line-height:1.5"></p>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="if(window._confirmRes){window._confirmRes(false);document.getElementById('confirm-modal').style.display='none';}" style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg3,var(--bg2));color:var(--text1);cursor:pointer;font-size:13px;">Cancel</button>
+      <button id="confirm-ok-btn" style="flex:1;padding:9px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:600;">Confirm</button>
+    </div>
+  </div>
+</div>
+
 </body>></html>`;
 
     const w = window.open('','_blank');
     w.document.write(reportHtml);
     w.document.close();
   } catch(e){ showToast('Report error: '+e.message,'error'); }
-  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="hgi hgi-stroke hgi-file-01"></i> Generate Report'; } }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="ti ti-file"></i> Generate Report'; } }
 }
 
 
@@ -2858,7 +2876,7 @@ function _renderContainerList(){
         <span style="font-size:11px;color:var(--accent);font-weight:700;margin-left:8px">${c.teu_total} TEU</span>
       </div>
       <button type="button" onclick="${c.fromDB&&c.dbIds?.length?`deleteContainerGroup(${i})`:"removeContainerRow("+i+")"}" class="btn btn-danger btn-sm btn-icon" style="padding:4px 8px">
-        <i class="hgi hgi-stroke hgi-delete-02"></i>
+        <i class="ti ti-trash"></i>
       </button>
     </div>`).join('');
 }
@@ -2894,14 +2912,16 @@ async function _saveContainers(shipmentId){
 
 /* ── Custom Confirm ── */
 let _confirmRes = null;
-function _confirm(msg) {
-  return new Promise(resolve => {
-    _confirmRes = resolve;
-    document.getElementById('confirm-msg').textContent = msg;
-    document.getElementById('confirm-ok-btn').onclick = () => {
-      closeModal('modal-confirm'); _confirmRes = null; resolve(true);
-    };
-    openModal('modal-confirm');
+function _confirm(msg){
+  return new Promise(function(resolve){
+    window._confirmRes=resolve;
+    var modal=document.getElementById('confirm-modal');
+    var msgEl=document.getElementById('confirm-msg');
+    var okBtn=document.getElementById('confirm-ok-btn');
+    if(!modal||!msgEl||!okBtn){ resolve(window.confirm(msg)); return; }
+    msgEl.textContent=msg;
+    okBtn.onclick=function(){ resolve(true);  modal.style.display='none'; };
+    modal.style.display='flex';
   });
 }
 function _confirmReject() {
