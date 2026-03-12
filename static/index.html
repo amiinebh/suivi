@@ -2110,11 +2110,7 @@ function _renderDetail(s){
   document.getElementById("detail-pod").textContent=s.pod||"—";
   document.getElementById("detail-etd").textContent=s.etd||"—";
   document.getElementById("detail-eta").textContent=s.eta||"—";
-  
-  const infoChips = document.getElementById("detail-info-chips");
-  if(infoChips){
-    infoChips.innerHTML = [
-      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🏭 <b>Shipper:</b> ${s.shipper}
+
   const ha=document.getElementById("detail-portal-href");
   const infoChips = document.getElementById("detail-info-chips");
   if(infoChips){
