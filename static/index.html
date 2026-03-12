@@ -1639,22 +1639,7 @@ function getToken(){ return localStorage.getItem(TOKEN_KEY); }
 function getUser(){
   try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
 }
-){
-  opts.headers = opts.headers || {};
-  const t = getToken();
-  if(t) opts.headers["Authorization"] = "Bearer " + t;
-  return fetch(url, opts).then(r => {
-    if(r.status === 401){
-      doLogout();
-      const ls = document.getElementById("login-screen");
-      if(ls){ ls.style.display="flex"; }
-      // Show message
-      const err = document.getElementById("login-error");
-      if(err){ err.textContent="Your account has been deactivated. Contact admin."; err.style.display="block"; }
-    }
-    return r;
-  });
-}
+
 
 document.addEventListener("keydown", e => {
   const ls = document.getElementById("login-screen");
@@ -2291,6 +2276,11 @@ function showToast(msg,type){
   t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"✅":"❌"}</span>${msg}`;
   wrap.appendChild(t); setTimeout(()=>t.remove(),2800);
 }
+
+window.addEventListener("DOMContentLoaded",function(){
+  if(getToken()){showApp();loadDashboard();if(localStorage.getItem('sidebarExpanded')==='1'){var sb=document.querySelector('.sidebar');if(sb)sb.classList.add('expanded');}}
+  else{var ls=document.getElementById('login-screen');if(ls)ls.style.display='flex';var ap=document.getElementById('app');if(ap)ap.style.display='none';}
+});
 </script>
 
 
@@ -2935,10 +2925,7 @@ function updateTransitPreview(){
 }
 
 
-window.addEventListener("DOMContentLoaded",function(){
-  if(getToken()){showApp();loadDashboard();if(localStorage.getItem('sidebarExpanded')==='1'){var sb=document.querySelector('.sidebar');if(sb)sb.classList.add('expanded');}}
-  else{var ls=document.getElementById('login-screen');if(ls)ls.style.display='flex';var ap=document.getElementById('app');if(ap)ap.style.display='none';}
-});
+
 </script>
 <datalist id="port-list"></datalist>
 <datalist id="consignee-list"></datalist>
