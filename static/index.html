@@ -1630,21 +1630,6 @@ loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFil
 
 <script>
 // ══════════════════════════════════════════════════
-// AUTH
-// ══════════════════════════════════════════════════
-const TOKEN_KEY = "ft_token";
-const USER_KEY  = "ft_user";
-
-function getToken(){ return localStorage.getItem(TOKEN_KEY); }
-function getUser(){
-  try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
-}
-
-
-document.addEventListener("keydown", e => {
-  const ls = document.getElementById("login-screen");
-  if(e.key === "Enter" && ls && ls.style.display !== "none") doLogin();
-});
 
 // ══════════════════════════════════════════════════
 // USER MANAGEMENT
