@@ -926,21 +926,23 @@ let editId=null, currentDetailId=null, allShipments=[];
 
 /* ── Nav ── */
 function showPage(id,el){
-  if((id==='analytics'||id==='users')&&!isAdmin()){id='shipments';}
-  if(id==='users') setTimeout(loadUsers,150);
-  // Role guards
+  // Role guard
   if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
-  if(id==='users'){ setTimeout(loadUsers, 150); setBottomNav('users'); }
+  // Remove active from all pages and nav items
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
+  const pageEl = document.getElementById('page-'+id);
+  if(pageEl) pageEl.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el) el.classList.add('active');
-  const titles={dashboard:'Overview',shipments:'Shipments'};
-  document.getElementById('page-title').textContent=titles[id]||id;
+  // Update topbar title
+  const titles={dashboard:'Overview',shipments:'Shipments',analytics:'KPI & Analytics',alerts:'Alerts',users:'Team Members',detail:'Shipment Detail'};
+  document.getElementById('page-title').textContent = titles[id] || id;
+  // Load page data
   if(id==='shipments') loadShipments();
   if(id==='analytics') loadAnalytics();
   if(id==='alerts') loadAlerts();
-  if(id==='dashboard') setTimeout(bindOverviewCards,250);
+  if(id==='users') setTimeout(loadUsers, 150);
+  if(id==='dashboard'){ loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200); }
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
