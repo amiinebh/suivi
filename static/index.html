@@ -427,6 +427,7 @@ textarea.form-control{resize:vertical;min-height:72px}
       </form>
     </div>
   </div>
+<div id="toast-wrap" style="position:fixed;bottom:76px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none"></div>
 <div class="version-tag">v27</div>
 
 <!-- FAB for mobile -->
@@ -985,10 +986,12 @@ async function apiFetch(url,options={}){
 /* ── Toast ── */
 function toast(msg,type='info'){
   const icons={success:'ph ph-check-circle',error:'ph ph-x-circle',info:'ph ph-info'};
+  const wrap=document.getElementById('toast-wrap');
+  if(!wrap){ showToast(msg,type); return; }
   const t=document.createElement('div');
   t.className=`toast ${type}`;
   t.innerHTML=`<i class="${icons[type]}"></i><span>${msg}</span>`;
-  document.getElementById('toast-wrap').appendChild(t);
+  wrap.appendChild(t);
   setTimeout(()=>t.style.opacity='0',3500);
   setTimeout(()=>t.remove(),3800);
 }
@@ -2811,4 +2814,6 @@ function _confirmReject() {
   closeModal('modal-confirm');
   if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
 }
-
+</script>
+</body>
+</html>
