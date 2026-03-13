@@ -49,7 +49,7 @@ code,pre,.mono{font-family:'Geist Mono',monospace;letter-spacing:0}
 #login-btn:hover{opacity:.9;transform:translateY(-1px)}
 #login-btn:disabled{opacity:.5;transform:none;cursor:not-allowed}
 /* APP SHELL */
-#app{display:flex;height:100vh;overflow:hidden}
+.app{display:flex;height:100vh;overflow:hidden}
 /* SIDEBAR */
 .sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;transition:width var(--t);overflow:hidden;position:relative;z-index:100;flex-shrink:0}
 @media(min-width:769px){.sidebar:hover{width:var(--sidebar-exp)}}
@@ -442,7 +442,7 @@ textarea.form-control{resize:vertical;min-height:72px}
       <i class="hgi hgi-stroke hgi-pie-chart"></i> Overview
     </div>
     <div class="nav-item" onclick="showPage('shipments',this)">
-      <i class="hgi hgi-stroke hgi-package-01"></i> Shipments
+      <i class="fa fa-boxes-stacked" style="font-size:14px"></i> Shipments
       <span class="nav-badge" id="nav-count">0</span>
     </div>
     <div class="nav-section">Analytics</div>
@@ -755,7 +755,7 @@ textarea.form-control{resize:vertical;min-height:72px}
       <i class="hgi hgi-stroke hgi-pie-chart"></i><span>Overview</span>
     </button>
     <button class="bnav-item" id="bnav-shipments" onclick="showPage('shipments',null);setBottomNav('shipments')">
-      <i class="hgi hgi-stroke hgi-package-01"></i><span>Shipments</span>
+      <i class="fa fa-boxes-stacked" style="font-size:20px"></i><span>Shipments</span>
     </button>
     <button class="bnav-item admin-only" id="bnav-analytics" onclick="showPage('analytics',null);setBottomNav('analytics')">
       <i class="hgi hgi-stroke hgi-chart-line-data-01"></i><span>KPIs</span>
@@ -939,20 +939,20 @@ let editId=null, currentDetailId=null, allShipments=[];
 
 /* ── Nav ── */
 function showPage(id,el){
-  if((id==='analytics'||id==='users')&&!isAdmin()){id='shipments';}
-  if(id==='users') setTimeout(loadUsers,150);
-  // Role guards
   if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
-  if(id==='users'){ setTimeout(loadUsers, 150); setBottomNav('users'); }
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
+  const pageEl = document.getElementById('page-'+id);
+  if(pageEl) pageEl.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el) el.classList.add('active');
-  const titles={dashboard:'Overview',shipments:'Shipments'};
-  document.getElementById('page-title').textContent=titles[id]||id;
+  const titles={dashboard:'Overview',shipments:'Shipments',analytics:'KPI & Analytics',alerts:'Alerts',users:'Team',detail:'Detail'};
+  const pt = document.getElementById('page-title');
+  if(pt) pt.textContent = titles[id]||id;
   if(id==='shipments') loadShipments();
   if(id==='analytics') loadAnalytics();
   if(id==='alerts') loadAlerts();
+  if(id==='users') setTimeout(loadUsers,150);
+  if(id==='dashboard'){ loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200); }
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -1346,7 +1346,8 @@ async function editShipment(sid){
       _cMerged[t].dbIds.push(c.id);
     });
     formContainers = Object.values(_cMerged);
-    _renderContainerList();
+    if(typeof _renderContainerList === 'function') _renderContainerList();
+    if(typeof switchShipTabIdx === 'function') switchShipTabIdx(0);
     openModal('modal-add');
   }catch(e){ toast(e.message,'error'); }
 }
