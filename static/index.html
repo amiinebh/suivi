@@ -205,7 +205,7 @@ select.filter option{background:var(--bg2)}
 .btn-sm{padding:5px 10px;font-size:var(--fs-xs)}
 .btn-icon{padding:5px 7px}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
-.btn-fab{position:fixed;bottom:80px;right:16px;z-index:150;width:48px;height:48px;border-radius:50%;padding:0;background:var(--green);color:#fff;box-shadow:0 4px 16px var(--green-glow);display:none}
+.btn-fab{position:fixed;bottom:80px;right:16px;z-index:150;width:48px;height:48px;border-radius:50%;padding:0;background:var(--green);color:#fff;box-shadow:0 4px 16px var(--green-glow);display:none;align-items:center;justify-content:center;line-height:1}
 /* PAGER */
 #pager{display:flex;gap:7px;align-items:center;justify-content:space-between;padding:3px 0}
 #pg-info,#ship-count-label{font-size:var(--fs-xs);color:var(--text2)}
@@ -322,7 +322,7 @@ textarea.form-control{resize:vertical;min-height:72px}
 /* RESPONSIVE */
 @media(max-width:1200px){#stats-grid{grid-template-columns:repeat(3,1fr)}.dash-grid{grid-template-columns:1fr 1fr}.dash-col2{grid-column:span 2}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:900px){.dash-grid{grid-template-columns:1fr}.dash-col2{grid-column:span 1}.charts-grid{grid-template-columns:1fr}}
-@media(max-width:768px){.sidebar{display:none}#hamburger-btn{display:flex!important}.bottom-nav{display:block}.content-wrap{padding:12px 12px 76px}.mobile-cards{display:block}.desktop-table{display:none}#stats-grid{grid-template-columns:repeat(2,1fr)}.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}.dash-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.filters-row{gap:5px}.search-wrap{display:none}.topbar-actions-desktop{display:none}#page-title{display:none}.theme-pill{display:none}.detail-grid{grid-template-columns:1fr}.modal-foot{flex-wrap:wrap}.modal-foot .btn{flex:1;justify-content:center}.topbar{padding:0 12px;gap:8px;height:52px}.topbar-brand{font-size:13px}.sidebar.mobile-open{display:flex!important;position:fixed;top:0;left:0;bottom:0;z-index:101;box-shadow:0 0 32px rgba(0,0,0,.7)}.btn-fab{display:flex}}
+@media(max-width:768px){.sidebar{display:none}#hamburger-btn{display:flex!important}.bottom-nav{display:block}.content-wrap{padding:12px 12px 76px}.mobile-cards{display:block}.desktop-table{display:none}#stats-grid{grid-template-columns:repeat(2,1fr)}.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}.dash-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.filters-row{gap:5px}.search-wrap{display:none}.topbar-actions-desktop{display:none}#page-title{display:none}.theme-pill{display:none}.detail-grid{grid-template-columns:1fr}.modal-foot{flex-wrap:wrap}.modal-foot .btn{flex:1;justify-content:center}.topbar{padding:0 12px;gap:8px;height:52px}.topbar-brand{font-size:13px}.sidebar.mobile-open{display:flex!important;position:fixed;top:0;left:0;bottom:0;z-index:101;box-shadow:0 0 32px rgba(0,0,0,.7)}.btn-fab{display:flex;align-items:center;justify-content:center}}
 @media(max-width:480px){#stats-grid{grid-template-columns:1fr 1fr}.kpi-grid{grid-template-columns:1fr 1fr}.login-card{margin:10px;padding:26px 18px}}
 
 /* PROFILE DROPDOWN in topbar */
@@ -426,7 +426,7 @@ textarea.form-control{resize:vertical;min-height:72px}
 
 <!-- FAB for mobile -->
 <button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
-  <i class="ph ph-plus"></i>
+  <i class="ph ph-plus" style="font-size:22px;line-height:1;display:flex"></i>
 </button>
 
 <div class="app">
@@ -439,30 +439,30 @@ textarea.form-control{resize:vertical;min-height:72px}
   <div class="nav">
     <div class="nav-section">Main</div>
     <div class="nav-item active" onclick="showPage('dashboard',this)">
-      <i class="ph ph-chart-pie"></i> Overview
+      <i class="ph ph-chart-pie"></i><span class="nav-label">Overview</span>
     </div>
     <div class="nav-item" onclick="showPage('shipments',this)">
-      <i class="ph ph-boat"></i> Shipments
+      <i class="ph ph-boat"></i><span class="nav-label">Shipments</span>
       <span class="nav-badge" id="nav-count">0</span>
     </div>
     <div class="nav-section">Analytics</div>
     <div class="nav-item admin-only" onclick="showPage('analytics',this)">
-      <i class="ph ph-chart-line"></i> KPI & Charts
+      <i class="ph ph-chart-line"></i><span class="nav-label">KPI & Charts</span>
     </div>
     <div class="nav-section admin-only">Team</div>
     <div class="nav-item admin-only" onclick="showPage('users',this)">
-      <i class="ph ph-users"></i> Team Members
+      <i class="ph ph-users"></i><span class="nav-label">Team Members</span>
     </div>
     <div class="nav-section">Tools</div>
     <div class="nav-item" onclick="showPage('alerts',this)" id="nav-alerts">
-      <i class="ph ph-bell"></i> Alerts
+      <i class="ph ph-bell"></i><span class="nav-label">Alerts</span>
       <span class="nav-badge" id="alerts-badge" style="display:none">0</span>
     </div>
     <div class="nav-item" onclick="exportXLSX()">
-      <i class="ph ph-table"></i> Export XLSX
+      <i class="ph ph-table"></i><span class="nav-label">Export XLSX</span>
     </div>
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import')">
-      <i class="ph ph-file-arrow-up" style="color:#22c55e"></i> Import XLSX
+      <i class="ph ph-file-arrow-up" style="color:#22c55e"></i><span class="nav-label">Import XLSX</span>
     </div>
 
   </div>
@@ -643,7 +643,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="page" id="page-users">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <div>
-          <div style="font-size:16px;font-weight:700;color:var(--text1)"><i class="ph ph-users"></i> Team Members</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text1)"><i class="ph ph-users"></i><span class="nav-label">Team Members</span></div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Manage your CS team access</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-user')" style="gap:6px">
@@ -662,7 +662,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="page" id="page-alerts">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div>
-          <div style="font-size:16px;font-weight:700;color:var(--text)"><i class="ph ph-bell"></i> Alerts</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)"><i class="ph ph-bell"></i><span class="nav-label">Alerts</span></div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments requiring your attention</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="loadAlerts()">
