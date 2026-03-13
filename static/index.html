@@ -1,6 +1,4 @@
 <!DOCTYPE html>
-<!-- FIXED-v45-TOKEN_KEY-SINGLE-2026-03-13 -->
-
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8"/>
@@ -1957,8 +1955,7 @@ async function deleteUser(id){
 </div>
 
 
-
-
+<script>
 // ═══ CHANGE PASSWORD ═════════════════════════════════════════
 async function doChangePassword(){
   const old_pw=document.getElementById("cpw-old").value;
@@ -2230,7 +2227,7 @@ function _renderDetail(s){
   document.getElementById("detail-info-chips").innerHTML=chips.map(c=>
     `<div class="info-chip${c.full?" full":""}"><div class="chip-label">${c.l}</div><div class="chip-value">${c.v}</div></div>`
   ).join("");
-}
+
 
 function switchDTab(tab){
   ["timeline","notes","info"].forEach(t=>{
