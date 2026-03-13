@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+  <link rel="icon" href="data:,">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate"/>
@@ -395,10 +396,12 @@ textarea.form-control{resize:vertical;min-height:72px}
         <div style="font-size:18px;font-weight:700;color:#e8eaf6">FreightTrack Pro</div>
         <div style="font-size:12px;color:#8892b0;margin-top:4px">Sign in to your account</div>
       </div>
+      <form onsubmit="event.preventDefault();doLogin();" autocomplete="on">
       <div style="margin-bottom:14px">
         <label style="font-size:11px;font-weight:600;color:#8892b0;text-transform:uppercase;
           letter-spacing:.5px;display:block;margin-bottom:5px">Email</label>
         <input id="login-email" type="email" placeholder="admin@freighttrack.com"
+          autocomplete="username"
           style="width:100%;background:#0f1629;border:1px solid #2a3a5c;border-radius:8px;
           padding:11px 13px;color:#e8eaf6;font-size:13px;outline:none;font-family:inherit;
           box-sizing:border-box"/>
@@ -407,6 +410,7 @@ textarea.form-control{resize:vertical;min-height:72px}
         <label style="font-size:11px;font-weight:600;color:#8892b0;text-transform:uppercase;
           letter-spacing:.5px;display:block;margin-bottom:5px">Password</label>
         <input id="login-password" type="password" placeholder="••••••••"
+          autocomplete="current-password"
           style="width:100%;background:#0f1629;border:1px solid #2a3a5c;border-radius:8px;
           padding:11px 13px;color:#e8eaf6;font-size:13px;outline:none;font-family:inherit;
           box-sizing:border-box"/>
@@ -420,6 +424,7 @@ textarea.form-control{resize:vertical;min-height:72px}
         cursor:pointer;font-family:inherit;transition:opacity .15s">
         Sign In →
       </button>
+      </form>
     </div>
   </div>
 <div class="version-tag">v27</div>
@@ -952,7 +957,7 @@ function showPage(id,el){
   if(id==='analytics') loadAnalytics();
   if(id==='alerts') loadAlerts();
   if(id==='users') setTimeout(loadUsers,150);
-  if(id==='dashboard'){ loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200); }
+  if(id==='dashboard'){ loadDashboard(); }
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -2054,43 +2059,7 @@ function _renderDetail(s){
   document.getElementById("detail-etd").textContent=s.etd||"—";
   document.getElementById("detail-eta").textContent=s.eta||"—";
   
-  const infoChips = document.getElementById("detail-info-chips");
-  if(infoChips){
-    infoChips.innerHTML = [
-      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:6px 10px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:6px 10px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px"><i class="ph ph-boat"></i> <b>Mode:</b> ${s.mode}</div>` : '',
-      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:6px 10px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
-    ].filter(Boolean).join('');
-  }
-
-  // Containers list
-  const contList = document.getElementById("detail-containers-list");
-  if(contList){
-    if(s.containers && s.containers.length){
-      contList.innerHTML = s.containers.map(c=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:600;color:var(--text1)">${c.container_no||c.size_type||'Container'}</div>
-          <div class="badge badge-gray" style="font-size:11px">${c.size_type||'—'}</div>
-        </div>
-      `).join('');
-      document.getElementById("detail-containers-section").style.display="block";
-    } else {
-      document.getElementById("detail-containers-section").style.display="none";
-    }
-  }
-</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
-    ].filter(Boolean).join('');
-    infoChips.style.display = infoChips.innerHTML ? 'flex' : 'none';
-  }
-
-  const ha=document.getElementById("detail-portal-href");
+    const ha=document.getElementById("detail-portal-href");
   const infoChips = document.getElementById("detail-info-chips");
   if(infoChips){
     infoChips.innerHTML = [
@@ -2583,7 +2552,8 @@ async function generateReport(){
 
     const statusColor = s => statusColors[s]||'#888';
 
-    const reportHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    const reportHtml = `<!DOCTYPE html><html><head>
+  <link rel="icon" href="data:,"><meta charset="UTF-8">
     <title>FreightTrack Pro — Report ${today.toLocaleDateString()}</title>
     <style>
       *{margin:0;padding:0;box-sizing:border-box}
