@@ -1516,7 +1516,7 @@ function setKpiPeriod(p,btn){
   loadAnalytics();
 }
 
-function loadAnalytics(){
+async function loadAnalytics(){
   try{
     const k=await apiFetch('/api/kpis');
     // ── Filter by period ──
@@ -2507,7 +2507,7 @@ function snoozeAlert(id,ref,event){
   toast(ref+' snoozed for 24h','info');
 }
 
-function loadAlerts(){
+async function loadAlerts(){
   const container=document.getElementById('alerts-list');
   const badge=document.getElementById('alerts-badge');
   if(!container) return;
