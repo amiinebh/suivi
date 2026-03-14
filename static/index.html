@@ -1232,9 +1232,9 @@ async function loadDashboard(){
   }catch(e){ console.error('stats',e); }
   try{
     const ships=await apiFetch('/api/shipments');
-    allShipments=ships;
+    allShipments=Array.isArray(ships)?ships:[];
     // ── Recent table ──
-    const recent=ships.slice(0,6);
+    const recent=allShipments.slice(0,6);
     renderCards(recent,'recent-cards');
     const tw=document.getElementById('recent-table');
     if(tw){
@@ -1254,16 +1254,21 @@ async function loadDashboard(){
         </tr>`).join('')}</tbody></table>`;
       }
     }
-    // ── Next Departures strip ──
-    const today=new Date(); today.setHours(0,0,0,0);
-    const upcoming=ships
-      .filter(sh=>sh.etd && !['Delivered','Discharged','Arrived'].includes(sh.status))
-      .map(sh=>{const d=new Date(sh.etd);d.setHours(0,0,0,0);return{...sh,_d:d};})
-      .filter(sh=>sh._d>=today)
-      .sort((a,b)=>a._d-b._d)
-      .slice(0,6);
+  }catch(e){ console.error('ships',e); }
+  // ── Next Departures strip — own isolated try so it always resolves ──
+  try{
     const strip=document.getElementById('next-dep-strip');
     if(strip){
+      const allS=Array.isArray(allShipments)&&allShipments.length
+        ? allShipments
+        : await apiFetch('/api/shipments').then(r=>Array.isArray(r)?r:[]).catch(()=>[]);
+      const today=new Date(); today.setHours(0,0,0,0);
+      const upcoming=allS
+        .filter(sh=>sh.etd && !['Delivered','Discharged','Arrived'].includes(sh.status))
+        .map(sh=>{const d=new Date(sh.etd);d.setHours(0,0,0,0);return{...sh,_d:d};})
+        .filter(sh=>sh._d>=today)
+        .sort((a,b)=>a._d-b._d)
+        .slice(0,6);
       if(!upcoming.length){
         strip.innerHTML='<div style="color:var(--text3);font-size:12px;padding:6px 0">No upcoming departures</div>';
       } else {
@@ -1279,7 +1284,10 @@ async function loadDashboard(){
         }).join('');
       }
     }
-  }catch(e){ console.error('ships',e); }
+  }catch(e){
+    const strip=document.getElementById('next-dep-strip');
+    if(strip) strip.innerHTML='<div style="color:var(--text3);font-size:12px;padding:6px 0">—</div>';
+  }
   try{ updateAlertsBadge(); }catch(e){}
 }
 
