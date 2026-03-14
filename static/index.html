@@ -382,6 +382,37 @@ textarea.form-control{resize:vertical;min-height:72px}
 .search-box i{color:var(--text3);font-size:14px;flex-shrink:0}
 @media(max-width:768px){.search-box{display:none}.topbar-title{display:block}.topbar{padding:0 12px;gap:8px;height:52px}}
 
+
+/* ── Clickable stat cards ── */
+.stat-clickable{cursor:pointer;transition:border-color .15s,transform .15s}
+.stat-clickable:hover{border-color:var(--accent);transform:translateY(-2px)}
+.stat-clickable:active{transform:scale(.97)}
+
+/* ── Next Departures strip ── */
+.dep-strip{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;margin-bottom:18px;-webkit-overflow-scrolling:touch}
+.dep-strip::-webkit-scrollbar{display:none}
+.dep-chip{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;min-width:130px;cursor:pointer;flex-shrink:0;transition:border-color .15s}
+.dep-chip:hover{border-color:var(--accent)}
+
+/* ── Dash meta row ── */
+.dash-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.dash-meta-title{font-size:15px;font-weight:700}
+.dash-last-updated{font-size:11px;color:var(--text3)}
+
+/* ── KPI period filter ── */
+.period-tabs{display:flex;gap:6px;margin-bottom:16px}
+.period-tab{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-family:inherit;transition:.15s}
+.period-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ── Alert category tabs ── */
+.alert-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.alert-tab{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-family:inherit;transition:.15s}
+.alert-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.alert-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;transition:border-color .15s}
+.alert-item:hover{border-color:var(--accent)}
+.alert-item-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap}
+.alert-item-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
 </head>
@@ -535,6 +566,10 @@ textarea.form-control{resize:vertical;min-height:72px}
 
     <!-- ─── DASHBOARD ─── -->
     <div class="page active" id="page-dashboard">
+      <div class="dash-meta">
+        <div class="dash-meta-title"><i class="ph ph-squares-four"></i> Overview</div>
+        <span class="dash-last-updated" id="dash-last-updated"></span>
+      </div>
       <div class="stats-grid" id="stats-grid">
         <div class="stat-card"><div class="stat-icon blue"><i class="ph ph-boat"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:32px"></div><div class="stat-label">Total</div></div>
         <div class="stat-card"><div class="stat-icon orange"><i class="ph ph-anchor"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Transit</div></div>
@@ -544,6 +579,12 @@ textarea.form-control{resize:vertical;min-height:72px}
         <div class="stat-card"><div class="stat-icon purple"><i class="ph ph-waves"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Ocean</div></div>
       </div>
 
+      <div class="section-header" style="margin-bottom:8px">
+        <div class="dash-meta-title" style="font-size:13px"><i class="ph ph-airplane-takeoff"></i> Next Departures</div>
+      </div>
+      <div class="dep-strip" id="next-dep-strip">
+        <div style="color:var(--text3);font-size:12px;padding:4px 0">Loading…</div>
+      </div>
       <div class="section-header">
         <div class="section-title">Recent Shipments</div>
         <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null);setBottomNav('shipments')">
@@ -610,6 +651,11 @@ textarea.form-control{resize:vertical;min-height:72px}
           <i class="ph ph-file"></i> Generate Report
         </button>
       </div>
+      <div class="period-tabs" id="kpi-period-tabs">
+        <button class="period-tab active" onclick="setKpiPeriod('all',this)">All Time</button>
+        <button class="period-tab" onclick="setKpiPeriod('3m',this)">Last 3 Months</button>
+        <button class="period-tab" onclick="setKpiPeriod('1m',this)">This Month</button>
+      </div>
       <div class="kpi-grid" id="kpi-cards">
         <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-value">—</div><div class="kpi-label">Total Shipments</div></div>
         <div class="kpi-card"><div class="kpi-icon"></div><div class="kpi-value">—</div><div class="kpi-label">On-Time Rate</div></div>
@@ -635,6 +681,10 @@ textarea.form-control{resize:vertical;min-height:72px}
           <div class="chart-title"><i class="ph ph-user"></i> Top Clients</div>
           <div class="bar-list" id="bar-clients"></div>
         </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:16px">
+        <div class="chart-title"><i class="ph ph-map-pin" style="color:var(--accent)"></i> Top Routes</div>
+        <div class="bar-list" id="bar-routes"></div>
       </div>
       <div class="chart-card" style="margin-bottom:16px">
         <div class="chart-title"><i class="ph ph-warning" style="color:var(--red)"></i> Overdue Shipments</div>
@@ -674,6 +724,12 @@ textarea.form-control{resize:vertical;min-height:72px}
         <button class="btn btn-ghost btn-sm" onclick="loadAlerts()">
           <i class="ph ph-arrows-clockwise"></i> Refresh
         </button>
+      </div>
+      <div class="alert-tabs" id="alert-category-tabs">
+        <button class="alert-tab active" onclick="setAlertCategory('all',this)">All</button>
+        <button class="alert-tab" onclick="setAlertCategory('danger',this)">🔴 Critical</button>
+        <button class="alert-tab" onclick="setAlertCategory('warning',this)">🟡 Warning</button>
+        <button class="alert-tab" onclick="setAlertCategory('info',this)">🔵 Info</button>
       </div>
       <div id="alerts-list">
         <div style="text-align:center;padding:40px;color:var(--text2);font-size:13px">
@@ -1155,41 +1211,86 @@ async function loadDashboard(){
     const bs=stats.by_status||{};
     const transit=(bs.Sailing||0)+(bs.Transit||0);
     const done=(bs.Delivered||0)+(bs.Arrived||0)+(bs.Discharged||0);
+    const lu=document.getElementById('dash-last-updated');
+    if(lu) lu.textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
     document.getElementById('stats-grid').innerHTML=`
-      <div class="stat-card"><div class="stat-icon blue"><i class="ph ph-boat"></i></div><div class="stat-value">${stats.total||0}</div><div class="stat-label">Total</div></div>
-      <div class="stat-card"><div class="stat-icon orange"><i class="ph ph-anchor"></i></div><div class="stat-value">${transit}</div><div class="stat-label">Transit</div></div>
-      <div class="stat-card"><div class="stat-icon green"><i class="ph ph-check-circle"></i></div><div class="stat-value">${done}</div><div class="stat-label">Done</div></div>
-      <div class="stat-card"><div class="stat-icon red"><i class="ph ph-warning"></i></div><div class="stat-value">${stats.delayed_count||0}</div><div class="stat-label">Delayed</div></div>
-      <div class="stat-card"><div class="stat-icon cyan"><i class="ph ph-clock"></i></div><div class="stat-value">${bs.Pending||0}</div><div class="stat-label">Pending</div></div>
-      <div class="stat-card"><div class="stat-icon purple"><i class="ph ph-waves"></i></div><div class="stat-value">${(stats.by_mode||{}).Ocean||0}</div><div class="stat-label">Ocean</div></div>
+      <div class="stat-card stat-clickable" onclick="filterShipmentsAndGo('all')" title="View all">
+        <div class="stat-icon blue"><i class="ph ph-boat"></i></div><div class="stat-value">${stats.total||0}</div><div class="stat-label">Total</div></div>
+      <div class="stat-card stat-clickable" onclick="filterShipmentsAndGo('Sailing')" title="In transit">
+        <div class="stat-icon orange"><i class="ph ph-anchor"></i></div><div class="stat-value">${transit}</div><div class="stat-label">Transit</div></div>
+      <div class="stat-card stat-clickable" onclick="filterShipmentsAndGo('Delivered')" title="Completed">
+        <div class="stat-icon green"><i class="ph ph-check-circle"></i></div><div class="stat-value">${done}</div><div class="stat-label">Done</div></div>
+      <div class="stat-card stat-clickable" onclick="filterShipmentsAndGo('Delayed')" title="Delayed">
+        <div class="stat-icon red"><i class="ph ph-warning"></i></div><div class="stat-value">${stats.delayed_count||0}</div><div class="stat-label">Delayed</div></div>
+      <div class="stat-card stat-clickable" onclick="filterShipmentsAndGo('Pending')" title="Pending">
+        <div class="stat-icon cyan"><i class="ph ph-clock"></i></div><div class="stat-value">${bs.Pending||0}</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card">
+        <div class="stat-icon purple"><i class="ph ph-waves"></i></div><div class="stat-value">${(stats.by_mode||{}).Ocean||0}</div><div class="stat-label">Ocean</div></div>
     `;
-    document.getElementById('nav-count').textContent=stats.total||0;
-  }catch(e){ console.error(e); }
+    const nc=document.getElementById('nav-count');
+    if(nc) nc.textContent=stats.total||0;
+  }catch(e){ console.error('stats',e); }
   try{
     const ships=await apiFetch('/api/shipments');
     allShipments=ships;
+    // ── Recent table ──
     const recent=ships.slice(0,6);
     renderCards(recent,'recent-cards');
-    // Desktop recent table
     const tw=document.getElementById('recent-table');
     if(tw){
-      if(!recent.length){ tw.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">No shipments yet</div><div class="empty-sub">Click "New" to add your first one</div></div>`; return; }
-      tw.innerHTML=`<table><thead><tr><th>Reference</th><th>Client</th><th>Route</th><th>Mode</th><th>ETA</th><th>Status</th><th></th></tr></thead><tbody>
-      ${recent.map(s=>`<tr class="clickable" onclick="openDetail(${s.id})">
-        <td class="ref-cell">${s.ref}<br><span style="font-weight:400;color:var(--text2);font-size:11px">${s.ref2||''}</span></td>
-        <td>${s.client||'—'}</td>
-        <td style="font-size:11px">${s.pol||'—'} → ${s.pod||'—'}</td>
-        <td>${modeBadge(s.mode)}</td><td>${fmt(s.eta)}</td><td>${statusBadge(s.status)}</td>
-        <td><div class="actions">
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="ph ph-pencil"></i></button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="ph ph-trash"></i></button>
-        </div></td>
-      </tr>`).join('')}</tbody></table>`;
+      if(!recent.length){
+        tw.innerHTML=`<div class="empty"><div class="empty-icon"><i class="ph ph-package"></i></div><div class="empty-title">No shipments yet</div><div class="empty-sub">Click "New" to add your first one</div></div>`;
+      } else {
+        tw.innerHTML=`<table><thead><tr><th>Reference</th><th>Client</th><th>Route</th><th>Mode</th><th>ETA</th><th>Status</th><th></th></tr></thead><tbody>
+        ${recent.map(sh=>`<tr class="clickable" onclick="openDetail(${sh.id})">
+          <td class="ref-cell">${sh.ref}<br><span style="font-weight:400;color:var(--text2);font-size:11px">${sh.ref2||''}</span></td>
+          <td>${sh.client||'—'}</td>
+          <td style="font-size:11px">${sh.pol||'—'} → ${sh.pod||'—'}</td>
+          <td>${modeBadge(sh.mode)}</td><td>${fmt(sh.eta)}</td><td>${statusBadge(sh.status)}</td>
+          <td><div class="actions">
+            <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${sh.id})"><i class="ph ph-pencil"></i></button>
+            <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${sh.id})"><i class="ph ph-trash"></i></button>
+          </div></td>
+        </tr>`).join('')}</tbody></table>`;
+      }
     }
-  }catch(e){ console.error(e); }
-  // Update alerts badge
+    // ── Next Departures strip ──
+    const today=new Date(); today.setHours(0,0,0,0);
+    const upcoming=ships
+      .filter(sh=>sh.etd && !['Delivered','Discharged','Arrived'].includes(sh.status))
+      .map(sh=>{const d=new Date(sh.etd);d.setHours(0,0,0,0);return{...sh,_d:d};})
+      .filter(sh=>sh._d>=today)
+      .sort((a,b)=>a._d-b._d)
+      .slice(0,6);
+    const strip=document.getElementById('next-dep-strip');
+    if(strip){
+      if(!upcoming.length){
+        strip.innerHTML='<div style="color:var(--text3);font-size:12px;padding:6px 0">No upcoming departures</div>';
+      } else {
+        strip.innerHTML=upcoming.map(sh=>{
+          const diff=Math.round((sh._d-today)/86400000);
+          const tag=diff===0?'Today':diff===1?'Tomorrow':'In '+diff+'d';
+          const col=diff===0?'var(--green)':diff<=3?'var(--yellow)':'var(--accent)';
+          return `<div class="dep-chip" onclick="openDetail(${sh.id})">
+            <div style="font-size:11px;font-weight:700;color:var(--text)">${sh.ref}</div>
+            <div style="font-size:10px;color:var(--text2);margin-top:2px">${sh.pol||'—'} → ${sh.pod||'—'}</div>
+            <div style="font-size:10px;font-weight:700;margin-top:4px;color:${col}">${tag}</div>
+          </div>`;
+        }).join('');
+      }
+    }
+  }catch(e){ console.error('ships',e); }
   try{ updateAlertsBadge(); }catch(e){}
 }
+
+function filterShipmentsAndGo(status){
+  const sel=document.getElementById('fil-status');
+  if(sel) sel.value=(status==='all')?'All Status':status;
+  const navEl=document.querySelector('.nav-item[onclick*="shipments"]');
+  showPage('shipments',navEl);
+  setBottomNav('shipments');
+}
+
 
 /* ── Shipments page ── */
 async function loadShipments(){
@@ -1407,140 +1508,178 @@ function chartTextColor(){ return isDark()?'#8892b0':'#5a6a8a'; }
 function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)'; }
 
 /* ── KPI Page ── */
-async function loadAnalytics(){
+async let _kpiPeriod='all';
+function setKpiPeriod(p,btn){
+  _kpiPeriod=p;
+  document.querySelectorAll('.period-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  loadAnalytics();
+}
+
+function loadAnalytics(){
   try{
-    const k = await apiFetch('/api/kpis');
+    const k=await apiFetch('/api/kpis');
+    // ── Filter by period ──
+    const now=new Date();
+    let ships=k.all_ships||[];
+    if(_kpiPeriod==='1m'){
+      const cut=new Date(now.getFullYear(),now.getMonth(),1);
+      ships=ships.filter(sh=>sh.created_at&&new Date(sh.created_at)>=cut);
+    } else if(_kpiPeriod==='3m'){
+      const cut=new Date(now);cut.setMonth(cut.getMonth()-3);
+      ships=ships.filter(sh=>sh.created_at&&new Date(sh.created_at)>=cut);
+    }
+
+    // ── Recompute KPIs from filtered set if period selected ──
+    let kd=k;
+    if(_kpiPeriod!=='all' && ships.length){
+      const total=ships.length;
+      const delayed=ships.filter(sh=>sh.status==='Delayed').length;
+      const finished=ships.filter(sh=>['Delivered','Arrived','Discharged'].includes(sh.status));
+      const onTime=finished.filter(sh=>{
+        if(!sh.eta||!sh.etd) return false;
+        return new Date(sh.eta)<=new Date(sh.etd);
+      }).length;
+      const onTimeRate=finished.length?Math.round(onTime/finished.length*100):0;
+      const delayRate=total?Math.round(delayed/total*100):0;
+      const transits=ships.filter(sh=>sh.etd&&sh.eta).map(sh=>Math.round((new Date(sh.eta)-new Date(sh.etd))/86400000)).filter(d=>d>0);
+      const avgTransit=transits.length?Math.round(transits.reduce((a,b)=>a+b,0)/transits.length):null;
+      const totalTeu=ships.reduce((a,sh)=>(a+(sh.teu||0)),0);
+      kd={...k,total,delayed_count:delayed,on_time_rate:onTimeRate,delay_rate:delayRate,avg_transit:avgTransit,total_teu:totalTeu};
+    }
+
+    const totalTeu=(kd.total_teu||ships.reduce((a,sh)=>(a+(sh.teu||0)),0)||k.total_teu)||0;
 
     // ── KPI Cards ──
-    document.getElementById('kpi-cards').innerHTML = `
+    document.getElementById('kpi-cards').innerHTML=`
       <div class="kpi-card">
         <div class="kpi-icon">📦</div>
-        <div class="kpi-value">${k.total}</div>
+        <div class="kpi-value">${kd.total}</div>
         <div class="kpi-label">Total Shipments</div>
-        <div class="kpi-sub neutral">All time</div>
+        <div class="kpi-sub neutral">${_kpiPeriod==='all'?'All time':_kpiPeriod==='1m'?'This month':'Last 3 months'}</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-icon"></div>
-        <div class="kpi-value" style="color:var(--green)">${k.on_time_rate}%</div>
+        <div class="kpi-icon">🎯</div>
+        <div class="kpi-value" style="color:var(--green)">${kd.on_time_rate}%</div>
         <div class="kpi-label">On-Time Rate</div>
-        <div class="kpi-sub ${k.on_time_rate>=80?'good':'bad'}">${k.on_time_rate>=80?'🟢 Good':'🔴 Needs attention'}</div>
+        <div class="kpi-sub ${kd.on_time_rate>=80?'good':'bad'}">${kd.on_time_rate>=80?'🟢 Good':'🔴 Needs attention'}</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-icon">⚠️</div>
-        <div class="kpi-value" style="color:${k.delay_rate>20?'var(--red)':'var(--yellow)'}">
-          ${k.delay_rate}%
-        </div>
+        <div class="kpi-value" style="color:${kd.delay_rate>20?'var(--red)':'var(--yellow)'}">${kd.delay_rate}%</div>
         <div class="kpi-label">Delay Rate</div>
-        <div class="kpi-sub ${k.delay_rate<10?'good':'bad'}">${k.delay_rate<10?'🟢 Low':'🔴 High'}</div>
+        <div class="kpi-sub ${kd.delay_rate<10?'good':'bad'}">${kd.delay_rate<10?'🟢 Low':'🔴 High'}</div>
       </div>
       <div class="kpi-card">
         <div class="kpi-icon">🕒</div>
-        <div class="kpi-value">${k.avg_transit||'—'}</div>
+        <div class="kpi-value">${kd.avg_transit||'—'}</div>
         <div class="kpi-label">Avg Transit Days</div>
-        <div class="kpi-sub neutral">${k.avg_transit?'ETD → ETA':'No data yet'}</div>
+        <div class="kpi-sub neutral">${kd.avg_transit?'ETD → ETA':'No data yet'}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🚢</div>
+        <div class="kpi-value">${totalTeu||'—'}</div>
+        <div class="kpi-label">Total TEU</div>
+        <div class="kpi-sub neutral">Volume handled</div>
       </div>
     `;
 
     // ── Status Donut ──
     destroyChart('chart-status');
-    const statusLabels = Object.keys(k.by_status);
-    const statusData   = Object.values(k.by_status);
+    const statusLabels=Object.keys(k.by_status);
+    const statusData=Object.values(k.by_status);
     if(statusLabels.length){
-      chartRegistry['chart-status'] = new Chart(
-        document.getElementById('chart-status'),{
-          type:'doughnut',
-          data:{
-            labels:statusLabels,
-            datasets:[{data:statusData,backgroundColor:getChartColors(statusLabels.length),
-              borderWidth:0,hoverOffset:6}]
-          },
-          options:{
-            responsive:true,maintainAspectRatio:false,
-            plugins:{
-              legend:{position:'right',labels:{color:chartTextColor(),font:{size:11},boxWidth:12,padding:10}},
-              tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} shipments`}}
-            },
-            cutout:'65%'
-          }
-        }
-      );
+      chartRegistry['chart-status']=new Chart(document.getElementById('chart-status'),{
+        type:'doughnut',
+        data:{labels:statusLabels,datasets:[{data:statusData,backgroundColor:getChartColors(statusLabels.length),borderWidth:0,hoverOffset:6}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{
+          legend:{position:'right',labels:{color:chartTextColor(),font:{size:11},boxWidth:12,padding:10}},
+          tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} shipments`}}
+        },cutout:'65%'}
+      });
     }
 
     // ── Monthly Bar ──
     destroyChart('chart-monthly');
     if(k.monthly&&k.monthly.length){
-      chartRegistry['chart-monthly'] = new Chart(
-        document.getElementById('chart-monthly'),{
-          type:'bar',
-          data:{
-            labels:k.monthly.map(m=>m.month),
-            datasets:[{
-              label:'Shipments',
-              data:k.monthly.map(m=>m.count),
-              backgroundColor:'rgba(79,142,247,.7)',
-              borderColor:'#4f8ef7',
-              borderWidth:1,
-              borderRadius:6,
-            }]
-          },
-          options:{
-            responsive:true,maintainAspectRatio:false,
-            plugins:{legend:{display:false}},
-            scales:{
-              x:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10}}},
-              y:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10},stepSize:1},beginAtZero:true}
-            }
-          }
+      chartRegistry['chart-monthly']=new Chart(document.getElementById('chart-monthly'),{
+        type:'bar',
+        data:{labels:k.monthly.map(m=>m.month),datasets:[{label:'Shipments',data:k.monthly.map(m=>m.count),backgroundColor:'rgba(79,142,247,.7)',borderColor:'#4f8ef7',borderWidth:1,borderRadius:6}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{x:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10}}},
+                  y:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10},stepSize:1},beginAtZero:true}}}
+      });
+    } else {
+      const mc=document.getElementById('chart-monthly');
+      if(mc) mc.parentElement.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px">No monthly data yet</div>';
+    }
+
+    // ── Carriers ──
+    const cWrap=document.getElementById('bar-carriers');
+    if(cWrap){
+      if(k.by_carrier&&k.by_carrier.length){
+        const max=k.by_carrier[0].count;
+        cWrap.innerHTML=k.by_carrier.map(c=>`
+          <div class="bar-item">
+            <div class="bar-label"><span>${c.name}</span><span>${c.count}</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.count/max*100)}%"></div></div>
+          </div>`).join('');
+      } else cWrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No carrier data yet</div>';
+    }
+
+    // ── Clients ──
+    const clWrap=document.getElementById('bar-clients');
+    if(clWrap){
+      if(k.by_client&&k.by_client.length){
+        const max=k.by_client[0].count;
+        clWrap.innerHTML=k.by_client.map(c=>`
+          <div class="bar-item">
+            <div class="bar-label"><span>${c.name}</span><span>${c.count}</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.count/max*100)}%"></div></div>
+          </div>`).join('');
+      } else clWrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No client data yet</div>';
+    }
+
+    // ── Top Routes ──
+    const rWrap=document.getElementById('bar-routes');
+    if(rWrap){
+      const allS=k.all_ships||[];
+      const routeMap={};
+      allS.forEach(sh=>{
+        if(sh.pol&&sh.pod){
+          const key=sh.pol+' → '+sh.pod;
+          routeMap[key]=(routeMap[key]||0)+1;
         }
-      );
-    } else {
-      document.getElementById('chart-monthly').parentElement.innerHTML =
-        '<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px">No monthly data yet</div>';
-    }
-
-    // ── Carriers bar list ──
-    const cWrap = document.getElementById('bar-carriers');
-    if(k.by_carrier&&k.by_carrier.length){
-      const max = k.by_carrier[0].count;
-      cWrap.innerHTML = k.by_carrier.map(c=>`
-        <div class="bar-item">
-          <div class="bar-label"><span>${c.name}</span><span>${c.count}</span></div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.count/max*100)}%"></div></div>
-        </div>`).join('');
-    } else {
-      cWrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No carrier data yet</div>';
-    }
-
-    // ── Clients bar list ──
-    const clWrap = document.getElementById('bar-clients');
-    if(k.by_client&&k.by_client.length){
-      const max = k.by_client[0].count;
-      clWrap.innerHTML = k.by_client.map(c=>`
-        <div class="bar-item">
-          <div class="bar-label"><span>${c.name}</span><span>${c.count}</span></div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.count/max*100)}%"></div></div>
-        </div>`).join('');
-    } else {
-      clWrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No client data yet</div>';
+      });
+      const routes=Object.entries(routeMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+      if(routes.length){
+        const max=routes[0][1];
+        rWrap.innerHTML=routes.map(([r,c])=>`
+          <div class="bar-item">
+            <div class="bar-label"><span>${r}</span><span>${c}</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c/max*100)}%"></div></div>
+          </div>`).join('');
+      } else rWrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No route data yet</div>';
     }
 
     // ── Overdue ──
-    const oWrap = document.getElementById('overdue-list');
-    if(k.overdue&&k.overdue.length){
-      oWrap.innerHTML = k.overdue.map(o=>`
-        <div class="overdue-item">
-          <div>
-            <div class="overdue-ref">${o.ref}</div>
-            <div style="font-size:11px;color:var(--text2)">${o.client||'—'} · ETA ${o.eta?o.eta.split('T')[0]:'—'}</div>
-          </div>
-          <div class="overdue-days">${o.days_late}d late</div>
-        </div>`).join('');
-    } else {
-      oWrap.innerHTML='<div style="text-align:center;padding:16px;color:var(--green);font-size:13px">🎉 No overdue shipments!</div>';
+    const oWrap=document.getElementById('overdue-list');
+    if(oWrap){
+      if(k.overdue&&k.overdue.length){
+        oWrap.innerHTML=k.overdue.map(o=>`
+          <div class="overdue-item" onclick="openDetail(${o.id})" style="cursor:pointer">
+            <div>
+              <div class="overdue-ref">${o.ref}</div>
+              <div style="font-size:11px;color:var(--text2)">${o.client||'—'} · ETA ${o.eta?o.eta.split('T')[0]:'—'}</div>
+            </div>
+            <div class="overdue-days">${o.days_late}d late</div>
+          </div>`).join('');
+      } else oWrap.innerHTML='<div style="text-align:center;padding:16px;color:var(--green);font-size:13px">🎉 No overdue shipments!</div>';
     }
 
-  } catch(e){ toast('KPI error: '+e.message,'error'); console.error(e); }
+  }catch(e){ toast('KPI error: '+e.message,'error'); console.error(e); }
 }
+
 
 /* ── Theme ── */
 function toggleTheme(){
@@ -2349,69 +2488,122 @@ async function confirmSendEmail() {
 
 <script>
 /* ═══ ALERTS PAGE ═══ */
-async function loadAlerts() {
-  var container = document.getElementById('alerts-list');
-  var badge     = document.getElementById('alerts-badge');
-  if (!container) return;
-  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><div style="font-size:32px;margin-bottom:8px">⏳</div>Loading...</div>';
-  try {
-    var ships = await apiFetch('/api/shipments');
-    var alerts = buildAlerts(ships);
-    if (badge) {
-      badge.textContent = alerts.length;
-      badge.style.display = alerts.length ? '' : 'none';
-    }
-    if (!alerts.length) {
-      container.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px"></div><div style="font-size:15px;font-weight:700;margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention right now.</div></div>';
+async let _alertCategory='all';
+let _snoozed=JSON.parse(localStorage.getItem('snoozed_alerts')||'{}');
+
+function setAlertCategory(cat,btn){
+  _alertCategory=cat;
+  document.querySelectorAll('.alert-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  loadAlerts();
+}
+
+function snoozeAlert(id,ref,event){
+  event.stopPropagation();
+  const until=new Date(); until.setHours(until.getHours()+24);
+  _snoozed[id]={until:until.toISOString(),ref};
+  localStorage.setItem('snoozed_alerts',JSON.stringify(_snoozed));
+  loadAlerts();
+  toast(ref+' snoozed for 24h','info');
+}
+
+function loadAlerts(){
+  const container=document.getElementById('alerts-list');
+  const badge=document.getElementById('alerts-badge');
+  if(!container) return;
+  container.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><div style="font-size:32px;margin-bottom:8px">⏳</div>Loading...</div>';
+  try{
+    const ships=await apiFetch('/api/shipments');
+    // Clear expired snoozes
+    const now=new Date();
+    Object.keys(_snoozed).forEach(id=>{ if(new Date(_snoozed[id].until)<now) delete _snoozed[id]; });
+    localStorage.setItem('snoozed_alerts',JSON.stringify(_snoozed));
+
+    let alerts=buildAlerts(ships);
+    // Filter snoozed
+    alerts=alerts.filter(a=>!_snoozed[a.id]);
+    // Sort by urgency: danger first, then warning, then info; within each sort by days overdue desc
+    const urgency={danger:0,warning:1,info:2};
+    alerts.sort((a,b)=>(urgency[a.type]||2)-(urgency[b.type]||2)||(b.daysLate||0)-(a.daysLate||0));
+
+    if(badge){ badge.textContent=alerts.length; badge.style.display=alerts.length?'':'none'; }
+
+    // Apply category filter
+    const visible=_alertCategory==='all'?alerts:alerts.filter(a=>a.type===_alertCategory);
+
+    if(!visible.length){
+      const allClear=!alerts.length;
+      container.innerHTML=allClear
+        ?'<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">✅</div><div style="font-size:15px;font-weight:700;margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention right now.</div></div>'
+        :'<div style="text-align:center;padding:32px 20px;color:var(--text2);font-size:13px">No alerts in this category.</div>';
       return;
     }
-    container.innerHTML = alerts.map(function(a) {
-      var color = a.type === 'danger' ? 'var(--red)' : a.type === 'warning' ? 'var(--yellow)' : 'var(--accent)';
-      return '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ' + color + ';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer" onclick="openDetail(' + a.id + ')">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-        + '<span style="font-size:14px;font-weight:700;color:var(--text)">' + a.ref + '</span>'
-        + '<span style="font-size:11px;background:' + color + '22;color:' + color + ';padding:3px 10px;border-radius:20px;font-weight:600">' + a.label + '</span>'
-        + '</div>'
-        + '<div style="font-size:12px;color:var(--text2)">' + a.message + '</div>'
-        + '</div>';
+
+    const colors={danger:'var(--red)',warning:'var(--yellow)',info:'var(--accent)'};
+    container.innerHTML=visible.map(a=>{
+      const col=colors[a.type]||'var(--accent)';
+      return `<div class="alert-item" style="border-left:3px solid ${col}">
+        <div class="alert-item-head">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+            <span style="font-size:14px;font-weight:700;color:var(--text);white-space:nowrap">${a.ref}</span>
+            <span style="font-size:11px;background:${col}22;color:${col};padding:3px 10px;border-radius:20px;font-weight:600;white-space:nowrap">${a.label}</span>
+          </div>
+          <div class="alert-item-actions">
+            <button class="btn btn-primary btn-sm" onclick="openDetail(${a.id})" style="font-size:11px;padding:4px 10px">
+              <i class="ph ph-arrow-right"></i> Open
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="snoozeAlert(${a.id},'${a.ref}',event)" title="Snooze 24h" style="font-size:11px;padding:4px 8px">
+              <i class="ph ph-bell-slash"></i>
+            </button>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text2)">${a.message}</div>
+      </div>`;
     }).join('');
-  } catch(e) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">Error: ' + e.message + '</div>';
+  }catch(e){
+    container.innerHTML='<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">Error: '+e.message+'</div>';
   }
 }
 
-function buildAlerts(ships) {
-  var today = new Date(); today.setHours(0,0,0,0);
-  var alerts = [];
-  ships.forEach(function(s) {
-    if (['Delivered','Discharged'].includes(s.status)) return;
-    if (s.eta) {
-      var eta = new Date(s.eta); eta.setHours(0,0,0,0);
-      var diff = Math.round((eta - today) / 86400000);
-      if (diff < 0) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'danger', label: 'ETA Passed', message: 'ETA was ' + s.eta.substring(0,10) + ' — ' + s.pod });
-      } else if (diff <= 3) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'warning', label: 'Arriving Soon', message: 'Arriving in ' + diff + ' day' + (diff===1?'':'s') + ' at ' + (s.pod||'—') });
+function buildAlerts(ships){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const alerts=[];
+  ships.forEach(function(sh){
+    if(['Delivered','Discharged'].includes(sh.status)) return;
+    if(sh.eta){
+      const eta=new Date(sh.eta); eta.setHours(0,0,0,0);
+      const diff=Math.round((eta-today)/86400000);
+      if(diff<0){
+        alerts.push({id:sh.id,ref:sh.ref,type:'danger',label:'ETA Passed',daysLate:Math.abs(diff),
+          message:'ETA was '+sh.eta.substring(0,10)+' ('+Math.abs(diff)+'d ago) — '+( sh.pod||'—')});
+      } else if(diff<=3){
+        alerts.push({id:sh.id,ref:sh.ref,type:'warning',label:'Arriving Soon',daysLate:0,
+          message:'Arriving in '+diff+' day'+(diff===1?'':'s')+' at '+(sh.pod||'—')});
       }
     }
-    if (s.etd) {
-      var etd = new Date(s.etd); etd.setHours(0,0,0,0);
-      if (etd < today && ['Pending','Booked'].includes(s.status)) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'warning', label: 'ETD Passed', message: 'ETD was ' + s.etd.substring(0,10) + ' — still ' + s.status });
+    if(sh.etd){
+      const etd=new Date(sh.etd); etd.setHours(0,0,0,0);
+      if(etd<today && ['Pending','Booked'].includes(sh.status)){
+        const days=Math.round((today-etd)/86400000);
+        alerts.push({id:sh.id,ref:sh.ref,type:'warning',label:'ETD Passed',daysLate:days,
+          message:'ETD was '+sh.etd.substring(0,10)+' ('+days+'d ago) — still '+sh.status});
       }
     }
-    if (s.stuffing_date && ['Pending','Booked'].includes(s.status)) {
-      var sf = new Date(s.stuffing_date); sf.setHours(0,0,0,0);
-      if (sf <= today) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'info', label: 'Stuffing Date', message: 'EXW stuffing date reached — confirm loading' });
+    if(sh.stuffing_date && ['Pending','Booked'].includes(sh.status)){
+      const sf=new Date(sh.stuffing_date); sf.setHours(0,0,0,0);
+      if(sf<=today){
+        alerts.push({id:sh.id,ref:sh.ref,type:'info',label:'Stuffing Date',daysLate:0,
+          message:'EXW stuffing date reached — confirm loading'});
       }
     }
-    if (s.status === 'Delayed') {
-      alerts.push({ id: s.id, ref: s.ref, type: 'danger', label: 'Delayed', message: (s.pol||'—') + ' → ' + (s.pod||'—') + ' · ETA: ' + (s.eta?s.eta.substring(0,10):'—') });
+    if(sh.status==='Delayed'){
+      alerts.push({id:sh.id,ref:sh.ref,type:'danger',label:'Delayed',daysLate:1,
+        message:(sh.pol||'—')+' → '+(sh.pod||'—')+' · ETA: '+(sh.eta?sh.eta.substring(0,10):'—')});
     }
   });
   return alerts;
 }
+
 
 /* ═══ EMAIL LOG ═══ */
 async function loadEmailLog(sid) {
@@ -2814,6 +3006,31 @@ function _confirmReject() {
   closeModal('modal-confirm');
   if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
 }
+/* ── Keyboard shortcuts ── */
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT') return;
+  if(e.key==='n'||e.key==='N'){
+    openModal('modal-add');
+    if(typeof resetForm==='function') resetForm();
+  }
+  if(e.key==='Escape'){
+    document.querySelectorAll('.overlay.open').forEach(o=>{
+      o.classList.remove('open');
+      document.body.style.overflow='';
+    });
+  }
+});
+
+/* ── Search debounce ── */
+(function(){
+  const origOnSearch=window.onSearch;
+  let _st=null;
+  window.onSearch=function(v){
+    clearTimeout(_st);
+    _st=setTimeout(()=>{ if(typeof origOnSearch==='function') origOnSearch(v); else onSearch(v); },250);
+  };
+})();
+
 </script>
 </body>
 </html>
