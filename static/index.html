@@ -958,7 +958,7 @@ async function apiFetch(url,options={}){
   catch(e){ throw new Error('Network error: '+e.message); }
   if(res.status===401){ doLogout(); throw new Error('Session expired — please log in again'); }
   if(!res.ok){
-    let msg=`HTTP ${res.status}`;
+    let msg="HTTP "+res.status;
     try{ const b=await res.json(); msg=b.detail||b.message||JSON.stringify(b); }catch{ msg=await res.text().catch(()=>msg); }
     throw new Error(msg);
   }
@@ -969,8 +969,8 @@ async function apiFetch(url,options={}){
 function toast(msg,type='info'){
   const icons={success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info'};
   const t=document.createElement('div');
-  t.className=`toast ${type}`;
-  t.innerHTML=`<i class="fa ${icons[type]}"></i><span>${msg}</span>`;
+  t.className="toast "+type;
+  t.innerHTML="<i class="fa ${icons[type]}"></i><span>"+msg+"</span>";
   document.getElementById('toast-wrap').appendChild(t);
   setTimeout(()=>t.style.opacity='0',3500);
   setTimeout(()=>t.remove(),3800);
@@ -1014,7 +1014,7 @@ function generateNextRef(){
   const d=new Date();
   const y=d.getFullYear();
   const n=String(Date.now()).slice(-6);
-  return `FT-${y}-${n}`;
+  return "FT-"+y+"-"+n;
 }
 
 
@@ -1047,10 +1047,10 @@ function bindOverviewCards(){
 function statusBadge(s){
   const m={Pending:'pending',Sailing:'sailing',Transit:'transit',Arrived:'arrived',
     Delivered:'delivered',Delayed:'delayed',Discharged:'discharged'};
-  return `<span class="badge badge-${m[s]||'pending'}">${s||'Pending'}</span>`;
+  return "<span class="badge badge-${m[s]||'pending'}">"+s||'Pending'+"</span>";
 }
 function modeBadge(m){
-  return `<span class="badge badge-mode badge-${(m||'ocean').toLowerCase()}">${m||'Ocean'}</span>`;
+  return "<span class="badge badge-mode badge-${(m||'ocean').toLowerCase()}">"+m||'Ocean'+"</span>";
 }
 function fmt(d){ return d?d.split('T')[0]:'—'; }
 function onSearch(v){
@@ -1068,7 +1068,7 @@ function renderPage(){
   renderCards(pageShips,'ship-cards');
   renderTable(pageShips);
   const info=document.getElementById('pg-info');
-  if(info) info.textContent=`Page ${_pgPage}/${pages} · ${total} total`;
+  if(info) info.textContent="Page ${_pgPage}/${pages} · "+total+" total";
   const prev=document.getElementById('pg-prev');
   const next=document.getElementById('pg-next');
   if(prev) prev.disabled = _pgPage<=1;
@@ -1095,7 +1095,7 @@ function renderCards(ships,containerId='ship-cards'){
       <div class="empty-sub">Tap + to add your first shipment</div></div>`;
     return;
   }
-  wrap.innerHTML=ships.map(s=>`
+  wrap.innerHTML=ships.map(s=>"
     <div class="ship-card" onclick="openDetail(${s.id})">
       <div class="ship-card-head">
         <div>
@@ -1143,12 +1143,12 @@ function renderCards(ships,containerId='ship-cards'){
           <button class="btn btn-secondary btn-sm btn-icon" onclick="editShipment(${s.id})" title="Edit">
             <i class="fa fa-pen"></i>
           </button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteShipment(${s.id})" title="Delete">
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteShipment("+s.id+")" title="Delete">
             <i class="fa fa-trash"></i>
           </button>
         </div>
       </div>
-    </div>`).join('');
+    </div>").join('');
 }
 
 /* ── Render table (desktop) ── */
@@ -1156,10 +1156,10 @@ function renderTable(ships){
   const wrap=document.getElementById('ship-table');
   if(!wrap) return;
   if(!ships.length){ wrap.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No shipments</div></div>`; return; }
-  wrap.innerHTML=`<table><thead><tr>
+  wrap.innerHTML="<table><thead><tr>
     <th>Ref / Booking</th><th>Client</th><th>Incoterm</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th><th>TEU</th><th>Status</th><th style="width:70px"></th>
   </tr></thead><tbody>
-  ${ships.map(s=>`<tr class="clickable" onclick="openDetail(${s.id})">
+  "+ships.map(s=>`<tr class="clickable" onclick="openDetail(${s.id+")">
     <td class="ref-cell">
       <div>${s.ref}</div>
       <div style="font-size:11px;color:var(--text2);margin-top:2px">${s.booking_no||'—'}</div>
@@ -1176,7 +1176,7 @@ function renderTable(ships){
       <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="fa fa-pen"></i></button>
       <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="fa fa-trash"></i></button>
     </div></td>
-  </tr>`).join('')}</tbody></table>`;
+  </tr>").join('')}</tbody></table>`;
 }
 
 /* ── Dashboard ── */
@@ -1187,14 +1187,14 @@ async function loadDashboard(){
     const bs=stats.by_status||{};
     const transit=(bs.Sailing||0)+(bs.Transit||0);
     const done=(bs.Delivered||0)+(bs.Arrived||0)+(bs.Discharged||0);
-    document.getElementById('stats-grid').innerHTML=`
+    document.getElementById('stats-grid').innerHTML="
       <div class="stat-card"><div class="stat-icon blue"><i class="fa fa-ship"></i></div><div class="stat-value">${stats.total||0}</div><div class="stat-label">Total</div></div>
       <div class="stat-card"><div class="stat-icon orange"><i class="fa fa-anchor"></i></div><div class="stat-value">${transit}</div><div class="stat-label">Transit</div></div>
       <div class="stat-card"><div class="stat-icon green"><i class="fa fa-check-circle"></i></div><div class="stat-value">${done}</div><div class="stat-label">Done</div></div>
       <div class="stat-card"><div class="stat-icon red"><i class="fa fa-triangle-exclamation"></i></div><div class="stat-value">${stats.delayed_count||0}</div><div class="stat-label">Delayed</div></div>
       <div class="stat-card"><div class="stat-icon cyan"><i class="fa fa-clock"></i></div><div class="stat-value">${bs.Pending||0}</div><div class="stat-label">Pending</div></div>
-      <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value">${(stats.by_mode||{}).Ocean||0}</div><div class="stat-label">Ocean</div></div>
-    `;
+      <div class="stat-card"><div class="stat-icon purple"><i class="fa fa-water"></i></div><div class="stat-value">"+(stats.by_mode||{+").Ocean||0}</div><div class="stat-label">Ocean</div></div>
+    ";
     document.getElementById('nav-count').textContent=stats.total||0;
   }catch(e){ console.error(e); }
   try{
@@ -1206,8 +1206,8 @@ async function loadDashboard(){
     const tw=document.getElementById('recent-table');
     if(tw){
       if(!recent.length){ tw.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">No shipments yet</div><div class="empty-sub">Click "New" to add your first one</div></div>`; return; }
-      tw.innerHTML=`<table><thead><tr><th>Reference</th><th>Client</th><th>Route</th><th>Mode</th><th>ETA</th><th>Status</th><th></th></tr></thead><tbody>
-      ${recent.map(s=>`<tr class="clickable" onclick="openDetail(${s.id})">
+      tw.innerHTML="<table><thead><tr><th>Reference</th><th>Client</th><th>Route</th><th>Mode</th><th>ETA</th><th>Status</th><th></th></tr></thead><tbody>
+      "+recent.map(s=>`<tr class="clickable" onclick="openDetail(${s.id+")">
         <td class="ref-cell">${s.ref}<br><span style="font-weight:400;color:var(--text2);font-size:11px">${s.ref2||''}</span></td>
         <td>${s.client||'—'}</td>
         <td style="font-size:11px">${s.pol||'—'} → ${s.pod||'—'}</td>
@@ -1216,7 +1216,7 @@ async function loadDashboard(){
           <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="fa fa-pen"></i></button>
           <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="fa fa-trash"></i></button>
         </div></td>
-      </tr>`).join('')}</tbody></table>`;
+      </tr>").join('')}</tbody></table>`;
     }
   }catch(e){ console.error(e); }
   // Update alerts badge
@@ -1229,13 +1229,13 @@ async function loadShipments(){
   const mode=document.getElementById('fil-mode')?.value||'';
   const search=(window._searchVal!==undefined?window._searchVal:(document.getElementById('global-search')?.value||''));
   try{
-    const ships=await apiFetch(`/api/shipments?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}&mode=${encodeURIComponent(mode)}`);
+    const ships=await apiFetch("/api/shipments?search="+encodeURIComponent(search)+"&status="+encodeURIComponent(status)+"&mode="+encodeURIComponent(mode));
     allShipments=ships;
     const inc=document.getElementById('fil-incoterm')?.value||'';
     _pgShips = inc ? ships.filter(s=>(s.incoterm||'')===inc) : ships;
     _pgPage = 1;
     const lbl=document.getElementById('ship-count-label');
-    if(lbl) lbl.textContent=`${_pgShips.length} shipment${_pgShips.length!==1?'s':''}`;
+    if(lbl) lbl.textContent=_pgShips.length+" shipment"+_pgShips.length!==1?'s':'';
     renderPage();
     // Update suggestions (Ports, Consignees, Carriers)
     const ports = new Set(), cons = new Set(), cars = new Set();
@@ -1244,7 +1244,7 @@ async function loadShipments(){
       if(s.consignee) cons.add(s.consignee);
       if(s.carrier) cars.add(s.carrier);
     });
-    const updateList = (id, set) => { const el = document.getElementById(id); if(el) el.innerHTML = Array.from(set).sort().map(v => `<option value="${v}">`).join(''); };
+    const updateList = (id, set) => { const el = document.getElementById(id); if(el) el.innerHTML = Array.from(set).sort().map(v => "<option value=""+v+"">").join(''); };
     updateList('port-list', ports);
     updateList('consignee-list', cons);
     updateList('carrier-list', cars);
@@ -1257,11 +1257,11 @@ async function openDetail(sid){
   openModal('modal-detail');
   document.getElementById('detail-body').innerHTML=`<div style="text-align:center;padding:40px"><div class="spinner" style="width:28px;height:28px;border-width:3px"></div></div>`;
   try{
-    const s=await apiFetch("/api/shipments/"+"\1");
+    const s=await apiFetch("/api/shipments/"+sid);
     document.getElementById('detail-title').textContent=s.ref;
-    document.getElementById('detail-sub').textContent=`${s.client||''}${s.carrier?' · '+s.carrier:''}`;
-    const trackLink=`${location.origin}/track/${s.ref}`;
-    document.getElementById('detail-body').innerHTML=`
+    document.getElementById('detail-sub').textContent=s.client||''+s.carrier?' · '+s.carrier:'';
+    const trackLink=location.origin+"/track/"+s.ref;
+    document.getElementById('detail-body').innerHTML="
       <div class="detail-grid">
         <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${statusBadge(s.status)}</div></div>
         <div class="detail-item"><div class="detail-label">Mode</div><div class="detail-value">${modeBadge(s.mode)}</div></div>
@@ -1279,22 +1279,22 @@ async function openDetail(sid){
             </span>
           </div>
         </div>
-        ${s.note?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Note</div><div class="detail-value" style="color:var(--text2)">${s.note}</div></div>`:''}
+        "+s.note?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Note</div><div class="detail-value" style="color:var(--text2)">${s.note+"</div></div>":''}
       </div>
-      ${s.events&&s.events.length?`
+      ${s.events&&s.events.length?"
         <div style="font-size:13px;font-weight:700;margin-bottom:10px">
           <i class="fa fa-timeline" style="color:var(--accent);margin-right:6px"></i>Events
         </div>
         <div class="events-list">
-          ${s.events.slice(0,6).map(e=>`
+          "+s.events.slice(0,6).map(e=>`
             <div class="event-item">
               <div class="event-dot"></div>
-              <div><div style="font-size:13px;font-weight:500">${e.description||'—'}</div>
+              <div><div style="font-size:13px;font-weight:500">${e.description||'—'+"</div>
               <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
-            </div>`).join('')}
+            </div>").join('')}
         </div>`:``}
     `;
-  }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
+  }catch(e){ document.getElementById('detail-body').innerHTML="<p style="color:var(--red)">"+e.message+"</p>"; }
 }
 
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
@@ -1351,7 +1351,7 @@ async function saveShipment(){
   };
   try{
     let r;
-    if(editId) r=await apiFetch("/api/shipments/"+"\1",{method:'PATCH',body:JSON.stringify(data)});
+    if(editId) r=await apiFetch("/api/shipments/"+editId,{method:'PATCH',body:JSON.stringify(data)});
     else r=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
     if(r&&r.id){
       try{await _saveContainers(r.id);}catch(e){console.warn('containers:',e);}
@@ -1366,7 +1366,7 @@ async function saveShipment(){
 /* ── Edit ── */
 async function editShipment(sid){
   try{
-    const s=await apiFetch("/api/shipments/"+"\1");
+    const s=await apiFetch("/api/shipments/"+sid);
     editId=sid;
     document.getElementById('modal-add-title').textContent='Edit Shipment';
     const set=(id,v)=>{const el=document.getElementById(id);if(el) el.value=v||'';};
@@ -1398,7 +1398,7 @@ async function editShipment(sid){
 async function deleteShipment(sid){
   if(!await _confirm('Delete this shipment?')) return;
   try{
-    await apiFetch("/api/shipments/"+"\1",{method:'DELETE'});
+    await apiFetch("/api/shipments/"+sid,{method:'DELETE'});
     toast('Deleted','success'); closeModal('modal-detail');
     initTheme();
 loadDashboard(); setTimeout(bindOverviewCards,250); setTimeout(attachOverviewFilters,200); loadShipments();
@@ -1411,7 +1411,7 @@ async function trackOne(){
   const btn=document.getElementById('detail-track-btn');
   btn.innerHTML='<span class="spinner"></span>'; btn.disabled=true;
   try{
-    await apiFetch("/api/shipments/"+"\1+"/track",{method:'POST'});
+    await apiFetch("/api/shipments/"+currentDetailId+"/track",{method:'POST'});
     toast('Tracking updated!','success'); openDetail(currentDetailId);
   }catch(e){ toast(e.message,'error'); }
   btn.innerHTML='<i class="fa fa-rotate"></i> Track'; btn.disabled=false;
@@ -1456,7 +1456,7 @@ async function loadAnalytics(){
     const k = await apiFetch('/api/kpis');
 
     // ── KPI Cards ──
-    document.getElementById('kpi-cards').innerHTML = `
+    document.getElementById('kpi-cards').innerHTML = "
       <div class="kpi-card">
         <div class="kpi-icon">📦</div>
         <div class="kpi-value">${k.total}</div>
@@ -1481,9 +1481,9 @@ async function loadAnalytics(){
         <div class="kpi-icon">🕒</div>
         <div class="kpi-value">${k.avg_transit||'—'}</div>
         <div class="kpi-label">Avg Transit Days</div>
-        <div class="kpi-sub neutral">${k.avg_transit?'ETD → ETA':'No data yet'}</div>
+        <div class="kpi-sub neutral">"+k.avg_transit?'ETD → ETA':'No data yet'+"</div>
       </div>
-    `;
+    ";
 
     // ── Status Donut ──
     destroyChart('chart-status');
@@ -1502,7 +1502,7 @@ async function loadAnalytics(){
             responsive:true,maintainAspectRatio:false,
             plugins:{
               legend:{position:'right',labels:{color:chartTextColor(),font:{size:11},boxWidth:12,padding:10}},
-              tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} shipments`}}
+              tooltip:{callbacks:{label:ctx=>"${ctx.label}: "+ctx.parsed+" shipments"}}
             },
             cutout:'65%'
           }
@@ -1546,11 +1546,11 @@ async function loadAnalytics(){
     const cWrap = document.getElementById('bar-carriers');
     if(k.by_carrier&&k.by_carrier.length){
       const max = k.by_carrier[0].count;
-      cWrap.innerHTML = k.by_carrier.map(c=>`
+      cWrap.innerHTML = k.by_carrier.map(c=>"
         <div class="bar-item">
           <div class="bar-label"><span>${c.name}</span><span>${c.count}</span></div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.count/max*100)}%"></div></div>
-        </div>`).join('');
+          <div class="bar-track"><div class="bar-fill" style="width:"+Math.round(c.count/max*100)+"%"></div></div>
+        </div>").join('');
     } else {
       cWrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No carrier data yet</div>';
     }
@@ -1559,11 +1559,11 @@ async function loadAnalytics(){
     const clWrap = document.getElementById('bar-clients');
     if(k.by_client&&k.by_client.length){
       const max = k.by_client[0].count;
-      clWrap.innerHTML = k.by_client.map(c=>`
+      clWrap.innerHTML = k.by_client.map(c=>"
         <div class="bar-item">
           <div class="bar-label"><span>${c.name}</span><span>${c.count}</span></div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.count/max*100)}%"></div></div>
-        </div>`).join('');
+          <div class="bar-track"><div class="bar-fill" style="width:"+Math.round(c.count/max*100)+"%"></div></div>
+        </div>").join('');
     } else {
       clWrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No client data yet</div>';
     }
@@ -1571,14 +1571,14 @@ async function loadAnalytics(){
     // ── Overdue ──
     const oWrap = document.getElementById('overdue-list');
     if(k.overdue&&k.overdue.length){
-      oWrap.innerHTML = k.overdue.map(o=>`
+      oWrap.innerHTML = k.overdue.map(o=>"
         <div class="overdue-item">
           <div>
             <div class="overdue-ref">${o.ref}</div>
             <div style="font-size:11px;color:var(--text2)">${o.client||'—'} · ETA ${o.eta?o.eta.split('T')[0]:'—'}</div>
           </div>
-          <div class="overdue-days">${o.days_late}d late</div>
-        </div>`).join('');
+          <div class="overdue-days">"+o.days_late+"d late</div>
+        </div>").join('');
     } else {
       oWrap.innerHTML='<div style="text-align:center;padding:16px;color:var(--green);font-size:13px">🎉 No overdue shipments!</div>';
     }
@@ -1729,7 +1729,7 @@ async function loadUsers(){
     const agents = users.filter(u=>u.role!=='admin').length;
     const active = users.filter(u=>u.is_active).length;
 
-    list.innerHTML = `
+    list.innerHTML = "
       <!-- Team Stats -->
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
         <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
@@ -1746,13 +1746,13 @@ async function loadUsers(){
         </div>
       </div>
       <!-- Member Cards -->
-      ${users.map(u => `
+      "+users.map(u => `
         <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;transition:border-color .2s"
              onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
           <div style="display:flex;align-items:center;gap:14px">
             <!-- Avatar -->
             <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;
-              background:linear-gradient(135deg,${u.role==='admin'?'#6c63ff,#4f8ef7':'#4f8ef7,#22c55e'});
+              background:linear-gradient(135deg,${u.role==='admin'?'#6c63ff,#4f8ef7':'#4f8ef7,#22c55e'+");
               display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;
               box-shadow:0 4px 12px rgba(79,142,247,.3)">
               ${(u.name||'U')[0].toUpperCase()}
@@ -1773,7 +1773,7 @@ async function loadUsers(){
               </div>
             </div>
             <!-- Actions -->
-            ${u.role!=='admin'?`
+            ${u.role!=='admin'?"
             <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
               <button onclick="toggleUser(${u.id})" class="btn btn-ghost btn-sm" style="font-size:11px;gap:5px;padding:5px 10px">
                 <i class="fa ${u.is_active?'fa-lock':'fa-lock-open'}"></i> ${u.is_active?'Disable':'Enable'}
@@ -1786,7 +1786,7 @@ async function loadUsers(){
         </div>`).join('')}
     `;
   } catch(e){
-    list.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center;font-size:13px"><i class="fa fa-circle-xmark"></i> ${e.message}</div>`;
+    list.innerHTML = "<div style="color:var(--red);padding:20px;text-align:center;font-size:13px"><i class="fa fa-circle-xmark"></i> "+e.message+"</div>";
   }
 }
 
@@ -1809,13 +1809,13 @@ async function createUser(){
 }
 
 async function toggleUser(id){
-  const r = await authFetch("/api/users/"+"\1+"/toggle",{method:"PATCH"});
+  const r = await authFetch("/api/users/"+id+"/toggle",{method:"PATCH"});
   if(r.ok) loadUsers();
 }
 
 async function deleteUser(id){
   if(!await _confirm("Delete this user permanently?")) return;
-  const r = await authFetch("/api/users/"+"\1",{method:"DELETE"});
+  const r = await authFetch("/api/users/"+id,{method:"DELETE"});
   if(r.ok) loadUsers();
 }
 </script>
@@ -2022,7 +2022,7 @@ async function doChangePassword(){
   const new_pw=document.getElementById("cpw-new").value;
   const confirm=document.getElementById("cpw-confirm").value;
   const msg=document.getElementById("cpw-msg");
-  async function showMsg(txt,ok){
+  function showMsg(txt,ok){
     msg.textContent=txt; msg.style.display="block";
     msg.style.background=ok?"rgba(34,197,94,.1)":"rgba(239,68,68,.1)";
     msg.style.border="1px solid "+(ok?"rgba(34,197,94,.3)":"rgba(239,68,68,.3)");
@@ -2050,7 +2050,7 @@ function bulkFileSelected(file){
   const res=document.getElementById("bulk-result");
   res.style.display="none";
   if(!file){ sel.style.display="none"; if(btn) btn.style.display="none"; return; }
-  sel.innerHTML=`<i class="fa fa-file-excel" style="color:#22c55e"></i> <strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB)`;
+  sel.innerHTML="<i class="fa fa-file-excel" style="color:#22c55e"></i> <strong>${file.name}</strong> ("+(file.size/1024).toFixed(1)+" KB)";
   sel.style.display="block";
   if(btn) btn.style.display="";
 }
@@ -2068,8 +2068,8 @@ async function doBulkUpload(){
     const d=await r.json();
     if(!r.ok) throw new Error(d.detail||"Import failed");
     res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#16a34a";
-    res.innerHTML=`✅ <strong>${d.created}</strong> created, <strong>${d.skipped}</strong> skipped`
-      +(d.errors?.length?`<br>⚠️ ${d.errors.length} error(s)`:"");
+    res.innerHTML="✅ <strong>${d.created}</strong> created, <strong>"+d.skipped+"</strong> skipped"
+      +(d.errors?.length?"<br>⚠️ "+d.errors.length+" error(s)":"");
     _bulkFile=null; if(btn) btn.style.display="none";
     if(typeof loadShipments==="function") loadShipments();
   } catch(e){
@@ -2090,7 +2090,7 @@ async function loadUsers(){
       list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px">👥</div>No team members yet</div>';
       return;
     }
-    list.innerHTML=users.map(u=>`
+    list.innerHTML=users.map(u=>"
       <div class="shipment-card" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:12px 14px">
         <div style="width:40px;height:40px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,${u.role==='admin'?'#6c63ff,#4f8ef7':'#4f8ef7,#22c55e'});display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff">
           ${(u.name||"U")[0].toUpperCase()}
@@ -2103,12 +2103,12 @@ async function loadUsers(){
           <span class="badge ${u.role==='admin'?'badge-blue':'badge-green'}" style="font-size:10px">${u.role==='admin'?'👑 Admin':'🎧 CS'}</span>
           <span class="badge ${u.is_active?'badge-green':'badge-red'}" style="font-size:10px">${u.is_active?'Active':'Inactive'}</span>
         </div>
-        ${u.role!=='admin'?`<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-          <button onclick="toggleUser(${u.id})" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px">${u.is_active?'🔒 Disable':'🔓 Enable'}</button>
+        "+u.role!=='admin'?`<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <button onclick="toggleUser(${u.id+")" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px">${u.is_active?'🔒 Disable':'🔓 Enable'}</button>
           <button onclick="deleteUser(${u.id})" class="btn btn-danger btn-sm" style="font-size:10px;padding:3px 8px">🗑 Delete</button>
-        </div>`:""}
+        </div>":""}
       </div>`).join("");
-  } catch(e){ list.innerHTML=`<div style="color:#ef4444;padding:20px;text-align:center">Error: ${e.message}</div>`; }
+  } catch(e){ list.innerHTML="<div style="color:#ef4444;padding:20px;text-align:center">Error: "+e.message+"</div>"; }
 }
 
 function openNewUserModal(){
@@ -2135,13 +2135,13 @@ async function createUser(){
 }
 
 async function toggleUser(id){
-  try{ await apiFetch("/api/users/"+"\1+"/toggle",{method:"PATCH"}); loadUsers(); }
+  try{ await apiFetch("/api/users/"+id+"/toggle",{method:"PATCH"}); loadUsers(); }
   catch(e){ showToast("Error: "+e.message,"error"); }
 }
 
 async function deleteUser(id){
   if(!await _confirm("Delete this user permanently?")) return;
-  try{ await apiFetch("/api/users/"+"\1",{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
+  try{ await apiFetch("/api/users/"+id,{method:"DELETE"}); loadUsers(); showToast("User deleted","success"); }
   catch(e){ showToast("Error: "+e.message,"error"); }
 }
 
@@ -2163,7 +2163,7 @@ async function openDetail(id){
   document.getElementById("detail-no-events").style.display="none";
   switchDTab("timeline");
   try{
-    const s=await apiFetch("/api/shipments/"+"\1");
+    const s=await apiFetch("/api/shipments/"+id);
     _renderDetail(s);
   } catch(e){ document.getElementById("detail-ref").textContent="Error: "+e.message; }
 }
@@ -2171,7 +2171,7 @@ async function openDetail(id){
 function _renderDetail(s){
   document.getElementById("detail-ref").textContent=s.ref||"—";
   document.getElementById("detail-sub").textContent=[s.booking_no,s.carrier].filter(Boolean).join(" · ")||"No container/carrier info";
-  document.getElementById("detail-status-badge").innerHTML=typeof statusBadge==="function"?statusBadge(s.status):`<span>${s.status}</span>`;
+  document.getElementById("detail-status-badge").innerHTML=typeof statusBadge==="function"?statusBadge(s.status):"<span>"+s.status+"</span>";
   document.getElementById("detail-pol").textContent=s.pol||"—";
   document.getElementById("detail-pod").textContent=s.pod||"—";
   document.getElementById("detail-etd").textContent=s.etd||"—";
@@ -2180,12 +2180,12 @@ function _renderDetail(s){
   const infoChips = document.getElementById("detail-info-chips");
   if(infoChips){
     infoChips.innerHTML = [
-      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:6px 10px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:6px 10px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
-      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:6px 10px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
+      s.shipper    ? "<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🏭 <b>Shipper:</b> "+s.shipper+"</div>" : '',
+      s.consignee  ? "<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">📦 <b>Consignee:</b> "+s.consignee+"</div>" : '',
+      s.client     ? "<div class="badge badge-blue" style="font-size:12px;padding:6px 10px">👤 <b>Client:</b> "+s.client+"</div>" : '',
+      s.incoterm   ? "<div class="badge badge-red" style="font-size:12px;padding:6px 10px">📋 <b>Incoterm:</b> "+s.incoterm+"</div>" : '',
+      s.mode       ? "<div class="badge badge-gray" style="font-size:12px;padding:6px 10px">🚢 <b>Mode:</b> "+s.mode+"</div>" : '',
+      (s.containers&&s.containers.length) ? "<div class="badge badge-green" style="font-size:12px;padding:6px 10px">🗃 <b>Containers:</b> ${s.containers.length} ("+s.teu||0+" TEU)</div>" : '',
     ].filter(Boolean).join('');
   }
 
@@ -2193,22 +2193,22 @@ function _renderDetail(s){
   const contList = document.getElementById("detail-containers-list");
   if(contList){
     if(s.containers && s.containers.length){
-      contList.innerHTML = s.containers.map(c=>`
+      contList.innerHTML = s.containers.map(c=>"
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
           <div style="font-size:13px;font-weight:600;color:var(--text1)">${c.container_no||c.size_type||'Container'}</div>
-          <div class="badge badge-gray" style="font-size:11px">${c.size_type||'—'}</div>
+          <div class="badge badge-gray" style="font-size:11px">"+c.size_type||'—'+"</div>
         </div>
-      `).join('');
+      ").join('');
       document.getElementById("detail-containers-section").style.display="block";
     } else {
       document.getElementById("detail-containers-section").style.display="none";
     }
   }
 </div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      (s.containers&&s.containers.length) ? `<div class="badge badge-green" style="font-size:12px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : '',
+      s.consignee  ? "<div class="badge badge-gray" style="font-size:12px">📦 <b>Consignee:</b> "+s.consignee+"</div>" : '',
+      s.client     ? "<div class="badge badge-blue" style="font-size:12px">👤 <b>Client:</b> "+s.client+"</div>" : '',
+      s.incoterm   ? "<div class="badge badge-red" style="font-size:12px">📋 <b>Incoterm:</b> "+s.incoterm+"</div>" : '',
+      (s.containers&&s.containers.length) ? "<div class="badge badge-green" style="font-size:12px">🗃 <b>Containers:</b> ${s.containers.length} ("+s.teu||0+" TEU)</div>" : '',
     ].filter(Boolean).join('');
     infoChips.style.display = infoChips.innerHTML ? 'flex' : 'none';
   }
@@ -2217,12 +2217,12 @@ function _renderDetail(s){
   const infoChips = document.getElementById("detail-info-chips");
   if(infoChips){
     infoChips.innerHTML = [
-      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:4px 8px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:4px 8px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🚢 <b>Mode:</b> ${s.mode}</div>` : '',
-      (s.containers && s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:4px 8px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : ''
+      s.shipper    ? "<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🏭 <b>Shipper:</b> "+s.shipper+"</div>" : '',
+      s.consignee  ? "<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">📦 <b>Consignee:</b> "+s.consignee+"</div>" : '',
+      s.client     ? "<div class="badge badge-blue" style="font-size:12px;padding:4px 8px">👤 <b>Client:</b> "+s.client+"</div>" : '',
+      s.incoterm   ? "<div class="badge badge-red" style="font-size:12px;padding:4px 8px">📋 <b>Incoterm:</b> "+s.incoterm+"</div>" : '',
+      s.mode       ? "<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🚢 <b>Mode:</b> "+s.mode+"</div>" : '',
+      (s.containers && s.containers.length) ? "<div class="badge badge-green" style="font-size:12px;padding:4px 8px">🗃 <b>Containers:</b> ${s.containers.length} ("+s.teu||0+" TEU)</div>" : ''
     ].filter(Boolean).join('');
   }
   const contSection = document.getElementById("detail-containers-section");
@@ -2230,11 +2230,11 @@ function _renderDetail(s){
   if(contSection && contList){
     if(s.containers && s.containers.length){
       contSection.style.display = 'block';
-      contList.innerHTML = s.containers.map(c=>`
+      contList.innerHTML = s.containers.map(c=>"
         <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
           <div style="font-size:13px;font-weight:600;color:var(--text1)">${c.container_no||c.size_type||'Container'}</div>
-          <div style="font-size:11px;color:var(--text2)">${c.size_type||''}</div>
-        </div>`).join('');
+          <div style="font-size:11px;color:var(--text2)">"+c.size_type||''+"</div>
+        </div>").join('');
     } else {
       contSection.style.display = 'none';
       contList.innerHTML = '';
@@ -2249,13 +2249,13 @@ function _renderDetail(s){
   if(!evts.length){ evList.innerHTML=""; noEv.style.display="block"; }
   else{
     noEv.style.display="none";
-    evList.innerHTML=evts.map((e,i)=>`
+    evList.innerHTML=evts.map((e,i)=>"
       <div class="timeline-item">
         <div class="tl-dot ${i===0?"latest":""}">${i===0?"🚢":"📍"}</div>
         <div class="tl-content">
           <div class="tl-time">${e.timestamp||""}</div>
           <div class="tl-label">${e.description||e.status||"Update"}</div>
-          ${e.location?`<div class="tl-loc">📌 ${e.location}</div>`:""}
+          "+e.location?`<div class="tl-loc">📌 ${e.location+"</div>":""}
         </div>
       </div>`).join("");
   }
@@ -2265,12 +2265,12 @@ function _renderDetail(s){
   const comments=s.comments||[];
   cList.innerHTML=!comments.length
     ?'<div style="text-align:center;padding:20px;color:var(--text2);font-size:12px">No notes yet</div>'
-    :comments.map(c=>`
+    :comments.map(c=>"
       <div class="comment-bubble">
         <span class="comment-author">${c.author||"Agent"}</span>
         <span class="comment-time">${c.timestamp||""}</span>
-        <div class="comment-text">${c.text||""}</div>
-      </div>`).join("");
+        <div class="comment-text">"+c.text||""+"</div>
+      </div>").join("");
 
   // Info chips
   const chips=[
@@ -2285,7 +2285,7 @@ function _renderDetail(s){
     {l:"Last Synced",v:s.last_tracked||"Never"},
   ];
   document.getElementById("detail-info-chips").innerHTML=chips.map(c=>
-    `<div class="info-chip${c.full?" full":""}"><div class="chip-label">${c.l}</div><div class="chip-value">${c.v}</div></div>`
+    "<div class="info-chip${c.full?" full":""}"><div class="chip-label">${c.l}</div><div class="chip-value">"+c.v+"</div></div>"
   ).join("");
 }
 
@@ -2303,10 +2303,10 @@ async function submitComment(){
   if(!txt||!txt.value.trim()) return;
   const user=getUser();
   try{
-    await apiFetch("/api/shipments/"+"\1+"/comments",{method:"POST",
+    await apiFetch("/api/shipments/"+_detailId+"/comments",{method:"POST",
       body:JSON.stringify({author:user?.name||"Agent",text:txt.value.trim()})});
     txt.value="";
-    const s=await apiFetch("/api/shipments/"+"\1");
+    const s=await apiFetch("/api/shipments/"+_detailId);
     _renderDetail(s); switchDTab("notes"); showToast("Note added","success");
   } catch(e){ showToast("Error: "+e.message,"error"); }
 }
@@ -2316,8 +2316,8 @@ async function syncDetail(){
   const btn=document.getElementById("detail-sync-btn");
   if(btn){ btn.disabled=true; btn.innerHTML='<i class="fa fa-rotate fa-spin"></i>'; }
   try{
-    await apiFetch("/api/shipments/"+"\1+"/track",{method:"POST"});
-    const s=await apiFetch("/api/shipments/"+"\1");
+    await apiFetch("/api/shipments/"+_detailId+"/track",{method:"POST"});
+    const s=await apiFetch("/api/shipments/"+_detailId);
     _renderDetail(s); showToast("Synced","success");
   } catch(e){ showToast("Sync error: "+e.message,"error"); }
   finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="fa fa-rotate"></i>'; } }
@@ -2339,7 +2339,7 @@ function showToast(msg,type){
     document.body.appendChild(wrap); }
   const t=document.createElement("div");
   t.style.cssText="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;color:var(--text1);box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;white-space:nowrap";
-  t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"✅":"❌"}</span>${msg}`;
+  t.innerHTML="<span style="color:"+type==="success"?"#22c55e":"#ef4444"+"">"+type==="success"?"✅":"❌"+"</span>"+msg;
   wrap.appendChild(t); setTimeout(()=>t.remove(),2800);
 }
 </script>
@@ -2668,7 +2668,7 @@ async function generateReport(){
 
     const statusColor = s => statusColors[s]||'#888';
 
-    const reportHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    const reportHtml = "<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>FreightTrack Pro — Report ${today.toLocaleDateString()}</title>
     <style>
       *{margin:0;padding:0;box-sizing:border-box}
@@ -2739,21 +2739,21 @@ async function generateReport(){
       <div class="section">
         <div class="section-title">📦 By Status</div>
         <table><thead><tr><th>Status</th><th>Count</th><th style="width:120px">Share</th></tr></thead><tbody>
-          ${statusList.filter(s=>bs[s]).map(s=>`<tr>
-            <td><span class="badge" style="background:${statusColors[s]}22;color:${statusColors[s]}">${s}</span></td>
+          "+statusList.filter(s=>bs[s]).map(s=>`<tr>
+            <td><span class="badge" style="background:${statusColors[s]+"22;color:${statusColors[s]}">${s}</span></td>
             <td style="font-weight:700">${bs[s]||0}</td>
             <td><div class="bar-wrap"><div class="bar" style="width:${Math.round(((bs[s]||0)/total)*100)}%;background:${statusColors[s]}"></div></div></td>
-          </tr>`).join('')}
+          </tr>").join('')}
         </tbody></table>
       </div>
       <div class="section">
         <div class="section-title">🚢 By Carrier</div>
         <table><thead><tr><th>Carrier</th><th>Shipments</th><th style="width:120px">Share</th></tr></thead><tbody>
-          ${carrierRows.length ? carrierRows.map(([c,n])=>`<tr>
+          ${carrierRows.length ? carrierRows.map(([c,n])=>"<tr>
             <td style="font-weight:600">${c}</td>
             <td style="font-weight:700">${n}</td>
-            <td><div class="bar-wrap"><div class="bar" style="width:${Math.round((n/total)*100)}%;background:#4f8ef7"></div></div></td>
-          </tr>`).join('') : '<tr><td colspan="3" style="color:#aaa;text-align:center;padding:20px">No carrier data</td></tr>'}
+            <td><div class="bar-wrap"><div class="bar" style="width:"+Math.round((n/total)*100)+"%;background:#4f8ef7"></div></div></td>
+          </tr>").join('') : '<tr><td colspan="3" style="color:#aaa;text-align:center;padding:20px">No carrier data</td></tr>'}
         </tbody></table>
       </div>
     </div>
@@ -2763,43 +2763,43 @@ async function generateReport(){
       <div class="section">
         <div class="section-title">✈ By Mode</div>
         <table><thead><tr><th>Mode</th><th>Count</th><th>TEU</th></tr></thead><tbody>
-          ${Object.entries(bm).map(([m,n])=>`<tr>
+          ${Object.entries(bm).map(([m,n])=>"<tr>
             <td style="font-weight:600">${m}</td>
             <td>${n}</td>
-            <td style="color:#6c63ff;font-weight:600">${ships.filter(s=>s.mode===m).reduce((a,s)=>a+(s.teu||0),0)||'—'}</td>
-          </tr>`).join('')}
+            <td style="color:#6c63ff;font-weight:600">"+ships.filter(s=>s.mode===m).reduce((a,s)=>a+(s.teu||0),0)||'—'+"</td>
+          </tr>").join('')}
         </tbody></table>
       </div>
       <div class="section">
         <div class="section-title">🏁 Top Destinations (POD)</div>
         <table><thead><tr><th>Port</th><th>Count</th></tr></thead><tbody>
-          ${podRows.map(([p,n])=>`<tr><td style="font-weight:600">${p}</td><td>${n}</td></tr>`).join('')}
+          ${podRows.map(([p,n])=>"<tr><td style="font-weight:600">${p}</td><td>"+n+"</td></tr>").join('')}
         </tbody></table>
       </div>
     </div>
 
-    ${overdue.length ? `
+    ${overdue.length ? "
     <!-- Overdue -->
     <div class="section">
       <div class="section-title" style="color:#dc2626">⚠️ Overdue Shipments (ETA Passed)</div>
       <table><thead><tr><th>Ref</th><th>Client</th><th>Route</th><th>Carrier</th><th>ETA</th><th>Status</th></tr></thead><tbody>
-        ${overdue.map(s=>`<tr class="overdue-row">
-          <td style="font-weight:700">${s.ref}</td>
+        "+overdue.map(s=>`<tr class="overdue-row">
+          <td style="font-weight:700">${s.ref+"</td>
           <td>${s.client||'—'}</td>
           <td>${s.pol||'—'} → ${s.pod||'—'}</td>
           <td>${s.carrier||'—'}</td>
           <td style="font-weight:700">${fmtD(s.eta)}</td>
           <td><span class="badge" style="background:${statusColor(s.status)}22;color:${statusColor(s.status)}">${s.status}</span></td>
-        </tr>`).join('')}
+        </tr>").join('')}
       </tbody></table>
-    </div>` : ''}
+    </div>" : ''}
 
     <!-- Full Shipment List -->
     <div class="section">
       <div class="section-title">📋 All Shipments (${total})</div>
       <table><thead><tr><th>#</th><th>Reference</th><th>Container/AWB</th><th>Client</th><th>Carrier</th><th>Route</th><th>Mode</th><th>TEU</th><th>ETD</th><th>ETA</th><th>Status</th></tr></thead><tbody>
-        ${ships.map((s,i)=>`<tr>
-          <td style="color:#aaa">${i+1}</td>
+        "+ships.map((s,i)=>`<tr>
+          <td style="color:#aaa">${i+1+"</td>
           <td style="font-weight:700;color:#4f8ef7">${s.ref||'—'}</td>
           <td style="color:#5a6a8a;font-size:11px">${s.ref2||'—'}</td>
           <td>${s.client||'—'}</td>
@@ -2810,7 +2810,7 @@ async function generateReport(){
           <td>${fmtD(s.etd)}</td>
           <td>${fmtD(s.eta)}</td>
           <td><span class="badge" style="background:${statusColor(s.status)}22;color:${statusColor(s.status)}">${s.status||'—'}</span></td>
-        </tr>`).join('')}
+        </tr>").join('')}
       </tbody></table>
     </div>
 
@@ -2868,7 +2868,7 @@ function _renderContainerList(){
     list.innerHTML = '<div style="font-size:12px;color:var(--text2);text-align:center;padding:10px">No containers added yet</div>';
     return;
   }
-  list.innerHTML = _formContainers.map((c,i)=>`
+  list.innerHTML = _formContainers.map((c,i)=>"
     <div style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
       <div style="font-size:20px">📦</div>
       
@@ -2885,7 +2885,7 @@ function _renderContainerList(){
         <span style="font-size:13px;font-weight:700;color:var(--text1)">${c.qty} × ${c.size_type}</span>
         <span style="font-size:11px;color:var(--accent);font-weight:700;margin-left:8px">${c.teu_total} TEU</span>
       </div>
-      <button type="button" onclick="${c.fromDB&&c.dbIds?.length?`deleteContainerGroup(${i})`:"removeContainerRow("+i+")"}" class="btn btn-danger btn-sm btn-icon" style="padding:4px 8px">
+      <button type="button" onclick=""+c.fromDB&&c.dbIds?.length?`deleteContainerGroup(${i+")":"removeContainerRow("+i+")"}" class="btn btn-danger btn-sm btn-icon" style="padding:4px 8px">
         <i class="fa fa-trash"></i>
       </button>
     </div>`).join('');
@@ -2902,7 +2902,7 @@ async function deleteContainerGroup(idx){
   const c=_formContainers[idx];
   if(c.fromDB&&c.dbIds){
     for(const id of c.dbIds){
-      try{ await apiFetch(`/api/containers/${id}`,{method:'DELETE'}); }catch(e){}
+      try{ await apiFetch("/api/containers/"+id,{method:'DELETE'}); }catch(e){}
     }
   }
   _formContainers.splice(idx,1);
@@ -2913,7 +2913,7 @@ async function _saveContainers(shipmentId){
   for(const c of _formContainers){
     if(c.fromDB) continue; // already saved in DB, skip
     for(let i=0;i<c.qty;i++){
-      await apiFetch(`/api/shipments/${shipmentId}/containers`,{
+      await apiFetch("/api/shipments/"+shipmentId+"/containers",{
         method:'POST', body:JSON.stringify({container_no:c.size_type+'_'+String(i+1).padStart(2,'0'), size_type:c.size_type, seal_no:null})
       });
     }
