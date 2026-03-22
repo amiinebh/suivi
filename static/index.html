@@ -697,54 +697,6 @@ textarea.form-control{resize:vertical;min-height:72px}
         <div id="clients-list"></div>
       </div>
 
-      <!-- CLIENT MODAL -->
-      <div class="modal-backdrop" id="modal-client" onclick="if(event.target===this)closeClientModal()">
-        <div class="modal" onclick="event.stopPropagation()">
-          <div class="modal-header">
-            <span id="client-modal-title">New Client</span>
-            <button class="btn btn-ghost btn-sm" onclick="closeClientModal()"><i class="ph ph-x"></i></button>
-          </div>
-          <div class="modal-body">
-            <div class="form-grid">
-              <div class="form-group full">
-                <label>Company Name</label>
-                <input id="cf-name" class="form-control" placeholder="e.g. Atlas Trading SARL">
-              </div>
-              <div class="form-group">
-                <label>Contact Person</label>
-                <input id="cf-contact" class="form-control" placeholder="Full name">
-              </div>
-              <div class="form-group">
-                <label>Email</label>
-                <input id="cf-email" class="form-control" type="email" placeholder="contact@company.com">
-              </div>
-              <div class="form-group">
-                <label>Phone</label>
-                <input id="cf-phone" class="form-control" placeholder="+212 6xx xxx xxx">
-              </div>
-              <div class="form-group">
-                <label>Address</label>
-                <input id="cf-address" class="form-control" placeholder="City, Country">
-              </div>
-              <div class="form-group">
-                <label>Payment Terms</label>
-                <select id="cf-payment" class="form-control">
-                  <option>Cash</option><option>30 days</option><option>60 days</option><option>90 days</option><option>Prepaid</option>
-                </select>
-              </div>
-              <div class="form-group full">
-                <label>Notes</label>
-                <textarea id="cf-notes" class="form-control" rows="2" placeholder="Any internal notes"></textarea>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-ghost" onclick="closeClientModal()" style="flex:1">Cancel</button>
-            <button class="btn btn-primary" onclick="saveClient()" style="flex:2"><i class="ph ph-floppy-disk"></i> Save</button>
-          </div>
-        </div>
-      </div>
-
       <div class="page" id="page-users">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <div>
@@ -3274,6 +3226,55 @@ function renderClientActivity() {
 
 // Auto-run when analytics page loads via existing integration above
 </script>
+
+
+
+  <div class="modal-backdrop" id="modal-client" style="display:none" onclick="if(event.target===this)closeClientModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <span id="client-modal-title">New Client</span>
+            <button class="btn btn-ghost btn-sm" onclick="closeClientModal()"><i class="ph ph-x"></i></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-grid">
+              <div class="form-group full">
+                <label>Company Name</label>
+                <input id="cf-name" class="form-control" placeholder="e.g. Atlas Trading SARL">
+              </div>
+              <div class="form-group">
+                <label>Contact Person</label>
+                <input id="cf-contact" class="form-control" placeholder="Full name">
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input id="cf-email" class="form-control" type="email" placeholder="contact@company.com">
+              </div>
+              <div class="form-group">
+                <label>Phone</label>
+                <input id="cf-phone" class="form-control" placeholder="+212 6xx xxx xxx">
+              </div>
+              <div class="form-group">
+                <label>Address</label>
+                <input id="cf-address" class="form-control" placeholder="City, Country">
+              </div>
+              <div class="form-group">
+                <label>Payment Terms</label>
+                <select id="cf-payment" class="form-control">
+                  <option>Cash</option><option>30 days</option><option>60 days</option><option>90 days</option><option>Prepaid</option>
+                </select>
+              </div>
+              <div class="form-group full">
+                <label>Notes</label>
+                <textarea id="cf-notes" class="form-control" rows="2" placeholder="Any internal notes"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeClientModal()" style="flex:1">Cancel</button>
+            <button class="btn btn-primary" onclick="saveClient()" style="flex:2"><i class="ph ph-floppy-disk"></i> Save</button>
+          </div>
+        </div>
+      </div>
 
 </body>
 </html>
