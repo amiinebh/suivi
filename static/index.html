@@ -1207,7 +1207,7 @@ async function loadDashboard(){
         .filter(function(sh){ return sh.etd && _done.indexOf(sh.status)===-1; })
         .map(function(sh){ var d=new Date(sh.etd); d.setHours(0,0,0,0);
           return {id:sh.id,ref:sh.ref,pol:sh.pol||'',pod:sh.pod||'',_d:d}; })
-        .filter(function(sh){ return sh._d >= _t; })
+        .filter(function(sh){ var _max=new Date(_t); _max.setDate(_max.getDate()+3); return sh._d >= _t && sh._d <= _max; })
         .sort(function(a,b){ return a._d - b._d; }).slice(0,6);
       if (!_up.length) {
         _s.innerHTML = '<div style="color:var(--text3);font-size:12px">No upcoming departures</div>';
@@ -1905,34 +1905,64 @@ async function doBulkUpload(){
 
 // ═══ USER MANAGEMENT ═════════════════════════════════════════
 async function loadUsers(){
-  const list=document.getElementById("users-list");
+  var list=document.getElementById('users-list');
   if(!list) return;
-  list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text2)"><i class="ph ph-spinner"></i> Loading…</div>';
+  list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">'
+    +'<i class="ph ph-spinner" style="font-size:24px"></i>'
+    +'<div style="margin-top:12px;font-size:13px">Loading team...</div></div>';
   try{
-    const users=await apiFetch("/api/users");
-    if(!users.length){
-      list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:28px;margin-bottom:8px"><i class="ph ph-users"></i></div>No team members yet</div>';
+    var users=await apiFetch('/api/users');
+    if(!users||!users.length){
+      list.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2)">'
+        +'<div style="font-size:40px;margin-bottom:12px"><i class="ph ph-users"></i></div>'
+        +'<div style="font-size:15px;font-weight:700">No team members yet</div>'
+        +'<div style="font-size:13px;margin-top:6px">Add your first CS agent above</div></div>';
       return;
     }
-    list.innerHTML=users.map(u=>`
-      <div class="shipment-card" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;padding:12px 14px">
-        <div style="width:40px;height:40px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,${u.role==='admin'?'#6c63ff,#4f8ef7':'#4f8ef7,#22c55e'});display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff">
-          ${(u.name||"U")[0].toUpperCase()}
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.email}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
-          <span class="badge ${u.role==='admin'?'badge-blue':'badge-green'}" style="font-size:10px">${u.role==='admin'?'👑 Admin':'🎧 CS'}</span>
-          <span class="badge ${u.is_active?'badge-green':'badge-red'}" style="font-size:10px">${u.is_active?'Active':'Inactive'}</span>
-        </div>
-        ${u.role!=='admin'?`<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-          <button onclick="toggleUser(${u.id})" class="btn btn-ghost btn-sm" style="font-size:10px;padding:3px 8px">${u.is_active?'🔒 Disable':'🔓 Enable'}</button>
-          <button onclick="deleteUser(${u.id})" class="btn btn-danger btn-sm" style="font-size:10px;padding:3px 8px">🗑 Delete</button>
-        </div>`:""}
-      </div>`).join("");
-  } catch(e){ list.innerHTML=`<div style="color:#ef4444;padding:20px;text-align:center">Error: ${e.message}</div>`; }
+    var total=users.length;
+    var agents=users.filter(function(u){return u.role!=='admin';}).length;
+    var active=users.filter(function(u){return u.isactive;}).length;
+    var statsHtml='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">'
+      +'<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">'
+      +'<div style="font-size:22px;font-weight:700;color:var(--accent)">'+total+'</div>'
+      +'<div style="font-size:11px;color:var(--text2);margin-top:2px">Total</div></div>'
+      +'<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">'
+      +'<div style="font-size:22px;font-weight:700;color:var(--green)">'+active+'</div>'
+      +'<div style="font-size:11px;color:var(--text2);margin-top:2px">Active</div></div>'
+      +'<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">'
+      +'<div style="font-size:22px;font-weight:700;color:var(--accent2)">'+agents+'</div>'
+      +'<div style="font-size:11px;color:var(--text2);margin-top:2px">Agents</div></div></div>';
+    var cardsHtml=users.map(function(u){
+      var avatarBg=u.role==='admin'?'linear-gradient(135deg,#6c63ff,#4f8ef7)':'linear-gradient(135deg,#4f8ef7,#22c55e)';
+      var initial=(u.name||'?')[0].toUpperCase();
+      var roleBadge=u.role==='admin'
+        ?'<span class="badge badge-sailing" style="font-size:10px">Admin</span>'
+        :'<span class="badge badge-arrived" style="font-size:10px">CS Agent</span>';
+      var statusBadge=u.isactive
+        ?'<span class="badge badge-arrived" style="font-size:10px">Active</span>'
+        :'<span class="badge badge-delayed" style="font-size:10px">Inactive</span>';
+      var actions=u.role!=='admin'
+        ?'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">'
+          +'<button onclick="toggleUser('+u.id+')" class="btn btn-ghost btn-sm" style="font-size:11px;padding:5px 10px">'
+          +'<i class="ph '+(u.isactive?'ph-lock':'ph-lock-open')+'"></i> '+(u.isactive?'Disable':'Enable')+'</button>'
+          +'<button onclick="deleteUser('+u.id+')" class="btn btn-danger btn-sm" style="font-size:11px;padding:5px 10px">'
+          +'<i class="ph ph-trash"></i> Delete</button></div>'
+        :'<div style="padding:4px 8px;font-size:11px;color:var(--text3)">Owner</div>';
+      return '<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;transition:border-color .2s"'
+        +' onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
+        +'<div style="display:flex;align-items:center;gap:14px">'
+        +'<div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:'+avatarBg+';display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff">'+initial+'</div>'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-size:14px;font-weight:700;color:var(--text1)">'+u.name+'</div>'
+        +'<div style="font-size:12px;color:var(--text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+u.email+'</div>'
+        +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'+roleBadge+statusBadge+'</div></div>'
+        +actions+'</div></div>';
+    }).join('');
+    list.innerHTML=statsHtml+cardsHtml;
+  }catch(e){
+    list.innerHTML='<div style="color:var(--red);padding:20px;text-align:center;font-size:13px">'+e.message+'</div>';
+    if(typeof toast==='function') toast(e.message,'error');
+  }
 }
 
 function openNewUserModal(){
@@ -1974,22 +2004,31 @@ let _detailId=null;
 
 async function openDetail(id){
   _detailId=id;
-  showPage("detail",null);
-  document.getElementById("detail-ref").textContent="Loading…";
-  document.getElementById("detail-sub").textContent="";
-  document.getElementById("detail-status-badge").innerHTML="";
-  ["detail-pol","detail-pod","detail-etd","detail-eta"].forEach(i=>{
-    const el=document.getElementById(i); if(el) el.textContent="—";
-  });
-  document.getElementById("detail-events-list").innerHTML="";
-  document.getElementById("detail-comments-list").innerHTML="";
-  document.getElementById("detail-info-chips").innerHTML="";
-  document.getElementById("detail-no-events").style.display="none";
-  switchDTab("timeline");
+  showPage('detail',null);
+  function _set(elId,val){ var el=document.getElementById(elId); if(el) el.textContent=val; }
+  function _html(elId,val){ var el=document.getElementById(elId); if(el) el.innerHTML=val; }
+  _set('detail-ref','Loading…');
+  _set('detail-sub','');
+  _html('detail-status-badge','');
+  ['detail-pol','detail-pod','detail-etd','detail-eta'].forEach(function(i){ _set(i,'—'); });
+  _html('detail-events-list','');
+  _html('detail-comments-list','');
+  _html('detail-info-chips','');
   try{
-    const s=await apiFetch(`/api/shipments/${id}`);
-    _renderDetail(s);
-  } catch(e){ document.getElementById("detail-ref").textContent="Error: "+e.message; }
+    var ship=await apiFetch('/api/shipments/'+id);
+    _set('detail-ref', ship.ref||'');
+    _set('detail-sub', (ship.client||'')+(ship.carrier?' · '+ship.carrier:''));
+    _html('detail-status-badge', statusBadge(ship.status));
+    _set('detail-pol', ship.pol||'—');
+    _set('detail-pod', ship.pod||'—');
+    _set('detail-etd', fmtd(ship.etd));
+    _set('detail-eta', fmtd(ship.eta));
+    if(typeof _renderDetail==='function') _renderDetail(ship);
+  }catch(e){
+    _set('detail-ref','Error');
+    _html('detail-sub','<span style="color:var(--red)">'+e.message+'</span>');
+    if(typeof toast==='function') toast(e.message,'error');
+  }
 }
 
 function _renderDetail(s){
@@ -2288,9 +2327,11 @@ async function confirmSendEmail() {
 
 <script>
 /* ═══ ALERTS PAGE ═══ */
-async function snoozeAlert(key) {
+async function snoozeAlert(key, ref) {
   var exp = new Date(); exp.setHours(exp.getHours()+24);
   localStorage.setItem('snooze_'+key, exp.getTime());
+  var label = ref ? ref : key.split('_')[0];
+  if(typeof toast==='function') toast(label + ' snoozed for 24h', 'info');
   loadAlerts();
 }
 function isAlertSnoozed(key) {
@@ -2325,7 +2366,7 @@ async function loadAlerts() {
         + '<div style="font-size:12px;color:var(--text2);margin-bottom:10px">' + a.message + '</div>'
         + '<div style="display:flex;gap:8px">'
         + '<button onclick="openDetail(' + a.id + ')" style="flex:1;padding:6px 0;font-size:12px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer">Open &rarr;</button>'
-        + '<button onclick="snoozeAlert(\'' + a.id + '_' + a.type + '\')" style="padding:6px 12px;font-size:12px;font-weight:600;background:var(--bg2);color:var(--text2);border:1px solid var(--border);border-radius:8px;cursor:pointer">Snooze 24h</button>'
+        + '<button onclick="snoozeAlert(\'' + a.id + '_' + a.type + '\',\'' + a.ref + '\')" style="padding:6px 12px;font-size:12px;font-weight:600;background:var(--bg2);color:var(--text2);border:1px solid var(--border);border-radius:8px;cursor:pointer">Snooze 24h</button>'
         + '</div>'
         + '</div>';
     }).join('');
