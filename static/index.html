@@ -404,11 +404,11 @@ textarea.form-control{resize:vertical;min-height:72px}
 .digest-row:last-child{border-bottom:none}
 
 
-@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-.skeleton{pointer-events:none;background:linear-gradient(90deg,var(--bg3) 25%,var(--border) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--radius-sm)}
-.skel-row{height:52px;margin-bottom:8px;border-radius:var(--radius)}
-.skel-card{height:140px;margin-bottom:10px;border-radius:var(--radius)}
-.skel-kpi{height:88px;border-radius:var(--radius);flex:1}
+100%{background-position:200% 0}}
+
+
+
+
 
 .empty{text-align:center;padding:60px 20px;color:var(--text2);display:flex;flex-direction:column;align-items:center;gap:10px}
 .empty-icon{font-size:48px;opacity:.4;line-height:1}
@@ -1430,9 +1430,6 @@ color:'+etaColor+'">'+fmtd(sh.eta)+etaTag+'</td>'
 
 /* ── Dashboard ── */
 async function loadDashboard(){
-  var rc=document.getElementById("recent-list");
-  if(rc)rc.innerHTML='<div style="display:flex;gap:8px;padding:4px">'+'<div class="skeleton skel-kpi"></div>'.repeat(4)+'</div>';
-
   try{
     var hr=new Date().getHours();
     var greet=(hr<12)?'Good morning':(hr<17?'Good afternoon':'Good evening');
