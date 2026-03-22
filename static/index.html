@@ -13,32 +13,32 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   --green:#22c55e;--green2:#16a34a;--green-glow:rgba(34,197,94,.14);
   --blue:#3b82f6;--yellow:#f59e0b;--red:#ef4444;--cyan:#06b6d4;--purple:#a855f7;--orange:#f97316;
-  --radius:4px;--radius-sm:4px;--radius-lg:6px;
-  --sidebar-w:52px;--sidebar-exp:216px;
+  --radius:12px;--radius-sm:8px;--radius-lg:16px;
+  --sidebar-w:216px;--sidebar-exp:216px;
   --t:.18s cubic-bezier(.4,0,.2,1);
   --accent:var(--green);
   --fs-base:14px;--fs-sm:12px;--fs-xs:11px;
 }
 [data-theme="dark"]{
-  --bg:#1c1c1c;--bg2:#212121;--bg3:#282828;
-  --card:#212121;--card2:#2a2a2a;--border:rgba(255,255,255,.08);
-  --text1:#ededed;--text2:#a0a0a0;--text3:#555;
-  --shadow:0 4px 24px rgba(0,0,0,.6);--input-bg:#1c1c1c;
+  --bg:#0f0f13;--bg2:#18181f;--bg3:#21212a;
+  --card:#18181f;--card2:#21212a;--border:rgba(255,255,255,.1);
+  --text1:#f0f0f0;--text2:#9090a0;--text3:#50505a;
+  --shadow:0 4px 32px rgba(0,0,0,.7);--input-bg:#13131a;
 }
 [data-theme="light"]{
-  --bg:#f2f2f2;--bg2:#ffffff;--bg3:#ebebeb;
-  --card:#ffffff;--card2:#f7f7f7;--border:rgba(0,0,0,.09);
-  --text1:#111;--text2:#666;--text3:#aaa;
-  --shadow:0 2px 16px rgba(0,0,0,.07);--input-bg:#f7f7f7;
+  --bg:#f0f2f5;--bg2:#ffffff;--bg3:#e8eaed;
+  --card:#ffffff;--card2:#f5f6f8;--border:rgba(0,0,0,.1);
+  --text1:#0a0a0f;--text2:#5a5a6a;--text3:#9090a0;
+  --shadow:0 2px 20px rgba(0,0,0,.09);--input-bg:#f5f6f8;
 }
-html,body{height:100%;font-family:Geist,system-ui,sans-serif;font-size:var(--fs-base);background:var(--bg);color:var(--text1);letter-spacing:0;line-height:1.5}
+html,body{height:100%;font-family:Inter,system-ui,sans-serif;font-size:var(--fs-base);background:var(--bg);color:var(--text1);letter-spacing:0;line-height:1.5}
 body{overflow:hidden}
-code,pre,.mono{font-family:'Geist Mono',monospace;letter-spacing:0}
+code,pre,.mono{font-family:'JetBrains Mono',monospace;letter-spacing:0}
 /* LOGIN */
 #login-screen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;align-items:center;justify-content:center}
 .login-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:40px 36px;width:100%;max-width:380px;box-shadow:var(--shadow);animation:fadeUp .3s ease}
@@ -132,7 +132,7 @@ code,pre,.mono{font-family:'Geist Mono',monospace;letter-spacing:0}
 .stat-icon.red{background:rgba(239,68,68,.1);color:var(--red)}
 .stat-icon.cyan{background:rgba(6,182,212,.1);color:var(--cyan)}
 .stat-icon.purple{background:rgba(168,85,247,.1);color:var(--purple)}
-.stat-value{font-size:24px;font-weight:700;line-height:1;margin-bottom:3px;font-family:'Geist Mono',monospace}
+.stat-value{font-size:24px;font-weight:700;line-height:1;margin-bottom:3px;font-family:'JetBrains Mono',monospace}
 .stat-label{font-size:var(--fs-xs);color:var(--text2);font-weight:500}
 /* CARDS */
 .card,.shipment-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
@@ -155,14 +155,14 @@ code,pre,.mono{font-family:'Geist Mono',monospace;letter-spacing:0}
 .table-wrap tr:last-child td{border-bottom:none}
 .table-wrap tr.clickable{cursor:pointer;transition:background var(--t)}
 .table-wrap tr.clickable:hover{background:var(--bg3)}
-.ref-cell{font-weight:600;color:var(--green);font-family:'Geist Mono',monospace;font-size:var(--fs-xs)}
+.ref-cell{font-weight:600;color:var(--green);font-family:'JetBrains Mono',monospace;font-size:var(--fs-xs)}
 .actions{display:flex;gap:3px}
 /* MOBILE CARDS */
 .mobile-cards{display:none}
 .ship-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;cursor:pointer;transition:all var(--t);margin-bottom:8px}
 .ship-card:hover{border-color:rgba(34,197,94,.3)}
 .ship-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
-.ship-refs{font-size:13px;font-weight:700;color:var(--green);font-family:'Geist Mono',monospace}
+.ship-refs{font-size:13px;font-weight:700;color:var(--green);font-family:'JetBrains Mono',monospace}
 .ship-sub{font-size:var(--fs-xs);color:var(--text2);margin-top:1px}
 .ship-card-body{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:9px 0}
 .ship-field{display:flex;flex-direction:column;gap:2px}
@@ -177,7 +177,7 @@ code,pre,.mono{font-family:'Geist Mono',monospace;letter-spacing:0}
 select.filter option{background:var(--bg2)}
 /* BADGES */
 .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:3px;font-size:var(--fs-xs);font-weight:500;white-space:nowrap;letter-spacing:0}
-.badge::before{content:'';width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .badge-confirmed{background:rgba(79,142,247,.13);color:#4f8ef7}.badge-confirmed::before{background:#4f8ef7}
 .badge-booked{background:rgba(168,85,247,.12);color:#a855f7}.badge-booked::before{background:#a855f7}
 .badge-stuffed{background:rgba(249,115,22,.12);color:#f97316}.badge-stuffed::before{background:#f97316}
@@ -217,7 +217,7 @@ select.filter option{background:var(--bg2)}
 .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;animation:fadeUp .3s ease both}
 .kpi-icon{width:36px;height:36px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;margin-bottom:10px;background:rgba(34,197,94,.08)}
 .kpi-icon svg,.kpi-icon i{width:16px;height:16px;font-size:16px;color:var(--green)}
-.kpi-value{font-size:26px;font-weight:700;line-height:1;margin-bottom:3px;font-family:'Geist Mono',monospace}
+.kpi-value{font-size:26px;font-weight:700;line-height:1;margin-bottom:3px;font-family:'JetBrains Mono',monospace}
 .kpi-label{font-size:var(--fs-sm);color:var(--text2);font-weight:500;margin-bottom:5px}
 .kpi-sub{font-size:var(--fs-xs);color:var(--text3)}
 .kpi-sub.good{color:var(--green)}.kpi-sub.bad{color:var(--red)}.kpi-sub.neutral{color:var(--text2)}
@@ -233,7 +233,7 @@ select.filter option{background:var(--bg2)}
 .bar-fill{height:100%;background:var(--green);border-radius:2px;transition:width .5s ease}
 .overdue-list{display:flex;flex-direction:column;gap:6px}
 .overdue-item{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.12);border-radius:var(--radius)}
-.overdue-ref{font-size:var(--fs-sm);font-weight:600;color:var(--red);font-family:'Geist Mono',monospace}
+.overdue-ref{font-size:var(--fs-sm);font-weight:600;color:var(--red);font-family:'JetBrains Mono',monospace}
 .overdue-days{font-size:var(--fs-xs);font-weight:600;color:var(--red)}
 /* DETAIL */
 .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
@@ -370,7 +370,7 @@ textarea.form-control{resize:vertical;min-height:72px}
 .sidebar:hover .nav-badge,.sidebar.mobile-open .nav-badge{opacity:1}
 /* sidebar-bottom user avatar compat */
 .sidebar .avatar{width:28px;height:28px;border-radius:var(--radius);flex-shrink:0;background:linear-gradient(135deg,var(--green),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
-.sidebar .user-info{opacity:0;transition:opacity var(--t);white-space:nowrap;min-width:0}
+.sidebar .user-info{opacity:1;transition:opacity var(--t);white-space:nowrap;min-width:0;overflow:hidden}
 .sidebar:hover .user-info,.sidebar.mobile-open .user-info{opacity:1}
 .sidebar .user-info .name{font-size:var(--fs-sm);font-weight:600;color:var(--text1)}
 .sidebar .user-info .role{font-size:10px;color:var(--green);margin-top:1px}
@@ -402,6 +402,61 @@ textarea.form-control{resize:vertical;min-height:72px}
 .digest-section{background:var(--bg3);border-radius:12px;padding:12px 14px;margin-bottom:10px}
 .digest-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
 .digest-row:last-child{border-bottom:none}
+
+@keyframes scaleIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@media(min-width:600px){.modal{animation:scaleIn .2s cubic-bezier(.34,1.56,.64,1)}}
+
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--border) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--radius-sm)}
+.skel-row{height:52px;margin-bottom:8px;border-radius:var(--radius)}
+.skel-card{height:140px;margin-bottom:10px;border-radius:var(--radius)}
+.skel-kpi{height:88px;border-radius:var(--radius);flex:1}
+
+.empty{text-align:center;padding:60px 20px;color:var(--text2);display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty-icon{font-size:48px;opacity:.4;line-height:1}
+.empty-title{font-size:15px;font-weight:700;color:var(--text1)}
+.empty-sub{font-size:13px;color:var(--text2)}
+.empty-action{margin-top:4px;padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border-radius:var(--radius)}
+
+@media(max-width:768px){
+  .bnav-item span{font-size:9px}
+  .bnav-item{padding:5px 4px;min-width:0;flex:1}
+  .bnav-item i,.bnav-item .ph{font-size:18px}
+}
+
+/* ── Pill status filters (mobile) ── */
+.status-pills{display:none;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.status-pills::-webkit-scrollbar{display:none}
+.pill{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.pill.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+@media(max-width:768px){
+  .status-pills{display:flex}
+  .filters-row .fil-status-wrap{display:none}
+}
+/* ── Improved table ── */
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--bg3);padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;border-bottom:1.5px solid var(--border);position:sticky;top:0;z-index:2}
+tbody tr{border-bottom:1px solid var(--border);transition:background .12s}
+tbody tr:hover{background:var(--bg3)}
+tbody td{padding:11px 12px;color:var(--text1);vertical-align:middle}
+/* ── Card improvements ── */
+.ship-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;transition:box-shadow .2s,transform .15s;cursor:pointer}
+.ship-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.15);transform:translateY(-1px)}
+.ship-card:active{transform:scale(.99)}
+.ship-ref{font-size:14px;font-weight:800;color:var(--text1);letter-spacing:-.01em}
+.ship-sub{font-size:11px;color:var(--text2);margin-top:3px}
+.ship-field-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+.ship-field-value{font-size:13px;font-weight:600;color:var(--text1)}
+/* ── Input focus ── */
+.form-control:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(34,197,94,.15);outline:none}
+/* ── Nav active indicator ── */
+.nav-item.active{background:rgba(34,197,94,.1);color:var(--accent)}
+.nav-item.active i,.nav-item.active .ph{color:var(--accent)}
+/* ── Sidebar nav labels always visible ── */
+.nav-label{opacity:1!important;white-space:nowrap}
+.nav-group{opacity:1!important}
+/* ── Card hover lift ── */
+.card:hover{box-shadow:0 6px 24px rgba(0,0,0,.18);transition:box-shadow .2s}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -614,7 +669,17 @@ textarea.form-control{resize:vertical;min-height:72px}
           <input class="form-control" placeholder="Search shipments…" oninput="onSearch(this.value)" style="border:none;background:transparent;outline:none;width:100%"/>
         </div>
       </div>
-<div class="filters-row">
+<div class="status-pills" id="status-pills">
+  <button class="pill active" onclick="setPillStatus('')">All</button>
+  <button class="pill" onclick="setPillStatus('Confirmed')">Confirmed</button>
+  <button class="pill" onclick="setPillStatus('Booked')">Booked</button>
+  <button class="pill" onclick="setPillStatus('Stuffed')">Stuffed</button>
+  <button class="pill" onclick="setPillStatus('Sailing')">Sailing</button>
+  <button class="pill" onclick="setPillStatus('Arrived')">Arrived</button>
+  <button class="pill" onclick="setPillStatus('Closed')">Closed</button>
+  <button class="pill" onclick="setPillStatus('Canceled')">Canceled</button>
+</div>
+        <div class="filters-row">
         <select class="filter" id="fil-status" onchange="loadShipments()">
           <option value="">All Status</option>
           <option>Confirmed</option><option>Booked</option><option>Stuffed</option><option>Sailing</option><option>Arrived</option><option>Closed</option><option>Canceled</option>
@@ -1269,7 +1334,7 @@ function renderCards(ships,containerId){
   var wrap=document.getElementById(cid);
   if(!wrap)return;
   if(!ships.length){
-    wrap.innerHTML='<div class="empty"><div class="empty-icon">&#128230;</div><div class="empty-title">No shipments</div><div class="empty-sub">Tap + to add your first shipment</div></div>';
+    wrap.innerHTML='<div class="empty"><div class="empty-icon">&#128230;</div><div class="empty-title">No shipments yet</div><div class="empty-sub">Add your first shipment to get started</div><button class="empty-action" onclick="document.getElementById(\"modal-add\").style.display=\"flex\""><i class="ph ph-plus"></i> Add Shipment</button></div>';
     return;
   }
   var today=new Date();today.setHours(0,0,0,0);
@@ -1315,11 +1380,24 @@ function renderTable(ships){
   window._selectedShips=window._selectedShips||new Set();
   var wrap=document.getElementById('ship-table');
   if(!wrap)return;
-  if(!ships.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">&#128269;</div><div class="empty-title">No shipments</div></div>';return;}
+  if(window._sortCol){
+    ships=ships.slice().sort(function(a,b){
+      var av=a[window._sortCol]||''; var bv=b[window._sortCol]||'';
+      return window._sortDir*(av<bv?-1:av>bv?1:0);
+    });
+  }
+  if(!ships.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">&#128269;</div><div class="empty-title">No shipments found</div><div class="empty-sub">Try adjusting your filters or add a new shipment</div><button class="empty-action" onclick="document.getElementById(\"modal-add\").style.display=\"flex\""><i class="ph ph-plus"></i> Add Shipment</button></div>';return;}
   var today=new Date();today.setHours(0,0,0,0);
+  window._sortCol=window._sortCol||'eta'; window._sortDir=window._sortDir||1;
+  function _thSort(col,lbl){
+    var isActive=window._sortCol===col;
+    var arrow=isActive?(window._sortDir===1?'↑':'↓'):'<span style="opacity:.3">↕</span>';
+    return '<th onclick="_tableSortBy(\''+col+'\')" style="cursor:pointer;user-select:none;white-space:nowrap">'+(isActive?'<b>'+lbl+'</b>':lbl)+' '+arrow+'</th>';
+  }
   var thead='<table><thead><tr>'
     +'<th style="width:36px"><input type="checkbox" id="check-all" onchange="toggleAllShipments(this.checked)" style="cursor:pointer;width:15px;height:15px"></th>'
-    +'<th>Ref / Booking</th><th>Client</th><th>Incoterm</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th><th>TEU</th><th>Status</th><th style="width:70px"></th>'
+    +_thSort('ref','Ref / Booking')+_thSort('client','Client')+'<th>Incoterm</th><th>POL</th><th>POD</th>'
+    +_thSort('etd','ETD')+_thSort('eta','ETA')+'<th>TEU</th>'+_thSort('status','Status')+'<th style="width:70px"></th>'
     +'</tr></thead><tbody>';
   var tbody=ships.map(function(sh){
     var chk=window._selectedShips.has(sh.id)?'checked':'';
@@ -1336,7 +1414,14 @@ function renderTable(ships){
       +'<td style="font-size:12px;color:var(--text2)">'+(sh.pol||'--')+'</td>'
       +'<td style="font-size:12px;color:var(--text2)">'+(sh.pod||'--')+'</td>'
       +'<td style="font-size:12px">'+fmtd(sh.etd)+'</td>'
-      +'<td style="font-size:12px;color:'+etaColor+'">'+fmtd(sh.eta)+etaTag+'</td>'
+      +'<td style="font-size:12px;
+function _tableSortBy(col){
+  if(window._sortCol===col){ window._sortDir*=-1; }
+  else { window._sortCol=col; window._sortDir=1; }
+  if(typeof renderPage==='function') renderPage();
+  else if(typeof renderTable==='function'&&typeof _pgShips!=='undefined') renderTable(_pgShips);
+}
+color:'+etaColor+'">'+fmtd(sh.eta)+etaTag+'</td>'
       +'<td><span class="badge badge-blue" style="font-size:11px">'+(sh.teu?sh.teu+' TEU':'--')+'</span></td>'
       +'<td>'+statusBadge(sh.status)+'</td>'
       +'<td><div class="actions">'
@@ -1350,6 +1435,9 @@ function renderTable(ships){
 
 /* ── Dashboard ── */
 async function loadDashboard(){
+  var rc=document.getElementById("recent-list");
+  if(rc)rc.innerHTML='<div style="display:flex;gap:8px;padding:4px">'+'<div class="skeleton skel-kpi"></div>'.repeat(4)+'</div>';
+
   try{
     var hr=new Date().getHours();
     var greet=(hr<12)?'Good morning':(hr<17?'Good afternoon':'Good evening');
@@ -1462,6 +1550,12 @@ async function loadDashboard(){
 
 /* ── Shipments page ── */
 async function loadShipments(){
+  var tw=document.getElementById("ship-table"),cw=document.getElementById("ship-cards");
+  var skelHtml='<div class="skeleton skel-row"></div>'.repeat(6);
+  var skelCard='<div class="skeleton skel-card"></div>'.repeat(4);
+  if(tw)tw.innerHTML='<div style="padding:8px">'+skelHtml+'</div>';
+  if(cw)cw.innerHTML=skelCard;
+
   const status=document.getElementById('fil-status')?.value||'';
   const mode=document.getElementById('fil-mode')?.value||'';
   const search=(window._searchVal!==undefined?window._searchVal:(document.getElementById('global-search')?.value||''));
@@ -1651,7 +1745,7 @@ async function loadAnalytics(){
        {icon:'ph-clock',color:'#a78bfa',val:k.avg_transit||'--',label:'Avg Transit (days)',sub:k.avg_transit?'ETD to ETA average':'No data yet'}
       ].forEach(function(c){
         var d=document.createElement('div');d.className='card';
-        d.innerHTML='<div class="card__body" style="padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">'+c.label+'</div><div style="width:34px;height:34px;border-radius:10px;background:'+c.color+'22;display:flex;align-items:center;justify-content:center"><i class="ph '+c.icon+'" style="font-size:17px;color:'+c.color+'"></i></div></div><div style="font-size:28px;font-weight:800;color:var(--text1);line-height:1">'+c.val+'</div><div style="font-size:11px;margin-top:6px;font-weight:600;color:'+(c.sc||'var(--text2)')+'">'+c.sub+'</div></div>';
+        d.innerHTML='<div class="card__body" style="padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">'+c.label+'</div><div style="width:34px;height:34px;border-radius:10px;background:'+c.color+'22;display:flex;align-items:center;justify-content:center"><i class="ph '+c.icon+'" style="font-size:17px;color:'+c.color+'"></i></div></div><div style="font-size:40px;font-weight:800;color:var(--text1);line-height:1">'+c.val+'</div><div style="font-size:11px;margin-top:6px;font-weight:600;color:'+(c.sc||'var(--text2)')+'">'+c.sub+'</div></div>';
         el1.appendChild(d);
       });
     }
@@ -1667,7 +1761,7 @@ async function loadAnalytics(){
        {icon:'ph-siren',color:'#ef4444',val:ovc,label:'Overdue',sub:ovc?ovc+' need attention':'All on track',sc:ovc?'#ef4444':'#22c55e'}
       ].forEach(function(c){
         var d=document.createElement('div');d.className='card';
-        d.innerHTML='<div class="card__body" style="padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">'+c.label+'</div><div style="width:34px;height:34px;border-radius:10px;background:'+c.color+'22;display:flex;align-items:center;justify-content:center"><i class="ph '+c.icon+'" style="font-size:17px;color:'+c.color+'"></i></div></div><div style="font-size:28px;font-weight:800;color:var(--text1);line-height:1">'+c.val+'</div><div style="font-size:11px;margin-top:6px;font-weight:600;color:'+(c.sc||'var(--text2)')+'">'+c.sub+'</div></div>';
+        d.innerHTML='<div class="card__body" style="padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">'+c.label+'</div><div style="width:34px;height:34px;border-radius:10px;background:'+c.color+'22;display:flex;align-items:center;justify-content:center"><i class="ph '+c.icon+'" style="font-size:17px;color:'+c.color+'"></i></div></div><div style="font-size:40px;font-weight:800;color:var(--text1);line-height:1">'+c.val+'</div><div style="font-size:11px;margin-top:6px;font-weight:600;color:'+(c.sc||'var(--text2)')+'">'+c.sub+'</div></div>';
         el2.appendChild(d);
       });
     }
@@ -3422,6 +3516,15 @@ function openDigest(){
 
 function closeDigest(){
   document.getElementById('modal-digest').style.display = 'none';
+}
+
+function setPillStatus(val){
+  var sel = document.getElementById('fil-status');
+  if(sel) sel.value = val;
+  document.querySelectorAll('.status-pills .pill').forEach(function(p){
+    p.classList.toggle('active', p.textContent.trim()===(val||'All'));
+  });
+  if(typeof loadShipments==='function') loadShipments();
 }
 </script>
 </body>
