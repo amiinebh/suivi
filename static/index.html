@@ -385,7 +385,7 @@ textarea.form-control{resize:vertical;min-height:72px}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  </head>
+</head>
 <body>
 <script>var formContainers = [];</script>
   <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;
@@ -605,45 +605,37 @@ textarea.form-control{resize:vertical;min-height:72px}
 
     <!-- ─── ANALYTICS / KPI PAGE ─── -->
     <div class="page" id="page-analytics">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div style="font-size:16px;font-weight:700"><i class="ph ph-chart-bar"></i> KPI &amp; Analytics</div>
-        <button id="report-btn" class="btn btn-primary btn-sm" onclick="generateReport()">
-          <i class="ph ph-file"></i> Generate Report
-        </button>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px">
+    <div><div style="font-size:18px;font-weight:800;color:var(--text1)"><i class="ph ph-chart-line" style="color:var(--accent)"></i> KPI &amp; Analytics</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:2px">Live operational intelligence</div></div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div id="kpi-period-tabs" style="display:flex;background:var(--bg3);border-radius:8px;padding:3px;gap:2px">
+        <button class="kpi-ptab" onclick="setKpiPeriod('all',this)" style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff">All</button>
+        <button class="kpi-ptab" onclick="setKpiPeriod('1m',this)"  style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2)">1M</button>
+        <button class="kpi-ptab" onclick="setKpiPeriod('3m',this)"  style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2)">3M</button>
+        <button class="kpi-ptab" onclick="setKpiPeriod('6m',this)"  style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2)">6M</button>
+        <button class="kpi-ptab" onclick="setKpiPeriod('1y',this)"  style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2)">1Y</button>
       </div>
-      <div class="kpi-grid" id="kpi-cards">
-        <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-value">—</div><div class="kpi-label">Total Shipments</div></div>
-        <div class="kpi-card"><div class="kpi-icon"></div><div class="kpi-value">—</div><div class="kpi-label">On-Time Rate</div></div>
-        <div class="kpi-card"><div class="kpi-icon">⚠️</div><div class="kpi-value">—</div><div class="kpi-label">Delay Rate</div></div>
-        <div class="kpi-card"><div class="kpi-icon">🕒</div><div class="kpi-value">—</div><div class="kpi-label">Avg Transit Days</div></div>
-      </div>
-      <div class="charts-grid">
-        <div class="chart-card">
-          <div class="chart-title"><i class="ph ph-chart-pie"></i> Status Distribution</div>
-          <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-title"><i class="ph ph-chart-bar"></i> Monthly Volume</div>
-          <div class="chart-wrap"><canvas id="chart-monthly"></canvas></div>
-        </div>
-      </div>
-      <div class="charts-grid">
-        <div class="chart-card">
-          <div class="chart-title"><i class="ph ph-boat"></i> Top Carriers</div>
-          <div class="bar-list" id="bar-carriers"></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-title"><i class="ph ph-user"></i> Top Clients</div>
-          <div class="bar-list" id="bar-clients"></div>
-        </div>
-      </div>
-      <div class="chart-card" style="margin-bottom:16px">
-        <div class="chart-title"><i class="ph ph-warning" style="color:var(--red)"></i> Overdue Shipments</div>
-        <div class="overdue-list" id="overdue-list">
-          <div style="color:var(--text2);font-size:13px;text-align:center;padding:16px">Loading…</div>
-        </div>
-      </div>
+      <button id="report-btn" class="btn btn-primary btn-sm" onclick="generateReport()"><i class="ph ph-file-arrow-down"></i> Export Report</button>
     </div>
+  </div>
+  <div id="kpi-cards"  style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px"></div>
+  <div id="kpi-cards-2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px"></div>
+  <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div><div style="height:200px;position:relative"><canvas id="chart-monthly"></canvas></div></div></div>
+    <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-chart-donut" style="color:var(--accent)"></i> Status Mix</div><div style="height:200px;position:relative"><canvas id="chart-status"></canvas></div></div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-boat" style="color:var(--accent)"></i> Transport Mode</div><div style="height:190px;position:relative"><canvas id="chart-mode"></canvas></div></div></div>
+    <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-shipping-container" style="color:var(--accent)"></i> Top Carriers</div><div id="bar-carriers" style="display:flex;flex-direction:column;gap:9px"></div></div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-users" style="color:var(--accent)"></i> Top Clients</div><div id="bar-clients" style="display:flex;flex-direction:column;gap:9px"></div></div></div>
+    <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-warning" style="color:#ef4444"></i> Overdue Shipments</div><div id="overdue-list"></div></div></div>
+  </div>
+  <div class="card" style="margin-bottom:20px"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-path" style="color:var(--accent)"></i> Top Routes</div><div id="bar-routes" style="display:flex;flex-wrap:wrap;gap:8px"></div></div></div>
+</div>
+
 
 
     <!-- ─── USERS PAGE (admin only) ─── -->
@@ -1221,49 +1213,33 @@ async function loadShipments(){
 }
 
 /* ── Detail ── */
-async function openDetail(sid){
-  currentDetailId=sid;
-  openModal('modal-detail');
-  document.getElementById('detail-body').innerHTML=`<div style="text-align:center;padding:40px"><div class="spinner" style="width:28px;height:28px;border-width:3px"></div></div>`;
+async function openDetail(id){
+  _detailId=id;
+  showPage('detail',null);
+  function _set(elId,val){var el=document.getElementById(elId);if(el)el.textContent=val||'';}
+  function _html(elId,val){var el=document.getElementById(elId);if(el)el.innerHTML=val||'';}
+  _set('detail-ref','Loading...');
+  _set('detail-sub','');
+  _html('detail-status-badge','');
+  ['detail-pol','detail-pod','detail-etd','detail-eta'].forEach(function(i){_set(i,'--');});
+  _html('detail-events-list','');
+  _html('detail-comments-list','');
+  _html('detail-info-chips','');
   try{
-    const s=await apiFetch(`/api/shipments/${sid}`);
-    document.getElementById('detail-title').textContent=s.ref;
-    document.getElementById('detail-sub').textContent=`${s.client||''}${s.carrier?' · '+s.carrier:''}`;
-    const trackLink=`${location.origin}/track/${s.ref}`;
-    document.getElementById('detail-body').innerHTML=`
-      <div class="detail-grid">
-        <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${statusBadge(s.status)}</div></div>
-        <div class="detail-item"><div class="detail-label">Mode</div><div class="detail-value">${modeBadge(s.mode)}</div></div>
-        <div class="detail-item"><div class="detail-label">Container / AWB</div><div class="detail-value">${s.ref2||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Booking No</div><div class="detail-value">${s.booking_no||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Carrier</div><div class="detail-value">${s.carrier||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">Vessel</div><div class="detail-value">${s.vessel||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">POL → POD</div><div class="detail-value">${s.pol||'—'} → ${s.pod||'—'}</div></div>
-        <div class="detail-item"><div class="detail-label">ETD / ETA</div><div class="detail-value">${fmt(s.etd)} → ${fmt(s.eta)}</div></div>
-        <div class="detail-item" style="grid-column:1/-1">
-          <div class="detail-label">Client Tracking Link</div>
-          <div class="detail-value">
-            <span class="copy-link" onclick="copyLink('${trackLink}')">
-              <i class="ph ph-link"></i> Copy link
-            </span>
-          </div>
-        </div>
-        ${s.note?`<div class="detail-item" style="grid-column:1/-1"><div class="detail-label">Note</div><div class="detail-value" style="color:var(--text2)">${s.note}</div></div>`:''}
-      </div>
-      ${s.events&&s.events.length?`
-        <div style="font-size:13px;font-weight:700;margin-bottom:10px">
-          <i class="ph ph-calendar-clock" style="color:var(--accent);margin-right:6px"></i>Events
-        </div>
-        <div class="events-list">
-          ${s.events.slice(0,6).map(e=>`
-            <div class="event-item">
-              <div class="event-dot"></div>
-              <div><div style="font-size:13px;font-weight:500">${e.description||'—'}</div>
-              <div class="event-time">${e.location||''} · ${fmt(e.timestamp)}</div></div>
-            </div>`).join('')}
-        </div>`:``}
-    `;
-  }catch(e){ document.getElementById('detail-body').innerHTML=`<p style="color:var(--red)">${e.message}</p>`; }
+    var ship=await apiFetch('/api/shipments/'+id);
+    _set('detail-ref',ship.ref||'');
+    _set('detail-sub',(ship.client||'')+(ship.carrier?' - '+ship.carrier:''));
+    _html('detail-status-badge',statusBadge(ship.status));
+    _set('detail-pol',ship.pol||'--');
+    _set('detail-pod',ship.pod||'--');
+    _set('detail-etd',fmtd(ship.etd));
+    _set('detail-eta',fmtd(ship.eta));
+    if(typeof _renderDetail==='function')_renderDetail(ship);
+  }catch(e){
+    _set('detail-ref','Error');
+    _html('detail-sub','<span style="color:var(--red)">'+e.message+'</span>');
+    if(typeof toast==='function')toast(e.message,'error');
+  }
 }
 
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
@@ -1410,137 +1386,67 @@ function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240
 /* ── KPI Page ── */
 async function loadAnalytics(){
   try{
-    const k = await apiFetch('/api/kpis');
-
-    // ── KPI Cards ──
-    document.getElementById('kpi-cards').innerHTML = `
-      <div class="kpi-card">
-        <div class="kpi-icon">📦</div>
-        <div class="kpi-value">${k.total}</div>
-        <div class="kpi-label">Total Shipments</div>
-        <div class="kpi-sub neutral">All time</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-icon"></div>
-        <div class="kpi-value" style="color:var(--green)">${k.on_time_rate}%</div>
-        <div class="kpi-label">On-Time Rate</div>
-        <div class="kpi-sub ${k.on_time_rate>=80?'good':'bad'}">${k.on_time_rate>=80?'🟢 Good':'🔴 Needs attention'}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-icon">⚠️</div>
-        <div class="kpi-value" style="color:${k.delay_rate>20?'var(--red)':'var(--yellow)'}">
-          ${k.delay_rate}%
-        </div>
-        <div class="kpi-label">Delay Rate</div>
-        <div class="kpi-sub ${k.delay_rate<10?'good':'bad'}">${k.delay_rate<10?'🟢 Low':'🔴 High'}</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-icon">🕒</div>
-        <div class="kpi-value">${k.avg_transit||'—'}</div>
-        <div class="kpi-label">Avg Transit Days</div>
-        <div class="kpi-sub neutral">${k.avg_transit?'ETD → ETA':'No data yet'}</div>
-      </div>
-    `;
-
-    // ── Status Donut ──
-    destroyChart('chart-status');
-    const statusLabels = Object.keys(k.by_status);
-    const statusData   = Object.values(k.by_status);
-    if(statusLabels.length){
-      chartRegistry['chart-status'] = new Chart(
-        document.getElementById('chart-status'),{
-          type:'doughnut',
-          data:{
-            labels:statusLabels,
-            datasets:[{data:statusData,backgroundColor:getChartColors(statusLabels.length),
-              borderWidth:0,hoverOffset:6}]
-          },
-          options:{
-            responsive:true,maintainAspectRatio:false,
-            plugins:{
-              legend:{position:'right',labels:{color:chartTextColor(),font:{size:11},boxWidth:12,padding:10}},
-              tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed} shipments`}}
-            },
-            cutout:'65%'
-          }
-        }
-      );
+    var k=await apiFetch('/api/kpis');
+    var el1=document.getElementById('kpi-cards');
+    if(el1){
+      el1.innerHTML='';
+      [{icon:'ph-package',color:'#4f8ef7',val:k.total,label:'Total Shipments',sub:'All records'},
+       {icon:'ph-check-circle',color:'#22c55e',val:(k.on_time_rate||0)+'%',label:'On-Time Rate',sub:(k.on_time_rate||0)>=80?'Excellent':'Needs work',sc:(k.on_time_rate||0)>=80?'#22c55e':'#ef4444'},
+       {icon:'ph-warning-circle',color:(k.delay_rate||0)>20?'#ef4444':'#f59e0b',val:(k.delay_rate||0)+'%',label:'Delay Rate',sub:(k.delay_rate||0)<10?'Low':'High',sc:(k.delay_rate||0)<10?'#22c55e':'#ef4444'},
+       {icon:'ph-clock',color:'#a78bfa',val:k.avg_transit||'--',label:'Avg Transit (days)',sub:k.avg_transit?'ETD to ETA average':'No data yet'}
+      ].forEach(function(c){
+        var d=document.createElement('div');d.className='card';
+        d.innerHTML='<div class="card__body" style="padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">'+c.label+'</div><div style="width:34px;height:34px;border-radius:10px;background:'+c.color+'22;display:flex;align-items:center;justify-content:center"><i class="ph '+c.icon+'" style="font-size:17px;color:'+c.color+'"></i></div></div><div style="font-size:28px;font-weight:800;color:var(--text1);line-height:1">'+c.val+'</div><div style="font-size:11px;margin-top:6px;font-weight:600;color:'+(c.sc||'var(--text2)')+'">'+c.sub+'</div></div>';
+        el1.appendChild(d);
+      });
     }
-
-    // ── Monthly Bar ──
+    var el2=document.getElementById('kpi-cards-2');
+    if(el2){
+      el2.innerHTML='';
+      var bs=k.by_status||{};
+      var inTr=(bs['In Transit']||0)+(bs['On Board']||0)+(bs['In Customs']||0)+(bs['Out for Delivery']||0);
+      var ovc=k.overdue&&k.overdue.length?k.overdue.length:0;
+      [{icon:'ph-truck',color:'#3b82f6',val:inTr,label:'In Transit',sub:'Active movements'},
+       {icon:'ph-flag-banner',color:'#22c55e',val:bs['Delivered']||0,label:'Delivered',sub:'Completed successfully'},
+       {icon:'ph-hourglass',color:'#f59e0b',val:(bs['Pending']||0)+(bs['Booked']||0),label:'Pending',sub:'Awaiting departure'},
+       {icon:'ph-siren',color:'#ef4444',val:ovc,label:'Overdue',sub:ovc?ovc+' need attention':'All on track',sc:ovc?'#ef4444':'#22c55e'}
+      ].forEach(function(c){
+        var d=document.createElement('div');d.className='card';
+        d.innerHTML='<div class="card__body" style="padding:14px 16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">'+c.label+'</div><div style="width:34px;height:34px;border-radius:10px;background:'+c.color+'22;display:flex;align-items:center;justify-content:center"><i class="ph '+c.icon+'" style="font-size:17px;color:'+c.color+'"></i></div></div><div style="font-size:28px;font-weight:800;color:var(--text1);line-height:1">'+c.val+'</div><div style="font-size:11px;margin-top:6px;font-weight:600;color:'+(c.sc||'var(--text2)')+'">'+c.sub+'</div></div>';
+        el2.appendChild(d);
+      });
+    }
     destroyChart('chart-monthly');
-    if(k.monthly&&k.monthly.length){
-      chartRegistry['chart-monthly'] = new Chart(
-        document.getElementById('chart-monthly'),{
-          type:'bar',
-          data:{
-            labels:k.monthly.map(m=>m.month),
-            datasets:[{
-              label:'Shipments',
-              data:k.monthly.map(m=>m.count),
-              backgroundColor:'rgba(79,142,247,.7)',
-              borderColor:'#4f8ef7',
-              borderWidth:1,
-              borderRadius:6,
-            }]
-          },
-          options:{
-            responsive:true,maintainAspectRatio:false,
-            plugins:{legend:{display:false}},
-            scales:{
-              x:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10}}},
-              y:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10},stepSize:1},beginAtZero:true}
-            }
-          }
-        }
-      );
+    var mo=k.monthly&&k.monthly.length?k.monthly:[];
+    if(mo.length){
+      chartRegistry['chart-monthly']=new Chart(document.getElementById('chart-monthly'),{type:'line',data:{labels:mo.map(function(m){return m.month;}),datasets:[{label:'Shipments',data:mo.map(function(m){return m.count;}),borderColor:'#4f8ef7',backgroundColor:'rgba(79,142,247,.13)',borderWidth:2.5,fill:true,tension:0.4,pointBackgroundColor:'#4f8ef7',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,pointHoverRadius:7}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+' shipments';}}}},scales:{x:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10}}},y:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10}},beginAtZero:true}}}});
     } else {
-      document.getElementById('chart-monthly').parentElement.innerHTML =
-        '<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px">No monthly data yet</div>';
+      var ce=document.getElementById('chart-monthly');if(ce&&ce.parentElement)ce.parentElement.innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:13px">No monthly data yet</div>';
     }
-
-    // ── Carriers bar list ──
-    const cWrap = document.getElementById('bar-carriers');
-    if(k.by_carrier&&k.by_carrier.length){
-      const max = k.by_carrier[0].count;
-      cWrap.innerHTML = k.by_carrier.map(c=>`
-        <div class="bar-item">
-          <div class="bar-label"><span>${c.name}</span><span>${c.count}</span></div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.count/max*100)}%"></div></div>
-        </div>`).join('');
-    } else {
-      cWrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No carrier data yet</div>';
-    }
-
-    // ── Clients bar list ──
-    const clWrap = document.getElementById('bar-clients');
-    if(k.by_client&&k.by_client.length){
-      const max = k.by_client[0].count;
-      clWrap.innerHTML = k.by_client.map(c=>`
-        <div class="bar-item">
-          <div class="bar-label"><span>${c.name}</span><span>${c.count}</span></div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.count/max*100)}%"></div></div>
-        </div>`).join('');
-    } else {
-      clWrap.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No client data yet</div>';
-    }
-
-    // ── Overdue ──
-    const oWrap = document.getElementById('overdue-list');
-    if(k.overdue&&k.overdue.length){
-      oWrap.innerHTML = k.overdue.map(o=>`
-        <div class="overdue-item">
-          <div>
-            <div class="overdue-ref">${o.ref}</div>
-            <div style="font-size:11px;color:var(--text2)">${o.client||'—'} · ETA ${o.eta?o.eta.split('T')[0]:'—'}</div>
-          </div>
-          <div class="overdue-days">${o.days_late}d late</div>
-        </div>`).join('');
-    } else {
-      oWrap.innerHTML='<div style="text-align:center;padding:16px;color:var(--green);font-size:13px">🎉 No overdue shipments!</div>';
-    }
-
-  } catch(e){ toast('KPI error: '+e.message,'error'); console.error(e); }
+    destroyChart('chart-status');
+    var sl=Object.keys(k.by_status||{}),sd=Object.values(k.by_status||{});
+    var stot=sd.reduce(function(a,b){return a+b;},0)||1;
+    if(sl.length)chartRegistry['chart-status']=new Chart(document.getElementById('chart-status'),{type:'doughnut',data:{labels:sl,datasets:[{data:sd,backgroundColor:getChartColors(sl.length),borderWidth:0,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:chartTextColor(),font:{size:11},boxWidth:12,padding:8}},tooltip:{callbacks:{label:function(c){return c.label+': '+c.parsed+' ('+Math.round(c.parsed/stot*100)+'%)';}}}},cutout:'60%'}});
+    destroyChart('chart-mode');
+    var md=k.by_mode||{},ml=Object.keys(md).filter(function(x){return md[x]>0;}),mv=ml.map(function(x){return md[x];});
+    var mc=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#ef4444','#06b6d4'];
+    if(ml.length)chartRegistry['chart-mode']=new Chart(document.getElementById('chart-mode'),{type:'doughnut',data:{labels:ml,datasets:[{data:mv,backgroundColor:mc,borderWidth:0,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:chartTextColor(),font:{size:11},boxWidth:12,padding:8}},tooltip:{callbacks:{label:function(c){return c.label+': '+c.parsed;}}}},cutout:'60%'}});
+    else{var me=document.getElementById('chart-mode');if(me&&me.parentElement)me.parentElement.innerHTML='<div style="text-align:center;padding:50px;color:var(--text2);font-size:13px">No mode data</div>';}
+    var cW=document.getElementById('bar-carriers');
+    if(cW){if(k.by_carrier&&k.by_carrier.length){var cMx=k.by_carrier[0].count,cTt=k.by_carrier.reduce(function(a,b){return a+b.count;},0)||1;var cc2=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#ef4444','#06b6d4'];cW.innerHTML=k.by_carrier.slice(0,6).map(function(c,i){var pt=Math.round(c.count/cTt*100),w=Math.round(c.count/cMx*100);return '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text1);font-weight:600">'+c.name+'</span><span style="color:var(--text2)">'+c.count+' <b style="color:'+cc2[i%6]+'">'+pt+'%</b></span></div><div style="height:7px;background:var(--bg3);border-radius:4px"><div style="height:7px;border-radius:4px;background:'+cc2[i%6]+';width:'+w+'%;transition:width .7s"></div></div></div>';}).join('');}else cW.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No carrier data</div>';}
+    var clW=document.getElementById('bar-clients');
+    if(clW){if(k.by_client&&k.by_client.length){var clMx=k.by_client[0].count,clTt=k.by_client.reduce(function(a,b){return a+b.count;},0)||1;var clc=['#4f8ef7','#a78bfa','#22c55e','#06b6d4','#f59e0b','#ef4444'];clW.innerHTML=k.by_client.slice(0,6).map(function(c,i){var pt=Math.round(c.count/clTt*100),w=Math.round(c.count/clMx*100);return '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text1);font-weight:600">'+c.name+'</span><span style="color:var(--text2)">'+c.count+' <b style="color:'+clc[i%6]+'">'+pt+'%</b></span></div><div style="height:7px;background:var(--bg3);border-radius:4px"><div style="height:7px;border-radius:4px;background:'+clc[i%6]+';width:'+w+'%;transition:width .7s"></div></div></div>';}).join('');}else clW.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No client data</div>';}
+    var oW=document.getElementById('overdue-list');
+    if(oW){if(k.overdue&&k.overdue.length){oW.innerHTML=k.overdue.map(function(o){var ug=o.days_late>7?'#ef4444':o.days_late>3?'#f97316':'#f59e0b';return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;margin-bottom:7px;background:var(--bg3);border-left:3px solid '+ug+'"><div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+o.ref+'</div><div style="font-size:11px;color:var(--text2);margin-top:2px">'+(o.client||'--')+' &middot; ETA '+(o.eta?o.eta.split("T")[0]:'--')+'</div></div><div style="display:flex;align-items:center;gap:8px"><span style="background:'+ug+'22;color:'+ug+';font-weight:800;font-size:12px;padding:3px 10px;border-radius:20px">'+o.days_late+'d late</span><button onclick="openDetail('+o.id+')" style="padding:5px 10px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button></div></div>';}).join('');}else oW.innerHTML='<div style="text-align:center;padding:28px;color:var(--green);font-size:14px">No overdue shipments!</div>';}
+    var rW=document.getElementById('bar-routes');
+    if(rW){var rt={};if(k.top_routes&&k.top_routes.length)k.top_routes.forEach(function(r){rt[r.route]=r.count;});else if(typeof allShipments!=='undefined'&&allShipments&&allShipments.length)allShipments.forEach(function(sh){if(sh.pol&&sh.pod){var ky=sh.pol+' to '+sh.pod;rt[ky]=(rt[ky]||0)+1;}});var ra=Object.keys(rt).map(function(k){return{route:k,count:rt[k]};}).sort(function(a,b){return b.count-a.count;}).slice(0,12);var rc=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444'];if(ra.length)rW.innerHTML=ra.map(function(r,i){return '<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:8px;padding:8px 14px;border-left:3px solid '+rc[i%6]+'"><i class="ph ph-arrows-horizontal" style="font-size:13px;color:'+rc[i%6]+'"></i><span style="font-size:12px;font-weight:700;color:var(--text1)">'+r.route+'</span><span style="background:'+rc[i%6]+'22;color:'+rc[i%6]+';font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px">'+r.count+'</span></div>';}).join('');else rW.innerHTML='<div style="color:var(--text2);font-size:13px">No route data yet</div>';}
+  }catch(e){toast('KPI error: '+e.message,'error');console.error(e);}
+}
+function setKpiPeriod(p,btn){
+  window._kpiPeriod=p;
+  document.querySelectorAll('.kpi-ptab').forEach(function(b){b.style.background='transparent';b.style.color='var(--text2)';});
+  if(btn){btn.style.background='var(--accent)';btn.style.color='#fff';}
+  loadAnalytics();
 }
 
 /* ── Theme ── */
@@ -1577,76 +1483,6 @@ loadDashboard();
 </script>
 
 <script>
-var _bulkFile = null; var _bulkRows = [];
-function _bulkStep(n) {
-  ['bulk-step-upload','bulk-step-preview','bulk-step-result'].forEach(function(id,i){
-    var el=document.getElementById(id); if(el) el.style.display=(i===(n-1))?'':'none';
-  });
-  var btn=document.getElementById('bulk-confirm-btn'); if(btn) btn.style.display=(n===2)?'':'none';
-  if(n===1){
-    var foot=document.getElementById('bulk-modal-foot'); if(foot) foot.innerHTML='<button class="btn btn-secondary" onclick="closeBulkImport()">Cancel</button><button class="btn btn-primary" id="bulk-confirm-btn" style="display:none" onclick="doBulkUpload()"><i class="ph ph-check-circle"></i> Confirm Import</button>';
-    var dz=document.getElementById('bulk-drop-zone'); if(dz) dz.innerHTML='<i class="ph ph-file-xls" style="font-size:38px;color:#22c55e;display:block;margin-bottom:10px"></i><div style="font-size:14px;font-weight:700;color:var(--text1)">Drop .xlsx file here</div><div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>';
-  }
-  ['bstep-1','bstep-2','bstep-3'].forEach(function(id,i){
-    var el=document.getElementById(id); if(el){ el.style.background=(i+1<=n)?'var(--accent)':'var(--bg3)'; el.style.color=(i+1<=n)?'#fff':'var(--text2)'; }
-  });
-}
-function closeBulkImport() {
-  closeModal('modal-bulk-import'); _bulkFile=null; _bulkRows=[];
-  var fi=document.getElementById('bulk-file'); if(fi) fi.value='';
-  var ps=document.getElementById('bulk-parse-status'); if(ps){ ps.style.display='none'; ps.innerHTML=''; }
-  var pt=document.getElementById('bulk-preview-table'); if(pt) pt.innerHTML='';
-  setTimeout(function(){_bulkStep(1);},200);
-}
-function bulkFileSelected(file) {
-  if(!file) return;
-  _bulkFile=file; _bulkRows=[];
-  var ps=document.getElementById('bulk-parse-status'); if(ps){ ps.style.display='block'; ps.innerHTML='<i class="ph ph-spinner"></i> Reading…'; }
-  var dz=document.getElementById('bulk-drop-zone'); if(dz) dz.innerHTML='<i class="ph ph-file-xls" style="font-size:28px;color:#22c55e"></i><div>'+file.name+'</div>';
-  function parseWithSheetJS(ab){
-    var wb=XLSX.read(ab,{type:'arraybuffer'}); var ws=wb.Sheets[wb.SheetNames[0]]; var rows=XLSX.utils.sheet_to_json(ws,{defval:''}); _bulkRows=rows;
-    if(!rows.length){ if(ps) ps.innerHTML='<span style="color:var(--red)">No rows</span>'; return; }
-    showBulkPreview(rows);
-  }
-  function doRead(){
-    var reader=new FileReader(); reader.onload=function(e){ try{ parseWithSheetJS(e.target.result); }catch(err){ if(ps) ps.innerHTML='<span style="color:var(--red)">'+err.message+'</span>'; } };
-    reader.readAsArrayBuffer(file);
-  }
-  if(typeof XLSX!=='undefined'){ doRead(); } else { if(ps) ps.innerHTML='<span style="color:var(--red)">XLSX library not ready</span>'; }
-}
-function showBulkPreview(rows) {
-  _bulkStep(2);
-  var info=document.getElementById('bulk-preview-info'); if(info) info.innerHTML='<strong>'+rows.length+'</strong> shipments ready';
-  var cols=['ref','ref2','mode','carrier','shipper','consignee','client','pol','pod','etd','eta','status','incoterm','booking_no'];
-  var existCols=cols.filter(function(c){ return rows.some(function(r){ return r[c]!==undefined&&r[c]!==''; }); });
-  if(!existCols.length) existCols=Object.keys(rows[0]);
-  var thead='<thead><tr>'+existCols.map(function(c){ return '<th style="background:var(--accent);color:#fff;padding:8px;font-size:11px;text-transform:uppercase;white-space:nowrap;position:sticky;top:0">'+c+'</th>'; }).join('')+'</tr></thead>';
-  var tbody='<tbody>'+rows.slice(0,50).map(function(row,i){ var bg=i%2===0?'var(--bg)':'var(--bg2)'; var missing=!row['ref']; return '<tr style="background:'+(missing?'rgba(239,68,68,.1)':bg)+'">'+existCols.map(function(c){ var v=row[c]!==undefined?String(row[c]):''; var st='padding:7px;font-size:12px;border-bottom:1px solid var(--border)'; if(c==='ref'&&!v) st+=';color:var(--red);font-weight:700'; return '<td style="'+st+'">'+v+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody>';
-  var tbl=document.getElementById('bulk-preview-table'); if(tbl) tbl.innerHTML='<table style="width:100%;border-collapse:collapse">'+thead+tbody+'</table>';
-}
-async function doBulkUpload() {
-  if(!_bulkFile) return;
-  var btn=document.getElementById('bulk-confirm-btn'); if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Importing…';}
-  var fd=new FormData(); fd.append('file',_bulkFile);
-  try{
-    var token=getToken();
-    var r=await fetch('/api/shipments/bulk-import',{method:'POST', headers:token?{'Authorization':'Bearer '+token}:{}, body:fd});
-    var d=await r.json(); if(!r.ok) throw new Error(d.detail||'Failed');
-    _bulkStep(3);
-    var rc=document.getElementById('bulk-result-content'); if(rc){
-      var errHtml=d.errors&&d.errors.length?'<div style="color:var(--red);margin-top:10px">⚠ '+d.errors.length+' errors</div>':'';
-      rc.innerHTML='<div style="font-size:40px;margin-bottom:10px">✅</div><div style="font-size:16px;font-weight:700">Success</div><div style="display:flex;gap:16px;justify-content:center;margin-top:16px"><div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:700;color:#22c55e">'+d.created+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Created</div></div><div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:700;color:#f59e0b">'+d.skipped+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Skipped</div></div></div>'+errHtml;
-    }
-    var foot=document.getElementById('bulk-modal-foot'); if(foot) foot.innerHTML='<button class="btn btn-primary" onclick="closeBulkImport();loadDashboard()">Done</button>';
-    _bulkFile=null; _bulkRows=[];
-    toast('Imported '+d.created+' shipments','success'); if(typeof loadShipments==='function') loadShipments(); if(typeof loadDashboard==='function') loadDashboard();
-  }catch(e){
-    if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-check-circle"></i> Confirm Import';}
-    toast(e.message,'error'); _bulkStep(3);
-    var rc2=document.getElementById('bulk-result-content'); if(rc2) rc2.innerHTML='<div style="font-size:36px;margin-bottom:10px">❌</div><div style="color:var(--red);font-weight:700">Failed</div><div style="color:var(--text2);margin-top:8px">'+e.message+'</div><button class="btn btn-ghost" style="margin-top:16px" onclick="_bulkStep(1)">Try Again</button>';
-  }
-}
-
 // ══════════════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════════════
@@ -1759,79 +1595,26 @@ window.addEventListener("DOMContentLoaded", () => {
 // USER MANAGEMENT
 // ══════════════════════════════════════════════════
 async function loadUsers(){
-  const list = document.getElementById("users-list");
-  if(!list) return;
-  list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2)"><i class="ph ph-spinner" style="font-size:24px"></i><div style="margin-top:12px;font-size:13px">Loading team…</div></div>';
+  var cont=document.getElementById('team-list');if(!cont)return;
+  cont.innerHTML='<div style="text-align:center;padding:20px"><i class="ph ph-spinner"></i> Loading...</div>';
   try{
-    const users = await apiFetch("/api/users");
-    if(!users.length){
-      list.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px"><i class="ph ph-users"></i></div><div style="font-size:15px;font-weight:700">No team members yet</div><div style="font-size:13px;margin-top:6px">Add your first CS agent above</div></div>';
-      return;
-    }
-    // Stats bar
-    const total = users.length;
-    const admins = users.filter(u=>u.role==='admin').length;
-    const agents = users.filter(u=>u.role!=='admin').length;
-    const active = users.filter(u=>u.is_active).length;
-
-    list.innerHTML = `
-      <!-- Team Stats -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
-          <div style="font-size:22px;font-weight:700;color:var(--accent)">${total}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Total</div>
-        </div>
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
-          <div style="font-size:22px;font-weight:700;color:var(--green)">${active}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Active</div>
-        </div>
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center">
-          <div style="font-size:22px;font-weight:700;color:var(--accent2)">${agents}</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Agents</div>
-        </div>
-      </div>
-      <!-- Member Cards -->
-      ${users.map(u => `
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;transition:border-color .2s"
-             onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-          <div style="display:flex;align-items:center;gap:14px">
-            <!-- Avatar -->
-            <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;
-              background:linear-gradient(135deg,${u.role==='admin'?'#6c63ff,#4f8ef7':'#4f8ef7,#22c55e'});
-              display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;
-              box-shadow:0 4px 12px rgba(79,142,247,.3)">
-              ${(u.name||'U')[0].toUpperCase()}
-            </div>
-            <!-- Info -->
-            <div style="flex:1;min-width:0">
-              <div style="font-size:14px;font-weight:700;color:var(--text1)">${u.name}</div>
-              <div style="font-size:12px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-                <i class="ph ph-envelope" style="font-size:10px;margin-right:4px"></i>${u.email}
-              </div>
-              <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-                <span class="badge ${u.role==='admin'?'badge-sailing':'badge-arrived'}" style="font-size:10px">
-                  ${u.role==='admin'?'👑 Admin':'🎧 CS Agent'}
-                </span>
-                <span class="badge ${u.is_active?'badge-arrived':'badge-delayed'}" style="font-size:10px">
-                  ${u.is_active?'● Active':'● Inactive'}
-                </span>
-              </div>
-            </div>
-            <!-- Actions -->
-            ${u.role!=='admin'?`
-            <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-              <button onclick="toggleUser(${u.id})" class="btn btn-ghost btn-sm" style="font-size:11px;gap:5px;padding:5px 10px">
-                <i class="hgi hgi-stroke ${u.is_active?'hgi-lock':'hgi-unlock-01'}"></i> ${u.is_active?'Disable':'Enable'}
-              </button>
-              <button onclick="deleteUser(${u.id})" class="btn btn-danger btn-sm" style="font-size:11px;gap:5px;padding:5px 10px">
-                <i class="ph ph-trash"></i> Delete
-              </button>
-            </div>`:'<div style="padding:4px 8px;font-size:11px;color:var(--text3)">Owner</div>'}
-          </div>
-        </div>`).join('')}
-    `;
-  } catch(e){
-    list.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center;font-size:13px"><i class="ph ph-x-circle"></i> ${e.message}</div>`;
+    var users=await authFetch('/api/admin/users');
+    var html='';
+    users.forEach(function(u){
+      html+='<div class="card" style="margin-bottom:10px"><div class="card__body" style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between">';
+      html+='<div><div style="font-weight:700;color:var(--text1)">'+u.email+'</div>';
+      html+='<div style="font-size:12px;color:var(--text2);margin-top:4px">'+u.name+'</div>';
+      html+='<div style="margin-top:6px"><span style="display:inline-block;background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase">'+u.role+'</span></div></div>';
+      html+='<div style="display:flex;gap:6px">';
+      html+='<button onclick="toggleUser('+u.id+')" style="padding:6px 10px;border:1px solid var(--border);background:var(--bg2);border-radius:6px;cursor:pointer;font-size:12px">'+(u.is_active?'Disable':'Enable')+'</button>';
+      if(u.role!=='admin')html+='<button onclick="deleteUser('+u.id+')" style="padding:6px 10px;border:1px solid var(--red);background:rgba(239,68,68,.1);color:var(--red);border-radius:6px;cursor:pointer;font-size:12px">Delete</button>';
+      html+='</div></div></div>';
+    });
+    if(!users.length)html='<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">No users found</div>';
+    cont.innerHTML=html;
+  }catch(e){
+    cont.innerHTML='<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:12px;color:var(--red);font-size:13px">'+e.message+'</div>';
+    if(typeof toast==='function')toast(e.message,'error');
   }
 }
 
@@ -1854,22 +1637,14 @@ async function createUser(){
 }
 
 async function toggleUser(id){
-  const r = await authFetch(`/api/users/${id}/toggle`,{method:"PATCH"});
+  const r = await authFetch("/api/users/"+id+"/toggle",{method:"PATCH"});
   if(r.ok) loadUsers();
 }
 
 async function deleteUser(id){
   if(!await _confirm("Delete this user permanently?")) return;
-  const r = await authFetch(`/api/users/${id}`,{method:"DELETE"});
+  const r = await authFetch("/api/users/"+id,{method:"DELETE"});
   if(r.ok) loadUsers();
-}
-
-function snoozeAlert(key, ref) {
-  var exp = new Date(); exp.setHours(exp.getHours()+24);
-  localStorage.setItem('snooze_'+key, exp.getTime());
-  var label = ref ? ref : key.split('_')[0];
-  if(typeof toast==='function') toast(label + ' snoozed for 24h', 'info');
-  if(typeof loadAlerts==='function') loadAlerts();
 }
 </script>
 
@@ -1947,25 +1722,24 @@ function snoozeAlert(key, ref) {
 <!-- BULK IMPORT -->
 <div class="overlay" id="modal-bulk-import">
   <div class="modal" style="max-width:680px"><div class="modal-handle"></div>
-    <div class="modal-head">
-      <div class="modal-title">📥 Bulk Import</div>
-      <button class="modal-close" onclick="closeBulkImport()"><i class="ph ph-x"></i></button>
-    </div>
+    <div class="modal-head"><div class="modal-title">&#128229; Bulk Import</div>
+      <button class="modal-close" onclick="closeBulkImport()"><i class="ph ph-x"></i></button></div>
     <div class="modal-body" id="bulk-modal-body">
-      <div id="bulk-steps" style="display:flex;gap:0;margin-bottom:18px">
-        <div id="bstep-1" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:700;border-radius:8px 0 0 8px;background:var(--accent);color:#fff">① Upload</div>
-        <div id="bstep-2" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;background:var(--bg3);color:var(--text2)">② Preview</div>
-        <div id="bstep-3" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;border-radius:0 8px 8px 0;background:var(--bg3);color:var(--text2)">③ Confirm</div>
+      <div style="display:flex;margin-bottom:18px">
+        <div id="bstep-1" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:700;border-radius:8px 0 0 8px;background:var(--accent);color:#fff">&#9312; Upload</div>
+        <div id="bstep-2" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;background:var(--bg3);color:var(--text2)">&#9313; Preview</div>
+        <div id="bstep-3" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;border-radius:0 8px 8px 0;background:var(--bg3);color:var(--text2)">&#9314; Done</div>
       </div>
       <div id="bulk-step-upload">
         <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--text2)">
-          <strong style="color:var(--text1)">Required columns (row 1 = headers):</strong>
-          <code style="display:block;margin-top:4px;font-size:11px;line-height:1.7">ref · ref2 · mode · carrier · shipper · consignee · client · client_email · pol · pod · etd · eta · status · incoterm · booking_no</code>
-          <div style="margin-top:6px">Only <strong>ref</strong> is required. Dates as YYYY-MM-DD.</div>
+          <strong style="color:var(--text1)">Excel columns (row 1 = headers):</strong>
+          <code style="display:block;margin-top:4px;font-size:11px">ref &middot; ref2 &middot; mode &middot; carrier &middot; shipper &middot; consignee &middot; client &middot; client_email &middot; pol &middot; pod &middot; etd &middot; eta &middot; status &middot; incoterm &middot; booking_no</code>
+          <div style="margin-top:6px">Only <strong>ref</strong> is required. Dates: YYYY-MM-DD.</div>
         </div>
-        <div id="bulk-drop-zone" onclick="document.getElementById('bulk-file').click()"
+        <div id="bulk-drop-zone"
+          onclick="document.getElementById('bulk-file').click()"
           ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='var(--bg3)'"
-          ondragleave="this.style.borderColor='var(--border)';this.style.background='"
+          ondragleave="this.style.borderColor='var(--border)';this.style.background=''"
           ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='';bulkFileSelected(event.dataTransfer.files[0])"
           style="border:2px dashed var(--border);border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s">
           <i class="ph ph-file-xls" style="font-size:38px;color:#22c55e;display:block;margin-bottom:10px"></i>
@@ -1973,7 +1747,7 @@ function snoozeAlert(key, ref) {
           <div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>
         </div>
         <input id="bulk-file" type="file" accept=".xlsx,.xls" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
-        <div id="bulk-parse-status" style="display:none;margin-top:12px;text-align:center;font-size:13px;color:var(--text2)"></div>
+        <div id="bulk-parse-status" style="display:none;margin-top:12px;text-align:center;font-size:13px"></div>
       </div>
       <div id="bulk-step-preview" style="display:none">
         <div id="bulk-preview-info" style="font-size:13px;color:var(--text2);margin-bottom:10px"></div>
@@ -1985,13 +1759,11 @@ function snoozeAlert(key, ref) {
     </div>
     <div class="modal-foot" id="bulk-modal-foot">
       <button class="btn btn-secondary" onclick="closeBulkImport()">Cancel</button>
-      <button class="btn btn-primary" id="bulk-confirm-btn" style="display:none" onclick="doBulkUpload()">
-        <i class="ph ph-check-circle"></i> Confirm Import
-      </button>
+      <button class="btn btn-primary" id="bulk-confirm-btn" style="display:none" onclick="doBulkUpload()"><i class="ph ph-check-circle"></i> Confirm Import</button>
     </div>
   </div>
 </div>
-/div>
+
 <!-- ADD USER -->
 
 
@@ -2207,7 +1979,7 @@ function showToast(msg,type){
         <i class="ph ph-arrow-right" style="color:var(--text3);margin-left:auto"></i>
       </button>
       <!-- Import (admin only) -->
-      <button id="sheet-import-btn" onclick="openModal('modal-bulk-import');_bulkStep(1);closeModal('sheet-files')"
+      <button id="sheet-import-btn" onclick="openModal('modal-bulk-import');closeModal('sheet-files')"
         style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;
           background:var(--bg3);border:none;border-radius:12px;cursor:pointer;
           font-family:inherit;text-align:left;display:none">
@@ -2803,6 +2575,95 @@ function _confirm(msg) {
 function _confirmReject() {
   closeModal('modal-confirm');
   if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
+}
+</script>
+
+<script>
+var _bulkFile=null,_bulkRows=[];
+function _bulkStep(n){
+  ["bulk-step-upload","bulk-step-preview","bulk-step-result"].forEach(function(id,i){var el=document.getElementById(id);if(el)el.style.display=(i===(n-1))?"":"none";});
+  var cb=document.getElementById("bulk-confirm-btn");if(cb)cb.style.display=(n===2)?"":"none";
+  ["bstep-1","bstep-2","bstep-3"].forEach(function(id,i){var el=document.getElementById(id);if(el){el.style.background=(i+1<=n)?"var(--accent)":"var(--bg3)";el.style.color=(i+1<=n)?"#fff":"var(--text2)";}});
+  if(n===1){
+    var dz=document.getElementById("bulk-drop-zone");if(dz)dz.innerHTML='<i class="ph ph-file-xls" style="font-size:38px;color:#22c55e;display:block;margin-bottom:10px"></i><div style="font-size:14px;font-weight:700;color:var(--text1)">Drop .xlsx file here</div><div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>';
+    var ps=document.getElementById("bulk-parse-status");if(ps){ps.style.display="none";ps.innerHTML="";}
+    var fi=document.getElementById("bulk-file");if(fi)fi.value="";
+    var foot=document.getElementById("bulk-modal-foot");if(foot)foot.innerHTML='<button class="btn btn-secondary" onclick="closeBulkImport()">Cancel</button><button class="btn btn-primary" id="bulk-confirm-btn" style="display:none" onclick="doBulkUpload()"><i class="ph ph-check-circle"></i> Confirm Import</button>';
+  }
+}
+function closeBulkImport(){
+  if(typeof closeModal==="function")closeModal("modal-bulk-import");
+  _bulkFile=null;_bulkRows=[];
+  setTimeout(function(){_bulkStep(1);},200);
+}
+function bulkFileSelected(file){
+  if(!file)return;
+  _bulkFile=file;_bulkRows=[];
+  var ps=document.getElementById("bulk-parse-status");
+  if(ps){ps.style.display="block";ps.innerHTML='<i class="ph ph-spinner"></i> Reading file...';}
+  var dz=document.getElementById("bulk-drop-zone");
+  if(dz)dz.innerHTML='<i class="ph ph-file-xls" style="font-size:28px;color:#22c55e;display:block"></i><div style="font-size:13px;font-weight:700">'+file.name+'</div><div style="font-size:11px;color:var(--text2)">'+(file.size/1024).toFixed(1)+' KB</div>';
+  if(typeof XLSX==="undefined"){if(ps)ps.innerHTML='<span style="color:var(--red)">XLSX library not loaded</span>';return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:"arraybuffer"});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(ws,{defval:""});
+      _bulkRows=rows;
+      if(!rows.length){if(ps)ps.innerHTML='<span style="color:var(--red)">No rows found in file</span>';return;}
+      showBulkPreview(rows);
+    }catch(err){if(ps)ps.innerHTML='<span style="color:var(--red)">Parse error: '+err.message+'</span>';}
+  };
+  reader.readAsArrayBuffer(file);
+}
+function showBulkPreview(rows){
+  _bulkStep(2);
+  var info=document.getElementById("bulk-preview-info");
+  if(info)info.innerHTML="<strong>"+rows.length+"</strong> shipments ready to import";
+  var cols=["ref","ref2","mode","carrier","shipper","consignee","client","pol","pod","etd","eta","status","incoterm","booking_no"];
+  var ec=cols.filter(function(c){return rows.some(function(r){return r[c]!==undefined&&r[c]!=="";}); });
+  if(!ec.length)ec=Object.keys(rows[0]);
+  var thead="<thead><tr>"+ec.map(function(c){return '<th style="background:var(--accent);color:#fff;padding:8px;font-size:11px;text-transform:uppercase;white-space:nowrap;position:sticky;top:0">'+c+"</th>";}).join("")+"</tr></thead>";
+  var tbody="<tbody>"+rows.slice(0,50).map(function(row,i){
+    var bg=i%2===0?"var(--bg)":"var(--bg2)";
+    return "<tr style=\"background:"+(row["ref"]?bg:"rgba(239,68,68,.08)")+"\">" +ec.map(function(c){var v=row[c]!==undefined?String(row[c]):"";var st="padding:7px;font-size:12px;border-bottom:1px solid var(--border)";if(c==="ref"&&!v)st+=";color:var(--red);font-weight:700";return '<td style="'+st+'">'+v+"</td>";}).join("")+"</tr>";
+  }).join("")+"</tbody>";
+  var tbl=document.getElementById("bulk-preview-table");
+  if(tbl)tbl.innerHTML="<table style=\"width:100%;border-collapse:collapse\">"+thead+tbody+"</table>"+(rows.length>50?'<div style="font-size:11px;padding:8px;text-align:center;color:var(--text2)">Showing first 50 of '+rows.length+" rows</div>":"");
+}
+async function doBulkUpload(){
+  if(!_bulkFile)return;
+  var btn=document.getElementById("bulk-confirm-btn");
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Importing...';}
+  var fd=new FormData();fd.append("file",_bulkFile);
+  try{
+    var token=typeof getToken==="function"?getToken():null;
+    var r=await fetch("/api/shipments/bulk-import",{method:"POST",headers:token?{"Authorization":"Bearer "+token}:{},body:fd});
+    var d=await r.json();if(!r.ok)throw new Error(d.detail||"Import failed");
+    _bulkStep(3);
+    var rc=document.getElementById("bulk-result-content");
+    if(rc)rc.innerHTML='<div style="font-size:40px;margin-bottom:10px">&#9989;</div><div style="font-size:16px;font-weight:700;color:var(--text1)">Import Complete</div><div style="display:flex;gap:16px;justify-content:center;margin-top:16px"><div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#22c55e">'+d.created+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Created</div></div><div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#f59e0b">'+d.skipped+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Skipped</div></div></div>'+(d.errors&&d.errors.length?'<div style="margin-top:10px;font-size:12px;color:var(--red)">Warning: '+d.errors.length+" error(s)</div>":"");
+    var foot=document.getElementById("bulk-modal-foot");
+    if(foot)foot.innerHTML='<button class="btn btn-primary" onclick="closeBulkImport()"><i class="ph ph-check"></i> Done</button>';
+    _bulkFile=null;_bulkRows=[];
+    if(typeof toast==="function")toast("Imported "+d.created+" shipments","success");
+    if(typeof loadShipments==="function")loadShipments();
+    if(typeof loadDashboard==="function")loadDashboard();
+  }catch(e){
+    if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-check-circle"></i> Confirm Import';}
+    if(typeof toast==="function")toast(e.message,"error");
+    _bulkStep(3);
+    var rc2=document.getElementById("bulk-result-content");
+    if(rc2)rc2.innerHTML='<div style="font-size:36px;margin-bottom:10px">&#10060;</div><div style="font-size:14px;font-weight:700;color:var(--red)">Import Failed</div><div style="font-size:13px;color:var(--text2);margin-top:8px">'+e.message+'</div><button class="btn btn-ghost" style="margin-top:16px" onclick="_bulkStep(1)">Try Again</button>';
+  }
+}
+function snoozeAlert(key,ref){
+  var exp=new Date();exp.setHours(exp.getHours()+24);
+  localStorage.setItem("snooze_"+key,exp.getTime());
+  var label=ref?ref:key.split("_")[0];
+  if(typeof toast==="function")toast(label+" snoozed for 24h","info");
+  if(typeof loadAlerts==="function")loadAlerts();
 }
 </script>
 </body>
