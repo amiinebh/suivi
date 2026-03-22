@@ -388,8 +388,8 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
                 status=status,
                 incoterm=row_data.get("incoterm",""),
                 vessel=row_data.get("vessel",""),
-                voyage=row_data.get("voyage",""),
-                teu=teu,
+                **({"voyage": row_data.get("voyage","")} if row_data.get("voyage","") else {}),
+                **({"teu": teu} if teu is not None else {}),
                 note=row_data.get("note",""),
                 created_at=datetime.utcnow().isoformat()
             )

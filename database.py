@@ -48,6 +48,8 @@ def run_migrations():
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS agent VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS shipper VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS consignee VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS voyage VARCHAR",
+        "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS teu INTEGER",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS notes TEXT",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS vessel VARCHAR",
         "ALTER TABLE shipments ADD COLUMN IF NOT EXISTS direction VARCHAR",
@@ -65,5 +67,5 @@ def run_migrations():
                 except Exception as e:
                     conn.rollback()
     except Exception as e:
-        logger.warning(f"Migration error: {e}")
+        log.warning(f"Migration error: {e}")
 
