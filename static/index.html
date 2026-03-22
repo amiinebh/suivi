@@ -1213,34 +1213,6 @@ async function loadShipments(){
 }
 
 /* ── Detail ── */
-async function openDetail(id){
-  _detailId=id;
-  showPage('detail',null);
-  function _set(elId,val){var el=document.getElementById(elId);if(el)el.textContent=val||'';}
-  function _html(elId,val){var el=document.getElementById(elId);if(el)el.innerHTML=val||'';}
-  _set('detail-ref','Loading...');
-  _set('detail-sub','');
-  _html('detail-status-badge','');
-  ['detail-pol','detail-pod','detail-etd','detail-eta'].forEach(function(i){_set(i,'--');});
-  _html('detail-events-list','');
-  _html('detail-comments-list','');
-  _html('detail-info-chips','');
-  try{
-    var ship=await apiFetch('/api/shipments/'+id);
-    _set('detail-ref',ship.ref||'');
-    _set('detail-sub',(ship.client||'')+(ship.carrier?' - '+ship.carrier:''));
-    _html('detail-status-badge',statusBadge(ship.status));
-    _set('detail-pol',ship.pol||'--');
-    _set('detail-pod',ship.pod||'--');
-    _set('detail-etd',fmtd(ship.etd));
-    _set('detail-eta',fmtd(ship.eta));
-    if(typeof _renderDetail==='function')_renderDetail(ship);
-  }catch(e){
-    _set('detail-ref','Error');
-    _html('detail-sub','<span style="color:var(--red)">'+e.message+'</span>');
-    if(typeof toast==='function')toast(e.message,'error');
-  }
-}
 
 function copyLink(url){ navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success')); }
 function editFromDetail(){ closeModal('modal-detail'); editShipment(currentDetailId); }
@@ -1420,9 +1392,7 @@ async function loadAnalytics(){
     var mo=k.monthly&&k.monthly.length?k.monthly:[];
     if(mo.length){
       chartRegistry['chart-monthly']=new Chart(document.getElementById('chart-monthly'),{type:'line',data:{labels:mo.map(function(m){return m.month;}),datasets:[{label:'Shipments',data:mo.map(function(m){return m.count;}),borderColor:'#4f8ef7',backgroundColor:'rgba(79,142,247,.13)',borderWidth:2.5,fill:true,tension:0.4,pointBackgroundColor:'#4f8ef7',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:4,pointHoverRadius:7}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+' shipments';}}}},scales:{x:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10}}},y:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10}},beginAtZero:true}}}});
-    } else {
-      var ce=document.getElementById('chart-monthly');if(ce&&ce.parentElement)ce.parentElement.innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:13px">No monthly data yet</div>';
-    }
+    }else{var ce=document.getElementById('chart-monthly');if(ce&&ce.parentElement)ce.parentElement.innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:13px">No monthly data yet</div>';}
     destroyChart('chart-status');
     var sl=Object.keys(k.by_status||{}),sd=Object.values(k.by_status||{});
     var stot=sd.reduce(function(a,b){return a+b;},0)||1;
@@ -1433,9 +1403,9 @@ async function loadAnalytics(){
     if(ml.length)chartRegistry['chart-mode']=new Chart(document.getElementById('chart-mode'),{type:'doughnut',data:{labels:ml,datasets:[{data:mv,backgroundColor:mc,borderWidth:0,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:chartTextColor(),font:{size:11},boxWidth:12,padding:8}},tooltip:{callbacks:{label:function(c){return c.label+': '+c.parsed;}}}},cutout:'60%'}});
     else{var me=document.getElementById('chart-mode');if(me&&me.parentElement)me.parentElement.innerHTML='<div style="text-align:center;padding:50px;color:var(--text2);font-size:13px">No mode data</div>';}
     var cW=document.getElementById('bar-carriers');
-    if(cW){if(k.by_carrier&&k.by_carrier.length){var cMx=k.by_carrier[0].count,cTt=k.by_carrier.reduce(function(a,b){return a+b.count;},0)||1;var cc2=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#ef4444','#06b6d4'];cW.innerHTML=k.by_carrier.slice(0,6).map(function(c,i){var pt=Math.round(c.count/cTt*100),w=Math.round(c.count/cMx*100);return '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text1);font-weight:600">'+c.name+'</span><span style="color:var(--text2)">'+c.count+' <b style="color:'+cc2[i%6]+'">'+pt+'%</b></span></div><div style="height:7px;background:var(--bg3);border-radius:4px"><div style="height:7px;border-radius:4px;background:'+cc2[i%6]+';width:'+w+'%;transition:width .7s"></div></div></div>';}).join('');}else cW.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No carrier data</div>';}
+    if(cW){if(k.by_carrier&&k.by_carrier.length){var cMx=k.by_carrier[0].count,cTt=k.by_carrier.reduce(function(a,b){return a+b.count;},0)||1;var cc2=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#ef4444','#06b6d4'];cW.innerHTML=k.by_carrier.slice(0,6).map(function(c,i){var pt=Math.round(c.count/cTt*100),w=Math.round(c.count/cMx*100);return '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text1);font-weight:600">'+c.name+'</span><span style="color:var(--text2)">'+c.count+' <b style="color:'+cc2[i%6]+'">'+pt+'%</b></span></div><div style="height:7px;background:var(--bg3);border-radius:4px"><div style="height:7px;border-radius:4px;background:'+cc2[i%6]+';width:'+w+'%;transition:width .7s"></div></div></div>';}).join('');}else cW.innerHTML='<div style="color:var(--text2);font-size:13px">No carrier data</div>';}
     var clW=document.getElementById('bar-clients');
-    if(clW){if(k.by_client&&k.by_client.length){var clMx=k.by_client[0].count,clTt=k.by_client.reduce(function(a,b){return a+b.count;},0)||1;var clc=['#4f8ef7','#a78bfa','#22c55e','#06b6d4','#f59e0b','#ef4444'];clW.innerHTML=k.by_client.slice(0,6).map(function(c,i){var pt=Math.round(c.count/clTt*100),w=Math.round(c.count/clMx*100);return '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text1);font-weight:600">'+c.name+'</span><span style="color:var(--text2)">'+c.count+' <b style="color:'+clc[i%6]+'">'+pt+'%</b></span></div><div style="height:7px;background:var(--bg3);border-radius:4px"><div style="height:7px;border-radius:4px;background:'+clc[i%6]+';width:'+w+'%;transition:width .7s"></div></div></div>';}).join('');}else clW.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px">No client data</div>';}
+    if(clW){if(k.by_client&&k.by_client.length){var clMx=k.by_client[0].count,clTt=k.by_client.reduce(function(a,b){return a+b.count;},0)||1;var clc=['#4f8ef7','#a78bfa','#22c55e','#06b6d4','#f59e0b','#ef4444'];clW.innerHTML=k.by_client.slice(0,6).map(function(c,i){var pt=Math.round(c.count/clTt*100),w=Math.round(c.count/clMx*100);return '<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text1);font-weight:600">'+c.name+'</span><span style="color:var(--text2)">'+c.count+' <b style="color:'+clc[i%6]+'">'+pt+'%</b></span></div><div style="height:7px;background:var(--bg3);border-radius:4px"><div style="height:7px;border-radius:4px;background:'+clc[i%6]+';width:'+w+'%;transition:width .7s"></div></div></div>';}).join('');}else clW.innerHTML='<div style="color:var(--text2);font-size:13px">No client data</div>';}
     var oW=document.getElementById('overdue-list');
     if(oW){if(k.overdue&&k.overdue.length){oW.innerHTML=k.overdue.map(function(o){var ug=o.days_late>7?'#ef4444':o.days_late>3?'#f97316':'#f59e0b';return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;margin-bottom:7px;background:var(--bg3);border-left:3px solid '+ug+'"><div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+o.ref+'</div><div style="font-size:11px;color:var(--text2);margin-top:2px">'+(o.client||'--')+' &middot; ETA '+(o.eta?o.eta.split("T")[0]:'--')+'</div></div><div style="display:flex;align-items:center;gap:8px"><span style="background:'+ug+'22;color:'+ug+';font-weight:800;font-size:12px;padding:3px 10px;border-radius:20px">'+o.days_late+'d late</span><button onclick="openDetail('+o.id+')" style="padding:5px 10px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button></div></div>';}).join('');}else oW.innerHTML='<div style="text-align:center;padding:28px;color:var(--green);font-size:14px">No overdue shipments!</div>';}
     var rW=document.getElementById('bar-routes');
@@ -1594,58 +1564,9 @@ window.addEventListener("DOMContentLoaded", () => {
 // ══════════════════════════════════════════════════
 // USER MANAGEMENT
 // ══════════════════════════════════════════════════
-async function loadUsers(){
-  var cont=document.getElementById('team-list');if(!cont)return;
-  cont.innerHTML='<div style="text-align:center;padding:20px"><i class="ph ph-spinner"></i> Loading...</div>';
-  try{
-    var users=await authFetch('/api/admin/users');
-    var html='';
-    users.forEach(function(u){
-      html+='<div class="card" style="margin-bottom:10px"><div class="card__body" style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between">';
-      html+='<div><div style="font-weight:700;color:var(--text1)">'+u.email+'</div>';
-      html+='<div style="font-size:12px;color:var(--text2);margin-top:4px">'+u.name+'</div>';
-      html+='<div style="margin-top:6px"><span style="display:inline-block;background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase">'+u.role+'</span></div></div>';
-      html+='<div style="display:flex;gap:6px">';
-      html+='<button onclick="toggleUser('+u.id+')" style="padding:6px 10px;border:1px solid var(--border);background:var(--bg2);border-radius:6px;cursor:pointer;font-size:12px">'+(u.is_active?'Disable':'Enable')+'</button>';
-      if(u.role!=='admin')html+='<button onclick="deleteUser('+u.id+')" style="padding:6px 10px;border:1px solid var(--red);background:rgba(239,68,68,.1);color:var(--red);border-radius:6px;cursor:pointer;font-size:12px">Delete</button>';
-      html+='</div></div></div>';
-    });
-    if(!users.length)html='<div style="text-align:center;padding:20px;color:var(--text2);font-size:13px">No users found</div>';
-    cont.innerHTML=html;
-  }catch(e){
-    cont.innerHTML='<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:12px;color:var(--red);font-size:13px">'+e.message+'</div>';
-    if(typeof toast==='function')toast(e.message,'error');
-  }
-}
 
-async function createUser(){
-  const name  = document.getElementById("nu-name").value.trim();
-  const email = document.getElementById("nu-email").value.trim();
-  const pw    = document.getElementById("nu-pw").value;
-  const role  = document.getElementById("nu-role").value;
-  const err   = document.getElementById("nu-error");
-  if(!name||!email||!pw){ err.textContent="All fields are required"; err.style.display="block"; return; }
-  if(pw.length<6){ err.textContent="Password must be at least 6 characters"; err.style.display="block"; return; }
-  const r = await authFetch("/api/users",{
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({name, email, password:pw, role})
-  });
-  const d = await r.json();
-  if(!r.ok){ err.textContent = d.detail||"Error creating user"; err.style.display="block"; return; }
-  closeModal("modal-new-user");
-  loadUsers();
-}
 
-async function toggleUser(id){
-  const r = await authFetch("/api/users/"+id+"/toggle",{method:"PATCH"});
-  if(r.ok) loadUsers();
-}
 
-async function deleteUser(id){
-  if(!await _confirm("Delete this user permanently?")) return;
-  const r = await authFetch("/api/users/"+id,{method:"DELETE"});
-  if(r.ok) loadUsers();
-}
 </script>
 
 
@@ -1732,9 +1653,9 @@ async function deleteUser(id){
       </div>
       <div id="bulk-step-upload">
         <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--text2)">
-          <strong style="color:var(--text1)">Excel columns (row 1 = headers):</strong>
-          <code style="display:block;margin-top:4px;font-size:11px">ref &middot; ref2 &middot; mode &middot; carrier &middot; shipper &middot; consignee &middot; client &middot; client_email &middot; pol &middot; pod &middot; etd &middot; eta &middot; status &middot; incoterm &middot; booking_no</code>
-          <div style="margin-top:6px">Only <strong>ref</strong> is required. Dates: YYYY-MM-DD.</div>
+          <strong style="color:var(--text1)">Required columns (row 1 = headers):</strong>
+          <code style="display:block;margin-top:4px;font-size:11px">ref &middot; ref2 &middot; mode &middot; carrier &middot; shipper &middot; consignee &middot; client &middot; pol &middot; pod &middot; etd &middot; eta &middot; status &middot; incoterm &middot; booking_no</code>
+          <div style="margin-top:6px">Only <strong>ref</strong> required. Dates: <strong>YYYY-MM-DD</strong>.</div>
         </div>
         <div id="bulk-drop-zone"
           onclick="document.getElementById('bulk-file').click()"
@@ -1770,6 +1691,7 @@ async function deleteUser(id){
 
 <script>
 // ═══ CHANGE PASSWORD ═════════════════════════════════════════
+
 async function doChangePassword(){
   const old_pw=document.getElementById("cpw-old").value;
   const new_pw=document.getElementById("cpw-new").value;
@@ -1794,12 +1716,6 @@ async function doChangePassword(){
   } catch(e){ showMsg(e.message||"Error updating password",false); }
 }
 
-// ═══ BULK IMPORT ═════════════════════════════════════════════
-let _bulkFile=null;
-
-
-// ═══ USER MANAGEMENT ═════════════════════════════════════════
-
 function openNewUserModal(){
   _resetContainerForm();
   ["nu-name","nu-email","nu-pw"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
@@ -1807,151 +1723,198 @@ function openNewUserModal(){
   const e=document.getElementById("nu-error"); if(e) e.style.display="none";
   openModal("modal-add-user");
 }
-
-
-
-
-// ═══ SHIPMENT DETAIL ═════════════════════════════════════════
-let _detailId=null;
-
-
-function _renderDetail(s){
-  document.getElementById("detail-ref").textContent=s.ref||"—";
-  document.getElementById("detail-sub").textContent=[s.booking_no,s.carrier].filter(Boolean).join(" · ")||"No container/carrier info";
-  document.getElementById("detail-status-badge").innerHTML=typeof statusBadge==="function"?statusBadge(s.status):`<span>${s.status}</span>`;
-  document.getElementById("detail-pol").textContent=s.pol||"—";
-  document.getElementById("detail-pod").textContent=s.pod||"—";
-  document.getElementById("detail-etd").textContent=s.etd||"—";
-  document.getElementById("detail-eta").textContent=s.eta||"—";
-  
-    const ha=document.getElementById("detail-portal-href");
-  const infoChips = document.getElementById("detail-info-chips");
-  if(infoChips){
-    infoChips.innerHTML = [
-      s.shipper    ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">🏭 <b>Shipper:</b> ${s.shipper}</div>` : '',
-      s.consignee  ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px">📦 <b>Consignee:</b> ${s.consignee}</div>` : '',
-      s.client     ? `<div class="badge badge-blue" style="font-size:12px;padding:4px 8px">👤 <b>Client:</b> ${s.client}</div>` : '',
-      s.incoterm   ? `<div class="badge badge-red" style="font-size:12px;padding:4px 8px">📋 <b>Incoterm:</b> ${s.incoterm}</div>` : '',
-      s.mode       ? `<div class="badge badge-gray" style="font-size:12px;padding:4px 8px"><i class="ph ph-boat"></i> <b>Mode:</b> ${s.mode}</div>` : '',
-      (s.containers && s.containers.length) ? `<div class="badge badge-green" style="font-size:12px;padding:4px 8px">🗃 <b>Containers:</b> ${s.containers.length} (${s.teu||0} TEU)</div>` : ''
-    ].filter(Boolean).join('');
+async function openDetail(id){
+  _detailId=id;
+  showPage('detail',null);
+  function _set(elId,val){var el=document.getElementById(elId);if(el)el.textContent=val||'';}
+  function _html(elId,val){var el=document.getElementById(elId);if(el)el.innerHTML=val||'';}
+  _set('detail-ref','Loading...');
+  _set('detail-sub','');
+  _html('detail-status-badge','');
+  ['detail-pol','detail-pod','detail-etd','detail-eta'].forEach(function(i){_set(i,'--');});
+  _html('detail-events-list','');
+  _html('detail-comments-list','');
+  _html('detail-info-chips','');
+  try{
+    var ship=await apiFetch('/api/shipments/'+id);
+    _renderDetail(ship);
+  }catch(e){
+    _set('detail-ref','Error loading shipment');
+    _html('detail-sub','<span style="color:var(--red)">'+e.message+'</span>');
+    if(typeof toast==='function')toast(e.message,'error');
   }
-  const contSection = document.getElementById("detail-containers-section");
-  const contList = document.getElementById("detail-containers-list");
-  if(contSection && contList){
-    if(s.containers && s.containers.length){
-      contSection.style.display = 'block';
-      contList.innerHTML = s.containers.map(c=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-          <div style="font-size:13px;font-weight:600;color:var(--text1)">${c.container_no||c.size_type||'Container'}</div>
-          <div style="font-size:11px;color:var(--text2)">${c.size_type||''}</div>
-        </div>`).join('');
-    } else {
-      contSection.style.display = 'none';
-      contList.innerHTML = '';
+}
+
+async function loadUsers(){
+  var cont=document.getElementById('users-list');
+  if(!cont)return;
+  cont.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)"><i class="ph ph-spinner"></i> Loading...</div>';
+  try{
+    var users=await authFetch('/api/admin/users');
+    var html='';
+    users.forEach(function(u){
+      html+='<div class="card" style="margin-bottom:10px"><div class="card__body" style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between">';
+      html+='<div><div style="font-weight:700;color:var(--text1)">'+u.email+'</div>';
+      html+='<div style="font-size:12px;color:var(--text2);margin-top:4px">'+(u.name||'')+'</div>';
+      html+='<div style="margin-top:6px"><span style="display:inline-block;background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase">'+u.role+'</span>';
+      if(!u.is_active)html+=' <span style="display:inline-block;background:#ef444420;color:#ef4444;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">Disabled</span>';
+      html+='</div></div>';
+      html+='<div style="display:flex;gap:6px">';
+      html+='<button onclick="toggleUser('+u.id+')" style="padding:6px 10px;border:1px solid var(--border);background:var(--bg2);border-radius:6px;cursor:pointer;font-size:12px">'+(u.is_active?'Disable':'Enable')+'</button>';
+      if(u.role!=='admin')html+='<button onclick="deleteUser('+u.id+')" style="padding:6px 10px;border:1px solid var(--red);background:rgba(239,68,68,.1);color:var(--red);border-radius:6px;cursor:pointer;font-size:12px">Delete</button>';
+      html+='</div></div></div>';
+    });
+    if(!users.length)html='<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><i class="ph ph-users" style="font-size:32px;display:block;margin-bottom:8px"></i>No users found</div>';
+    cont.innerHTML=html;
+  }catch(e){
+    cont.innerHTML='<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:12px;color:var(--red);font-size:13px">'+e.message+'</div>';
+    if(typeof toast==='function')toast(e.message,'error');
+  }
+}
+async function createUser(){
+  var name=document.getElementById('new-user-name');
+  var email=document.getElementById('new-user-email');
+  var pass=document.getElementById('new-user-pass');
+  var role=document.getElementById('new-user-role');
+  if(!email||!email.value.trim()||!pass||!pass.value.trim())return toast('Email and password required','error');
+  try{
+    await authFetch('/api/admin/users',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name:name?name.value.trim():'',email:email.value.trim(),password:pass.value.trim(),role:role?role.value:'agent'})});
+    closeModal('modal-add-user');
+    if(name)name.value='';email.value='';pass.value='';
+    toast('User created','success');
+    loadUsers();
+  }catch(e){toast(e.message,'error');}
+}
+async function toggleUser(id){
+  try{
+    await authFetch('/api/users/'+id+'/toggle',{method:'PATCH'});
+    loadUsers();
+  }catch(e){toast(e.message,'error');}
+}
+async function deleteUser(id){
+  if(!confirm('Delete this user?'))return;
+  try{
+    await authFetch('/api/users/'+id,{method:'DELETE'});
+    toast('User deleted','success');
+    loadUsers();
+  }catch(e){toast(e.message,'error');}
+}
+
+function _renderDetail(ship){
+  function _s(id,v){var el=document.getElementById(id);if(el)el.textContent=v||'';}
+  function _h(id,v){var el=document.getElementById(id);if(el)el.innerHTML=v||'';}
+  _s('detail-ref',ship.ref||'--');
+  _s('detail-sub',[ship.booking_no,ship.carrier].filter(Boolean).join(' · ')||'No booking/carrier info');
+  _h('detail-status-badge',typeof statusBadge==='function'?statusBadge(ship.status):'<span>'+ship.status+'</span>');
+  _s('detail-pol',ship.pol||'--');
+  _s('detail-pod',ship.pod||'--');
+  _s('detail-etd',fmtd(ship.etd));
+  _s('detail-eta',fmtd(ship.eta));
+  var ha=document.getElementById('detail-portal-href');
+  if(ha)ha.href='/track/'+(ship.ref||'');
+  var infoChips=document.getElementById('detail-info-chips');
+  if(infoChips){
+    var chips=[
+      {l:'Reference',v:ship.ref},{l:'Container / AWB',v:ship.ref2||'--'},
+      {l:'Mode',v:ship.mode||'--'},{l:'Carrier',v:ship.carrier||'--'},
+      {l:'Vessel',v:ship.vessel||'--'},{l:'Status',v:ship.status||'--'},
+      {l:'ETD',v:fmtd(ship.etd)},{l:'ETA',v:fmtd(ship.eta)},
+      {l:'Client',v:ship.client||'--',full:true},
+      {l:'Client Email',v:ship.client_email||'--',full:true},
+      {l:'Shipper',v:ship.shipper||'--',full:true},
+      {l:'Consignee',v:ship.consignee||'--',full:true},
+      {l:'Incoterm',v:ship.incoterm||'--'},
+      {l:'Booking No.',v:ship.booking_no||'--'},
+      {l:'Last Synced',v:ship.last_tracked||'Never'},
+    ];
+    infoChips.innerHTML=chips.map(function(c){
+      return '<div class="info-chip'+(c.full?' full':'')+'"><div class="chip-label">'+c.l+'</div><div class="chip-value">'+c.v+'</div></div>';
+    }).join('');
+  }
+  var contSection=document.getElementById('detail-containers-section');
+  var contList=document.getElementById('detail-containers-list');
+  if(contSection&&contList){
+    if(ship.containers&&ship.containers.length){
+      contSection.style.display='block';
+      contList.innerHTML=ship.containers.map(function(c){
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><div style="font-size:13px;font-weight:600;color:var(--text1)">'+(c.container_no||c.size_type||'Container')+'</div><div style="font-size:11px;color:var(--text2)">'+(c.size_type||'')+'</div></div>';
+      }).join('');
+    }else{contSection.style.display='none';contList.innerHTML='';}
+  }
+  var evList=document.getElementById('detail-events-list');
+  var noEv=document.getElementById('detail-no-events');
+  var evts=(ship.events||[]).slice().reverse();
+  if(evList){
+    if(!evts.length){
+      evList.innerHTML='';
+      if(noEv)noEv.style.display='block';
+    }else{
+      if(noEv)noEv.style.display='none';
+      evList.innerHTML=evts.map(function(e,i){
+        var dotCls=i===0?'tl-dot latest':'tl-dot';
+        var dotIcon=i===0?'<i class="ph ph-map-pin"></i>':'<i class="ph ph-circle"></i>';
+        return '<div class="timeline-item"><div class="'+dotCls+'">'+dotIcon+'</div>'
+          +'<div class="tl-content">'
+          +'<div class="tl-time">'+(e.timestamp||'')+'</div>'
+          +'<div class="tl-label">'+(e.description||e.status||'Update')+'</div>'
+          +(e.location?'<div class="tl-loc"><i class="ph ph-map-pin"></i> '+e.location+'</div>':'')
+          +'</div></div>';
+      }).join('');
     }
   }
-  if(ha) ha.href="/track/"+(s.ref||"");
-
-  // Timeline
-  const evList=document.getElementById("detail-events-list");
-  const noEv=document.getElementById("detail-no-events");
-  const evts=(s.events||[]).slice().reverse();
-  if(!evts.length){ evList.innerHTML=""; noEv.style.display="block"; }
-  else{
-    noEv.style.display="none";
-    evList.innerHTML=evts.map((e,i)=>`
-      <div class="timeline-item">
-        <div class="tl-dot ${i===0?"latest":""}">${i===0?"<i class="ph ph-boat"></i>":"📍"}</div>
-        <div class="tl-content">
-          <div class="tl-time">${e.timestamp||""}</div>
-          <div class="tl-label">${e.description||e.status||"Update"}</div>
-          ${e.location?`<div class="tl-loc">📌 ${e.location}</div>`:""}
-        </div>
-      </div>`).join("");
+  var cList=document.getElementById('detail-comments-list');
+  if(cList){
+    var comments=ship.comments||[];
+    cList.innerHTML=!comments.length
+      ?'<div style="text-align:center;padding:20px;color:var(--text2);font-size:12px">No notes yet</div>'
+      :comments.map(function(c){
+        return '<div class="comment-bubble"><span class="comment-author">'+(c.author||'Agent')+'</span>'
+          +' <span class="comment-time">'+(c.timestamp||'')+'</span>'
+          +'<div class="comment-text">'+(c.text||'')+'</div></div>';
+      }).join('');
   }
-
-  // Comments
-  const cList=document.getElementById("detail-comments-list");
-  const comments=s.comments||[];
-  cList.innerHTML=!comments.length
-    ?'<div style="text-align:center;padding:20px;color:var(--text2);font-size:12px">No notes yet</div>'
-    :comments.map(c=>`
-      <div class="comment-bubble">
-        <span class="comment-author">${c.author||"Agent"}</span>
-        <span class="comment-time">${c.timestamp||""}</span>
-        <div class="comment-text">${c.text||""}</div>
-      </div>`).join("");
-
-  // Info chips
-  const chips=[
-    {l:"Reference",v:s.ref},{l:"Container/AWB",v:s.ref2||"—"},
-    {l:"Mode",v:s.mode||"—"},{l:"Carrier",v:s.carrier||"—"},
-    {l:"Vessel",v:s.vessel||"—"},{l:"Status",v:s.status||"—"},
-    {l:"ETD",v:s.etd||"—"},{l:"ETA",v:s.eta||"—"},
-    {l:"Client",v:s.client||"—",full:true},
-    {l:"Client Email",v:s.client_email||"—",full:true},
-    {l:"Booking No.",v:s.booking_no||"—"},
-    {l:"Note",v:s.note||"—",full:true},
-    {l:"Last Synced",v:s.last_tracked||"Never"},
-  ];
-  document.getElementById("detail-info-chips").innerHTML=chips.map(c=>
-    `<div class="info-chip${c.full?" full":""}"><div class="chip-label">${c.l}</div><div class="chip-value">${c.v}</div></div>`
-  ).join("");
-
+}
 
 function switchDTab(tab){
-  ["timeline","notes","info"].forEach(t=>{
-    const p=document.getElementById("dtab-"+t);
-    const b=document.getElementById("dtab-btn-"+t);
-    if(p) p.style.display=t===tab?"block":"none";
-    if(b) b.classList.toggle("active",t===tab);
+  ['timeline','notes','info'].forEach(function(t){
+    var p=document.getElementById('dtab-'+t);
+    var b=document.getElementById('dtab-btn-'+t);
+    if(p)p.style.display=t===tab?'block':'none';
+    if(b)b.classList.toggle('active',t===tab);
   });
 }
-
 async function submitComment(){
-  const txt=document.getElementById("detail-comment-text");
-  if(!txt||!txt.value.trim()) return;
-  const user=getUser();
+  var txt=document.getElementById('detail-comment-text');
+  if(!txt||!txt.value.trim())return;
+  var user=typeof getUser==='function'?getUser():null;
   try{
-    await apiFetch(`/api/shipments/${_detailId}/comments`,{method:"POST",
-      body:JSON.stringify({author:user?.name||"Agent",text:txt.value.trim()})});
-    txt.value="";
-    const s=await apiFetch(`/api/shipments/${_detailId}`);
-    _renderDetail(s); switchDTab("notes"); showToast("Note added","success");
-  } catch(e){ showToast("Error: "+e.message,"error"); }
+    await apiFetch('/api/shipments/'+_detailId+'/comments',{method:'POST',
+      body:JSON.stringify({author:user&&user.name?user.name:'Agent',text:txt.value.trim()})});
+    txt.value='';
+    var ship=await apiFetch('/api/shipments/'+_detailId);
+    _renderDetail(ship);
+    switchDTab('notes');
+    toast('Note added','success');
+  }catch(e){toast('Error: '+e.message,'error');}
 }
-
 async function syncDetail(){
-  if(!_detailId) return;
-  const btn=document.getElementById("detail-sync-btn");
-  if(btn){ btn.disabled=true; btn.innerHTML='<i class="ph ph-arrows-clockwise"></i>'; }
+  if(!_detailId)return;
+  var btn=document.getElementById('detail-sync-btn');
+  if(btn){btn.disabled=true;}
   try{
-    await apiFetch(`/api/shipments/${_detailId}/track`,{method:"POST"});
-    const s=await apiFetch(`/api/shipments/${_detailId}`);
-    _renderDetail(s); showToast("Synced","success");
-  } catch(e){ showToast("Sync error: "+e.message,"error"); }
-  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="ph ph-arrows-clockwise"></i>'; } }
+    await apiFetch('/api/shipments/'+_detailId+'/track',{method:'POST'});
+    var ship=await apiFetch('/api/shipments/'+_detailId);
+    _renderDetail(ship);
+    toast('Synced','success');
+  }catch(e){toast('Sync error: '+e.message,'error');}
+  finally{if(btn)btn.disabled=false;}
 }
-
 function copyPortalLink(){
-  const a=document.getElementById("detail-portal-href");
-  if(!a) return;
-  const url=window.location.origin+a.getAttribute("href");
-  navigator.clipboard.writeText(url)
-    .then(()=>showToast("Link copied!","success"))
-    .catch(()=>{ prompt("Copy this link:",url); });
-}
-
-function showToast(msg,type){
-  let wrap=document.getElementById("toast-wrap");
-  if(!wrap){ wrap=document.createElement("div"); wrap.id="toast-wrap";
-    wrap.style.cssText="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none";
-    document.body.appendChild(wrap); }
-  const t=document.createElement("div");
-  t.style.cssText="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;color:var(--text1);box-shadow:var(--shadow);display:flex;align-items:center;gap:8px;white-space:nowrap";
-  t.innerHTML=`<span style="color:${type==="success"?"#22c55e":"#ef4444"}">${type==="success"?"":""}</span>${msg}`;
-  wrap.appendChild(t); setTimeout(()=>t.remove(),2800);
+  var a=document.getElementById('detail-portal-href');
+  if(!a)return;
+  var url=window.location.origin+a.getAttribute('href');
+  navigator.clipboard.writeText(url).then(function(){toast('Link copied!','success');}).catch(function(){prompt('Copy this link:',url);});
 }
 </script>
 
@@ -2142,37 +2105,45 @@ async function loadAlerts() {
   }
 }
 
-function buildAlerts(ships) {
-  var today = new Date(); today.setHours(0,0,0,0);
-  var alerts = [];
-  ships.forEach(function(s) {
-    if (['Delivered','Discharged'].includes(s.status)) return;
-    if (s.eta) {
-      var eta = new Date(s.eta); eta.setHours(0,0,0,0);
-      var diff = Math.round((eta - today) / 86400000);
-      if (diff < 0) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'danger', label: 'ETA Passed', message: 'ETA was ' + s.eta.substring(0,10) + ' — ' + s.pod });
-      } else if (diff <= 3) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'warning', label: 'Arriving Soon', message: 'Arriving in ' + diff + ' day' + (diff===1?'':'s') + ' at ' + (s.pod||'—') });
-      }
+function buildAlerts(ships){
+  var today=new Date();today.setHours(0,0,0,0);
+  var alerts=[];
+  ships.forEach(function(sh){
+    if(['Delivered','Discharged'].indexOf(sh.status)>=0)return;
+    var sk=sh.id+'_'+sh.status;
+    var snz=localStorage.getItem('snooze_'+sk);
+    if(snz&&new Date().getTime()<parseInt(snz))return;
+    if(sh.eta){
+      var eta=new Date(sh.eta);eta.setHours(0,0,0,0);
+      var diff=Math.round((eta-today)/86400000);
+      if(diff<0)alerts.push({id:sh.id,ref:sh.ref,type:'overdue',days:Math.abs(diff),msg:'Overdue by '+Math.abs(diff)+'d',color:'#ef4444',icon:'ph-siren',sk:sk});
+      else if(diff<=3)alerts.push({id:sh.id,ref:sh.ref,type:'due',days:diff,msg:'ETA in '+diff+'d',color:'#f59e0b',icon:'ph-clock',sk:sk});
     }
-    if (s.etd) {
-      var etd = new Date(s.etd); etd.setHours(0,0,0,0);
-      if (etd < today && ['Pending','Booked'].includes(s.status)) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'warning', label: 'ETD Passed', message: 'ETD was ' + s.etd.substring(0,10) + ' — still ' + s.status });
-      }
-    }
-    if (s.stuffing_date && ['Pending','Booked'].includes(s.status)) {
-      var sf = new Date(s.stuffing_date); sf.setHours(0,0,0,0);
-      if (sf <= today) {
-        alerts.push({ id: s.id, ref: s.ref, type: 'info', label: 'Stuffing Date', message: 'EXW stuffing date reached — confirm loading' });
-      }
-    }
-    if (s.status === 'Delayed') {
-      alerts.push({ id: s.id, ref: s.ref, type: 'danger', label: 'Delayed', message: (s.pol||'—') + ' → ' + (s.pod||'—') + ' · ETA: ' + (s.eta?s.eta.substring(0,10):'—') });
+    if(!sh.eta&&!sh.etd)alerts.push({id:sh.id,ref:sh.ref,type:'nodate',msg:'Missing ETD/ETA',color:'#a78bfa',icon:'ph-warning',sk:sk});
+    if(sh.status==='Pending'&&sh.etd){
+      var etd=new Date(sh.etd);etd.setHours(0,0,0,0);
+      if(etd<today)alerts.push({id:sh.id,ref:sh.ref,type:'pending',msg:'Pending past ETD',color:'#f97316',icon:'ph-hourglass',sk:sk});
     }
   });
-  return alerts;
+  var wrap=document.getElementById('alerts-list');
+  if(!wrap)return;
+  if(!alerts.length){
+    wrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--green)"><i class="ph ph-check-circle" style="font-size:36px;display:block;margin-bottom:8px"></i><div style="font-size:14px;font-weight:700">All clear!</div><div style="font-size:12px;color:var(--text2);margin-top:4px">No active alerts</div></div>';
+    return;
+  }
+  wrap.innerHTML=alerts.map(function(a){
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;margin-bottom:10px;background:var(--bg3);border-left:3px solid '+a.color+'">'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<div style="width:32px;height:32px;border-radius:8px;background:'+a.color+'22;display:flex;align-items:center;justify-content:center"><i class="ph '+a.icon+'" style="color:'+a.color+';font-size:16px"></i></div>'
+      +'<div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+a.ref+'</div>'
+      +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+a.msg+'</div></div></div>'
+      +'<div style="display:flex;gap:6px">'
+      +'<button onclick="snoozeAlert(\'' +a.sk+'\',\''+a.ref+'\')" style="padding:5px 10px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--bg2);color:var(--text2);border-radius:6px;cursor:pointer"><i class="ph ph-bell-slash"></i> Snooze</button>'
+      +'<button onclick="openDetail('+a.id+')" style="padding:5px 10px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button>'
+      +'</div></div>';
+  }).join('');
+  var badge=document.getElementById('alerts-badge');
+  if(badge){badge.textContent=alerts.length;badge.style.display=alerts.length?'flex':'none';}
 }
 
 /* ═══ EMAIL LOG ═══ */
@@ -2579,31 +2550,44 @@ function _confirmReject() {
 </script>
 
 <script>
+function fmtd(d){
+  if(!d)return "--";
+  try{
+    var dt=new Date(d);
+    if(isNaN(dt.getTime()))return String(d);
+    return dt.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+  }catch(e){return String(d);}
+}
 var _bulkFile=null,_bulkRows=[];
 function _bulkStep(n){
-  ["bulk-step-upload","bulk-step-preview","bulk-step-result"].forEach(function(id,i){var el=document.getElementById(id);if(el)el.style.display=(i===(n-1))?"":"none";});
+  ["bulk-step-upload","bulk-step-preview","bulk-step-result"].forEach(function(id,i){
+    var el=document.getElementById(id);if(el)el.style.display=(i===(n-1))?"":"none";
+  });
   var cb=document.getElementById("bulk-confirm-btn");if(cb)cb.style.display=(n===2)?"":"none";
-  ["bstep-1","bstep-2","bstep-3"].forEach(function(id,i){var el=document.getElementById(id);if(el){el.style.background=(i+1<=n)?"var(--accent)":"var(--bg3)";el.style.color=(i+1<=n)?"#fff":"var(--text2)";}});
+  ["bstep-1","bstep-2","bstep-3"].forEach(function(id,i){
+    var el=document.getElementById(id);
+    if(el){el.style.background=(i+1<=n)?"var(--accent)":"var(--bg3)";el.style.color=(i+1<=n)?"#fff":"var(--text2)";}
+  });
   if(n===1){
-    var dz=document.getElementById("bulk-drop-zone");if(dz)dz.innerHTML='<i class="ph ph-file-xls" style="font-size:38px;color:#22c55e;display:block;margin-bottom:10px"></i><div style="font-size:14px;font-weight:700;color:var(--text1)">Drop .xlsx file here</div><div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>';
+    var dz=document.getElementById("bulk-drop-zone");
+    if(dz)dz.innerHTML='<i class="ph ph-file-xls" style="font-size:38px;color:#22c55e;display:block;margin-bottom:10px"></i><div style="font-size:14px;font-weight:700;color:var(--text1)">Drop .xlsx file here</div><div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>';
     var ps=document.getElementById("bulk-parse-status");if(ps){ps.style.display="none";ps.innerHTML="";}
     var fi=document.getElementById("bulk-file");if(fi)fi.value="";
-    var foot=document.getElementById("bulk-modal-foot");if(foot)foot.innerHTML='<button class="btn btn-secondary" onclick="closeBulkImport()">Cancel</button><button class="btn btn-primary" id="bulk-confirm-btn" style="display:none" onclick="doBulkUpload()"><i class="ph ph-check-circle"></i> Confirm Import</button>';
+    _bulkFile=null;_bulkRows=[];
   }
 }
 function closeBulkImport(){
   if(typeof closeModal==="function")closeModal("modal-bulk-import");
-  _bulkFile=null;_bulkRows=[];
   setTimeout(function(){_bulkStep(1);},200);
 }
 function bulkFileSelected(file){
   if(!file)return;
-  _bulkFile=file;_bulkRows=[];
+  _bulkFile=file;
   var ps=document.getElementById("bulk-parse-status");
-  if(ps){ps.style.display="block";ps.innerHTML='<i class="ph ph-spinner"></i> Reading file...';}
   var dz=document.getElementById("bulk-drop-zone");
   if(dz)dz.innerHTML='<i class="ph ph-file-xls" style="font-size:28px;color:#22c55e;display:block"></i><div style="font-size:13px;font-weight:700">'+file.name+'</div><div style="font-size:11px;color:var(--text2)">'+(file.size/1024).toFixed(1)+' KB</div>';
-  if(typeof XLSX==="undefined"){if(ps)ps.innerHTML='<span style="color:var(--red)">XLSX library not loaded</span>';return;}
+  if(ps){ps.style.display="block";ps.innerHTML='<i class="ph ph-spinner"></i> Parsing file...';}
+  if(typeof XLSX==="undefined"){if(ps)ps.innerHTML='<span style="color:var(--red)">XLSX library not loaded. Check your internet connection.</span>';return;}
   var reader=new FileReader();
   reader.onload=function(e){
     try{
@@ -2611,7 +2595,8 @@ function bulkFileSelected(file){
       var ws=wb.Sheets[wb.SheetNames[0]];
       var rows=XLSX.utils.sheet_to_json(ws,{defval:""});
       _bulkRows=rows;
-      if(!rows.length){if(ps)ps.innerHTML='<span style="color:var(--red)">No rows found in file</span>';return;}
+      if(!rows.length){if(ps)ps.innerHTML='<span style="color:var(--red)">No rows found in file.</span>';return;}
+      if(ps)ps.style.display="none";
       showBulkPreview(rows);
     }catch(err){if(ps)ps.innerHTML='<span style="color:var(--red)">Parse error: '+err.message+'</span>';}
   };
@@ -2620,32 +2605,44 @@ function bulkFileSelected(file){
 function showBulkPreview(rows){
   _bulkStep(2);
   var info=document.getElementById("bulk-preview-info");
-  if(info)info.innerHTML="<strong>"+rows.length+"</strong> shipments ready to import";
+  if(info)info.innerHTML="<strong>"+rows.length+"</strong> shipments ready to import. First 50 shown below.";
   var cols=["ref","ref2","mode","carrier","shipper","consignee","client","pol","pod","etd","eta","status","incoterm","booking_no"];
-  var ec=cols.filter(function(c){return rows.some(function(r){return r[c]!==undefined&&r[c]!=="";}); });
-  if(!ec.length)ec=Object.keys(rows[0]);
+  var ec=cols.filter(function(c){return rows.some(function(r){return r[c]!==undefined&&r[c]!=="";});});
+  if(!ec.length)ec=Object.keys(rows[0]).slice(0,10);
   var thead="<thead><tr>"+ec.map(function(c){return '<th style="background:var(--accent);color:#fff;padding:8px;font-size:11px;text-transform:uppercase;white-space:nowrap;position:sticky;top:0">'+c+"</th>";}).join("")+"</tr></thead>";
   var tbody="<tbody>"+rows.slice(0,50).map(function(row,i){
-    var bg=i%2===0?"var(--bg)":"var(--bg2)";
-    return "<tr style=\"background:"+(row["ref"]?bg:"rgba(239,68,68,.08)")+"\">" +ec.map(function(c){var v=row[c]!==undefined?String(row[c]):"";var st="padding:7px;font-size:12px;border-bottom:1px solid var(--border)";if(c==="ref"&&!v)st+=";color:var(--red);font-weight:700";return '<td style="'+st+'">'+v+"</td>";}).join("")+"</tr>";
+    var hasRef=row["ref"]&&String(row["ref"]).trim();
+    var bg=hasRef?(i%2===0?"var(--bg)":"var(--bg2)"):"rgba(239,68,68,.07)";
+    return "<tr style=\"background:"+bg+"\">"+ec.map(function(c){
+      var v=row[c]!==undefined?String(row[c]):"";
+      var st="padding:7px;font-size:12px;border-bottom:1px solid var(--border)";
+      if(c==="ref"&&!v)st+=";color:var(--red);font-weight:700";
+      if((c==="etd"||c==="eta")&&v)st+=";color:var(--accent);font-weight:600";
+      return '<td style="'+st+'">'+v+"</td>";
+    }).join("")+"</tr>";
   }).join("")+"</tbody>";
   var tbl=document.getElementById("bulk-preview-table");
   if(tbl)tbl.innerHTML="<table style=\"width:100%;border-collapse:collapse\">"+thead+tbody+"</table>"+(rows.length>50?'<div style="font-size:11px;padding:8px;text-align:center;color:var(--text2)">Showing first 50 of '+rows.length+" rows</div>":"");
+  var cb=document.getElementById("bulk-confirm-btn");if(cb)cb.style.display="";
 }
 async function doBulkUpload(){
-  if(!_bulkFile)return;
+  if(!_bulkFile&&!_bulkRows.length)return;
   var btn=document.getElementById("bulk-confirm-btn");
-  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Importing...';}
-  var fd=new FormData();fd.append("file",_bulkFile);
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="ph ph-spinner"></i> Importing...';}
   try{
+    var fd=new FormData();fd.append("file",_bulkFile);
     var token=typeof getToken==="function"?getToken():null;
     var r=await fetch("/api/shipments/bulk-import",{method:"POST",headers:token?{"Authorization":"Bearer "+token}:{},body:fd});
     var d=await r.json();if(!r.ok)throw new Error(d.detail||"Import failed");
     _bulkStep(3);
     var rc=document.getElementById("bulk-result-content");
-    if(rc)rc.innerHTML='<div style="font-size:40px;margin-bottom:10px">&#9989;</div><div style="font-size:16px;font-weight:700;color:var(--text1)">Import Complete</div><div style="display:flex;gap:16px;justify-content:center;margin-top:16px"><div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#22c55e">'+d.created+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Created</div></div><div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#f59e0b">'+d.skipped+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Skipped</div></div></div>'+(d.errors&&d.errors.length?'<div style="margin-top:10px;font-size:12px;color:var(--red)">Warning: '+d.errors.length+" error(s)</div>":"");
-    var foot=document.getElementById("bulk-modal-foot");
-    if(foot)foot.innerHTML='<button class="btn btn-primary" onclick="closeBulkImport()"><i class="ph ph-check"></i> Done</button>';
+    if(rc)rc.innerHTML='<div style="font-size:40px;margin-bottom:10px">&#9989;</div>'
+      +'<div style="font-size:16px;font-weight:700;color:var(--text1)">Import Complete!</div>'
+      +'<div style="display:flex;gap:16px;justify-content:center;margin-top:16px">'
+      +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#22c55e">'+d.created+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Created</div></div>'
+      +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#f59e0b">'+d.skipped+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Skipped</div></div></div>'
+      +(d.errors&&d.errors.length?'<div style="margin-top:10px;font-size:12px;color:var(--red)">&#9888; '+d.errors.length+' warning(s)</div>':"")
+      +'<button class="btn btn-primary" style="margin-top:16px" onclick="closeBulkImport()"><i class="ph ph-check"></i> Done</button>';
     _bulkFile=null;_bulkRows=[];
     if(typeof toast==="function")toast("Imported "+d.created+" shipments","success");
     if(typeof loadShipments==="function")loadShipments();
@@ -2653,15 +2650,12 @@ async function doBulkUpload(){
   }catch(e){
     if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-check-circle"></i> Confirm Import';}
     if(typeof toast==="function")toast(e.message,"error");
-    _bulkStep(3);
-    var rc2=document.getElementById("bulk-result-content");
-    if(rc2)rc2.innerHTML='<div style="font-size:36px;margin-bottom:10px">&#10060;</div><div style="font-size:14px;font-weight:700;color:var(--red)">Import Failed</div><div style="font-size:13px;color:var(--text2);margin-top:8px">'+e.message+'</div><button class="btn btn-ghost" style="margin-top:16px" onclick="_bulkStep(1)">Try Again</button>';
   }
 }
 function snoozeAlert(key,ref){
   var exp=new Date();exp.setHours(exp.getHours()+24);
   localStorage.setItem("snooze_"+key,exp.getTime());
-  var label=ref?ref:key.split("_")[0];
+  var label=ref||key.split("_")[0];
   if(typeof toast==="function")toast(label+" snoozed for 24h","info");
   if(typeof loadAlerts==="function")loadAlerts();
 }
