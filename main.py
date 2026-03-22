@@ -14,21 +14,6 @@ from database import run_migrations
 run_migrations()
 
 app = FastAPI(title="FreightTrack Pro")
-
-# ── Security headers ──────────────────────────────────────────────────────
-@app.middleware("http")
-async def security_headers(request: Request, call_next):
-    response = await call_next(request)
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-    if request.url.path.startswith("/api/"):
-        response.headers["Cache-Control"] = "no-store, no-cache"
-    return response
-
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def get_db():
@@ -38,29 +23,6 @@ def get_db():
 
 
 # ── Pages ────────────────────────────────────────────────────────────────────
-# ── Simple in-memory rate limiter for login ──────────────────────────────
-import time as _time
-from collections import defaultdict
-_login_attempts: dict = defaultdict(list)
-_LOGIN_MAX = 10
-_LOGIN_WINDOW = 60  # seconds
-
-def _check_login_rate(ip: str):
-    now = _time.time()
-    attempts = [t for t in _login_attempts[ip] if now - t < _LOGIN_WINDOW]
-    _login_attempts[ip] = attempts
-    if len(attempts) >= _LOGIN_MAX:
-        raise HTTPException(429, f"Too many login attempts. Try again in {_LOGIN_WINDOW} seconds.")
-    _login_attempts[ip].append(now)
-
-
-
-def _dev_only():
-    """Block access in production environment."""
-    if os.getenv("ENV", "development").lower() == "production":
-        raise HTTPException(403, "Not available in production")
-
-
 @app.get("/")
 def root():
     from fastapi.responses import HTMLResponse
@@ -379,16 +341,22 @@ import io
 async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db),
                       current=Depends(get_current_user)):
     import openpyxl
-    # Security: validate file type and size
-    if not (file.filename or "").lower().endswith(".xlsx"):
-        raise HTTPException(400, "Only .xlsx files are accepted")
+    from datetime import datetime
     content = await file.read()
-    if len(content) > 5 * 1024 * 1024:
-        raise HTTPException(413, "File too large — maximum 5 MB")
     wb = openpyxl.load_workbook(io.BytesIO(content))
     ws = wb.active
-    headers = [str(c.value).strip().lower() if c.value else "" for c in next(ws.iter_rows(min_row=1,max_row=1))]
+    headers = [str(c.value).strip().lower().replace(" ","_") if c.value else "" for c in next(ws.iter_rows(min_row=1,max_row=1))]
     created, skipped, errors = [], [], []
+
+    VALID_STATUSES = ["Confirmed","Booked","Stuffed","Sailing","Arrived","Closed","Canceled"]
+
+    def parse_date(val):
+        if not val: return None
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"):
+            try: return datetime.strptime(str(val).strip(), fmt).strftime("%Y-%m-%d")
+            except: pass
+        return None
+
     for row in ws.iter_rows(min_row=2, values_only=True):
         row_data = {headers[i]:(str(v).strip() if v is not None else "") for i,v in enumerate(row) if i<len(headers)}
         ref = row_data.get("ref","").strip()
@@ -396,18 +364,40 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
         if db.query(models.Shipment).filter(models.Shipment.ref==ref).first():
             skipped.append(ref); continue
         try:
-            from datetime import datetime
-            s = models.Shipment(ref=ref, ref2=row_data.get("ref2",""),
-                booking_no=row_data.get("booking_no",""), mode=row_data.get("mode","Ocean"),
-                carrier=row_data.get("carrier",""), client=row_data.get("client",""),
-                client_email=row_data.get("client_email",""), pol=row_data.get("pol",""),
-                pod=row_data.get("pod",""), status="Pending",
-                created_at=datetime.utcnow().isoformat())
+            raw_status = row_data.get("status","").strip()
+            status = raw_status if raw_status in VALID_STATUSES else "Confirmed"
+            etd = parse_date(row_data.get("etd",""))
+            eta = parse_date(row_data.get("eta",""))
+            teu_raw = row_data.get("teu","")
+            try: teu = int(float(teu_raw)) if teu_raw else None
+            except: teu = None
+            s = models.Shipment(
+                ref=ref,
+                ref2=row_data.get("ref2",""),
+                booking_no=row_data.get("booking_no",""),
+                mode=row_data.get("mode","Ocean"),
+                carrier=row_data.get("carrier",""),
+                shipper=row_data.get("shipper",""),
+                consignee=row_data.get("consignee",""),
+                client=row_data.get("client",""),
+                client_email=row_data.get("client_email",""),
+                pol=row_data.get("pol",""),
+                pod=row_data.get("pod",""),
+                etd=etd,
+                eta=eta,
+                status=status,
+                incoterm=row_data.get("incoterm",""),
+                vessel=row_data.get("vessel",""),
+                voyage=row_data.get("voyage",""),
+                teu=teu,
+                note=row_data.get("note",""),
+                created_at=datetime.utcnow().isoformat()
+            )
             db.add(s); db.commit(); created.append(ref)
         except Exception as e: errors.append({"ref":ref,"error":str(e)})
     return {"created":len(created),"skipped":len(skipped),"errors":errors,"refs_created":created}
 
-# ══ Debug track ════════════════════════════════════════════════════════
+
 @app.post("/api/shipments/{sid}/track-debug")
 def track_debug(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     import requests as req_lib
