@@ -1806,40 +1806,186 @@ window.addEventListener("DOMContentLoaded", () => {
 </div>
 <!-- BULK IMPORT -->
 <div class="overlay" id="modal-bulk-import">
-  <div class="modal"><div class="modal-handle"></div>
+  <div class="modal" style="max-width:680px"><div class="modal-handle"></div>
     <div class="modal-head">
       <div class="modal-title">📥 Bulk Import</div>
-      <button class="modal-close" onclick="closeModal('modal-bulk-import')"><i class="ph ph-x"></i></button>
+      <button class="modal-close" onclick="closeBulkImport()"><i class="ph ph-x"></i></button>
     </div>
-    <div class="modal-body">
-      <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2)">
-        <strong style="color:var(--text1)">Excel columns (row 1 = headers):</strong>
-        <code style="display:block;margin-top:4px;font-size:11px">ref · ref2 · mode · carrier · client · client_email · pol · pod · booking_no</code>
-        <div style="margin-top:6px">Only <strong>ref</strong> is required.</div>
+    <div class="modal-body" id="bulk-modal-body">
+      <div id="bulk-steps" style="display:flex;gap:0;margin-bottom:18px">
+        <div id="bstep-1" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:700;border-radius:8px 0 0 8px;background:var(--accent);color:#fff">① Upload</div>
+        <div id="bstep-2" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;background:var(--bg3);color:var(--text2)">② Preview</div>
+        <div id="bstep-3" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;border-radius:0 8px 8px 0;background:var(--bg3);color:var(--text2)">③ Confirm</div>
       </div>
-      <div id="bulk-drop-zone" onclick="document.getElementById('bulk-file').click()"
-        style="border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:.2s">
-        <i class="ph ph-table" style="font-size:30px;color:#22c55e;display:block;margin-bottom:8px"></i>
-        <div style="font-size:13px;font-weight:600;color:var(--text1)">Drop .xlsx here</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px">or click to browse</div>
+      <div id="bulk-step-upload">
+        <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--text2)">
+          <strong style="color:var(--text1)">Required columns (row 1 = headers):</strong>
+          <code style="display:block;margin-top:4px;font-size:11px;line-height:1.7">ref &nbsp;·&nbsp; ref2 &nbsp;·&nbsp; mode &nbsp;·&nbsp; carrier &nbsp;·&nbsp; shipper &nbsp;·&nbsp; consignee<br>client &nbsp;·&nbsp; client_email &nbsp;·&nbsp; pol &nbsp;·&nbsp; pod &nbsp;·&nbsp; etd &nbsp;·&nbsp; eta &nbsp;·&nbsp; status &nbsp;·&nbsp; incoterm &nbsp;·&nbsp; booking_no</code>
+          <div style="margin-top:6px">Only <strong>ref</strong> is required. Dates as YYYY-MM-DD.</div>
+        </div>
+        <div id="bulk-drop-zone" onclick="document.getElementById('bulk-file').click()"
+          ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='var(--bg3)'"
+          ondragleave="this.style.borderColor='var(--border)';this.style.background=''"
+          ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='';bulkFileSelected(event.dataTransfer.files[0])"
+          style="border:2px dashed var(--border);border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s">
+          <i class="ph ph-file-xls" style="font-size:38px;color:#22c55e;display:block;margin-bottom:10px"></i>
+          <div style="font-size:14px;font-weight:700;color:var(--text1)">Drop .xlsx file here</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>
+        </div>
+        <input id="bulk-file" type="file" accept=".xlsx,.xls" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
+        <div id="bulk-parse-status" style="display:none;margin-top:12px;text-align:center;font-size:13px;color:var(--text2)"></div>
       </div>
-      <input id="bulk-file" type="file" accept=".xlsx" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
-      <div id="bulk-selected" style="display:none;margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px"></div>
-      <div id="bulk-result" style="display:none;margin-top:10px;padding:12px;border-radius:8px;font-size:13px"></div>
+      <div id="bulk-step-preview" style="display:none">
+        <div id="bulk-preview-info" style="font-size:13px;color:var(--text2);margin-bottom:10px"></div>
+        <div id="bulk-preview-table" style="overflow-x:auto;max-height:320px;overflow-y:auto;border-radius:10px;border:1px solid var(--border)"></div>
+      </div>
+      <div id="bulk-step-result" style="display:none">
+        <div id="bulk-result-content" style="text-align:center;padding:20px 10px"></div>
+      </div>
     </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modal-bulk-import')">Close</button>
-      <button class="btn btn-primary" id="bulk-upload-btn" style="display:none" onclick="doBulkUpload()">
-        <i class="ph ph-upload-simple"></i> Import
+    <div class="modal-foot" id="bulk-modal-foot">
+      <button class="btn btn-secondary" onclick="closeBulkImport()">Cancel</button>
+      <button class="btn btn-primary" id="bulk-confirm-btn" style="display:none" onclick="doBulkUpload()">
+        <i class="ph ph-check-circle"></i> Confirm Import
       </button>
     </div>
   </div>
 </div>
+/div>
 <!-- ADD USER -->
 
 
 
 <script>
+var _bulkFile = null;
+var _bulkRows = [];
+
+function _bulkStep(n) {
+  document.getElementById('bulk-step-upload').style.display   = n===1?'':'none';
+  document.getElementById('bulk-step-preview').style.display  = n===2?'':'none';
+  document.getElementById('bulk-step-result').style.display   = n===3?'':'none';
+  document.getElementById('bulk-confirm-btn').style.display   = n===2?'':'none';
+  var steps=['bstep-1','bstep-2','bstep-3'];
+  steps.forEach(function(id,i){
+    var el=document.getElementById(id); if(!el) return;
+    var active=i+1<=n;
+    el.style.background=active?'var(--accent)':'var(--bg3)';
+    el.style.color=active?'#fff':'var(--text2)';
+  });
+}
+
+function closeBulkImport() {
+  closeModal('modal-bulk-import');
+  _bulkFile=null; _bulkRows=[];
+  var fi=document.getElementById('bulk-file'); if(fi) fi.value='';
+  var ps=document.getElementById('bulk-parse-status'); if(ps){ps.style.display='none';ps.innerHTML='';}
+  var pt=document.getElementById('bulk-preview-table'); if(pt) pt.innerHTML='';
+  setTimeout(function(){_bulkStep(1);},300);
+}
+
+function bulkFileSelected(file) {
+  if(!file) return;
+  _bulkFile=file; _bulkRows=[];
+  var ps=document.getElementById('bulk-parse-status');
+  if(ps){ ps.style.display='block'; ps.innerHTML='<i class="ph ph-spinner"></i> Reading file…'; }
+  var dz=document.getElementById('bulk-drop-zone');
+  if(dz) dz.innerHTML='<i class="ph ph-file-xls" style="font-size:28px;color:#22c55e;display:block;margin-bottom:6px"></i>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--text1)">'+file.name+'</div>'
+    +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+( file.size/1024).toFixed(1)+' KB</div>';
+  function parseWithSheetJS(ab){
+    var wb=XLSX.read(ab,{type:'arraybuffer'});
+    var ws=wb.Sheets[wb.SheetNames[0]];
+    var rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+    _bulkRows=rows;
+    if(!rows.length){
+      if(ps){ps.innerHTML='<span style="color:var(--red)">No data rows found in the file.</span>';}
+      return;
+    }
+    showBulkPreview(rows);
+  }
+  function doRead(){
+    var reader=new FileReader();
+    reader.onload=function(e){ try{parseWithSheetJS(e.target.result);}catch(err){if(ps)ps.innerHTML='<span style="color:var(--red)">Parse error: '+err.message+'</span>';} };
+    reader.readAsArrayBuffer(file);
+  }
+  if(typeof XLSX!=='undefined'){ doRead(); }
+  else{
+    var sc=document.createElement('script');
+    sc.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+    sc.onload=function(){ doRead(); };
+    sc.onerror=function(){ if(ps)ps.innerHTML='<span style="color:var(--red)">Failed to load XLSX parser. Check internet connection.</span>'; };
+    document.head.appendChild(sc);
+  }
+}
+
+function showBulkPreview(rows) {
+  _bulkStep(2);
+  var info=document.getElementById('bulk-preview-info');
+  var tbl=document.getElementById('bulk-preview-table');
+  if(info) info.innerHTML='<i class="ph ph-table" style="color:var(--accent)"></i> '
+    +'<strong>'+rows.length+'</strong> shipments ready to import. Review before confirming.';
+  var cols=['ref','ref2','mode','carrier','shipper','consignee','client','pol','pod','etd','eta','status','incoterm','booking_no'];
+  var existCols=cols.filter(function(c){ return rows.some(function(r){return r[c]!==undefined&&r[c]!=='';});});
+  if(!existCols.length) existCols=Object.keys(rows[0]);
+  var thead='<thead><tr>'+existCols.map(function(c){
+    return '<th style="background:var(--accent);color:#fff;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;position:sticky;top:0">'+c+'</th>';
+  }).join('')+'</tr></thead>';
+  var tbody='<tbody>'+rows.slice(0,50).map(function(row,i){
+    var bg=i%2===0?'var(--bg)':'var(--bg2)';
+    var missing=!row['ref'];
+    return '<tr style="background:'+(missing?'rgba(239,68,68,.08)':bg)+'">'
+      +existCols.map(function(c){
+        var v=row[c]!==undefined?String(row[c]):'';
+        var style='padding:7px 10px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap';
+        if(c==='ref'&&!v) style+=';color:var(--red);font-weight:700';
+        return '<td style="'+style+'">'+( v||'<span style="color:var(--text3);font-style:italic">—</span>')+'</td>';
+      }).join('')
+    +'</tr>';
+  }).join('')+'</tbody>';
+  var note=rows.length>50?'<div style="font-size:11px;color:var(--text2);padding:8px 10px;text-align:center">Showing first 50 of '+rows.length+' rows</div>':'';
+  if(tbl) tbl.innerHTML='<table style="width:100%;border-collapse:collapse">'+thead+tbody+'</table>'+note;
+}
+
+async function doBulkUpload() {
+  if(!_bulkFile) return;
+  var btn=document.getElementById('bulk-confirm-btn');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Importing…';}
+  var fd=new FormData(); fd.append('file',_bulkFile);
+  try{
+    var token=getToken();
+    var r=await fetch('/api/shipments/bulk-import',{method:'POST',
+      headers:token?{'Authorization':'Bearer '+token}:{}, body:fd});
+    var d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Import failed');
+    _bulkStep(3);
+    var rc=document.getElementById('bulk-result-content');
+    if(rc){
+      var errHtml=d.errors&&d.errors.length?'<div style="margin-top:10px;font-size:12px;color:var(--red)">⚠ '+d.errors.length+' row(s) had errors</div>':'';
+      rc.innerHTML='<div style="font-size:40px;margin-bottom:14px">✅</div>'
+        +'<div style="font-size:16px;font-weight:700;color:var(--text1)">Import Complete</div>'
+        +'<div style="display:flex;gap:16px;justify-content:center;margin-top:16px">'
+        +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--green)">'+d.created+'</div><div style="font-size:11px;color:var(--text2);margin-top:2px">Created</div></div>'
+        +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--yellow)">'+d.skipped+'</div><div style="font-size:11px;color:var(--text2);margin-top:2px">Skipped</div></div>'
+        +'</div>'+errHtml;
+    }
+    var foot=document.getElementById('bulk-modal-foot');
+    if(foot) foot.innerHTML='<button class="btn btn-primary" onclick="closeBulkImport();loadDashboard()"><i class="ph ph-check"></i> Done</button>';
+    _bulkFile=null; _bulkRows=[];
+    toast('Import complete: '+d.created+' shipments added','success');
+    if(typeof loadShipments==='function') loadShipments();
+    if(typeof loadDashboard==='function') loadDashboard();
+  }catch(e){
+    if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-check-circle"></i> Confirm Import';}
+    toast(e.message,'error');
+    var rc2=document.getElementById('bulk-result-content');
+    _bulkStep(3);
+    if(rc2) rc2.innerHTML='<div style="font-size:36px;margin-bottom:10px">❌</div>'
+      +'<div style="font-size:14px;font-weight:700;color:var(--red)">Import Failed</div>'
+      +'<div style="font-size:13px;color:var(--text2);margin-top:8px">'+e.message+'</div>'
+      +'<button class="btn btn-ghost" style="margin-top:16px" onclick="_bulkStep(1)">Try Again</button>';
+  }
+}
+
 // ═══ CHANGE PASSWORD ═════════════════════════════════════════
 async function doChangePassword(){
   const old_pw=document.getElementById("cpw-old").value;
@@ -1867,41 +2013,7 @@ async function doChangePassword(){
 
 // ═══ BULK IMPORT ═════════════════════════════════════════════
 let _bulkFile=null;
-function bulkFileSelected(file){
-  _bulkFile=file;
-  const sel=document.getElementById("bulk-selected");
-  const btn=document.getElementById("bulk-upload-btn");
-  const res=document.getElementById("bulk-result");
-  res.style.display="none";
-  if(!file){ sel.style.display="none"; if(btn) btn.style.display="none"; return; }
-  sel.innerHTML=`<i class="ph ph-table" style="color:#22c55e"></i> <strong>${file.name}</strong> (${(file.size/1024).toFixed(1)} KB)`;
-  sel.style.display="block";
-  if(btn) btn.style.display="";
-}
 
-async function doBulkUpload(){
-  if(!_bulkFile) return;
-  const btn=document.getElementById("bulk-upload-btn");
-  const res=document.getElementById("bulk-result");
-  if(btn){ btn.disabled=true; btn.textContent="Importing…"; }
-  const fd=new FormData(); fd.append("file",_bulkFile);
-  try{
-    const token=getToken();
-    const r=await fetch("/api/shipments/bulk-import",{method:"POST",
-      headers:token?{"Authorization":"Bearer "+token}:{}, body:fd});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.detail||"Import failed");
-    res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#16a34a";
-    res.innerHTML=` <strong>${d.created}</strong> created, <strong>${d.skipped}</strong> skipped`
-      +(d.errors?.length?`<br>⚠️ ${d.errors.length} error(s)`:"");
-    _bulkFile=null; if(btn) btn.style.display="none";
-    if(typeof loadShipments==="function") loadShipments();
-  } catch(e){
-    res.style.cssText="display:block;padding:12px;border-radius:8px;font-size:13px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444";
-    res.textContent=" "+e.message;
-  }
-  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="ph ph-upload-simple"></i> Import'; } }
-}
 
 // ═══ USER MANAGEMENT ═════════════════════════════════════════
 async function loadUsers(){
