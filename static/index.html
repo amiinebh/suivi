@@ -1,5 +1,4 @@
-<!DOC
-        <button class="btn btn-ghost btn-sm" onclick="openDigest()" title="Daily briefing" style="flex-shrink:0;font-size:11px;padding:5px 10px"><i class="ph ph-newspaper" style="margin-right:4px"></i>Briefing</button>TYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
   <link rel="icon" href="data:,">
@@ -473,6 +472,10 @@ textarea.form-control{resize:vertical;min-height:72px}
       <i class="ph ph-boat"></i><span class="nav-label">Shipments</span>
       <span class="nav-badge" id="nav-count">0</span>
     </div>
+    <div class="nav-section">Clients</div>
+    <div class="nav-item" id="nav-clients" onclick="showPage('clients',this)">
+      <i class="ph ph-address-book"></i><span class="nav-label">Clients</span>
+    </div>
     <div class="nav-section">Analytics</div>
     <div class="nav-item admin-only" onclick="showPage('analytics',this)">
       <i class="ph ph-chart-line"></i><span class="nav-label">KPI & Charts</span>
@@ -563,6 +566,7 @@ textarea.form-control{resize:vertical;min-height:72px}
           <div id="dash-date" style="font-size:12px;color:var(--text2);margin-top:2px"></div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openDigest()" style="font-size:11px;padding:5px 10px"><i class="ph ph-newspaper" style="margin-right:4px"></i>Briefing</button>
           <button class="btn btn-ghost btn-sm" onclick="showPage('alerts',null);setBottomNav('alerts')">
             <i class="ph ph-bell"></i> <span id="dash-alert-hint">Alerts</span>
           </button>
