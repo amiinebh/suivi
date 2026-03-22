@@ -178,11 +178,13 @@ select.filter option{background:var(--bg2)}
 /* BADGES */
 .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:3px;font-size:var(--fs-xs);font-weight:500;white-space:nowrap;letter-spacing:0}
 .badge::before{content:'';width:4px;height:4px;border-radius:50%;flex-shrink:0}
-.badge-pending{background:rgba(245,158,11,.1);color:var(--yellow)}.badge-pending::before{background:var(--yellow)}
-.badge-sailing{background:rgba(59,130,246,.1);color:var(--blue)}.badge-sailing::before{background:var(--blue)}
-.badge-transit{background:rgba(168,85,247,.1);color:var(--purple)}.badge-transit::before{background:var(--purple)}
-.badge-arrived,.badge-delivered,.badge-confirmed{background:rgba(34,197,94,.1);color:var(--green)}.badge-arrived::before,.badge-delivered::before,.badge-confirmed::before{background:var(--green)}
-.badge-delayed{background:rgba(239,68,68,.1);color:var(--red)}.badge-delayed::before{background:var(--red)}
+.badge-confirmed{background:rgba(79,142,247,.13);color:#4f8ef7}.badge-confirmed::before{background:#4f8ef7}
+.badge-booked{background:rgba(168,85,247,.12);color:#a855f7}.badge-booked::before{background:#a855f7}
+.badge-stuffed{background:rgba(249,115,22,.12);color:#f97316}.badge-stuffed::before{background:#f97316}
+.badge-sailing{background:rgba(6,182,212,.13);color:#06b6d4}.badge-sailing::before{background:#06b6d4}
+.badge-arrived{background:rgba(34,197,94,.12);color:#22c55e}.badge-arrived::before{background:#22c55e}
+.badge-closed{background:rgba(16,185,129,.13);color:#10b981}.badge-closed::before{background:#10b981}
+.badge-canceled{background:rgba(239,68,68,.1);color:#ef4444}.badge-canceled::before{background:#ef4444}
 .badge-discharged{background:rgba(6,182,212,.1);color:var(--cyan)}.badge-discharged::before{background:var(--cyan)}
 .badge-booked,.badge-on-board,.badge-loading{background:rgba(59,130,246,.1);color:var(--blue)}.badge-booked::before,.badge-on-board::before,.badge-loading::before{background:var(--blue)}
 .badge-blue{background:rgba(59,130,246,.1);color:var(--blue)}.badge-blue::before{background:var(--blue)}
@@ -382,6 +384,7 @@ textarea.form-control{resize:vertical;min-height:72px}
 .search-box i{color:var(--text3);font-size:14px;flex-shrink:0}
 @media(max-width:768px){.search-box{display:none}.topbar-title{display:block}.topbar{padding:0 12px;gap:8px;height:52px}}
 
+.search-wrap-mobile{display:none}@media(max-width:768px){.search-wrap-mobile{display:block!important}}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -582,12 +585,18 @@ textarea.form-control{resize:vertical;min-height:72px}
 
         <!-- ─── SHIPMENTS ─── -->
     <div class="page" id="page-shipments">
-      <div class="filters-row">
+      
+      <div class="search-wrap-mobile" style="display:none;margin-bottom:10px">
+        <div class="search-box" style="display:flex!important;width:100%">
+          <i class="ph ph-magnifying-glass"></i>
+          <input class="form-control" placeholder="Search shipments…" oninput="onSearch(this.value)" style="border:none;background:transparent;outline:none;width:100%"/>
+        </div>
+      </div>
+<div class="filters-row">
         <select class="filter" id="fil-status" onchange="loadShipments()">
           <option value="">All Status</option>
-          <option>Pending</option><option>Sailing</option><option>Transit</option>
-          <option>Arrived</option><option>Discharged</option><option>Delivered</option><option>Delayed</option>
-        </select>
+          <option>Confirmed</option><option>Booked</option><option>Stuffed</option><option>Sailing</option><option>Arrived</option><option>Closed</option><option>Canceled</option>
+          </select>
         <select class="filter" id="fil-mode" onchange="loadShipments()">
           <option value="">All Modes</option>
           <option>Ocean</option><option>Air</option>
@@ -711,17 +720,32 @@ textarea.form-control{resize:vertical;min-height:72px}
 
     <!-- ═══ DETAIL PAGE ═══ -->
     <div class="page" id="page-detail">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null)" style="padding:6px 10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null)" style="padding:6px 10px;flex-shrink:0">
           <i class="ph ph-arrow-left"></i>
         </button>
         <div style="flex:1;min-width:0">
           <div id="detail-ref" style="font-size:15px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
           <div id="detail-sub" style="font-size:11px;color:var(--text2);margin-top:1px">—</div>
         </div>
-        <div id="detail-status-badge"></div>
+        <select id="detail-status-select" onchange="updateShipmentStatus(this.value)"
+          style="padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:12px;font-weight:700;cursor:pointer">
+          <option value="Confirmed">Confirmed</option>
+          <option value="Booked">Booked</option>
+          <option value="Stuffed">Stuffed</option>
+          <option value="Sailing">Sailing</option>
+          <option value="Arrived">Arrived</option>
+          <option value="Closed">Closed</option>
+          <option value="Canceled">Canceled</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="cloneShipment()" title="Clone shipment" style="padding:6px 10px;flex-shrink:0">
+          <i class="ph ph-copy"></i>
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="editShipment(_detailId)" title="Edit" style="padding:6px 10px;flex-shrink:0">
+          <i class="ph ph-pencil"></i>
+        </button>
         <button class="btn btn-primary btn-sm" onclick="syncDetail()" id="detail-sync-btn" style="padding:6px 10px;flex-shrink:0">
-          <i class="ph ph-arrows-clockwise"></i>
+          <i class="ph ph-envelope"></i>
         </button>
       </div>
       <div class="shipment-card" style="margin-bottom:14px;padding:12px 14px">
@@ -742,17 +766,21 @@ textarea.form-control{resize:vertical;min-height:72px}
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--text2)">
           <span>ETD <strong id="detail-etd" style="color:var(--text1)">—</strong></span>
+          <span id="detail-vessel-line" style="display:none"><i class="ph ph-boat" style="font-size:10px"></i> <span id="detail-vessel-name"></span></span>
           <span>ETA <strong id="detail-eta" style="color:var(--accent)">—</strong></span>
         </div>
       </div>
       <div style="display:flex;gap:4px;margin-bottom:12px;background:var(--bg3);border-radius:10px;padding:4px">
-        <button class="detail-tab active" id="dtab-btn-timeline" onclick="switchDTab('timeline')">📋 Timeline</button>
-        <button class="detail-tab" id="dtab-btn-notes" onclick="switchDTab('notes')">💬 Notes</button>
-        <button class="detail-tab" id="dtab-btn-info" onclick="switchDTab('info')">📄 Details</button>
+        <button class="detail-tab active" id="dtab-btn-timeline" onclick="switchDTab('timeline')" style="flex:1">&#128203; Timeline</button>
+        <button class="detail-tab" id="dtab-btn-notes" onclick="switchDTab('notes')" style="flex:1">&#128172; Notes</button>
+        <button class="detail-tab" id="dtab-btn-info" onclick="switchDTab('info')" style="flex:1">&#128196; Details</button>
+        <button class="detail-tab" id="dtab-btn-emails" onclick="switchDTab('emails')" style="flex:1">&#9993; Emails</button>
       </div>
       <div id="dtab-timeline">
         <div id="detail-events-list" class="tl-list"></div>
-        
+        <div id="detail-no-events" style="display:none;text-align:center;padding:30px;color:var(--text2);font-size:13px">
+          <i class="ph ph-clock" style="font-size:28px;display:block;margin-bottom:8px"></i>No events yet
+        </div>
       </div>
       <div id="dtab-notes" style="display:none">
         <div id="detail-comments-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
@@ -764,12 +792,27 @@ textarea.form-control{resize:vertical;min-height:72px}
           </button>
         </div>
       </div>
-      
-      <div style="margin-top:12px;background:var(--bg3);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px">
-        <i class="ph ph-link" style="color:var(--accent);font-size:13px"></i>
-        <div style="flex:1;font-size:11px;color:var(--text2)">Client tracking link</div>
+      <div id="dtab-info" style="display:none">
+        <div id="detail-info-chips" class="info-grid"></div>
+        <div id="detail-containers-section" style="display:none;margin-top:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Containers</div>
+          <div id="detail-containers-list"></div>
+        </div>
+      </div>
+      <div id="dtab-emails" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+          <button class="btn btn-primary btn-sm" onclick="openEmailPreview()" id="btn-send-email">
+            <i class="ph ph-envelope"></i> Send Email
+          </button>
+        </div>
+        <div id="email-log-list">
+          <div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">
+            <i class="ph ph-envelope-open" style="font-size:28px;display:block;margin-bottom:8px"></i>No emails sent yet
+          </div>
+        </div>
       </div>
     </div>
+
 
   </div><!-- /content -->
 </div><!-- /main -->
@@ -886,10 +929,18 @@ textarea.form-control{resize:vertical;min-height:72px}
           <input id="f-eta" class="form-control" type="date"/>
         </div>
         <div class="form-group">
+          <label>Vessel Name</label>
+          <input id="f-vessel" class="form-control" placeholder="e.g. MSC OSCAR"/>
+        </div>
+        <div class="form-group">
+          <label>Voyage No.</label>
+          <input id="f-voyage" class="form-control" placeholder="e.g. 043W"/>
+        </div>
+
+        <div class="form-group">
           <label>Status</label>
           <select id="f-status" class="form-control">
-            <option>Pending</option><option>Sailing</option><option>Transit</option>
-            <option>Arrived</option><option>Discharged</option><option>Delivered</option><option>Delayed</option>
+            <option>Confirmed</option><option>Booked</option><option>Stuffed</option><option>Sailing</option><option>Arrived</option><option>Closed</option><option>Canceled</option>
           </select>
         </div>
         <div class="form-group full" id="containers-section">
@@ -962,7 +1013,7 @@ textarea.form-control{resize:vertical;min-height:72px}
 
 <script>
 let _pgPage=1, _pgSize=20, _pgShips=[];
-let editId=null, currentDetailId=null, allShipments=[];
+let editId=null, currentDetailId=null, _detailId=null, allShipments=[];
 
 /* ── Nav ── */
 function showPage(id,el){
@@ -1030,14 +1081,22 @@ function resetForm(){
     .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   _resetContainerForm();
   const fm=document.getElementById('f-mode'); if(fm) fm.value='Ocean';
-  const fs=document.getElementById('f-status'); if(fs) fs.value='Pending';
+  const fs=document.getElementById('f-status'); if(fs) fs.value='Confirmed';
   document.getElementById('modal-add-title').textContent='New Shipment';
   editId=null;
 }
-function statusBadge(s){
-  const m={Pending:'pending',Sailing:'sailing',Transit:'transit',Arrived:'arrived',
-    Delivered:'delivered',Delayed:'delayed',Discharged:'discharged'};
-  return `<span class="badge badge-${m[s]||'pending'}">${s||'Pending'}</span>`;
+function statusBadge(st){
+  var m={
+    'Confirmed':'confirmed',
+    'Booked':'booked',
+    'Stuffed':'stuffed',
+    'Sailing':'sailing',
+    'Arrived':'arrived',
+    'Closed':'closed',
+    'Canceled':'canceled'
+  };
+  var cls=m[st]||'confirmed';
+  return '<span class="badge badge-'+cls+'">'+( st||'Confirmed')+'</span>';
 }
 function modeBadge(m){
   return `<span class="badge badge-mode badge-${(m||'ocean').toLowerCase()}">${m||'Ocean'}</span>`;
@@ -1076,69 +1135,50 @@ function setPageSize(v){
 }
 
 /* ── Render cards (mobile) ── */
-function renderCards(ships,containerId='ship-cards'){
-  const wrap=document.getElementById(containerId);
-  if(!wrap) return;
+function renderCards(ships,containerId){
+  var cid=containerId||'ship-cards';
+  var wrap=document.getElementById(cid);
+  if(!wrap)return;
   if(!ships.length){
-    wrap.innerHTML=`<div class="empty"><div class="empty-icon">📦</div>
-      <div class="empty-title">No shipments</div>
-      <div class="empty-sub">Tap + to add your first shipment</div></div>`;
+    wrap.innerHTML='<div class="empty"><div class="empty-icon">&#128230;</div><div class="empty-title">No shipments</div><div class="empty-sub">Tap + to add your first shipment</div></div>';
     return;
   }
-  wrap.innerHTML=ships.map(s=>`
-    <div class="ship-card" onclick="openDetail(${s.id})">
-      <div class="ship-card-head">
-        <div>
-          <div class="ship-ref">${s.ref}</div>
-          <div class="ship-sub">${s.booking_no||'—'} ${s.carrier?'· '+s.carrier:''}</div>
-        </div>
-        ${statusBadge(s.status)}
-      </div>
-      <div class="ship-card-body" style="grid-template-columns: repeat(2, 1fr); gap:12px">
-        <div class="ship-field">
-          <div class="ship-field-label">Client</div>
-          <div class="ship-field-value">${s.client||'—'}</div>
-        </div>
-        <div class="ship-field">
-          <div class="ship-field-label">Incoterm</div>
-          <div class="ship-field-value">${s.incoterm||'—'}</div>
-        </div>
-        <div class="ship-field">
-          <div class="ship-field-label">POL</div>
-          <div class="ship-field-value">${s.pol||'—'}</div>
-        </div>
-        <div class="ship-field">
-          <div class="ship-field-label">POD</div>
-          <div class="ship-field-value">${s.pod||'—'}</div>
-        </div>
-        <div class="ship-field">
-          <div class="ship-field-label">ETD</div>
-          <div class="ship-field-value">${fmt(s.etd)}</div>
-        </div>
-        <div class="ship-field">
-          <div class="ship-field-label">ETA</div>
-          <div class="ship-field-value">${fmt(s.eta)}</div>
-        </div>
-        <div class="ship-field" style="grid-column: span 2;">
-          <div class="ship-field-label">Quantity</div>
-          <div class="ship-field-value" style="color:var(--accent);font-weight:600">${s.teu?s.teu+' TEU':'—'}</div>
-        </div>
-      </div>
-      <div class="ship-card-foot">
-        <div style="font-size:11px;color:var(--text2)">
-          <i class="ph ph-clock" style="margin-right:4px"></i>
-          ${s.last_tracked?'<i class="ph ph-arrows-clockwise" style="font-size:10px;margin-right:3px"></i>Updated '+fmt(s.last_tracked):''}
-        </div>
-        <div class="ship-actions" onclick="event.stopPropagation()">
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="editShipment(${s.id})" title="Edit">
-            <i class="ph ph-pencil"></i>
-          </button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteShipment(${s.id})" title="Delete">
-            <i class="ph ph-trash"></i>
-          </button>
-        </div>
-      </div>
-    </div>`).join('');
+  var today=new Date();today.setHours(0,0,0,0);
+  window._selectedShips=window._selectedShips||new Set();
+  var isBulk=cid==='ship-cards';
+  wrap.innerHTML=ships.map(function(sh){
+    var eta=sh.eta?new Date(sh.eta):null;
+    if(eta)eta.setHours(0,0,0,0);
+    var diff=(eta!==null)?Math.round((eta-today)/86400000):null;
+    var ec=diff===null?'var(--text2)':(diff<0?'#ef4444':(diff<=2?'#f97316':'var(--accent)'));
+    var el=diff===null?'':(diff<0?Math.abs(diff)+'d late':(diff===0?'TODAY':(diff===1?'Tomorrow':('In '+diff+'d'))));
+    var chk=(isBulk&&window._selectedShips.has(sh.id))?'checked':'';
+    return '<div class="ship-card" onclick="openDetail('+sh.id+')" style="position:relative">'
+      +(isBulk?'<div onclick="event.stopPropagation()" style="position:absolute;top:12px;right:12px"><input type="checkbox" '+chk+' onchange="toggleShipmentSelect('+sh.id+',this.checked)" style="width:16px;height:16px;cursor:pointer"></div>':'')
+      +'<div class="ship-card-head">'
+      +'<div><div class="ship-ref">'+sh.ref+'</div>'
+      +'<div class="ship-sub">'+(sh.booking_no||'--')+(sh.carrier?' &middot; '+sh.carrier:'')+'</div></div>'
+      +(typeof statusBadge==='function'?statusBadge(sh.status):'<span>'+sh.status+'</span>')
+      +'</div>'
+      +'<div class="ship-card-body" style="grid-template-columns:repeat(2,1fr);gap:12px">'
+      +'<div class="ship-field"><div class="ship-field-label">Client</div><div class="ship-field-value">'+(sh.client||'--')+'</div></div>'
+      +'<div class="ship-field"><div class="ship-field-label">Incoterm</div><div class="ship-field-value">'+(sh.incoterm||'--')+'</div></div>'
+      +'<div class="ship-field"><div class="ship-field-label">POL</div><div class="ship-field-value">'+(sh.pol||'--')+'</div></div>'
+      +'<div class="ship-field"><div class="ship-field-label">POD</div><div class="ship-field-value">'+(sh.pod||'--')+'</div></div>'
+      +'<div class="ship-field"><div class="ship-field-label">ETD</div><div class="ship-field-value">'+fmtd(sh.etd)+'</div></div>'
+      +'<div class="ship-field"><div class="ship-field-label">ETA</div>'
+      +'<div class="ship-field-value" style="color:'+ec+'">'+fmtd(sh.eta)+(el?'&nbsp;<span style="font-size:10px;font-weight:700;background:'+ec+'22;padding:1px 6px;border-radius:8px">'+el+'</span>':'')+'</div></div>'
+      +'<div class="ship-field" style="grid-column:span 2"><div class="ship-field-label">Quantity</div>'
+      +'<div class="ship-field-value" style="color:var(--accent);font-weight:600">'+(sh.teu?sh.teu+' TEU':'--')+'</div></div>'
+      +'</div>'
+      +'<div class="ship-card-foot">'
+      +'<div style="font-size:11px;color:var(--text2)">'+(sh.last_tracked?'<i class="ph ph-arrows-clockwise" style="font-size:10px;margin-right:3px"></i>Updated '+fmtd(sh.last_tracked):'')+'</div>'
+      +'<div class="ship-actions" onclick="event.stopPropagation()">'
+      +'<button class="btn btn-secondary btn-sm btn-icon" onclick="editShipment('+sh.id+')" title="Edit"><i class="ph ph-pencil"></i></button>'
+      +'<button class="btn btn-danger btn-sm btn-icon" onclick="deleteShipment('+sh.id+')" title="Delete"><i class="ph ph-trash"></i></button>'
+      +'</div></div>'
+      +'</div>';
+  }).join('');
 }
 
 /* ── Render table (desktop) ── */
@@ -1194,9 +1234,9 @@ async function loadDashboard(){
   try{
     var stats=await apiFetch('/api/stats');
     var bs=stats.by_status||{};
-    var transit=(bs.Sailing||0)+(bs.Transit||0)+(bs['In Transit']||0)+(bs['On Board']||0)+(bs['In Customs']||0)+(bs['Out for Delivery']||0);
-    var done=(bs.Delivered||0)+(bs.Arrived||0)+(bs.Discharged||0);
-    var pending=(bs.Pending||0)+(bs.Booked||0);
+    var transit=(bs.Sailing||0)+(bs.Stuffed||0);
+    var done=(bs.Closed||0)+(bs.Arrived||0);
+    var pending=(bs.Confirmed||0)+(bs.Booked||0);
     var overdue=stats.delayed_count||0;
     var total=stats.total||0;
     var sbEl=document.getElementById('dash-status-bar');
@@ -1234,7 +1274,7 @@ async function loadDashboard(){
     var today=new Date();today.setHours(0,0,0,0);
     var in7=new Date(today);in7.setDate(in7.getDate()+7);
     var arriving=list.filter(function(sh){
-      if(['Delivered','Discharged','Arrived'].indexOf(sh.status)>=0)return false;
+      if(['Closed','Canceled'].indexOf(sh.status)>=0)return false;
       if(!sh.eta)return false;
       var e=new Date(sh.eta);e.setHours(0,0,0,0);
       return e>=today&&e<=in7;
@@ -1367,7 +1407,7 @@ async function saveShipment(){
   const data={ref,ref2:g('f-ref2'),booking_no:g('f-booking'),
     mode:document.getElementById('f-mode')?.value||'Ocean',
     carrier:formatCarrier(g('f-carrier')),shipper:g('f-shipper'),consignee:g('f-consignee'),incoterm:g('f-incoterm'),client:g('f-client'),client_email:g('f-client-email'),
-    pol:g('f-pol'),pod:g('f-pod'),etd:g('f-etd'),eta:g('f-eta'),
+    pol:g('f-pol'),pod:g('f-pod'),etd:g('f-etd'),eta:g('f-eta'),vessel:g('f-vessel'),voyage:g('f-voyage'),
     status:document.getElementById('f-status')?.value||'Pending',note:g('f-note'),
     teu:totalTeuNow||null};
   try{
@@ -1398,7 +1438,10 @@ async function editShipment(sid){
     set('f-etd',s.etd?s.etd.split('T')[0]:''); set('f-eta',s.eta?s.eta.split('T')[0]:'');
     set('f-note',s.note);
     const fm=document.getElementById('f-mode'); if(fm) fm.value=s.mode||'Ocean';
-    const fs=document.getElementById('f-status'); if(fs) fs.value=s.status||'Pending';
+    const fs=document.getElementById('f-status'); if(fs) fs.value=s.status||'Confirmed';
+    var fv=document.getElementById('f-vessel');if(fv)fv.value=s.vessel||'';
+    var fvg=document.getElementById('f-voyage');if(fvg)fvg.value=s.voyage||'';
+
     // Reset + load existing containers grouped by type
     const _rawConts = (s.containers||[]);
     const _cMerged = {};
@@ -1487,11 +1530,11 @@ async function loadAnalytics(){
     if(el2){
       el2.innerHTML='';
       var bs=k.by_status||{};
-      var inTr=(bs['In Transit']||0)+(bs['On Board']||0)+(bs['In Customs']||0)+(bs['Out for Delivery']||0);
+      var inTr=(bs['Sailing']||0)+(bs['Stuffed']||0);
       var ovc=k.overdue&&k.overdue.length?k.overdue.length:0;
       [{icon:'ph-truck',color:'#3b82f6',val:inTr,label:'In Transit',sub:'Active movements'},
-       {icon:'ph-flag-banner',color:'#22c55e',val:bs['Delivered']||0,label:'Delivered',sub:'Completed successfully'},
-       {icon:'ph-hourglass',color:'#f59e0b',val:(bs['Pending']||0)+(bs['Booked']||0),label:'Pending',sub:'Awaiting departure'},
+       {icon:'ph-flag-banner',color:'#22c55e',val:(bs['Closed']||0)+(bs['Arrived']||0),label:'Delivered/Closed',sub:'Completed'},
+       {icon:'ph-hourglass',color:'#f59e0b',val:(bs['Confirmed']||0)+(bs['Booked']||0),label:'Pending',sub:'Awaiting departure'},
        {icon:'ph-siren',color:'#ef4444',val:ovc,label:'Overdue',sub:ovc?ovc+' need attention':'All on track',sc:ovc?'#ef4444':'#22c55e'}
       ].forEach(function(c){
         var d=document.createElement('div');d.className='card';
@@ -1835,6 +1878,7 @@ function openNewUserModal(){
   openModal("modal-add-user");
 }
 async function openDetail(id){
+  _detailId=id; currentDetailId=id;
   _detailId=id;
   showPage('detail',null);
   function _set(elId,val){var el=document.getElementById(elId);if(el)el.textContent=val||'';}
@@ -1926,11 +1970,17 @@ function _renderDetail(ship){
   function _h(id,v){var el=document.getElementById(id);if(el)el.innerHTML=v||'';}
   _s('detail-ref',ship.ref||'--');
   _s('detail-sub',[ship.booking_no,ship.carrier].filter(Boolean).join(' · ')||'No booking/carrier info');
+  var dss=document.getElementById('detail-status-select');
+  if(dss)dss.value=ship.status||'Confirmed';
   _h('detail-status-badge',typeof statusBadge==='function'?statusBadge(ship.status):'<span>'+ship.status+'</span>');
   _s('detail-pol',ship.pol||'--');
   _s('detail-pod',ship.pod||'--');
   _s('detail-etd',fmtd(ship.etd));
   _s('detail-eta',fmtd(ship.eta));
+  var vl=document.getElementById('detail-vessel-line');
+  var vn=document.getElementById('detail-vessel-name');
+  if(ship.vessel&&vl&&vn){vl.style.display='inline';vn.textContent=ship.vessel+(ship.voyage?' / '+ship.voyage:'');}
+  else if(vl)vl.style.display='none';
   var infoChips=document.getElementById('detail-info-chips');
   if(infoChips){
     var chips=[
@@ -1944,7 +1994,9 @@ function _renderDetail(ship){
       {l:'Consignee',v:ship.consignee||'--',full:true},
       {l:'Incoterm',v:ship.incoterm||'--'},
       {l:'Booking No.',v:ship.booking_no||'--'},
-      {l:'Last Synced',v:ship.last_tracked||'Never'},
+      {l:'Vessel',v:ship.vessel||'--'},
+      {l:'Voyage No.',v:ship.voyage||'--'},
+      {l:'Last Updated',v:ship.last_tracked||'Never'},
     ];
     infoChips.innerHTML=chips.map(function(c){
       return '<div class="info-chip'+(c.full?' full':'')+'"><div class="chip-label">'+c.l+'</div><div class="chip-value">'+c.v+'</div></div>';
@@ -1995,12 +2047,15 @@ function _renderDetail(ship){
 }
 
 function switchDTab(tab){
-  ['timeline','notes','info'].forEach(function(t){
+  ['timeline','notes','info','emails'].forEach(function(t){
     var p=document.getElementById('dtab-'+t);
     var b=document.getElementById('dtab-btn-'+t);
-    if(p)p.style.display=t===tab?'block':'none';
+    if(p)p.style.display=(t===tab?'block':'none');
     if(b)b.classList.toggle('active',t===tab);
   });
+  if(tab==='emails'&&typeof _detailId!=='undefined'&&_detailId){
+    if(typeof loadEmailLog==='function')loadEmailLog(_detailId);
+  }
 }
 async function submitComment(){
   var txt=document.getElementById('detail-comment-text');
@@ -2114,14 +2169,13 @@ function openFilesSheet(){
 
 <script>
 var STATUS_TEMPLATES = {
-  Pending:    { subject: "Your shipment {ref} has been registered",     body: "Dear {client},\n\nYour shipment {ref} has been registered in our system.\n\nRoute: {pol} to {pod}\nCarrier: {carrier}\nETD: {etd}   ETA: {eta}\n\nYou can track your shipment at any time using the link below.\n\nBest regards,\nFreightTrack Team" },
-  Booked:     { subject: "Your shipment {ref} is confirmed and booked", body: "Dear {client},\n\nGreat news! Your shipment {ref} has been confirmed and booked with {carrier}.\n\nBooking: {booking_no}\nETD: {etd}   ETA: {eta}\n\nBest regards,\nFreightTrack Team" },
-  Sailing:    { subject: "Your shipment {ref} has departed",            body: "Dear {client},\n\nYour shipment {ref} has departed from {pol} and is now sailing to {pod}.\n\nCarrier: {carrier}\nVessel: {vessel}\nETA: {eta}\n\nTrack your cargo using the link below.\n\nBest regards,\nFreightTrack Team" },
-  Transit:    { subject: "Your shipment {ref} is in transit",           body: "Dear {client},\n\nYour shipment {ref} is currently in transit to {pod}.\n\nETA: {eta}   Carrier: {carrier}\n\nBest regards,\nFreightTrack Team" },
-  Arrived:    { subject: "Your shipment {ref} has arrived at {pod}",    body: "Dear {client},\n\nYour shipment {ref} has arrived at {pod}.\n\nPlease coordinate with your local agent for customs clearance.\n\nBooking: {booking_no}\n\nBest regards,\nFreightTrack Team" },
-  Discharged: { subject: "Your shipment {ref} has been discharged",     body: "Dear {client},\n\nYour shipment {ref} has been discharged at {pod} and is awaiting customs clearance.\n\nBooking: {booking_no}\n\nBest regards,\nFreightTrack Team" },
-  Delivered:  { subject: "Your shipment {ref} has been delivered",      body: "Dear {client},\n\nYour shipment {ref} has been successfully delivered.\n\nThank you for trusting us with your cargo. We look forward to serving you again.\n\nBest regards,\nFreightTrack Team" },
-  Delayed:    { subject: "Important: Your shipment {ref} is delayed",   body: "Dear {client},\n\nYour shipment {ref} is experiencing a delay.\n\nRevised ETA: {eta}   Carrier: {carrier}\nRoute: {pol} to {pod}\n\nWe apologize for the inconvenience and will keep you updated.\n\nBest regards,\nFreightTrack Team" }
+  Confirmed: { subject: "Your shipment {ref} has been confirmed", body: "Dear {client},\n\nYour shipment {ref} has been confirmed.\n\nRoute: {pol} to {pod}\nCarrier: {carrier}\nETD: {etd}   ETA: {eta}\n\nBest regards,\nFreightTrack Team" },
+  Booked:    { subject: "Your shipment {ref} is booked with {carrier}", body: "Dear {client},\n\nYour shipment {ref} has been booked with {carrier}.\n\nBooking No: {booking_no}\nETD: {etd}   ETA: {eta}\nRoute: {pol} to {pod}\n\nBest regards,\nFreightTrack Team" },
+  Stuffed:   { subject: "Your shipment {ref} has been stuffed", body: "Dear {client},\n\nYour shipment {ref} has been stuffed and is ready for departure from {pol}.\n\nVessel: {vessel}\nETD: {etd}   ETA: {eta}\n\nBest regards,\nFreightTrack Team" },
+  Sailing:   { subject: "Your shipment {ref} has departed", body: "Dear {client},\n\nYour shipment {ref} has departed from {pol} and is now sailing to {pod}.\n\nCarrier: {carrier}  Vessel: {vessel}\nETA: {eta}\n\nBest regards,\nFreightTrack Team" },
+  Arrived:   { subject: "Your shipment {ref} has arrived at {pod}", body: "Dear {client},\n\nYour shipment {ref} has arrived at {pod}.\n\nPlease coordinate with your local agent for customs clearance.\nBooking: {booking_no}\n\nBest regards,\nFreightTrack Team" },
+  Closed:    { subject: "Your shipment {ref} is closed", body: "Dear {client},\n\nYour shipment {ref} has been successfully closed. The delivery order has been issued.\n\nThank you for trusting us with your cargo.\n\nBest regards,\nFreightTrack Team" },
+  Canceled:  { subject: "Your shipment {ref} has been canceled", body: "Dear {client},\n\nWe regret to inform you that shipment {ref} has been canceled.\n\nPlease contact us for further details.\n\nBest regards,\nFreightTrack Team" }
 };
 
 function fillTpl(tpl, s) {
@@ -2225,7 +2279,7 @@ function buildAlerts(ships){
   var alerts=[];
   if(!ships||!ships.length)return alerts;
   ships.forEach(function(sh){
-    if(['Delivered','Discharged'].indexOf(sh.status)>=0)return;
+    if(['Closed','Canceled'].indexOf(sh.status)>=0)return;
     var sk=sh.id+'_'+sh.status;
     var snz=localStorage.getItem('snooze_'+sk);
     if(snz&&new Date().getTime()<parseInt(snz))return;
@@ -2236,7 +2290,7 @@ function buildAlerts(ships){
       else if(diff<=3)alerts.push({id:sh.id,ref:sh.ref,sk:sk,type:'warning',label:'Due soon',message:'ETA '+fmtd(sh.eta)+' ('+diff+'d)'});
     }
     if(!sh.eta&&!sh.etd)alerts.push({id:sh.id,ref:sh.ref,sk:sk,type:'info',label:'No dates',message:'Missing ETD & ETA — please update'});
-    if(sh.status==='Pending'&&sh.etd){
+    if(sh.status==='Confirmed'&&sh.etd){
       var etd=new Date(sh.etd);etd.setHours(0,0,0,0);
       if(etd<today)alerts.push({id:sh.id,ref:sh.ref,sk:sk,type:'warning',label:'Pending past ETD',message:'ETD was '+fmtd(sh.etd)});
     }
@@ -2812,20 +2866,91 @@ async function bulkDeleteShipments(){
   if(typeof loadDashboard==='function') loadDashboard();
 }
 async function deleteAllShipments(){
-  var total = window._pgShips ? window._pgShips.length : (window.allShipments ? window.allShipments.length : '?');
-  if(!confirm('WARNING: Delete ALL '+total+' shipment(s)? This is irreversible!')) return;
-  if(!confirm('Are you absolutely sure? All shipment data will be permanently deleted.')) return;
-  var all = window.allShipments || [];
-  if(!all.length){ toast('No shipments to delete','error'); return; }
-  var ok=0, fail=0;
-  for(var i=0;i<all.length;i++){
-    try{ await apiFetch('/api/shipments/'+all[i].id,{method:'DELETE'}); ok++; }
-    catch(e){ fail++; }
+  if(!confirm('WARNING: Delete ALL shipments? This is irreversible!'))return;
+  if(!confirm('Are you absolutely sure? All shipment data will be permanently deleted.'))return;
+  var delBtn=document.querySelector('#bulk-toolbar button:last-child');
+  if(delBtn){delBtn.disabled=true;delBtn.innerHTML='<i class="ph ph-spinner"></i> Deleting...';}
+  try{
+    var fresh=await apiFetch('/api/shipments');
+    var all=Array.isArray(fresh)?fresh:(fresh.data||fresh.shipments||[]);
+    if(!all.length){toast('No shipments to delete','error');if(delBtn){delBtn.disabled=false;delBtn.innerHTML='<i class="ph ph-warning"></i> Delete ALL';}return;}
+    var ok=0,fail=0;
+    for(var i=0;i<all.length;i++){
+      try{await apiFetch('/api/shipments/'+all[i].id,{method:'DELETE'});ok++;}
+      catch(e){fail++;}
+    }
+    window._selectedShips=new Set();
+    window.allShipments=[];
+    toast('Deleted '+ok+' shipment(s)'+(fail?' ('+fail+' failed)':''),'success');
+    if(typeof loadShipments==='function')loadShipments();
+    if(typeof loadDashboard==='function')loadDashboard();
+  }catch(e){
+    toast('Error: '+e.message,'error');
+    if(delBtn){delBtn.disabled=false;delBtn.innerHTML='<i class="ph ph-warning"></i> Delete ALL';}
   }
-  window._selectedShips = new Set();
-  toast('Deleted '+ok+' shipment(s)'+(fail?' ('+fail+' failed)':''), fail?'error':'success');
-  if(typeof loadShipments==='function') loadShipments();
-  if(typeof loadDashboard==='function') loadDashboard();
+}
+
+async function updateShipmentStatus(newStatus){
+  if(!_detailId||!newStatus)return;
+  var prev=null;
+  try{
+    var ship=await apiFetch('/api/shipments/'+_detailId);
+    prev=ship.status;
+    if(prev===newStatus)return;
+    await apiFetch('/api/shipments/'+_detailId,{method:'PATCH',body:JSON.stringify({status:newStatus})});
+    toast('Status updated to '+newStatus,'success');
+    var badge=document.getElementById('detail-status-badge');
+    if(badge&&typeof statusBadge==='function')badge.innerHTML=statusBadge(newStatus);
+    // Add timeline event
+    try{
+      await apiFetch('/api/shipments/'+_detailId+'/events',{method:'POST',body:JSON.stringify({
+        description:'Status changed: '+prev+' → '+newStatus,
+        status:newStatus
+      })});
+    }catch(e){}
+    // Reload detail
+    var updated=await apiFetch('/api/shipments/'+_detailId);
+    if(typeof _renderDetail==='function')_renderDetail(updated);
+  }catch(e){
+    toast('Error: '+e.message,'error');
+    var dss=document.getElementById('detail-status-select');
+    if(dss&&prev)dss.value=prev;
+  }
+}
+
+async function cloneShipment(){
+  if(!_detailId)return;
+  try{
+    var ship=await apiFetch('/api/shipments/'+_detailId);
+    var payload={
+      ref:ship.ref+'-COPY',
+      ref2:ship.ref2||'',
+      mode:ship.mode||'',
+      carrier:ship.carrier||'',
+      shipper:ship.shipper||'',
+      consignee:ship.consignee||'',
+      client:ship.client||'',
+      client_email:ship.client_email||'',
+      pol:ship.pol||'',
+      pod:ship.pod||'',
+      etd:ship.etd||'',
+      eta:ship.eta||'',
+      status:'Confirmed',
+      incoterm:ship.incoterm||'',
+      booking_no:'',
+      vessel:ship.vessel||'',
+      voyage:ship.voyage||'',
+      note:'Cloned from '+ship.ref
+    };
+    var created=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(payload)});
+    toast('Shipment cloned as '+payload.ref,'success');
+    if(created&&created.id){
+      if(typeof openDetail==='function')openDetail(created.id);
+    }else{
+      if(typeof loadShipments==='function')loadShipments();
+      if(typeof showPage==='function')showPage('shipments',null);
+    }
+  }catch(e){toast('Clone failed: '+e.message,'error');}
 }
 </script>
 </body>
