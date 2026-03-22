@@ -2662,12 +2662,6 @@ async function generateReport(){
 .digest-section{background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:10px;border:1px solid var(--border)}
 .digest-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
 .digest-row:last-child{border-bottom:none}
-/* ── Modal backdrop fix ── */
-.modal-backdrop{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px}
-.modal-backdrop .modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;animation:fadeUp .2s ease}
-.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;color:var(--text1);flex-shrink:0}
-.modal-body{flex:1;overflow-y:auto;padding:16px 18px}
-.modal-footer{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0}
 /* ── UI Polish ── */
 .stat-card{transition:all .2s cubic-bezier(.4,0,.2,1)}
 .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4);border-color:rgba(79,142,247,.2)}
@@ -2676,7 +2670,6 @@ async function generateReport(){
 .btn-primary:hover{box-shadow:0 4px 16px rgba(79,142,247,.3)}
 .badge{border-radius:20px}
 .toast{border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
-.overlay{backdrop-filter:blur(4px)}
 .profile-dropdown{box-shadow:0 8px 32px rgba(0,0,0,.5)}
 .card,.shipment-card{box-shadow:0 1px 8px rgba(0,0,0,.15)}
 .form-control:focus{box-shadow:0 0 0 3px rgba(79,142,247,.15)}
@@ -3036,11 +3029,11 @@ function openClientModal(id) {
       const pf = document.getElementById('cf-payment'); if (pf) pf.value = c.payment || 'Cash';
     }
   }
-  document.getElementById('modal-client').style.display = 'flex';
+  document.getElementById('modal-client').classList.add('open');
 }
 
 function closeClientModal() {
-  document.getElementById('modal-client').style.display = 'none';
+  document.getElementById('modal-client').classList.remove('open');
 }
 
 function saveClient() {
@@ -3229,11 +3222,11 @@ function renderClientActivity() {
 
 
 
-  <div class="modal-backdrop" id="modal-client" style="display:none" onclick="if(event.target===this)closeClientModal()">
+  <div class="overlay" id="modal-client" onclick="if(event.target===this)closeClientModal()">
         <div class="modal" onclick="event.stopPropagation()">
-          <div class="modal-header">
+          <div class="modal-head">
             <span id="client-modal-title">New Client</span>
-            <button class="btn btn-ghost btn-sm" onclick="closeClientModal()"><i class="ph ph-x"></i></button>
+            <button class="modal-close" onclick="closeClientModal()"><i class="ph ph-x"></i></button>
           </div>
           <div class="modal-body">
             <div class="form-grid">
@@ -3269,7 +3262,7 @@ function renderClientActivity() {
               </div>
             </div>
           </div>
-          <div class="modal-footer">
+          <div class="modal-foot">
             <button class="btn btn-ghost" onclick="closeClientModal()" style="flex:1">Cancel</button>
             <button class="btn btn-primary" onclick="saveClient()" style="flex:2"><i class="ph ph-floppy-disk"></i> Save</button>
           </div>
