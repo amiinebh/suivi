@@ -13,22 +13,22 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   --green:#22c55e;--green2:#16a34a;--green-glow:rgba(34,197,94,.14);
   --blue:#3b82f6;--yellow:#f59e0b;--red:#ef4444;--cyan:#06b6d4;--purple:#a855f7;--orange:#f97316;
-  --radius:12px;--radius-sm:8px;--radius-lg:16px;
+  --radius:4px;--radius-sm:4px;--radius-lg:6px;
   --sidebar-w:52px;--sidebar-exp:216px;
   --t:.18s cubic-bezier(.4,0,.2,1);
   --accent:var(--green);
   --fs-base:14px;--fs-sm:12px;--fs-xs:11px;
 }
 [data-theme="dark"]{
-  --bg:#0f0f13;--bg2:#18181f;--bg3:#21212a;
-  --card:#18181f;--card2:#21212a;--border:rgba(255,255,255,.1);
-  --text1:#f0f0f0;--text2:#9090a0;--text3:#50505a;
-  --shadow:0 4px 32px rgba(0,0,0,.7);--input-bg:#13131a;
+  --bg:#1c1c1c;--bg2:#212121;--bg3:#282828;
+  --card:#212121;--card2:#2a2a2a;--border:rgba(255,255,255,.08);
+  --text1:#ededed;--text2:#a0a0a0;--text3:#555;
+  --shadow:0 4px 24px rgba(0,0,0,.6);--input-bg:#1c1c1c;
 }
 [data-theme="light"]{
   --bg:#f2f2f2;--bg2:#ffffff;--bg3:#ebebeb;
@@ -36,7 +36,7 @@
   --text1:#111;--text2:#666;--text3:#aaa;
   --shadow:0 2px 16px rgba(0,0,0,.07);--input-bg:#f7f7f7;
 }
-html,body{height:100%;font-family:Inter,system-ui,sans-serif;font-size:var(--fs-base);background:var(--bg);color:var(--text1);letter-spacing:0;line-height:1.5}
+html,body{height:100%;font-family:Geist,system-ui,sans-serif;font-size:var(--fs-base);background:var(--bg);color:var(--text1);letter-spacing:0;line-height:1.5}
 body{overflow:hidden}
 code,pre,.mono{font-family:'Geist Mono',monospace;letter-spacing:0}
 /* LOGIN */
@@ -451,6 +451,11 @@ textarea.form-control{resize:vertical;min-height:72px}
       <i class="ph ph-boat"></i><span class="nav-label">Shipments</span>
       <span class="nav-badge" id="nav-count">0</span>
     </div>
+    <div class="nav-section">Clients</div>
+    <div class="nav-item" id="nav-clients" onclick="showPage('clients',this)">
+      <i class="ph ph-address-book"></i>
+      <span class="nav-label">Clients</span>
+    </div>
     <div class="nav-section">Analytics</div>
     <div class="nav-item admin-only" onclick="showPage('analytics',this)">
       <i class="ph ph-chart-line"></i><span class="nav-label">KPI & Charts</span>
@@ -535,6 +540,19 @@ textarea.form-control{resize:vertical;min-height:72px}
 
     <!-- ─── DASHBOARD ─── -->
     <div class="page active" id="page-dashboard">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+        <div>
+          <div id="dash-greeting" style="font-size:17px;font-weight:800;color:var(--text1)"></div>
+          <div id="dash-date" style="font-size:12px;color:var(--text2);margin-top:2px"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openDigest()" style="font-size:11px;padding:5px 10px"><i class="ph ph-newspaper" style="margin-right:4px"></i>Briefing</button>
+          <button class="btn btn-ghost btn-sm" onclick="showPage('alerts',null);setBottomNav('alerts')"><i class="ph ph-bell"></i> <span id="dash-alert-hint">Alerts</span></button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()"><i class="ph ph-plus"></i> New Shipment</button>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('modal-bulk-import');bulkStep1()"><i class="ph ph-upload-simple"></i> Bulk Import</button>
+        </div>
+      </div>
+      <div id="dash-status-bar" style="margin-bottom:20px"></div>
       <div class="stats-grid" id="stats-grid">
         <div class="stat-card"><div class="stat-icon blue"><i class="ph ph-boat"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:32px"></div><div class="stat-label">Total</div></div>
         <div class="stat-card"><div class="stat-icon orange"><i class="ph ph-anchor"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Transit</div></div>
@@ -642,11 +660,92 @@ textarea.form-control{resize:vertical;min-height:72px}
           <div style="color:var(--text2);font-size:13px;text-align:center;padding:16px">Loading…</div>
         </div>
       </div>
-    </div>
+    
+
+        <!-- Carrier Performance -->
+        <div class="card" style="margin-top:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:13px;font-weight:700;color:var(--text1)"><i class="ph ph-trophy" style="color:#f59e0b"></i> Carrier Performance</div>
+            <span style="font-size:10px;color:var(--text2)">Based on ETD vs ETA accuracy</span>
+          </div>
+          <div id="carrier-perf-table"></div>
+        </div>
+
+        <!-- Client Activity -->
+        <div class="card" style="margin-top:14px">
+          <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-users" style="color:#a855f7"></i> Client Activity</div>
+          <div id="client-activity-table"></div>
+        </div>
+</div>
 
 
     <!-- ─── USERS PAGE (admin only) ─── -->
-    <div class="page" id="page-users">
+    
+      <!-- CLIENTS PAGE -->
+      <div class="page" id="page-clients">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="font-size:16px;font-weight:800;color:var(--text1)"><i class="ph ph-address-book" style="color:var(--accent)"></i> Clients</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px" id="clients-count">Loading...</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openClientModal()"><i class="ph ph-plus"></i> Add Client</button>
+        </div>
+        <div class="search-box" style="margin-bottom:12px;display:flex">
+          <i class="ph ph-magnifying-glass"></i>
+          <input class="form-control" id="client-search" placeholder="Search client, email, contact..." oninput="filterClients(this.value)" style="border:none;background:transparent;outline:none;width:100%">
+        </div>
+        <div id="clients-list"></div>
+      </div>
+
+      <!-- CLIENT MODAL -->
+      <div class="modal-backdrop" id="modal-client" onclick="if(event.target===this)closeClientModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+          <div class="modal-header">
+            <span id="client-modal-title">New Client</span>
+            <button class="btn btn-ghost btn-sm" onclick="closeClientModal()"><i class="ph ph-x"></i></button>
+          </div>
+          <div class="modal-body">
+            <div class="form-grid">
+              <div class="form-group full">
+                <label>Company Name</label>
+                <input id="cf-name" class="form-control" placeholder="e.g. Atlas Trading SARL">
+              </div>
+              <div class="form-group">
+                <label>Contact Person</label>
+                <input id="cf-contact" class="form-control" placeholder="Full name">
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input id="cf-email" class="form-control" type="email" placeholder="contact@company.com">
+              </div>
+              <div class="form-group">
+                <label>Phone</label>
+                <input id="cf-phone" class="form-control" placeholder="+212 6xx xxx xxx">
+              </div>
+              <div class="form-group">
+                <label>Address</label>
+                <input id="cf-address" class="form-control" placeholder="City, Country">
+              </div>
+              <div class="form-group">
+                <label>Payment Terms</label>
+                <select id="cf-payment" class="form-control">
+                  <option>Cash</option><option>30 days</option><option>60 days</option><option>90 days</option><option>Prepaid</option>
+                </select>
+              </div>
+              <div class="form-group full">
+                <label>Notes</label>
+                <textarea id="cf-notes" class="form-control" rows="2" placeholder="Any internal notes"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeClientModal()" style="flex:1">Cancel</button>
+            <button class="btn btn-primary" onclick="saveClient()" style="flex:2"><i class="ph ph-floppy-disk"></i> Save</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-users">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <div>
           <div style="font-size:16px;font-weight:700;color:var(--text1)"><i class="ph ph-users"></i><span class="nav-label">Team Members</span></div>
@@ -771,6 +870,10 @@ textarea.form-control{resize:vertical;min-height:72px}
     </button>
     
     
+    
+    <button class="bnav-item" id="bnav-clients" onclick="showPage('clients',null);setBottomNav('clients')">
+      <i class="ph ph-address-book"></i><span>Clients</span>
+    </button>
     <button class="bnav-item" id="bnav-alerts" onclick="showPage('alerts',null);setBottomNav('alerts')">
       <i class="ph ph-bell"></i><span>Alerts</span>
     </button>
@@ -955,9 +1058,10 @@ function showPage(id,el){
   const pt = document.getElementById('page-title');
   if(pt) pt.textContent = titles[id]||id;
   if(id==='shipments') loadShipments();
-  if(id==='analytics') loadAnalytics();
+  if(id==='analytics'){ loadAnalytics(); setTimeout(renderCarrierPerf,400); setTimeout(renderClientActivity,450); }();
   if(id==='alerts') loadAlerts();
   if(id==='users') setTimeout(loadUsers,150);
+  if(id==='clients') { setTimeout(loadClients,100); }
   if(id==='dashboard'){ loadDashboard(); }
 }
 function setBottomNav(id){
@@ -2589,7 +2693,44 @@ async function generateReport(){
         .section{box-shadow:none;border:1px solid #e8eef6}
         .page-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
       }
-    </style>
+    
+/* ── Client cards ── */
+.client-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;transition:all .2s ease}
+.client-card:hover{border-color:rgba(79,142,247,.3);transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.client-avatar{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0}
+.client-stat{background:var(--bg3);border-radius:8px;padding:6px 12px;text-align:center;min-width:60px}
+.client-stat-val{font-size:16px;font-weight:800;color:var(--text1)}
+.client-stat-lbl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+/* ── Carrier perf ── */
+.carrier-perf-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.carrier-perf-row:last-child{border-bottom:none}
+.carrier-perf-bar-wrap{flex:1;height:10px;background:var(--bg3);border-radius:5px;overflow:hidden}
+.carrier-perf-bar{height:10px;border-radius:5px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+/* ── Digest ── */
+.digest-section{background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:10px;border:1px solid var(--border)}
+.digest-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
+.digest-row:last-child{border-bottom:none}
+/* ── Modal backdrop fix ── */
+.modal-backdrop{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px}
+.modal-backdrop .modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;animation:fadeUp .2s ease}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);font-size:14px;font-weight:600;color:var(--text1);flex-shrink:0}
+.modal-body{flex:1;overflow-y:auto;padding:16px 18px}
+.modal-footer{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0}
+/* ── UI Polish ── */
+.stat-card{transition:all .2s cubic-bezier(.4,0,.2,1)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4);border-color:rgba(79,142,247,.2)}
+.stat-value{font-weight:800;letter-spacing:-.02em}
+.btn-primary{box-shadow:0 2px 10px rgba(79,142,247,.2)}
+.btn-primary:hover{box-shadow:0 4px 16px rgba(79,142,247,.3)}
+.badge{border-radius:20px}
+.toast{border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.overlay{backdrop-filter:blur(4px)}
+.profile-dropdown{box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.card,.shipment-card{box-shadow:0 1px 8px rgba(0,0,0,.15)}
+.form-control:focus{box-shadow:0 0 0 3px rgba(79,142,247,.15)}
+@media(max-width:768px){.bnav-item.active{background:rgba(79,142,247,.08);border-radius:var(--radius)}.bottom-nav{backdrop-filter:blur(12px)}}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(79,142,247,.3);border-radius:2px}::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+</style>
 </head><body>
 
     <div class="page-header">
@@ -2815,5 +2956,324 @@ function _confirmReject() {
   if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
 }
 </script>
+
+  <!-- DIGEST MODAL -->
+  <div class="overlay" id="modal-digest">
+    <div class="modal" style="max-width:460px">
+      <div class="modal-handle"></div>
+      <div class="modal-head">
+        <div class="modal-title"><i class="ph ph-newspaper" style="color:var(--accent)"></i> Daily Briefing</div>
+        <button class="modal-close" onclick="closeDigest()"><i class="ph ph-x"></i></button>
+      </div>
+      <div class="modal-body" id="digest-body" style="padding:14px 18px"></div>
+    </div>
+  </div>
+
+
+<script>
+// ══ AVATAR COLORS ══
+const AVATAR_COLORS = ['#4f8ef7','#22c55e','#a855f7','#f59e0b','#06b6d4','#ef4444','#f97316','#6c63ff'];
+
+// ══ CLIENT STORE ══
+let clientStore = JSON.parse(localStorage.getItem('ft_clients') || '[]');
+let clientEditId = null;
+let clientsAll = [];
+
+function saveClientStore() {
+  localStorage.setItem('ft_clients', JSON.stringify(clientStore));
+}
+
+// ══ LOAD CLIENTS PAGE ══
+function loadClients() {
+  // Start from saved store
+  let clients = [...clientStore];
+
+  // Auto-discover from shipments
+  const ships = typeof allShipments !== 'undefined' ? allShipments : [];
+  const known = clients.map(c => c.name.toLowerCase().trim());
+  ships.forEach(sh => {
+    const cn = (sh.client || '').trim();
+    if (!cn) return;
+    if (!known.includes(cn.toLowerCase())) {
+      known.push(cn.toLowerCase());
+      clients.push({
+        id: 'auto_' + cn.toLowerCase().replace(/\s+/g,'_'),
+        name: cn,
+        contact: '',
+        email: sh.clientemail || '',
+        phone: '',
+        address: '',
+        payment: 'Cash',
+        notes: '',
+        auto: true
+      });
+    }
+  });
+
+  // Enrich with shipment counts
+  clients.forEach(c => {
+    c.shipments = ships.filter(s => (s.client||'').toLowerCase().trim() === c.name.toLowerCase().trim()).length;
+    c.active = ships.filter(s =>
+      (s.client||'').toLowerCase().trim() === c.name.toLowerCase().trim() &&
+      ['Confirmed','Booked','Stuffed','Sailing'].includes(s.status)
+    ).length;
+  });
+
+  clientsAll = clients;
+  renderClients(clients);
+
+  const countEl = document.getElementById('clients-count');
+  if (countEl) countEl.textContent = clients.length + ' client' + (clients.length !== 1 ? 's' : '');
+}
+
+function renderClients(list) {
+  const el = document.getElementById('clients-list');
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><i class="ph ph-address-book" style="font-size:36px;display:block;margin-bottom:10px;opacity:.4"></i>No clients yet.<br><span style="font-size:12px">Add one manually or they appear automatically from shipments.</span></div>';
+    return;
+  }
+  el.innerHTML = list.map((c, i) => {
+    const av = (c.name || '?').charAt(0).toUpperCase();
+    const col = AVATAR_COLORS[i % AVATAR_COLORS.length];
+    const autoTag = c.auto ? '<span style="font-size:9px;background:var(--bg3);color:var(--text2);padding:2px 6px;border-radius:10px;margin-left:6px">auto</span>' : '';
+    return `<div class="client-card">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="client-avatar" style="background:${col}">${av}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;color:var(--text1)">${c.name}${autoTag}</div>
+          ${c.contact ? `<div style="font-size:11px;color:var(--text2);margin-top:2px">${c.contact}${c.phone ? ' · ' + c.phone : ''}</div>` : ''}
+          ${c.email ? `<div style="font-size:11px;color:var(--accent);margin-top:1px">${c.email}</div>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-ghost btn-sm" onclick="editClient('${c.id}')" style="padding:5px 8px"><i class="ph ph-pencil"></i></button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteClient('${c.id}')" style="padding:5px 8px;color:#ef4444"><i class="ph ph-trash"></i></button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <div class="client-stat"><div class="client-stat-val">${c.shipments || 0}</div><div class="client-stat-lbl">Total</div></div>
+        <div class="client-stat"><div class="client-stat-val" style="color:#4f8ef7">${c.active || 0}</div><div class="client-stat-lbl">Active</div></div>
+        ${c.payment ? `<div class="client-stat"><div class="client-stat-val" style="font-size:11px;padding-top:3px">${c.payment}</div><div class="client-stat-lbl">Terms</div></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterClients(q) {
+  const qq = q.toLowerCase();
+  renderClients(clientsAll.filter(c =>
+    [c.name, c.email, c.contact, c.phone, c.address].join(' ').toLowerCase().includes(qq)
+  ));
+}
+
+function openClientModal(id) {
+  clientEditId = id || null;
+  document.getElementById('client-modal-title').textContent = id ? 'Edit Client' : 'New Client';
+  ['cf-name','cf-contact','cf-email','cf-phone','cf-address','cf-notes'].forEach(fid => {
+    const el = document.getElementById(fid); if (el) el.value = '';
+  });
+  if (id) {
+    const c = clientStore.find(x => String(x.id) === String(id));
+    if (c) {
+      document.getElementById('cf-name').value = c.name || '';
+      document.getElementById('cf-contact').value = c.contact || '';
+      document.getElementById('cf-email').value = c.email || '';
+      document.getElementById('cf-phone').value = c.phone || '';
+      document.getElementById('cf-address').value = c.address || '';
+      document.getElementById('cf-notes').value = c.notes || '';
+      const pf = document.getElementById('cf-payment'); if (pf) pf.value = c.payment || 'Cash';
+    }
+  }
+  document.getElementById('modal-client').style.display = 'flex';
+}
+
+function closeClientModal() {
+  document.getElementById('modal-client').style.display = 'none';
+}
+
+function saveClient() {
+  const name = document.getElementById('cf-name').value.trim();
+  if (!name) { toast('Company name is required', 'error'); return; }
+  const data = {
+    id: clientEditId || Date.now(),
+    name,
+    contact: document.getElementById('cf-contact').value.trim(),
+    email: document.getElementById('cf-email').value.trim(),
+    phone: document.getElementById('cf-phone').value.trim(),
+    address: document.getElementById('cf-address').value.trim(),
+    payment: document.getElementById('cf-payment')?.value || 'Cash',
+    notes: document.getElementById('cf-notes').value.trim(),
+    auto: false
+  };
+  if (clientEditId) {
+    const idx = clientStore.findIndex(x => String(x.id) === String(clientEditId));
+    if (idx >= 0) clientStore[idx] = data; else clientStore.push(data);
+  } else {
+    clientStore.push(data);
+  }
+  saveClientStore();
+  closeClientModal();
+  loadClients();
+  toast(clientEditId ? 'Client updated' : 'Client added', 'success');
+}
+
+function editClient(id) {
+  // If auto-discovered, convert to manual first
+  const autoIdx = clientsAll.findIndex(c => String(c.id) === String(id) && c.auto);
+  if (autoIdx >= 0) {
+    const ac = clientsAll[autoIdx];
+    const exists = clientStore.find(c => c.name.toLowerCase() === ac.name.toLowerCase());
+    if (!exists) clientStore.push({...ac, id: Date.now(), auto: false});
+    saveClientStore();
+    openClientModal(clientStore.find(c => c.name.toLowerCase() === ac.name.toLowerCase()).id);
+  } else {
+    openClientModal(id);
+  }
+}
+
+function deleteClient(id) {
+  if (!confirm('Delete this client?')) return;
+  clientStore = clientStore.filter(c => String(c.id) !== String(id));
+  saveClientStore();
+  loadClients();
+  toast('Client deleted', 'success');
+}
+
+// ══ DIGEST / BRIEFING ══
+function openDigest() {
+  const body = document.getElementById('digest-body');
+  if (!body) return;
+  const ships = typeof allShipments !== 'undefined' ? allShipments : [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in7 = new Date(today); in7.setDate(in7.getDate() + 7);
+  const overdue = ships.filter(s => {
+    if (['Closed','Canceled'].includes(s.status)) return false;
+    if (!s.eta) return false;
+    const e = new Date(s.eta); e.setHours(0,0,0,0);
+    return e < today;
+  });
+  const arriving = ships.filter(s => {
+    if (['Closed','Canceled'].includes(s.status)) return false;
+    if (!s.eta) return false;
+    const e = new Date(s.eta); e.setHours(0,0,0,0);
+    return e >= today && e <= in7;
+  });
+  const inTransit = ships.filter(s => ['Sailing','Stuffed'].includes(s.status));
+  const pending = ships.filter(s => ['Confirmed','Booked'].includes(s.status));
+  const now = new Date();
+  const hr = now.getHours();
+  const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  const user = typeof getUser === 'function' ? getUser() : null;
+  const name = user ? user.name.split(' ')[0] : '';
+
+  body.innerHTML = `
+    <div style="padding:14px 0 4px;font-size:15px;font-weight:700;color:var(--text1)">${greet}${name ? ', ' + name : ''} 👋</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:14px">${now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    <div class="digest-section">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">📊 Overview</div>
+      <div class="digest-row"><span>Total shipments</span><b style="color:var(--text1)">${ships.length}</b></div>
+      <div class="digest-row"><span>In transit</span><b style="color:#4f8ef7">${inTransit.length}</b></div>
+      <div class="digest-row"><span>Pending departure</span><b style="color:#f59e0b">${pending.length}</b></div>
+      <div class="digest-row"><span>Arriving this week</span><b style="color:#22c55e">${arriving.length}</b></div>
+      <div class="digest-row"><span style="color:#ef4444">Overdue</span><b style="color:#ef4444">${overdue.length}</b></div>
+    </div>
+    ${arriving.length ? `<div class="digest-section">
+      <div style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">📦 Arriving This Week</div>
+      ${arriving.slice(0,5).map(s => {
+        const e = new Date(s.eta); e.setHours(0,0,0,0);
+        const diff = Math.round((e - today)/86400000);
+        const lbl = diff === 0 ? 'TODAY' : diff === 1 ? 'Tomorrow' : 'In ' + diff + 'd';
+        const uc = diff === 0 ? '#ef4444' : diff <= 2 ? '#f97316' : '#22c55e';
+        return `<div class="digest-row"><span style="font-weight:600;color:var(--text1)">${s.ref}</span><span style="font-size:11px;color:var(--text2)">${s.client||'—'}</span><span style="background:${uc}22;color:${uc};font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">${lbl}</span></div>`;
+      }).join('')}
+    </div>` : ''}
+    ${overdue.length ? `<div class="digest-section">
+      <div style="font-size:11px;font-weight:700;color:#ef4444;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">⚠️ Overdue (${overdue.length})</div>
+      ${overdue.slice(0,5).map(s => {
+        const e = new Date(s.eta); e.setHours(0,0,0,0);
+        const days = Math.abs(Math.round((e - today)/86400000));
+        return `<div class="digest-row"><span style="font-weight:600;color:var(--text1)">${s.ref}</span><span style="font-size:11px;color:var(--text2)">${s.client||'—'}</span><span style="color:#ef4444;font-size:11px;font-weight:700">${days}d late</span></div>`;
+      }).join('')}
+    </div>` : ''}
+  `;
+  document.getElementById('modal-digest').classList.add('open');
+}
+
+function closeDigest() {
+  document.getElementById('modal-digest').classList.remove('open');
+}
+
+// ══ CARRIER PERFORMANCE ══
+function renderCarrierPerf() {
+  const el = document.getElementById('carrier-perf-table');
+  if (!el) return;
+  const ships = typeof allShipments !== 'undefined' ? allShipments : [];
+  if (!ships.length) { el.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">No data yet</div>'; return; }
+
+  // Group by carrier, calculate on-time rate
+  const map = {};
+  ships.forEach(s => {
+    if (!s.carrier) return;
+    const c = (s.carrier || '').trim();
+    if (!map[c]) map[c] = { total: 0, ontime: 0 };
+    map[c].total++;
+    if (s.eta && s.etd) {
+      const eta = new Date(s.eta), etd = new Date(s.etd);
+      const today = new Date();
+      if (['Arrived','Closed'].includes(s.status)) map[c].ontime++;
+    }
+  });
+
+  const carriers = Object.keys(map).map(k => ({
+    name: k,
+    total: map[k].total,
+    rate: map[k].total > 0 ? Math.round((map[k].ontime / map[k].total) * 100) : 0
+  })).sort((a,b) => b.total - a.total).slice(0, 8);
+
+  if (!carriers.length) { el.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">No carrier data</div>'; return; }
+
+  const colors = ['#4f8ef7','#22c55e','#a855f7','#f59e0b','#06b6d4','#ef4444','#f97316','#6c63ff'];
+  el.innerHTML = carriers.map((c, i) => `
+    <div class="carrier-perf-row">
+      <div style="width:110px;font-size:12px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+      <div class="carrier-perf-bar-wrap">
+        <div class="carrier-perf-bar" style="width:${Math.max(4, c.total / carriers[0].total * 100)}%;background:${colors[i % colors.length]}"></div>
+      </div>
+      <div style="width:50px;text-align:right;font-size:12px;color:var(--text2)">${c.total} shp</div>
+    </div>
+  `).join('');
+}
+
+function renderClientActivity() {
+  const el = document.getElementById('client-activity-table');
+  if (!el) return;
+  const ships = typeof allShipments !== 'undefined' ? allShipments : [];
+  if (!ships.length) { el.innerHTML = '<div style="color:var(--text2);font-size:13px;text-align:center;padding:20px">No data yet</div>'; return; }
+
+  const map = {};
+  ships.forEach(s => {
+    const cn = (s.client || '').trim(); if (!cn) return;
+    if (!map[cn]) map[cn] = { total: 0, active: 0 };
+    map[cn].total++;
+    if (['Confirmed','Booked','Stuffed','Sailing'].includes(s.status)) map[cn].active++;
+  });
+
+  const clients = Object.keys(map).map(k => ({ name: k, ...map[k] })).sort((a,b) => b.total - a.total).slice(0, 8);
+  const colors = ['#4f8ef7','#a855f7','#22c55e','#06b6d4','#f59e0b','#ef4444'];
+
+  el.innerHTML = clients.map((c, i) => `
+    <div class="carrier-perf-row">
+      <div style="width:110px;font-size:12px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+      <div class="carrier-perf-bar-wrap">
+        <div class="carrier-perf-bar" style="width:${Math.max(4, c.total / clients[0].total * 100)}%;background:${colors[i % colors.length]}"></div>
+      </div>
+      <div style="width:50px;text-align:right;font-size:12px;color:var(--text2)">${c.total} shp</div>
+    </div>
+  `).join('');
+}
+
+// Auto-run when analytics page loads via existing integration above
+</script>
+
 </body>
 </html>
