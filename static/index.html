@@ -575,25 +575,12 @@ textarea.form-control{resize:vertical;min-height:72px}
         </button>
       </div>
       <div class="mobile-cards" id="recent-cards"></div>
-      <div class="desktop-table table-wrap" id="recent-table-wrap">
+      <div class="desktop-table table-wrap" id="recent-table-wrap" style="margin-top:0">
         <div id="recent-table"></div>
       </div>
     </div>
 
-
-      <div class="section-header">
-        <div class="section-title">Recent Shipments</div>
-        <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null);setBottomNav('shipments')">
-          View All <i class="ph ph-arrow-right"></i>
-        </button>
-      </div>
-      <div class="mobile-cards" id="recent-cards"></div>
-      <div class="desktop-table table-wrap" id="recent-table-wrap">
-        <div id="recent-table"></div>
-      </div>
-    </div>
-
-    <!-- ─── SHIPMENTS ─── -->
+        <!-- ─── SHIPMENTS ─── -->
     <div class="page" id="page-shipments">
       <div class="filters-row">
         <select class="filter" id="fil-status" onchange="loadShipments()">
@@ -1196,14 +1183,14 @@ function renderTable(ships){
 async function loadDashboard(){
   try{
     var hr=new Date().getHours();
-    var greet=hr<12?'Good morning':(hr<17?'Good afternoon':'Good evening');
-    var user=typeof getUser==='function'?getUser():null;
-    var name=user&&user.name?', '+user.name.split(' ')[0]:'';
+    var greet=(hr<12)?'Good morning':(hr<17?'Good afternoon':'Good evening');
+    var user=(typeof getUser==='function')?getUser():null;
+    var name=(user&&user.name)?(', '+user.name.split(' ')[0]):'';
     var dgEl=document.getElementById('dash-greeting');
     if(dgEl)dgEl.textContent=greet+name;
     var ddEl=document.getElementById('dash-date');
     if(ddEl)ddEl.textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  }catch(e){}
+  }catch(e){console.error('greeting',e);}
   try{
     var stats=await apiFetch('/api/stats');
     var bs=stats.by_status||{};
@@ -1218,27 +1205,28 @@ async function loadDashboard(){
         {label:'Transit',val:transit,color:'#f59e0b'},
         {label:'Done',val:done,color:'#22c55e'},
         {label:'Pending',val:pending,color:'#4f8ef7'},
-        {label:'Overdue',val:overdue,color:'#ef4444'},
+        {label:'Overdue',val:overdue,color:'#ef4444'}
       ].filter(function(x){return x.val>0;});
-      var barHtml='<div style="display:flex;border-radius:8px;overflow:hidden;height:10px;gap:1px;margin-bottom:8px">';
-      segs.forEach(function(seg){barHtml+='<div style="flex:'+seg.val+';background:'+seg.color+';min-width:2px" title="'+seg.label+': '+seg.val+'"></div>';});
-      barHtml+='</div>';
-      barHtml+='<div style="display:flex;flex-wrap:wrap;gap:10px">';
-      segs.forEach(function(seg){barHtml+='<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:'+seg.color+';display:inline-block"></span>'+seg.label+' <b style="color:var(--text1)">'+seg.val+'</b></div>';});
-      barHtml+='</div>';
-      sbEl.innerHTML=barHtml;
+      var barH='<div style="display:flex;border-radius:8px;overflow:hidden;height:10px;gap:1px;margin-bottom:8px">';
+      segs.forEach(function(sg){barH+='<div style="flex:'+sg.val+';background:'+sg.color+';min-width:2px" title="'+sg.label+': '+sg.val+'"></div>';});
+      barH+='</div><div style="display:flex;flex-wrap:wrap;gap:10px">';
+      segs.forEach(function(sg){barH+='<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:'+sg.color+';display:inline-block"></span>'+sg.label+' <b style="color:var(--text1)">'+sg.val+'</b></div>';});
+      barH+='</div>';
+      sbEl.innerHTML=barH;
     }
-    document.getElementById('stats-grid').innerHTML=
+    var sg=document.getElementById('stats-grid');
+    if(sg)sg.innerHTML=
       '<div class="stat-card"><div class="stat-icon blue"><i class="ph ph-boat"></i></div><div class="stat-value">'+total+'</div><div class="stat-label">Total</div></div>'
       +'<div class="stat-card"><div class="stat-icon orange"><i class="ph ph-anchor"></i></div><div class="stat-value">'+transit+'</div><div class="stat-label">Transit</div></div>'
       +'<div class="stat-card"><div class="stat-icon green"><i class="ph ph-check-circle"></i></div><div class="stat-value">'+done+'</div><div class="stat-label">Done</div></div>'
       +'<div class="stat-card"><div class="stat-icon red"><i class="ph ph-siren"></i></div><div class="stat-value" style="color:'+(overdue?'#ef4444':'inherit')+'">'+overdue+'</div><div class="stat-label">Overdue</div></div>'
       +'<div class="stat-card"><div class="stat-icon cyan"><i class="ph ph-clock"></i></div><div class="stat-value">'+pending+'</div><div class="stat-label">Pending</div></div>'
       +'<div class="stat-card" id="due-week-card"><div class="stat-icon purple"><i class="ph ph-calendar-check"></i></div><div class="stat-value" id="due-week-val">--</div><div class="stat-label">Due This Week</div></div>';
-    document.getElementById('nav-count').textContent=total;
-    var alertHint=document.getElementById('dash-alert-hint');
-    if(alertHint)alertHint.textContent=overdue?'Alerts ('+overdue+')':'Alerts';
-  }catch(e){console.error(e);}
+    var nc=document.getElementById('nav-count');
+    if(nc)nc.textContent=total;
+    var ah=document.getElementById('dash-alert-hint');
+    if(ah)ah.textContent=overdue?('Alerts ('+overdue+')'):'Alerts';
+  }catch(e){console.error('stats',e);}
   try{
     var ships=await apiFetch('/api/shipments');
     var list=Array.isArray(ships)?ships:(ships.data||ships.shipments||[]);
@@ -1248,12 +1236,11 @@ async function loadDashboard(){
     var arriving=list.filter(function(sh){
       if(['Delivered','Discharged','Arrived'].indexOf(sh.status)>=0)return false;
       if(!sh.eta)return false;
-      var eta=new Date(sh.eta);eta.setHours(0,0,0,0);
-      return eta>=today&&eta<=in7;
+      var e=new Date(sh.eta);e.setHours(0,0,0,0);
+      return e>=today&&e<=in7;
     }).sort(function(a,b){return new Date(a.eta)-new Date(b.eta);}).slice(0,5);
-    var dueCount=arriving.length;
-    var dwVal=document.getElementById('due-week-val');
-    if(dwVal)dwVal.textContent=dueCount;
+    var dw=document.getElementById('due-week-val');
+    if(dw)dw.textContent=arriving.length;
     var arrEl=document.getElementById('dash-arriving');
     if(arrEl){
       if(!arriving.length){
@@ -1262,38 +1249,36 @@ async function loadDashboard(){
         arrEl.innerHTML=arriving.map(function(sh){
           var eta=new Date(sh.eta);eta.setHours(0,0,0,0);
           var diff=Math.round((eta-today)/86400000);
-          var urgColor=diff===0?'#ef4444':diff<=2?'#f97316':'#22c55e';
-          var urgLabel=diff===0?'TODAY':diff===1?'Tomorrow':'In '+diff+'d';
-          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg3);border-radius:10px;border-left:3px solid '+urgColor+'" onclick="openDetail('+sh.id+')" style="cursor:pointer">'
-            +'<div style="display:flex;align-items:center;gap:10px">'
+          var uc=diff===0?'#ef4444':(diff<=2?'#f97316':'#22c55e');
+          var ul=diff===0?'TODAY':(diff===1?'Tomorrow':('In '+diff+'d'));
+          return '<div onclick="openDetail('+sh.id+')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg3);border-radius:10px;border-left:3px solid '+uc+'">'
             +'<div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+sh.ref+'</div>'
-            +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+(sh.client||'--')+' &middot; '+(sh.pol||'--')+' &rarr; '+(sh.pod||'--')+'</div></div></div>'
-            +'<div style="display:flex;align-items:center;gap:8px">'
-            +'<span style="background:'+urgColor+'22;color:'+urgColor+';font-weight:800;font-size:12px;padding:4px 10px;border-radius:20px;white-space:nowrap">'+urgLabel+'</span>'
-            +'</div></div>';
+            +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+(sh.client||'--')+'&nbsp;&middot;&nbsp;'+(sh.pol||'--')+'&nbsp;&rarr;&nbsp;'+(sh.pod||'--')+'</div></div>'
+            +'<span style="background:'+uc+'22;color:'+uc+';font-weight:800;font-size:12px;padding:4px 10px;border-radius:20px;white-space:nowrap">'+ul+'</span>'
+            +'</div>';
         }).join('');
       }
     }
     var recent=list.slice(0,6);
-    renderCards(recent,'recent-cards');
+    if(typeof renderCards==='function')renderCards(recent,'recent-cards');
     var tw=document.getElementById('recent-table');
     if(tw){
       if(!recent.length){
-        tw.innerHTML='<div class="empty"><div class="empty-icon">&#128230;</div><div class="empty-title">No shipments yet</div><div class="empty-sub">Click &quot;New Shipment&quot; to get started</div></div>';
+        tw.innerHTML='<div class="empty"><div class="empty-icon">&#128230;</div><div class="empty-title">No shipments yet</div><div class="empty-sub">Click New Shipment to get started</div></div>';
       }else{
         var rows=recent.map(function(sh){
           var eta=sh.eta?new Date(sh.eta):null;
-          var etaDiff=eta?Math.round((eta-today)/86400000):null;
-          var etaColor=etaDiff===null?'var(--text2)':etaDiff<0?'#ef4444':etaDiff<=2?'#f97316':'var(--text2)';
-          var etaLabel=etaDiff===null?'--':etaDiff<0?Math.abs(etaDiff)+'d late':etaDiff===0?'Today':etaDiff===1?'Tomorrow':'In '+etaDiff+'d';
-          var etaDisplay=fmtd(sh.eta)+(etaDiff!==null?'<br><span style="font-size:10px;font-weight:700;color:'+etaColor+'">'+etaLabel+'</span>':'');
+          if(eta)eta.setHours(0,0,0,0);
+          var diff=(eta)?Math.round((eta-today)/86400000):null;
+          var ec=diff===null?'var(--text2)':(diff<0?'#ef4444':(diff<=2?'#f97316':'var(--text2)'));
+          var el=diff===null?'--':(diff<0?(Math.abs(diff)+'d late'):(diff===0?'Today':(diff===1?'Tomorrow':('In '+diff+'d'))));
           return '<tr class="clickable" onclick="openDetail('+sh.id+')" style="cursor:pointer">'
             +'<td class="ref-cell">'+sh.ref+'<br><span style="font-weight:400;color:var(--text2);font-size:11px">'+(sh.ref2||'')+'</span></td>'
             +'<td>'+(sh.client||'--')+'</td>'
-            +'<td style="font-size:11px">'+(sh.pol||'--')+' &rarr; '+(sh.pod||'--')+'</td>'
-            +'<td>'+modeBadge(sh.mode)+'</td>'
-            +'<td>'+etaDisplay+'</td>'
-            +'<td>'+statusBadge(sh.status)+'</td>'
+            +'<td style="font-size:11px">'+(sh.pol||'--')+'&nbsp;&rarr;&nbsp;'+(sh.pod||'--')+'</td>'
+            +'<td>'+(typeof modeBadge==='function'?modeBadge(sh.mode):sh.mode||'--')+'</td>'
+            +'<td style="color:'+ec+';font-size:12px">'+fmtd(sh.eta)+'<br><span style="font-size:10px;font-weight:700">'+el+'</span></td>'
+            +'<td>'+(typeof statusBadge==='function'?statusBadge(sh.status):sh.status||'--')+'</td>'
             +'<td><div class="actions">'
             +'<button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment('+sh.id+')"><i class="ph ph-pencil"></i></button>'
             +'<button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment('+sh.id+')"><i class="ph ph-trash"></i></button>'
@@ -1302,8 +1287,8 @@ async function loadDashboard(){
         tw.innerHTML='<table><thead><tr><th>Reference</th><th>Client</th><th>Route</th><th>Mode</th><th>ETA</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
       }
     }
-  }catch(e){console.error(e);}
-  try{updateAlertsBadge();}catch(e){}
+  }catch(e){console.error('ships',e);}
+  try{if(typeof updateAlertsBadge==='function')updateAlertsBadge();}catch(e){}
 }
 
 /* ── Shipments page ── */
