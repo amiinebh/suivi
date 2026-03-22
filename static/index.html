@@ -536,14 +536,50 @@ textarea.form-control{resize:vertical;min-height:72px}
 
     <!-- ─── DASHBOARD ─── -->
     <div class="page active" id="page-dashboard">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+        <div>
+          <div id="dash-greeting" style="font-size:17px;font-weight:800;color:var(--text1)"></div>
+          <div id="dash-date" style="font-size:12px;color:var(--text2);margin-top:2px"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="showPage('alerts',null);setBottomNav('alerts')">
+            <i class="ph ph-bell"></i> <span id="dash-alert-hint">Alerts</span>
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-shipment')">
+            <i class="ph ph-plus"></i> New Shipment
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('modal-bulk-import');_bulkStep(1)">
+            <i class="ph ph-upload-simple"></i> Bulk Import
+          </button>
+        </div>
+      </div>
+      <div id="dash-status-bar" style="margin-bottom:20px"></div>
       <div class="stats-grid" id="stats-grid">
         <div class="stat-card"><div class="stat-icon blue"><i class="ph ph-boat"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:32px"></div><div class="stat-label">Total</div></div>
         <div class="stat-card"><div class="stat-icon orange"><i class="ph ph-anchor"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Transit</div></div>
         <div class="stat-card"><div class="stat-icon green"><i class="ph ph-check"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Done</div></div>
-        <div class="stat-card"><div class="stat-icon red"><i class="ph ph-warning"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Delayed</div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="ph ph-siren"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Overdue</div></div>
         <div class="stat-card"><div class="stat-icon cyan"><i class="ph ph-clock"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Pending</div></div>
-        <div class="stat-card"><div class="stat-icon purple"><i class="ph ph-waves"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Ocean</div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="ph ph-calendar-check"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Due This Week</div></div>
       </div>
+      <div style="margin-bottom:20px">
+        <div class="section-header" style="margin-bottom:10px">
+          <div class="section-title"><i class="ph ph-calendar" style="color:var(--accent)"></i> Arriving This Week</div>
+        </div>
+        <div id="dash-arriving" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+      <div class="section-header">
+        <div class="section-title">Recent Shipments</div>
+        <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null);setBottomNav('shipments')">
+          View All <i class="ph ph-arrow-right"></i>
+        </button>
+      </div>
+      <div class="mobile-cards" id="recent-cards"></div>
+      <div class="desktop-table table-wrap" id="recent-table-wrap">
+        <div id="recent-table"></div>
+      </div>
+    </div>
+
 
       <div class="section-header">
         <div class="section-title">Recent Shipments</div>
@@ -579,6 +615,16 @@ textarea.form-control{resize:vertical;min-height:72px}
           <i class="ph ph-download-simple"></i> Export
         </button>
       </div>
+      <!-- Bulk action toolbar -->
+      <div id="bulk-toolbar" style="display:none;align-items:center;gap:8px;padding:8px 12px;background:var(--accent)11;border:1px solid var(--accent)33;border-radius:10px;margin-bottom:10px;flex-wrap:wrap">
+        <span id="bulk-count" style="font-size:13px;font-weight:700;color:var(--accent)">0 selected</span>
+        <div style="flex:1"></div>
+        <button class="btn btn-ghost btn-sm" onclick="selectAllShipments()" style="font-size:12px"><i class="ph ph-checks"></i> Select All</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearSelectionShipments()" style="font-size:12px"><i class="ph ph-x"></i> Clear</button>
+        <button class="btn btn-danger btn-sm" onclick="bulkDeleteShipments()" style="font-size:12px"><i class="ph ph-trash"></i> Delete Selected</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAllShipments()" style="font-size:12px;background:#7f1d1d;border-color:#7f1d1d"><i class="ph ph-warning"></i> Delete ALL</button>
+      </div>
+
       <div id="ship-count-label" style="font-size:12px;color:var(--text2);margin-bottom:10px"></div>
       <div id="pager" style="display:flex;gap:8px;align-items:center;justify-content:space-between;margin:10px 0;flex-wrap:wrap">
         <div style="display:flex;gap:8px;align-items:center">
@@ -735,11 +781,6 @@ textarea.form-control{resize:vertical;min-height:72px}
       <div style="margin-top:12px;background:var(--bg3);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px">
         <i class="ph ph-link" style="color:var(--accent);font-size:13px"></i>
         <div style="flex:1;font-size:11px;color:var(--text2)">Client tracking link</div>
-        <button class="btn btn-ghost btn-sm" onclick="copyPortalLink()" style="font-size:11px;padding:4px 10px">
-          <i class="ph ph-copy"></i> Copy
-        </button>
-        <a id="detail-portal-href" href="#" target="_blank" class="btn btn-ghost btn-sm"
-          style="font-size:11px;padding:4px 10px"><i class="ph ph-arrow-up-right"></i></a>
       </div>
     </div>
 
@@ -1115,73 +1156,154 @@ function renderCards(ships,containerId='ship-cards'){
 
 /* ── Render table (desktop) ── */
 function renderTable(ships){
-  const wrap=document.getElementById('ship-table');
-  if(!wrap) return;
-  if(!ships.length){ wrap.innerHTML=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No shipments</div></div>`; return; }
-  wrap.innerHTML=`<table><thead><tr>
-    <th>Ref / Booking</th><th>Client</th><th>Incoterm</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th><th>TEU</th><th>Status</th><th style="width:70px"></th>
-  </tr></thead><tbody>
-  ${ships.map(s=>`<tr class="clickable" onclick="openDetail(${s.id})">
-    <td class="ref-cell">
-      <div>${s.ref}</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:2px">${s.booking_no||'—'}</div>
-    </td>
-    <td>${s.client||'—'}</td>
-    <td>${s.incoterm||'—'}</td>
-    <td style="font-size:12px;color:var(--text2)">${s.pol||'—'}</td>
-    <td style="font-size:12px;color:var(--text2)">${s.pod||'—'}</td>
-    <td style="font-size:12px">${fmt(s.etd)}</td>
-    <td style="font-size:12px">${fmt(s.eta)}</td>
-    <td><span class="badge badge-blue" style="font-size:11px">${s.teu?s.teu+' TEU':'—'}</span></td>
-    <td>${statusBadge(s.status)}</td>
-    <td><div class="actions">
-      <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="ph ph-pencil"></i></button>
-      <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="ph ph-trash"></i></button>
-    </div></td>
-  </tr>`).join('')}</tbody></table>`;
+  window._selectedShips=window._selectedShips||new Set();
+  var wrap=document.getElementById('ship-table');
+  if(!wrap)return;
+  if(!ships.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">&#128269;</div><div class="empty-title">No shipments</div></div>';return;}
+  var today=new Date();today.setHours(0,0,0,0);
+  var thead='<table><thead><tr>'
+    +'<th style="width:36px"><input type="checkbox" id="check-all" onchange="toggleAllShipments(this.checked)" style="cursor:pointer;width:15px;height:15px"></th>'
+    +'<th>Ref / Booking</th><th>Client</th><th>Incoterm</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th><th>TEU</th><th>Status</th><th style="width:70px"></th>'
+    +'</tr></thead><tbody>';
+  var tbody=ships.map(function(sh){
+    var chk=window._selectedShips.has(sh.id)?'checked':'';
+    var eta=sh.eta?new Date(sh.eta):null;
+    if(eta)eta.setHours(0,0,0,0);
+    var diff=eta?Math.round((eta-today)/86400000):null;
+    var etaColor=diff===null?'var(--text2)':diff<0?'#ef4444':diff<=2?'#f97316':'var(--text2)';
+    var etaTag=diff===null?'':diff<0?'<br><span style="font-size:10px;font-weight:700;color:#ef4444">'+Math.abs(diff)+'d late</span>':diff===0?'<br><span style="font-size:10px;font-weight:700;color:#ef4444">TODAY</span>':diff<=2?'<br><span style="font-size:10px;font-weight:700;color:#f97316">In '+diff+'d</span>':'';
+    return '<tr class="clickable" onclick="openDetail('+sh.id+')" style="cursor:pointer">'
+      +'<td onclick="event.stopPropagation()"><input type="checkbox" '+chk+' onchange="toggleShipmentSelect('+sh.id+',this.checked)" style="cursor:pointer;width:15px;height:15px"></td>'
+      +'<td class="ref-cell"><div>'+sh.ref+'</div><div style="font-size:11px;color:var(--text2);margin-top:2px">'+(sh.booking_no||'--')+'</div></td>'
+      +'<td>'+(sh.client||'--')+'</td>'
+      +'<td>'+(sh.incoterm||'--')+'</td>'
+      +'<td style="font-size:12px;color:var(--text2)">'+(sh.pol||'--')+'</td>'
+      +'<td style="font-size:12px;color:var(--text2)">'+(sh.pod||'--')+'</td>'
+      +'<td style="font-size:12px">'+fmtd(sh.etd)+'</td>'
+      +'<td style="font-size:12px;color:'+etaColor+'">'+fmtd(sh.eta)+etaTag+'</td>'
+      +'<td><span class="badge badge-blue" style="font-size:11px">'+(sh.teu?sh.teu+' TEU':'--')+'</span></td>'
+      +'<td>'+statusBadge(sh.status)+'</td>'
+      +'<td><div class="actions">'
+      +'<button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment('+sh.id+')"><i class="ph ph-pencil"></i></button>'
+      +'<button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment('+sh.id+')"><i class="ph ph-trash"></i></button>'
+      +'</div></td></tr>';
+  }).join('');
+  wrap.innerHTML=thead+tbody+'</tbody></table>';
+  _updateBulkToolbar();
 }
 
 /* ── Dashboard ── */
 async function loadDashboard(){
   try{
-    const stats=await apiFetch('/api/stats');
-    const bs=stats.by_status||{};
-    const transit=(bs.Sailing||0)+(bs.Transit||0);
-    const done=(bs.Delivered||0)+(bs.Arrived||0)+(bs.Discharged||0);
-    document.getElementById('stats-grid').innerHTML=`
-      <div class="stat-card"><div class="stat-icon blue"><i class="ph ph-boat"></i></div><div class="stat-value">${stats.total||0}</div><div class="stat-label">Total</div></div>
-      <div class="stat-card"><div class="stat-icon orange"><i class="ph ph-anchor"></i></div><div class="stat-value">${transit}</div><div class="stat-label">Transit</div></div>
-      <div class="stat-card"><div class="stat-icon green"><i class="ph ph-check-circle"></i></div><div class="stat-value">${done}</div><div class="stat-label">Done</div></div>
-      <div class="stat-card"><div class="stat-icon red"><i class="ph ph-warning"></i></div><div class="stat-value">${stats.delayed_count||0}</div><div class="stat-label">Delayed</div></div>
-      <div class="stat-card"><div class="stat-icon cyan"><i class="ph ph-clock"></i></div><div class="stat-value">${bs.Pending||0}</div><div class="stat-label">Pending</div></div>
-      <div class="stat-card"><div class="stat-icon purple"><i class="ph ph-waves"></i></div><div class="stat-value">${(stats.by_mode||{}).Ocean||0}</div><div class="stat-label">Ocean</div></div>
-    `;
-    document.getElementById('nav-count').textContent=stats.total||0;
-  }catch(e){ console.error(e); }
+    var hr=new Date().getHours();
+    var greet=hr<12?'Good morning':(hr<17?'Good afternoon':'Good evening');
+    var user=typeof getUser==='function'?getUser():null;
+    var name=user&&user.name?', '+user.name.split(' ')[0]:'';
+    var dgEl=document.getElementById('dash-greeting');
+    if(dgEl)dgEl.textContent=greet+name;
+    var ddEl=document.getElementById('dash-date');
+    if(ddEl)ddEl.textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  }catch(e){}
   try{
-    const ships=await apiFetch('/api/shipments');
-    allShipments=ships;
-    const recent=ships.slice(0,6);
-    renderCards(recent,'recent-cards');
-    // Desktop recent table
-    const tw=document.getElementById('recent-table');
-    if(tw){
-      if(!recent.length){ tw.innerHTML=`<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">No shipments yet</div><div class="empty-sub">Click "New" to add your first one</div></div>`; return; }
-      tw.innerHTML=`<table><thead><tr><th>Reference</th><th>Client</th><th>Route</th><th>Mode</th><th>ETA</th><th>Status</th><th></th></tr></thead><tbody>
-      ${recent.map(s=>`<tr class="clickable" onclick="openDetail(${s.id})">
-        <td class="ref-cell">${s.ref}<br><span style="font-weight:400;color:var(--text2);font-size:11px">${s.ref2||''}</span></td>
-        <td>${s.client||'—'}</td>
-        <td style="font-size:11px">${s.pol||'—'} → ${s.pod||'—'}</td>
-        <td>${modeBadge(s.mode)}</td><td>${fmt(s.eta)}</td><td>${statusBadge(s.status)}</td>
-        <td><div class="actions">
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment(${s.id})"><i class="ph ph-pencil"></i></button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment(${s.id})"><i class="ph ph-trash"></i></button>
-        </div></td>
-      </tr>`).join('')}</tbody></table>`;
+    var stats=await apiFetch('/api/stats');
+    var bs=stats.by_status||{};
+    var transit=(bs.Sailing||0)+(bs.Transit||0)+(bs['In Transit']||0)+(bs['On Board']||0)+(bs['In Customs']||0)+(bs['Out for Delivery']||0);
+    var done=(bs.Delivered||0)+(bs.Arrived||0)+(bs.Discharged||0);
+    var pending=(bs.Pending||0)+(bs.Booked||0);
+    var overdue=stats.delayed_count||0;
+    var total=stats.total||0;
+    var sbEl=document.getElementById('dash-status-bar');
+    if(sbEl&&total>0){
+      var segs=[
+        {label:'Transit',val:transit,color:'#f59e0b'},
+        {label:'Done',val:done,color:'#22c55e'},
+        {label:'Pending',val:pending,color:'#4f8ef7'},
+        {label:'Overdue',val:overdue,color:'#ef4444'},
+      ].filter(function(x){return x.val>0;});
+      var barHtml='<div style="display:flex;border-radius:8px;overflow:hidden;height:10px;gap:1px;margin-bottom:8px">';
+      segs.forEach(function(seg){barHtml+='<div style="flex:'+seg.val+';background:'+seg.color+';min-width:2px" title="'+seg.label+': '+seg.val+'"></div>';});
+      barHtml+='</div>';
+      barHtml+='<div style="display:flex;flex-wrap:wrap;gap:10px">';
+      segs.forEach(function(seg){barHtml+='<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:'+seg.color+';display:inline-block"></span>'+seg.label+' <b style="color:var(--text1)">'+seg.val+'</b></div>';});
+      barHtml+='</div>';
+      sbEl.innerHTML=barHtml;
     }
-  }catch(e){ console.error(e); }
-  // Update alerts badge
-  try{ updateAlertsBadge(); }catch(e){}
+    document.getElementById('stats-grid').innerHTML=
+      '<div class="stat-card"><div class="stat-icon blue"><i class="ph ph-boat"></i></div><div class="stat-value">'+total+'</div><div class="stat-label">Total</div></div>'
+      +'<div class="stat-card"><div class="stat-icon orange"><i class="ph ph-anchor"></i></div><div class="stat-value">'+transit+'</div><div class="stat-label">Transit</div></div>'
+      +'<div class="stat-card"><div class="stat-icon green"><i class="ph ph-check-circle"></i></div><div class="stat-value">'+done+'</div><div class="stat-label">Done</div></div>'
+      +'<div class="stat-card"><div class="stat-icon red"><i class="ph ph-siren"></i></div><div class="stat-value" style="color:'+(overdue?'#ef4444':'inherit')+'">'+overdue+'</div><div class="stat-label">Overdue</div></div>'
+      +'<div class="stat-card"><div class="stat-icon cyan"><i class="ph ph-clock"></i></div><div class="stat-value">'+pending+'</div><div class="stat-label">Pending</div></div>'
+      +'<div class="stat-card" id="due-week-card"><div class="stat-icon purple"><i class="ph ph-calendar-check"></i></div><div class="stat-value" id="due-week-val">--</div><div class="stat-label">Due This Week</div></div>';
+    document.getElementById('nav-count').textContent=total;
+    var alertHint=document.getElementById('dash-alert-hint');
+    if(alertHint)alertHint.textContent=overdue?'Alerts ('+overdue+')':'Alerts';
+  }catch(e){console.error(e);}
+  try{
+    var ships=await apiFetch('/api/shipments');
+    var list=Array.isArray(ships)?ships:(ships.data||ships.shipments||[]);
+    allShipments=list;
+    var today=new Date();today.setHours(0,0,0,0);
+    var in7=new Date(today);in7.setDate(in7.getDate()+7);
+    var arriving=list.filter(function(sh){
+      if(['Delivered','Discharged','Arrived'].indexOf(sh.status)>=0)return false;
+      if(!sh.eta)return false;
+      var eta=new Date(sh.eta);eta.setHours(0,0,0,0);
+      return eta>=today&&eta<=in7;
+    }).sort(function(a,b){return new Date(a.eta)-new Date(b.eta);}).slice(0,5);
+    var dueCount=arriving.length;
+    var dwVal=document.getElementById('due-week-val');
+    if(dwVal)dwVal.textContent=dueCount;
+    var arrEl=document.getElementById('dash-arriving');
+    if(arrEl){
+      if(!arriving.length){
+        arrEl.innerHTML='<div style="padding:14px;text-align:center;color:var(--text2);font-size:13px;background:var(--bg3);border-radius:10px">No arrivals expected in the next 7 days</div>';
+      }else{
+        arrEl.innerHTML=arriving.map(function(sh){
+          var eta=new Date(sh.eta);eta.setHours(0,0,0,0);
+          var diff=Math.round((eta-today)/86400000);
+          var urgColor=diff===0?'#ef4444':diff<=2?'#f97316':'#22c55e';
+          var urgLabel=diff===0?'TODAY':diff===1?'Tomorrow':'In '+diff+'d';
+          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg3);border-radius:10px;border-left:3px solid '+urgColor+'" onclick="openDetail('+sh.id+')" style="cursor:pointer">'
+            +'<div style="display:flex;align-items:center;gap:10px">'
+            +'<div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+sh.ref+'</div>'
+            +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+(sh.client||'--')+' &middot; '+(sh.pol||'--')+' &rarr; '+(sh.pod||'--')+'</div></div></div>'
+            +'<div style="display:flex;align-items:center;gap:8px">'
+            +'<span style="background:'+urgColor+'22;color:'+urgColor+';font-weight:800;font-size:12px;padding:4px 10px;border-radius:20px;white-space:nowrap">'+urgLabel+'</span>'
+            +'</div></div>';
+        }).join('');
+      }
+    }
+    var recent=list.slice(0,6);
+    renderCards(recent,'recent-cards');
+    var tw=document.getElementById('recent-table');
+    if(tw){
+      if(!recent.length){
+        tw.innerHTML='<div class="empty"><div class="empty-icon">&#128230;</div><div class="empty-title">No shipments yet</div><div class="empty-sub">Click &quot;New Shipment&quot; to get started</div></div>';
+      }else{
+        var rows=recent.map(function(sh){
+          var eta=sh.eta?new Date(sh.eta):null;
+          var etaDiff=eta?Math.round((eta-today)/86400000):null;
+          var etaColor=etaDiff===null?'var(--text2)':etaDiff<0?'#ef4444':etaDiff<=2?'#f97316':'var(--text2)';
+          var etaLabel=etaDiff===null?'--':etaDiff<0?Math.abs(etaDiff)+'d late':etaDiff===0?'Today':etaDiff===1?'Tomorrow':'In '+etaDiff+'d';
+          var etaDisplay=fmtd(sh.eta)+(etaDiff!==null?'<br><span style="font-size:10px;font-weight:700;color:'+etaColor+'">'+etaLabel+'</span>':'');
+          return '<tr class="clickable" onclick="openDetail('+sh.id+')" style="cursor:pointer">'
+            +'<td class="ref-cell">'+sh.ref+'<br><span style="font-weight:400;color:var(--text2);font-size:11px">'+(sh.ref2||'')+'</span></td>'
+            +'<td>'+(sh.client||'--')+'</td>'
+            +'<td style="font-size:11px">'+(sh.pol||'--')+' &rarr; '+(sh.pod||'--')+'</td>'
+            +'<td>'+modeBadge(sh.mode)+'</td>'
+            +'<td>'+etaDisplay+'</td>'
+            +'<td>'+statusBadge(sh.status)+'</td>'
+            +'<td><div class="actions">'
+            +'<button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment('+sh.id+')"><i class="ph ph-pencil"></i></button>'
+            +'<button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment('+sh.id+')"><i class="ph ph-trash"></i></button>'
+            +'</div></td></tr>';
+        }).join('');
+        tw.innerHTML='<table><thead><tr><th>Reference</th><th>Client</th><th>Route</th><th>Mode</th><th>ETA</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+      }
+    }
+  }catch(e){console.error(e);}
+  try{updateAlertsBadge();}catch(e){}
 }
 
 /* ── Shipments page ── */
@@ -1754,14 +1876,19 @@ async function loadUsers(){
   if(!cont)return;
   cont.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)"><i class="ph ph-spinner"></i> Loading...</div>';
   try{
-    var resp=await authFetch('/api/admin/users');
+    var resp=await apiFetch('/api/admin/users');
     var users=Array.isArray(resp)?resp:(resp.data||resp.users||resp.items||[]);
+    if(!users.length){
+      cont.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><i class="ph ph-users" style="font-size:32px;display:block;margin-bottom:8px"></i>No users found</div>';
+      return;
+    }
     var html='';
     users.forEach(function(u){
       html+='<div class="card" style="margin-bottom:10px"><div class="card__body" style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between">';
       html+='<div><div style="font-weight:700;color:var(--text1)">'+u.email+'</div>';
       html+='<div style="font-size:12px;color:var(--text2);margin-top:4px">'+(u.name||'')+'</div>';
-      html+='<div style="margin-top:6px"><span style="display:inline-block;background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase">'+u.role+'</span>';
+      html+='<div style="margin-top:6px">';
+      html+='<span style="display:inline-block;background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase">'+u.role+'</span>';
       if(!u.is_active)html+=' <span style="display:inline-block;background:#ef444420;color:#ef4444;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">Disabled</span>';
       html+='</div></div>';
       html+='<div style="display:flex;gap:6px">';
@@ -1769,38 +1896,41 @@ async function loadUsers(){
       if(u.role!=='admin')html+='<button onclick="deleteUser('+u.id+')" style="padding:6px 10px;border:1px solid var(--red);background:rgba(239,68,68,.1);color:var(--red);border-radius:6px;cursor:pointer;font-size:12px">Delete</button>';
       html+='</div></div></div>';
     });
-    if(!users.length)html='<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><i class="ph ph-users" style="font-size:32px;display:block;margin-bottom:8px"></i>No users found</div>';
     cont.innerHTML=html;
   }catch(e){
-    cont.innerHTML='<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:12px;color:var(--red);font-size:13px">'+e.message+'</div>';
+    cont.innerHTML='<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:12px;color:var(--red);font-size:13px">Error: '+e.message+'</div>';
     if(typeof toast==='function')toast(e.message,'error');
   }
 }
 async function createUser(){
-  var name=document.getElementById('new-user-name');
-  var email=document.getElementById('new-user-email');
-  var pass=document.getElementById('new-user-pass');
-  var role=document.getElementById('new-user-role');
-  if(!email||!email.value.trim()||!pass||!pass.value.trim())return toast('Email and password required','error');
+  var nameEl=document.getElementById('new-user-name');
+  var emailEl=document.getElementById('new-user-email');
+  var passEl=document.getElementById('new-user-pass');
+  var roleEl=document.getElementById('new-user-role');
+  if(!emailEl||!emailEl.value.trim()||!passEl||!passEl.value.trim()){toast('Email and password required','error');return;}
   try{
-    await authFetch('/api/admin/users',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name:name?name.value.trim():'',email:email.value.trim(),password:pass.value.trim(),role:role?role.value:'agent'})});
+    await apiFetch('/api/admin/users',{method:'POST',body:JSON.stringify({
+      name:nameEl?nameEl.value.trim():'',
+      email:emailEl.value.trim(),
+      password:passEl.value.trim(),
+      role:roleEl?roleEl.value:'agent'
+    })});
     closeModal('modal-add-user');
-    if(name)name.value='';email.value='';pass.value='';
-    toast('User created','success');
+    if(nameEl)nameEl.value=''; emailEl.value=''; passEl.value='';
+    toast('User created successfully','success');
     loadUsers();
   }catch(e){toast(e.message,'error');}
 }
 async function toggleUser(id){
   try{
-    await authFetch('/api/users/'+id+'/toggle',{method:'PATCH'});
+    await apiFetch('/api/admin/users/'+id+'/toggle',{method:'PATCH'});
     loadUsers();
   }catch(e){toast(e.message,'error');}
 }
 async function deleteUser(id){
-  if(!confirm('Delete this user?'))return;
+  if(!confirm('Delete this user? This cannot be undone.'))return;
   try{
-    await authFetch('/api/users/'+id,{method:'DELETE'});
+    await apiFetch('/api/admin/users/'+id,{method:'DELETE'});
     toast('User deleted','success');
     loadUsers();
   }catch(e){toast(e.message,'error');}
@@ -1816,8 +1946,6 @@ function _renderDetail(ship){
   _s('detail-pod',ship.pod||'--');
   _s('detail-etd',fmtd(ship.etd));
   _s('detail-eta',fmtd(ship.eta));
-  var ha=document.getElementById('detail-portal-href');
-  if(ha)ha.href='/track/'+(ship.ref||'');
   var infoChips=document.getElementById('detail-info-chips');
   if(infoChips){
     var chips=[
@@ -1914,12 +2042,6 @@ async function syncDetail(){
     toast('Synced','success');
   }catch(e){toast('Sync error: '+e.message,'error');}
   finally{if(btn)btn.disabled=false;}
-}
-function copyPortalLink(){
-  var a=document.getElementById('detail-portal-href');
-  if(!a)return;
-  var url=window.location.origin+a.getAttribute('href');
-  navigator.clipboard.writeText(url).then(function(){toast('Link copied!','success');}).catch(function(){prompt('Copy this link:',url);});
 }
 </script>
 
@@ -2649,6 +2771,76 @@ function snoozeAlert(key,ref){
   var label=ref||key.split("_")[0];
   if(typeof toast==="function")toast(label+" snoozed for 24h","info");
   if(typeof loadAlerts==="function")loadAlerts();
+}
+
+function toggleShipmentSelect(id, checked){
+  window._selectedShips = window._selectedShips || new Set();
+  if(checked) window._selectedShips.add(id);
+  else window._selectedShips.delete(id);
+  _updateBulkToolbar();
+}
+function toggleAllShipments(checked){
+  window._selectedShips = window._selectedShips || new Set();
+  var boxes = document.querySelectorAll('#ship-table input[type="checkbox"]:not(#check-all)');
+  boxes.forEach(function(cb){
+    cb.checked = checked;
+    var id = parseInt(cb.getAttribute('onchange').match(/\d+/)[0]);
+    if(checked) window._selectedShips.add(id);
+    else window._selectedShips.delete(id);
+  });
+  _updateBulkToolbar();
+}
+function selectAllShipments(){
+  var cb = document.getElementById('check-all');
+  if(cb){ cb.checked=true; toggleAllShipments(true); }
+}
+function clearSelectionShipments(){
+  window._selectedShips = new Set();
+  document.querySelectorAll('#ship-table input[type="checkbox"]').forEach(function(cb){cb.checked=false;});
+  _updateBulkToolbar();
+}
+function _updateBulkToolbar(){
+  window._selectedShips = window._selectedShips || new Set();
+  var n = window._selectedShips.size;
+  var tb = document.getElementById('bulk-toolbar');
+  var ct = document.getElementById('bulk-count');
+  if(tb) tb.style.display = n > 0 ? 'flex' : 'none';
+  if(ct) ct.textContent = n + ' selected';
+}
+async function bulkDeleteShipments(){
+  window._selectedShips = window._selectedShips || new Set();
+  var ids = Array.from(window._selectedShips);
+  if(!ids.length){ toast('No shipments selected','error'); return; }
+  if(!confirm('Delete '+ids.length+' selected shipment(s)? This cannot be undone.')) return;
+  var btn = document.querySelector('#bulk-toolbar .btn-danger');
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="ph ph-spinner"></i> Deleting...'; }
+  var ok=0, fail=0;
+  for(var i=0;i<ids.length;i++){
+    try{
+      await apiFetch('/api/shipments/'+ids[i],{method:'DELETE'});
+      ok++;
+    }catch(e){ fail++; }
+  }
+  window._selectedShips = new Set();
+  toast('Deleted '+ok+' shipment(s)'+(fail?' ('+fail+' failed)':''), fail?'error':'success');
+  if(typeof loadShipments==='function') loadShipments();
+  if(typeof loadDashboard==='function') loadDashboard();
+}
+async function deleteAllShipments(){
+  var total = window._pgShips ? window._pgShips.length : (window.allShipments ? window.allShipments.length : '?');
+  if(!confirm('WARNING: Delete ALL '+total+' shipment(s)? This is irreversible!')) return;
+  if(!confirm('Are you absolutely sure? All shipment data will be permanently deleted.')) return;
+  var all = window.allShipments || [];
+  if(!all.length){ toast('No shipments to delete','error'); return; }
+  var ok=0, fail=0;
+  for(var i=0;i<all.length;i++){
+    try{ await apiFetch('/api/shipments/'+all[i].id,{method:'DELETE'}); ok++; }
+    catch(e){ fail++; }
+  }
+  window._selectedShips = new Set();
+  toast('Deleted '+ok+' shipment(s)'+(fail?' ('+fail+' failed)':''), fail?'error':'success');
+  if(typeof loadShipments==='function') loadShipments();
+  if(typeof loadDashboard==='function') loadDashboard();
 }
 </script>
 </body>
