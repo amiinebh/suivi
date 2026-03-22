@@ -1358,7 +1358,11 @@ function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240
 /* ── KPI Page ── */
 async function loadAnalytics(){
   try{
-    var k=await apiFetch('/api/kpis');
+    var _kr=await apiFetch('/api/kpis');
+    var k=(_kr&&typeof _kr==='object')?_kr:{};
+    k.total=k.total||0;k.on_time_rate=k.on_time_rate||0;k.delay_rate=k.delay_rate||0;
+    k.by_status=k.by_status||{};k.by_carrier=k.by_carrier||[];k.by_client=k.by_client||[];
+    k.by_mode=k.by_mode||{};k.monthly=k.monthly||[];k.overdue=k.overdue||[];k.top_routes=k.top_routes||[];
     var el1=document.getElementById('kpi-cards');
     if(el1){
       el1.innerHTML='';
@@ -1750,7 +1754,8 @@ async function loadUsers(){
   if(!cont)return;
   cont.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)"><i class="ph ph-spinner"></i> Loading...</div>';
   try{
-    var users=await authFetch('/api/admin/users');
+    var resp=await authFetch('/api/admin/users');
+    var users=Array.isArray(resp)?resp:(resp.data||resp.users||resp.items||[]);
     var html='';
     users.forEach(function(u){
       html+='<div class="card" style="margin-bottom:10px"><div class="card__body" style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between">';
@@ -2074,40 +2079,44 @@ async function confirmSendEmail() {
 
 <script>
 /* ═══ ALERTS PAGE ═══ */
-async function loadAlerts() {
-  var container = document.getElementById('alerts-list');
-  var badge     = document.getElementById('alerts-badge');
-  if (!container) return;
-  container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><div style="font-size:32px;margin-bottom:8px">⏳</div>Loading...</div>';
-  try {
-    var ships = await apiFetch('/api/shipments');
-    var alerts = buildAlerts(ships);
-    if (badge) {
-      badge.textContent = alerts.length;
-      badge.style.display = alerts.length ? '' : 'none';
-    }
-    if (!alerts.length) {
-      container.innerHTML = '<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px"></div><div style="font-size:15px;font-weight:700;margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention right now.</div></div>';
+async function loadAlerts(){
+  var container=document.getElementById('alerts-list');
+  var badge=document.getElementById('alerts-badge');
+  if(!container)return;
+  container.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><div style="font-size:32px;margin-bottom:8px">&#9203;</div>Loading...</div>';
+  try{
+    var ships=await apiFetch('/api/shipments');
+    var list=Array.isArray(ships)?ships:(ships.data||ships.shipments||[]);
+    var alerts=buildAlerts(list);
+    if(badge){badge.textContent=alerts.length;badge.style.display=alerts.length?'flex':'none';}
+    if(!alerts.length){
+      container.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">&#10003;</div><div style="font-size:15px;font-weight:700;color:var(--green);margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention.</div></div>';
       return;
     }
-    container.innerHTML = alerts.map(function(a) {
-      var color = a.type === 'danger' ? 'var(--red)' : a.type === 'warning' ? 'var(--yellow)' : 'var(--accent)';
-      return '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ' + color + ';border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer" onclick="openDetail(' + a.id + ')">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-        + '<span style="font-size:14px;font-weight:700;color:var(--text)">' + a.ref + '</span>'
-        + '<span style="font-size:11px;background:' + color + '22;color:' + color + ';padding:3px 10px;border-radius:20px;font-weight:600">' + a.label + '</span>'
-        + '</div>'
-        + '<div style="font-size:12px;color:var(--text2)">' + a.message + '</div>'
-        + '</div>';
+    container.innerHTML=alerts.map(function(a){
+      var color=a.type==='danger'?'#ef4444':a.type==='warning'?'#f59e0b':'#a78bfa';
+      var icon=a.type==='danger'?'ph-siren':a.type==='warning'?'ph-clock':'ph-warning';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;margin-bottom:10px;background:var(--bg3);border-left:3px solid '+color+'">'
+        +'<div style="display:flex;align-items:center;gap:10px">'
+        +'<div style="width:32px;height:32px;border-radius:8px;background:'+color+'22;display:flex;align-items:center;justify-content:center"><i class="ph '+icon+'" style="color:'+color+';font-size:16px"></i></div>'
+        +'<div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+a.ref+'</div>'
+        +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+a.message+'</div>'
+        +'<span style="display:inline-block;margin-top:4px;font-size:10px;background:'+color+'22;color:'+color+';padding:2px 8px;border-radius:10px;font-weight:700">'+a.label+'</span>'
+        +'</div></div>'
+        +'<div style="display:flex;gap:6px;flex-shrink:0">'
+        +'<button onclick="snoozeAlert(\''+a.sk+'\',\''+a.ref+'\')" style="padding:5px 10px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--bg2);color:var(--text2);border-radius:6px;cursor:pointer">&#128276; Snooze</button>'
+        +'<button onclick="openDetail('+a.id+')" style="padding:5px 10px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button>'
+        +'</div></div>';
     }).join('');
-  } catch(e) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">Error: ' + e.message + '</div>';
+  }catch(e){
+    container.innerHTML='<div style="text-align:center;padding:40px;color:var(--red);font-size:13px">Error: '+e.message+'</div>';
   }
 }
 
 function buildAlerts(ships){
   var today=new Date();today.setHours(0,0,0,0);
   var alerts=[];
+  if(!ships||!ships.length)return alerts;
   ships.forEach(function(sh){
     if(['Delivered','Discharged'].indexOf(sh.status)>=0)return;
     var sk=sh.id+'_'+sh.status;
@@ -2116,34 +2125,16 @@ function buildAlerts(ships){
     if(sh.eta){
       var eta=new Date(sh.eta);eta.setHours(0,0,0,0);
       var diff=Math.round((eta-today)/86400000);
-      if(diff<0)alerts.push({id:sh.id,ref:sh.ref,type:'overdue',days:Math.abs(diff),msg:'Overdue by '+Math.abs(diff)+'d',color:'#ef4444',icon:'ph-siren',sk:sk});
-      else if(diff<=3)alerts.push({id:sh.id,ref:sh.ref,type:'due',days:diff,msg:'ETA in '+diff+'d',color:'#f59e0b',icon:'ph-clock',sk:sk});
+      if(diff<0)alerts.push({id:sh.id,ref:sh.ref,sk:sk,type:'danger',label:'Overdue',message:'ETA was '+fmtd(sh.eta)+' ('+Math.abs(diff)+'d ago)'});
+      else if(diff<=3)alerts.push({id:sh.id,ref:sh.ref,sk:sk,type:'warning',label:'Due soon',message:'ETA '+fmtd(sh.eta)+' ('+diff+'d)'});
     }
-    if(!sh.eta&&!sh.etd)alerts.push({id:sh.id,ref:sh.ref,type:'nodate',msg:'Missing ETD/ETA',color:'#a78bfa',icon:'ph-warning',sk:sk});
+    if(!sh.eta&&!sh.etd)alerts.push({id:sh.id,ref:sh.ref,sk:sk,type:'info',label:'No dates',message:'Missing ETD & ETA — please update'});
     if(sh.status==='Pending'&&sh.etd){
       var etd=new Date(sh.etd);etd.setHours(0,0,0,0);
-      if(etd<today)alerts.push({id:sh.id,ref:sh.ref,type:'pending',msg:'Pending past ETD',color:'#f97316',icon:'ph-hourglass',sk:sk});
+      if(etd<today)alerts.push({id:sh.id,ref:sh.ref,sk:sk,type:'warning',label:'Pending past ETD',message:'ETD was '+fmtd(sh.etd)});
     }
   });
-  var wrap=document.getElementById('alerts-list');
-  if(!wrap)return;
-  if(!alerts.length){
-    wrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--green)"><i class="ph ph-check-circle" style="font-size:36px;display:block;margin-bottom:8px"></i><div style="font-size:14px;font-weight:700">All clear!</div><div style="font-size:12px;color:var(--text2);margin-top:4px">No active alerts</div></div>';
-    return;
-  }
-  wrap.innerHTML=alerts.map(function(a){
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;margin-bottom:10px;background:var(--bg3);border-left:3px solid '+a.color+'">'
-      +'<div style="display:flex;align-items:center;gap:10px">'
-      +'<div style="width:32px;height:32px;border-radius:8px;background:'+a.color+'22;display:flex;align-items:center;justify-content:center"><i class="ph '+a.icon+'" style="color:'+a.color+';font-size:16px"></i></div>'
-      +'<div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+a.ref+'</div>'
-      +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+a.msg+'</div></div></div>'
-      +'<div style="display:flex;gap:6px">'
-      +'<button onclick="snoozeAlert(\'' +a.sk+'\',\''+a.ref+'\')" style="padding:5px 10px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--bg2);color:var(--text2);border-radius:6px;cursor:pointer"><i class="ph ph-bell-slash"></i> Snooze</button>'
-      +'<button onclick="openDetail('+a.id+')" style="padding:5px 10px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button>'
-      +'</div></div>';
-  }).join('');
-  var badge=document.getElementById('alerts-badge');
-  if(badge){badge.textContent=alerts.length;badge.style.display=alerts.length?'flex':'none';}
+  return alerts;
 }
 
 /* ═══ EMAIL LOG ═══ */
