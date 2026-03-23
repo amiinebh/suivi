@@ -213,7 +213,7 @@ select.filter option{background:var(--bg2)}
 #pager{display:flex;gap:7px;align-items:center;justify-content:space-between;padding:3px 0}
 #pg-info,#ship-count-label{font-size:var(--fs-xs);color:var(--text2)}
 /* KPI */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;animation:fadeUp .3s ease both}
 .kpi-icon{width:36px;height:36px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;margin-bottom:10px;background:rgba(34,197,94,.08)}
 .kpi-icon svg,.kpi-icon i{width:16px;height:16px;font-size:16px;color:var(--green)}
@@ -402,6 +402,26 @@ textarea.form-control{resize:vertical;min-height:72px}
 .digest-section{background:var(--bg3);border-radius:12px;padding:12px 14px;margin-bottom:10px}
 .digest-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
 .digest-row:last-child{border-bottom:none}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+#kpi-cards, #kpi-cards-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+@media (max-width: 1200px) {
+  #kpi-cards, #kpi-cards-2 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  #kpi-cards, #kpi-cards-2 { grid-template-columns: 1fr; }
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1555,7 +1575,7 @@ loadDashboard(); loadShipments();
 }
 
 /* ── Edit ── */
-async async function editShipment(sid){
+async function editShipment(sid){
   try{
     const s=await apiFetch(`/api/shipments/${sid}`);
     editId=sid;
@@ -2133,7 +2153,7 @@ async function loadUsers(){
   if(!cont)return;
   cont.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)"><i class="ph ph-spinner"></i> Loading...</div>';
   try{
-    var resp=await apiFetch('/api/users');
+    var resp=await apiFetch('/api/admin/users');
     var users=Array.isArray(resp)?resp:(resp.data||resp.users||resp.items||[]);
     if(!users.length){
       cont.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><i class="ph ph-users" style="font-size:32px;display:block;margin-bottom:8px"></i>No users found</div>';
@@ -2166,7 +2186,7 @@ async function createUser(){
   var roleEl=document.getElementById('new-user-role');
   if(!emailEl||!emailEl.value.trim()||!passEl||!passEl.value.trim()){toast('Email and password required','error');return;}
   try{
-    await apiFetch('/api/users',{method:'POST',body:JSON.stringify({
+    await apiFetch('/api/admin/users',{method:'POST',body:JSON.stringify({
       name:nameEl?nameEl.value.trim():'',
       email:emailEl.value.trim(),
       password:passEl.value.trim(),
@@ -2180,14 +2200,14 @@ async function createUser(){
 }
 async function toggleUser(id){
   try{
-    await apiFetch('/api/users/'+id+'/toggle',{method:'PATCH'});
+    await apiFetch('/api/admin/users/'+id+'/toggle',{method:'PATCH'});
     loadUsers();
   }catch(e){toast(e.message,'error');}
 }
 async function deleteUser(id){
   if(!confirm('Delete this user? This cannot be undone.'))return;
   try{
-    await apiFetch('/api/users/'+id,{method:'DELETE'});
+    await apiFetch('/api/admin/users/'+id,{method:'DELETE'});
     toast('User deleted','success');
     loadUsers();
   }catch(e){toast(e.message,'error');}
@@ -2285,7 +2305,7 @@ function switchDTab(tab){
     if(typeof loadEmailLog==='function')loadEmailLog(_detailId);
   }
 }
-async async function submitComment(){
+async function submitComment(){
   var txt=document.getElementById('detail-comment-text');
   if(!txt||!txt.value.trim())return;
   var user=typeof getUser==='function'?getUser():null;
