@@ -2634,190 +2634,438 @@ async function generateReport(){
   const btn = document.getElementById('report-btn');
   if(btn){ btn.disabled=true; btn.innerHTML='<i class="ph ph-spinner"></i> Generating…'; }
   try{
-    const [ships, stats] = await Promise.all([apiFetch('/api/shipments'), apiFetch('/api/stats')]);
+    // ── Fetch same data sources as the KPI page ──
+    const [ships, kpis] = await Promise.all([apiFetch('/api/shipments'), apiFetch('/api/kpis')]);
     const today = new Date();
     const fmtD = d => d ? d.slice(0,10) : '—';
-    const bs = stats.by_status||{};
-    const bm = stats.by_mode||{};
+    const k = (kpis && typeof kpis==='object') ? kpis : {};
 
-    // Compute metrics
+    // ── Status counts using REAL status names (matching your system) ──
+    const bs = k.by_status || {};
     const total = ships.length;
     const totalTeu = ships.reduce((s,x)=>(s+(x.teu||0)),0);
-    const completed = ships.filter(s=>['Delivered','Arrived','Discharged'].includes(s.status)).length;
-    const inTransit = ships.filter(s=>['Sailing','Transit'].includes(s.status)).length;
-    const delayed = ships.filter(s=>s.status==='Delayed').length;
-    const pending = ships.filter(s=>s.status==='Pending').length;
+    const inTransit   = (bs['Sailing']||0) + (bs['Stuffed']||0);
+    const completed   = (bs['Closed']||0)  + (bs['Arrived']||0);
+    const pending     = (bs['Confirmed']||0) + (bs['Booked']||0);
+    const canceled    = bs['Canceled']||0;
+    const onTimeRate  = k.on_time_rate||0;
+    const delayRate   = k.delay_rate||0;
+    const avgTransit  = k.avg_transit||null;
 
-    // By status breakdown
-    const statusList = ['Pending','Sailing','Transit','Arrived','Discharged','Delivered','Delayed'];
-    const statusColors = {Pending:'#f59e0b',Sailing:'#4f8ef7',Transit:'#6c63ff',Arrived:'#22c55e',Discharged:'#06b6d4',Delivered:'#16a34a',Delayed:'#ef4444'};
-
-    // By carrier
-    const byCarrier = {};
-    ships.forEach(s=>{ if(s.carrier){ byCarrier[s.carrier]=(byCarrier[s.carrier]||0)+1; }});
-    const carrierRows = Object.entries(byCarrier).sort((a,b)=>b[1]-a[1]);
-
-    // By POD
-    const byPod = {};
-    ships.forEach(s=>{ if(s.pod){ byPod[s.pod]=(byPod[s.pod]||0)+1; }});
-    const podRows = Object.entries(byPod).sort((a,b)=>b[1]-a[1]).slice(0,10);
-
-    // Overdue (ETA passed, not delivered)
+    // ── Overdue: ETA passed, not closed/arrived/canceled ──
     const todayMs = new Date().setHours(0,0,0,0);
-    const overdue = ships.filter(s=>s.eta&&!['Delivered','Discharged'].includes(s.status)&&new Date(s.eta)<todayMs);
+    const overdue = ships.filter(s => s.eta
+      && !['Closed','Arrived','Canceled'].includes(s.status)
+      && new Date(s.eta) < todayMs
+    ).map(s => ({
+      ...s,
+      daysLate: Math.floor((todayMs - new Date(s.eta).setHours(0,0,0,0)) / 86400000)
+    })).sort((a,b)=>b.daysLate-a.daysLate);
 
-    const statusColor = s => statusColors[s]||'#888';
+    // ── Arriving next 7 days ──
+    const in7Ms = new Date(todayMs); in7Ms.setDate(in7Ms.getDate()+7);
+    const arriving = ships.filter(s => s.eta
+      && !['Closed','Canceled'].includes(s.status)
+      && new Date(s.eta)>=todayMs && new Date(s.eta)<=in7Ms
+    ).sort((a,b)=>new Date(a.eta)-new Date(b.eta));
+
+    // ── By Carrier (full analytics matching KPI page) ──
+    const carrierMap = {};
+    ships.forEach(s=>{
+      if(!s.carrier) return;
+      if(!carrierMap[s.carrier]) carrierMap[s.carrier]={total:0,closed:0,canceled:0,transitDays:[]};
+      carrierMap[s.carrier].total++;
+      if(s.status==='Closed'||s.status==='Arrived') carrierMap[s.carrier].closed++;
+      if(s.status==='Canceled') carrierMap[s.carrier].canceled++;
+      if(s.etd && s.eta){
+        const td = Math.round((new Date(s.eta)-new Date(s.etd))/(1000*60*60*24));
+        if(td>0) carrierMap[s.carrier].transitDays.push(td);
+      }
+    });
+    const carrierRows = Object.entries(carrierMap).map(([name,c])=>({
+      name, total:c.total, closed:c.closed, canceled:c.canceled,
+      rate: c.total>0?Math.round(c.closed/c.total*100):0,
+      avgTd: c.transitDays.length ? Math.round(c.transitDays.reduce((a,b)=>a+b,0)/c.transitDays.length) : null
+    })).sort((a,b)=>b.total-a.total);
+
+    // ── By Client ──
+    const clientMap = {};
+    ships.forEach(s=>{
+      if(!s.client) return;
+      if(!clientMap[s.client]) clientMap[s.client]={total:0,active:0,closed:0,canceled:0,modes:{}};
+      clientMap[s.client].total++;
+      if(['Confirmed','Booked','Stuffed','Sailing'].includes(s.status)) clientMap[s.client].active++;
+      if(s.status==='Closed'||s.status==='Arrived') clientMap[s.client].closed++;
+      if(s.status==='Canceled') clientMap[s.client].canceled++;
+      if(s.mode) clientMap[s.client].modes[s.mode]=(clientMap[s.client].modes[s.mode]||0)+1;
+    });
+    const clientRows = Object.entries(clientMap).map(([name,c])=>({
+      name, total:c.total, active:c.active, closed:c.closed, canceled:c.canceled,
+      topMode: Object.keys(c.modes).sort((a,b)=>c.modes[b]-c.modes[a])[0]||'—'
+    })).sort((a,b)=>b.total-a.total);
+
+    // ── By POD ──
+    const podMap={};
+    ships.forEach(s=>{ if(s.pod) podMap[s.pod]=(podMap[s.pod]||0)+1; });
+    const podRows = Object.entries(podMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+    // ── By POL ──
+    const polMap={};
+    ships.forEach(s=>{ if(s.pol) polMap[s.pol]=(polMap[s.pol]||0)+1; });
+    const polRows = Object.entries(polMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+    // ── Top Routes ──
+    const routeMap={};
+    ships.forEach(s=>{ if(s.pol&&s.pod){const k=s.pol+' → '+s.pod;routeMap[k]=(routeMap[k]||0)+1;} });
+    const routeRows = Object.entries(routeMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+    // ── By Mode ──
+    const bm = k.by_mode || {};
+
+    // ── Monthly data from KPI ──
+    const monthly = k.monthly||[];
+
+    // ── Status colour map (REAL status names) ──
+    const STATUS_COLORS = {
+      Confirmed:'#4f8ef7', Booked:'#a855f7', Stuffed:'#f97316',
+      Sailing:'#06b6d4',   Arrived:'#22c55e', Closed:'#10b981', Canceled:'#ef4444'
+    };
+    const sc = s => STATUS_COLORS[s]||'#8892b0';
+
+    // ── Insight strings ──
+    const topCarrier   = carrierRows[0]?.name || '—';
+    const topClient    = clientRows[0]?.name  || '—';
+    const topRoute     = routeRows[0]?.[0]    || '—';
+    const cancelRate   = total>0 ? Math.round(canceled/total*100) : 0;
+    const completionRate = total>0 ? Math.round(completed/total*100) : 0;
+
+    const BAR = (pct, color) =>
+      `<div style="background:#f0f4f8;border-radius:4px;height:8px;width:100%;overflow:hidden">
+        <div style="height:8px;border-radius:4px;background:${color};width:${pct}%"></div>
+       </div>`;
+
+    const BADGE = (txt, color) =>
+      `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:${color}22;color:${color}">${txt}</span>`;
 
     const reportHtml = `<!DOCTYPE html><html><head>
   <link rel="icon" href="data:,"><meta charset="UTF-8">
-    <title>FreightTrack Pro — Report ${today.toLocaleDateString()}</title>
-    <style>
-      *{margin:0;padding:0;box-sizing:border-box}
-      body{font-family:Inter,-apple-system,sans-serif;background:#f0f4f8;color:#1a2040;padding:32px;font-size:13px}
-      .page-header{background:linear-gradient(135deg,#1a2040,#2d3a6a);color:#fff;border-radius:16px;padding:28px 32px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center}
-      .page-header h1{font-size:20px;font-weight:800;margin-bottom:4px}
-      .page-header .sub{font-size:12px;opacity:.7}
-      .print-btn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px)}
-      .print-btn:hover{background:rgba(255,255,255,.25)}
-      .section{background:#fff;border-radius:14px;padding:22px 24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-      .section-title{font-size:14px;font-weight:700;color:#1a2040;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f4f8;display:flex;align-items:center;gap:8px}
-      .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:0}
-      .kpi{background:#f8fafc;border:1px solid #e8eef6;border-radius:12px;padding:16px;text-align:center}
-      .kpi-val{font-size:26px;font-weight:800;color:#4f8ef7}
-      .kpi-lbl{font-size:10px;color:#8892b0;margin-top:4px;text-transform:uppercase;letter-spacing:.6px}
-      .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-      table{width:100%;border-collapse:collapse}
-      th{background:#f8fafc;color:#5a6a8a;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;padding:10px 12px;text-align:left;border-bottom:2px solid #e8eef6}
-      td{padding:10px 12px;border-bottom:1px solid #f0f4f8;color:#1a2040}
-      tr:last-child td{border-bottom:none}
-      tr:hover td{background:#fafbff}
-      .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-      .bar-wrap{background:#f0f4f8;border-radius:4px;height:8px;width:100%;margin-top:4px;overflow:hidden}
-      .bar{height:8px;border-radius:4px;transition:width .3s}
-      .overdue-row td{background:#fff5f5!important;color:#dc2626}
-      .footer{text-align:center;font-size:11px;color:#aaa;margin-top:24px;padding:16px}
-      @media print{
-        body{background:#fff;padding:16px}
-        .no-print{display:none!important}
-        .section{box-shadow:none;border:1px solid #e8eef6}
-        .page-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      }
-    </style>
+  <title>FreightTrack Pro — KPI Report ${today.toLocaleDateString()}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f4f8;color:#1a2040;padding:32px;font-size:13px;line-height:1.5}
+    .page-header{background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;border-radius:16px;padding:30px 36px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start}
+    .page-header h1{font-size:22px;font-weight:800;margin-bottom:6px;letter-spacing:-.5px}
+    .page-header .sub{font-size:12px;opacity:.65;line-height:1.7}
+    .print-btn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;margin-top:4px}
+    .print-btn:hover{background:rgba(255,255,255,.22)}
+    .section{background:#fff;border-radius:14px;padding:22px 24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.05);border:1px solid #e8eef6}
+    .section-title{font-size:13px;font-weight:800;color:#1a2040;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f0f4f8;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.04em}
+    .section-title .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    /* KPI cards */
+    .kpi-row{display:grid;gap:12px;margin-bottom:20px}
+    .kpi-row-8{grid-template-columns:repeat(8,1fr)}
+    .kpi-row-4{grid-template-columns:repeat(4,1fr)}
+    .kpi{background:#f8fafc;border:1px solid #e8eef6;border-radius:12px;padding:16px 12px;text-align:center}
+    .kpi-val{font-size:24px;font-weight:800;line-height:1;color:#1e3a5f}
+    .kpi-lbl{font-size:9px;color:#8892b0;margin-top:5px;text-transform:uppercase;letter-spacing:.7px;font-weight:600}
+    /* Insight box */
+    .insight-box{background:linear-gradient(135deg,#f0f7ff,#eef3ff);border:1px solid #c7d9f0;border-radius:12px;padding:16px 20px;margin-bottom:20px}
+    .insight-title{font-size:11px;font-weight:800;color:#2d5fa6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+    .insight-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .insight-item{background:#fff;border-radius:8px;padding:12px;border:1px solid #dce8f7}
+    .insight-item .label{font-size:10px;color:#8892b0;font-weight:600;text-transform:uppercase;margin-bottom:4px}
+    .insight-item .value{font-size:13px;font-weight:700;color:#1a2040}
+    /* two-col */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+    .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+    /* table */
+    table{width:100%;border-collapse:collapse}
+    th{background:#f8fafc;color:#5a6a8a;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;padding:9px 12px;text-align:left;border-bottom:2px solid #e8eef6}
+    td{padding:9px 12px;border-bottom:1px solid #f4f6fb;color:#1a2040;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#fafbff}
+    .overdue-row td{background:#fff5f5!important}
+    /* arriving */
+    .arrive-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;margin-bottom:6px;border-left:3px solid #22c55e;background:#f6fff9}
+    /* footer */
+    .footer{text-align:center;font-size:11px;color:#aab4c8;margin-top:28px;padding:16px;border-top:1px solid #e8eef6}
+    @media print{
+      body{background:#fff;padding:16px}
+      .no-print{display:none!important}
+      .section,.insight-box{box-shadow:none}
+      .page-header,.kpi,.insight-item{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .two-col,.three-col{break-inside:avoid}
+    }
+  </style>
 </head><body>
 
-    <div class="page-header">
-      <div>
-        <h1><i class="ph ph-boat"></i> FreightTrack Pro — Shipment Report</h1>
-        <div class="sub">Generated ${today.toLocaleString()} &nbsp;·&nbsp; ${total} shipments &nbsp;·&nbsp; ${totalTeu} TEU total</div>
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <h1>🚢 FreightTrack Pro — KPI Report</h1>
+      <div class="sub">
+        Generated: ${today.toLocaleString()}<br>
+        Period: All time &nbsp;·&nbsp; ${total} total shipments &nbsp;·&nbsp; ${totalTeu||0} TEU
       </div>
-      <button class="print-btn no-print" onclick="window.print()">🖨 Print / Save PDF</button>
     </div>
+    <button class="print-btn no-print" onclick="window.print()">🖨 Print / Save PDF</button>
+  </div>
 
-    <!-- KPI Summary -->
+  <!-- TOP KPI ROW (matches kpi-cards row 1 on KPI page) -->
+  <div class="kpi-row kpi-row-4" style="margin-bottom:12px">
+    <div class="kpi"><div class="kpi-val" style="color:#4f8ef7">${total}</div><div class="kpi-lbl">Total Shipments</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:${onTimeRate>=80?'#22c55e':'#ef4444'}">${onTimeRate}%</div><div class="kpi-lbl">On-Time Rate</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:${delayRate<10?'#22c55e':'#ef4444'}">${delayRate}%</div><div class="kpi-lbl">Delay Rate</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#a78bfa">${avgTransit||'—'}</div><div class="kpi-lbl">Avg Transit (days)</div></div>
+  </div>
+  <!-- BOTTOM KPI ROW (matches kpi-cards-2 row on KPI page) -->
+  <div class="kpi-row kpi-row-4" style="margin-bottom:20px">
+    <div class="kpi"><div class="kpi-val" style="color:#3b82f6">${inTransit}</div><div class="kpi-lbl">In Transit</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#22c55e">${completed}</div><div class="kpi-lbl">Delivered / Closed</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#f59e0b">${pending}</div><div class="kpi-lbl">Pending</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#ef4444">${overdue.length}</div><div class="kpi-lbl">Overdue</div></div>
+  </div>
+
+  <!-- ANALYTICAL INSIGHTS -->
+  <div class="insight-box">
+    <div class="insight-title">📊 Operational Intelligence Summary</div>
+    <div class="insight-grid">
+      <div class="insight-item">
+        <div class="label">Completion Rate</div>
+        <div class="value">${completionRate}% &nbsp;<span style="font-size:11px;font-weight:400;color:#8892b0">(${completed} of ${total})</span></div>
+      </div>
+      <div class="insight-item">
+        <div class="label">Cancellation Rate</div>
+        <div class="value">${cancelRate}% &nbsp;<span style="font-size:11px;font-weight:400;color:#8892b0">(${canceled} canceled)</span></div>
+      </div>
+      <div class="insight-item">
+        <div class="label">Overdue Risk</div>
+        <div class="value" style="color:${overdue.length>0?'#ef4444':'#22c55e'}">${overdue.length} shipment${overdue.length!==1?'s':''} past ETA</div>
+      </div>
+      <div class="insight-item">
+        <div class="label">Top Carrier</div>
+        <div class="value">${topCarrier}</div>
+      </div>
+      <div class="insight-item">
+        <div class="label">Top Client</div>
+        <div class="value">${topClient}</div>
+      </div>
+      <div class="insight-item">
+        <div class="label">Busiest Route</div>
+        <div class="value" style="font-size:11px">${topRoute}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS + MODE -->
+  <div class="two-col">
     <div class="section">
-      <div class="section-title"><i class="ph ph-chart-bar"></i> Key Performance Indicators</div>
-      <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-val">${total}</div><div class="kpi-lbl">Total</div></div>
-        <div class="kpi"><div class="kpi-val" style="color:#22c55e">${completed}</div><div class="kpi-lbl">Completed</div></div>
-        <div class="kpi"><div class="kpi-val" style="color:#4f8ef7">${inTransit}</div><div class="kpi-lbl">In Transit</div></div>
-        <div class="kpi"><div class="kpi-val" style="color:#f59e0b">${pending}</div><div class="kpi-lbl">Pending</div></div>
-        <div class="kpi"><div class="kpi-val" style="color:#ef4444">${delayed}</div><div class="kpi-lbl">Delayed</div></div>
-        <div class="kpi"><div class="kpi-val" style="color:#6c63ff">${totalTeu||'—'}</div><div class="kpi-lbl">Total TEU</div></div>
-      </div>
-    </div>
-
-    <!-- Status + Carrier breakdown -->
-    <div class="two-col">
-      <div class="section">
-        <div class="section-title">📦 By Status</div>
-        <table><thead><tr><th>Status</th><th>Count</th><th style="width:120px">Share</th></tr></thead><tbody>
-          ${statusList.filter(s=>bs[s]).map(s=>`<tr>
-            <td><span class="badge" style="background:${statusColors[s]}22;color:${statusColors[s]}">${s}</span></td>
-            <td style="font-weight:700">${bs[s]||0}</td>
-            <td><div class="bar-wrap"><div class="bar" style="width:${Math.round(((bs[s]||0)/total)*100)}%;background:${statusColors[s]}"></div></div></td>
-          </tr>`).join('')}
-        </tbody></table>
-      </div>
-      <div class="section">
-        <div class="section-title"><i class="ph ph-boat"></i> By Carrier</div>
-        <table><thead><tr><th>Carrier</th><th>Shipments</th><th style="width:120px">Share</th></tr></thead><tbody>
-          ${carrierRows.length ? carrierRows.map(([c,n])=>`<tr>
-            <td style="font-weight:600">${c}</td>
-            <td style="font-weight:700">${n}</td>
-            <td><div class="bar-wrap"><div class="bar" style="width:${Math.round((n/total)*100)}%;background:#4f8ef7"></div></div></td>
-          </tr>`).join('') : '<tr><td colspan="3" style="color:#aaa;text-align:center;padding:20px">No carrier data</td></tr>'}
-        </tbody></table>
-      </div>
-    </div>
-
-    <!-- Mode + POD breakdown -->
-    <div class="two-col">
-      <div class="section">
-        <div class="section-title">✈ By Mode</div>
-        <table><thead><tr><th>Mode</th><th>Count</th><th>TEU</th></tr></thead><tbody>
-          ${Object.entries(bm).map(([m,n])=>`<tr>
-            <td style="font-weight:600">${m}</td>
-            <td>${n}</td>
-            <td style="color:#6c63ff;font-weight:600">${ships.filter(s=>s.mode===m).reduce((a,s)=>a+(s.teu||0),0)||'—'}</td>
-          </tr>`).join('')}
-        </tbody></table>
-      </div>
-      <div class="section">
-        <div class="section-title">🏁 Top Destinations (POD)</div>
-        <table><thead><tr><th>Port</th><th>Count</th></tr></thead><tbody>
-          ${podRows.map(([p,n])=>`<tr><td style="font-weight:600">${p}</td><td>${n}</td></tr>`).join('')}
-        </tbody></table>
-      </div>
-    </div>
-
-    ${overdue.length ? `
-    <!-- Overdue -->
-    <div class="section">
-      <div class="section-title" style="color:#dc2626">⚠️ Overdue Shipments (ETA Passed)</div>
-      <table><thead><tr><th>Ref</th><th>Client</th><th>Route</th><th>Carrier</th><th>ETA</th><th>Status</th></tr></thead><tbody>
-        ${overdue.map(s=>`<tr class="overdue-row">
-          <td style="font-weight:700">${s.ref}</td>
-          <td>${s.client||'—'}</td>
-          <td>${s.pol||'—'} → ${s.pod||'—'}</td>
-          <td>${s.carrier||'—'}</td>
-          <td style="font-weight:700">${fmtD(s.eta)}</td>
-          <td><span class="badge" style="background:${statusColor(s.status)}22;color:${statusColor(s.status)}">${s.status}</span></td>
+      <div class="section-title"><span class="dot" style="background:#4f8ef7"></span>Status Breakdown</div>
+      <table><thead><tr><th>Status</th><th>Count</th><th>Share</th><th style="width:100px">Bar</th></tr></thead><tbody>
+        ${Object.keys(STATUS_COLORS).filter(s=>bs[s]).map(s=>`<tr>
+          <td>${BADGE(s, sc(s))}</td>
+          <td style="font-weight:700">${bs[s]||0}</td>
+          <td style="color:#8892b0">${total>0?Math.round(((bs[s]||0)/total)*100):0}%</td>
+          <td>${BAR(total>0?Math.round(((bs[s]||0)/total)*100):0, sc(s))}</td>
         </tr>`).join('')}
       </tbody></table>
-    </div>` : ''}
-
-    <!-- Full Shipment List -->
+    </div>
     <div class="section">
-      <div class="section-title">📋 All Shipments (${total})</div>
-      <table><thead><tr><th>#</th><th>Reference</th><th>Container/AWB</th><th>Client</th><th>Carrier</th><th>Route</th><th>Mode</th><th>TEU</th><th>ETD</th><th>ETA</th><th>Status</th></tr></thead><tbody>
+      <div class="section-title"><span class="dot" style="background:#06b6d4"></span>Transport Mode</div>
+      <table><thead><tr><th>Mode</th><th>Shipments</th><th>TEU</th><th style="width:80px">Share</th></tr></thead><tbody>
+        ${Object.entries(bm).length ? Object.entries(bm).map(([m,n])=>`<tr>
+          <td style="font-weight:700">${m}</td>
+          <td>${n}</td>
+          <td style="color:#6c63ff;font-weight:600">${ships.filter(s=>s.mode===m).reduce((a,s)=>a+(s.teu||0),0)||'—'}</td>
+          <td>${BAR(total>0?Math.round(n/total*100):0,'#06b6d4')}</td>
+        </tr>`).join('') : '<tr><td colspan="4" style="color:#aaa;text-align:center;padding:20px">No mode data</td></tr>'}
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- CARRIER PERFORMANCE (matches KPI page carrier-perf-table) -->
+  <div class="section">
+    <div class="section-title"><span class="dot" style="background:#f59e0b"></span>🏆 Carrier Performance</div>
+    <table>
+      <thead><tr><th>Carrier</th><th>Total</th><th>Completed</th><th>Canceled</th><th>Avg Transit</th><th>Completion Rate</th></tr></thead>
+      <tbody>
+        ${carrierRows.length ? carrierRows.map((c,i)=>{
+          const COLORS=['#4f8ef7','#a855f7','#22c55e','#f97316','#06b6d4','#ef4444','#f59e0b','#10b981'];
+          const rateCol = c.rate>=80?'#22c55e':c.rate>=50?'#f59e0b':'#ef4444';
+          return `<tr>
+            <td style="font-weight:700">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COLORS[i%8]};margin-right:6px"></span>
+              ${c.name}
+            </td>
+            <td style="font-weight:600">${c.total}</td>
+            <td style="color:#22c55e;font-weight:600">${c.closed}</td>
+            <td style="color:#ef4444">${c.canceled}</td>
+            <td style="color:#a78bfa;font-weight:600">${c.avgTd ? c.avgTd+'d' : '—'}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                ${BAR(c.rate, rateCol)}
+                <span style="font-weight:700;color:${rateCol};min-width:34px;font-size:11px">${c.rate}%</span>
+              </div>
+            </td>
+          </tr>`;
+        }).join('') : '<tr><td colspan="6" style="color:#aaa;text-align:center;padding:20px">No carrier data</td></tr>'}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CLIENT ACTIVITY (matches KPI page client-activity-table) -->
+  <div class="section">
+    <div class="section-title"><span class="dot" style="background:#a855f7"></span>👥 Client Activity</div>
+    <table>
+      <thead><tr><th>Client</th><th>Total</th><th>Active</th><th>Completed</th><th>Canceled</th><th>Top Mode</th></tr></thead>
+      <tbody>
+        ${clientRows.length ? clientRows.slice(0,12).map((c,i)=>{
+          const CCOLORS=['#4f8ef7','#a855f7','#22c55e','#f97316','#06b6d4','#ef4444','#f59e0b','#10b981'];
+          return `<tr>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:26px;height:26px;border-radius:8px;background:${CCOLORS[i%8]};display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:11px;flex-shrink:0">${c.name.charAt(0).toUpperCase()}</div>
+                <span style="font-weight:700">${c.name}</span>
+              </div>
+            </td>
+            <td style="font-weight:700">${c.total}</td>
+            <td style="color:#4f8ef7;font-weight:600">${c.active}</td>
+            <td style="color:#22c55e;font-weight:600">${c.closed}</td>
+            <td style="color:#ef4444">${c.canceled}</td>
+            <td><span style="background:#f0f4f8;padding:2px 8px;border-radius:8px;font-size:11px;color:#5a6a8a">${c.topMode}</span></td>
+          </tr>`;
+        }).join('') : '<tr><td colspan="6" style="color:#aaa;text-align:center;padding:20px">No client data</td></tr>'}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ROUTES + DESTINATIONS -->
+  <div class="two-col">
+    <div class="section">
+      <div class="section-title"><span class="dot" style="background:#4f8ef7"></span>🔁 Top Routes</div>
+      <table><thead><tr><th>Route</th><th>Shipments</th><th style="width:80px">Share</th></tr></thead><tbody>
+        ${routeRows.length ? routeRows.map(([r,n],i)=>{
+          const RC=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444'];
+          return `<tr>
+            <td style="font-weight:600;font-size:12px">
+              <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${RC[i%6]};margin-right:6px"></span>${r}
+            </td>
+            <td>${n}</td>
+            <td>${BAR(total>0?Math.round(n/total*100):0,RC[i%6])}</td>
+          </tr>`;
+        }).join('') : '<tr><td colspan="3" style="color:#aaa;text-align:center;padding:20px">No route data</td></tr>'}
+      </tbody></table>
+    </div>
+    <div class="section">
+      <div class="section-title"><span class="dot" style="background:#22c55e"></span>🏁 Top Destinations (POD)</div>
+      <table><thead><tr><th>Port</th><th>Shipments</th><th style="width:80px">Share</th></tr></thead><tbody>
+        ${podRows.length ? podRows.map(([p,n])=>`<tr>
+          <td style="font-weight:600">${p}</td>
+          <td>${n}</td>
+          <td>${BAR(total>0?Math.round(n/total*100):0,'#22c55e')}</td>
+        </tr>`).join('') : '<tr><td colspan="3" style="color:#aaa;text-align:center;padding:16px">No data</td></tr>'}
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- ARRIVING THIS WEEK -->
+  ${arriving.length ? `
+  <div class="section">
+    <div class="section-title"><span class="dot" style="background:#22c55e"></span>📅 Arriving This Week (${arriving.length})</div>
+    ${arriving.map(s=>{
+      const diff = Math.round((new Date(s.eta).setHours(0,0,0,0)-todayMs)/86400000);
+      const lbl = diff===0?'TODAY':diff===1?'Tomorrow':'In '+diff+'d';
+      const uc = diff===0?'#ef4444':diff<=2?'#f97316':'#22c55e';
+      return `<div class="arrive-item" style="border-left-color:${uc}">
+        <div>
+          <span style="font-weight:700;font-size:13px">${s.ref}</span>
+          <span style="margin-left:8px;font-size:11px;color:#5a6a8a">${s.client||'—'} &nbsp;·&nbsp; ${s.pol||'—'} → ${s.pod||'—'} &nbsp;·&nbsp; ${s.carrier||'—'}</span>
+        </div>
+        <span style="background:${uc}22;color:${uc};font-weight:800;font-size:12px;padding:3px 12px;border-radius:20px;white-space:nowrap">${lbl}</span>
+      </div>`;
+    }).join('')}
+  </div>` : ''}
+
+  <!-- OVERDUE -->
+  ${overdue.length ? `
+  <div class="section">
+    <div class="section-title" style="color:#dc2626"><span class="dot" style="background:#ef4444"></span>⚠️ Overdue Shipments — ETA Passed (${overdue.length})</div>
+    <table><thead><tr><th>Ref</th><th>Client</th><th>Route</th><th>Carrier</th><th>ETA</th><th>Days Late</th><th>Status</th></tr></thead><tbody>
+      ${overdue.map(s=>{
+        const urgCol = s.daysLate>7?'#ef4444':s.daysLate>3?'#f97316':'#f59e0b';
+        return `<tr class="overdue-row">
+          <td style="font-weight:700;color:#4f8ef7">${s.ref}</td>
+          <td>${s.client||'—'}</td>
+          <td style="font-size:11px">${s.pol||'—'} → ${s.pod||'—'}</td>
+          <td>${s.carrier||'—'}</td>
+          <td style="font-weight:600">${fmtD(s.eta)}</td>
+          <td>${BADGE(s.daysLate+'d late', urgCol)}</td>
+          <td>${BADGE(s.status, sc(s.status))}</td>
+        </tr>`;
+      }).join('')}
+    </tbody></table>
+  </div>` : `
+  <div class="section" style="text-align:center;padding:24px">
+    <div style="font-size:28px;margin-bottom:8px">✅</div>
+    <div style="font-size:14px;font-weight:700;color:#22c55e">No overdue shipments</div>
+    <div style="font-size:12px;color:#8892b0;margin-top:4px">All active shipments are on schedule</div>
+  </div>`}
+
+  <!-- MONTHLY TREND (text table, no canvas needed) -->
+  ${monthly.length ? `
+  <div class="section">
+    <div class="section-title"><span class="dot" style="background:#4f8ef7"></span>📈 Monthly Volume Trend</div>
+    <table><thead><tr><th>Month</th><th>Shipments</th><th>Trend</th></tr></thead><tbody>
+      ${monthly.map((m,i)=>{
+        const prev = i>0?monthly[i-1].count:m.count;
+        const chg = prev>0?Math.round((m.count-prev)/prev*100):0;
+        const arrow = chg>0?'↑':chg<0?'↓':'→';
+        const ac = chg>0?'#22c55e':chg<0?'#ef4444':'#8892b0';
+        return `<tr>
+          <td style="font-weight:600">${m.month}</td>
+          <td style="font-weight:700">${m.count}</td>
+          <td>${BAR(Math.max(1,m.count), '#4f8ef7')} <span style="font-size:11px;color:${ac};font-weight:700">${i>0?arrow+' '+Math.abs(chg)+'%':''}</span></td>
+        </tr>`;
+      }).join('')}
+    </tbody></table>
+  </div>` : ''}
+
+  <!-- FULL SHIPMENT LIST -->
+  <div class="section">
+    <div class="section-title"><span class="dot" style="background:#5a6a8a"></span>📋 All Shipments (${total})</div>
+    <table>
+      <thead><tr><th>#</th><th>Reference</th><th>Container/AWB</th><th>Client</th><th>Carrier</th><th>Route</th><th>Mode</th><th>TEU</th><th>ETD</th><th>ETA</th><th>Status</th></tr></thead>
+      <tbody>
         ${ships.map((s,i)=>`<tr>
-          <td style="color:#aaa">${i+1}</td>
+          <td style="color:#aaa;font-size:11px">${i+1}</td>
           <td style="font-weight:700;color:#4f8ef7">${s.ref||'—'}</td>
           <td style="color:#5a6a8a;font-size:11px">${s.ref2||'—'}</td>
           <td>${s.client||'—'}</td>
           <td>${s.carrier||'—'}</td>
           <td style="font-size:11px">${s.pol||'—'} → ${s.pod||'—'}</td>
-          <td>${s.mode||'—'}</td>
+          <td style="font-size:11px">${s.mode||'—'}</td>
           <td style="font-weight:600;color:#6c63ff">${s.teu||'—'}</td>
           <td>${fmtD(s.etd)}</td>
           <td>${fmtD(s.eta)}</td>
-          <td><span class="badge" style="background:${statusColor(s.status)}22;color:${statusColor(s.status)}">${s.status||'—'}</span></td>
+          <td>${BADGE(s.status||'—', sc(s.status))}</td>
         </tr>`).join('')}
-      </tbody></table>
-    </div>
+      </tbody>
+    </table>
+  </div>
 
-    <div class="footer">FreightTrack Pro &nbsp;·&nbsp; ${today.getFullYear()} &nbsp;·&nbsp; Confidential</div>
-    <datalist id="port-list"></datalist>
-<datalist id="consignee-list"></datalist>
-<datalist id="carrier-list"></datalist>
+  <div class="footer">
+    FreightTrack Pro &nbsp;·&nbsp; KPI Report &nbsp;·&nbsp; ${today.getFullYear()} &nbsp;·&nbsp; Confidential<br>
+    <span style="font-size:10px">Generated ${today.toLocaleString()}</span>
+  </div>
 
-</body>></html>`;
+</body></html>`;
 
     const w = window.open('','_blank');
+    if(!w){ alert('Popup blocked — please allow popups for this site and try again.'); return; }
     w.document.write(reportHtml);
     w.document.close();
-  } catch(e){ showToast('Report error: '+e.message,'error'); }
-  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="ph ph-file"></i> Generate Report'; } }
+  } catch(e){ if(typeof toast==='function') toast('Report error: '+e.message,'error'); else alert('Report error: '+e.message); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML='<i class="ph ph-file-arrow-down"></i> Export Report'; } }
 }
 
 
