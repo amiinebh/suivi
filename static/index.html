@@ -754,9 +754,12 @@ textarea.form-control{resize:vertical;min-height:72px}
 
     <!-- ─── ANALYTICS / KPI PAGE ─── -->
     <div class="page" id="page-analytics">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px">
-    <div><div style="font-size:18px;font-weight:800;color:var(--text1)"><i class="ph ph-chart-line" style="color:var(--accent)"></i> KPI &amp; Analytics</div>
-    <div style="font-size:12px;color:var(--text2);margin-top:2px">Live operational intelligence</div></div>
+  <!-- Header row -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:4px">
+    <div>
+      <div style="font-size:18px;font-weight:800;color:var(--text1)"><i class="ph ph-chart-line" style="color:var(--accent)"></i> KPI &amp; Analytics</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">Live operational intelligence</div>
+    </div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <div id="kpi-period-tabs" style="display:flex;background:var(--bg3);border-radius:8px;padding:3px;gap:2px">
         <button class="kpi-ptab" onclick="setKpiPeriod('all',this)" style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff">All</button>
@@ -767,44 +770,51 @@ textarea.form-control{resize:vertical;min-height:72px}
       </div>
       <button id="report-btn" class="btn btn-primary btn-sm" onclick="generateReport()"><i class="ph ph-file-arrow-down"></i> Export Report</button>
     </div>
-  
-      <!-- Carrier Performance -->
-      <div class="card" style="margin-top:14px">
-        <div class="card__body">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:700;color:var(--text1)">
-              <i class="ph ph-trophy" style="color:#f59e0b"></i> Carrier Performance
-            </div>
-            <span style="font-size:10px;color:var(--text2)">Based on ETD vs ETA accuracy</span>
-          </div>
-          <div id="carrier-perf-table"></div>
-        </div>
-      </div>
-      <!-- Top Clients deeper stats -->
-      <div class="card" style="margin-top:14px">
-        <div class="card__body">
-          <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px">
-            <i class="ph ph-users" style="color:#a855f7"></i> Client Activity
-          </div>
-          <div id="client-activity-table"></div>
-        </div>
-      </div>
-</div>
-  <div id="kpi-cards"  style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px"></div>
-  <div id="kpi-cards-2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px"></div>
-  <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:14px;margin-bottom:14px">
+  </div>
+
+  <!-- KPI metric cards rows — full width, properly placed -->
+  <div id="kpi-cards"  style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px"></div>
+  <div id="kpi-cards-2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px"></div>
+
+  <!-- Charts row 1 -->
+  <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:14px">
     <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div><div style="height:200px;position:relative"><canvas id="chart-monthly"></canvas></div></div></div>
     <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-chart-donut" style="color:var(--accent)"></i> Status Mix</div><div style="height:200px;position:relative"><canvas id="chart-status"></canvas></div></div></div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+
+  <!-- Charts row 2 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
     <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-boat" style="color:var(--accent)"></i> Transport Mode</div><div style="height:190px;position:relative"><canvas id="chart-mode"></canvas></div></div></div>
     <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-shipping-container" style="color:var(--accent)"></i> Top Carriers</div><div id="bar-carriers" style="display:flex;flex-direction:column;gap:9px"></div></div></div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+
+  <!-- Charts row 3 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
     <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-users" style="color:var(--accent)"></i> Top Clients</div><div id="bar-clients" style="display:flex;flex-direction:column;gap:9px"></div></div></div>
     <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-warning" style="color:#ef4444"></i> Overdue Shipments</div><div id="overdue-list"></div></div></div>
   </div>
-  <div class="card" style="margin-bottom:20px"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-path" style="color:var(--accent)"></i> Top Routes</div><div id="bar-routes" style="display:flex;flex-wrap:wrap;gap:8px"></div></div></div>
+
+  <!-- Top Routes -->
+  <div class="card"><div class="card__body"><div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-path" style="color:var(--accent)"></i> Top Routes</div><div id="bar-routes" style="display:flex;flex-wrap:wrap;gap:8px"></div></div></div>
+
+  <!-- Carrier Performance -->
+  <div class="card">
+    <div class="card__body">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--text1)"><i class="ph ph-trophy" style="color:#f59e0b"></i> Carrier Performance</div>
+        <span style="font-size:10px;color:var(--text2)">Based on ETD vs ETA accuracy</span>
+      </div>
+      <div id="carrier-perf-table"></div>
+    </div>
+  </div>
+
+  <!-- Client Activity -->
+  <div class="card">
+    <div class="card__body">
+      <div style="font-size:13px;font-weight:700;color:var(--text1);margin-bottom:14px"><i class="ph ph-users" style="color:#a855f7"></i> Client Activity</div>
+      <div id="client-activity-table"></div>
+    </div>
+  </div>
 </div>
 
 
@@ -2224,7 +2234,7 @@ async function loadUsers(){
   if(!cont)return;
   cont.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)"><i class="ph ph-spinner"></i> Loading...</div>';
   try{
-    var resp=await apiFetch('/api/admin/users');
+    var resp=await apiFetch('/api/users');
     var users=Array.isArray(resp)?resp:(resp.data||resp.users||resp.items||[]);
     if(!users.length){
       cont.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><i class="ph ph-users" style="font-size:32px;display:block;margin-bottom:8px"></i>No users found</div>';
@@ -2257,7 +2267,7 @@ async function createUser(){
   var roleEl=document.getElementById('new-user-role');
   if(!emailEl||!emailEl.value.trim()||!passEl||!passEl.value.trim()){toast('Email and password required','error');return;}
   try{
-    await apiFetch('/api/admin/users',{method:'POST',body:JSON.stringify({
+    await apiFetch('/api/users',{method:'POST',body:JSON.stringify({
       name:nameEl?nameEl.value.trim():'',
       email:emailEl.value.trim(),
       password:passEl.value.trim(),
@@ -2271,14 +2281,14 @@ async function createUser(){
 }
 async function toggleUser(id){
   try{
-    await apiFetch('/api/admin/users/'+id+'/toggle',{method:'PATCH'});
+    await apiFetch('/api/users/'+id+'/toggle',{method:'PATCH'});
     loadUsers();
   }catch(e){toast(e.message,'error');}
 }
 async function deleteUser(id){
   if(!confirm('Delete this user? This cannot be undone.'))return;
   try{
-    await apiFetch('/api/admin/users/'+id,{method:'DELETE'});
+    await apiFetch('/api/users/'+id,{method:'DELETE'});
     toast('User deleted','success');
     loadUsers();
   }catch(e){toast(e.message,'error');}
@@ -2378,17 +2388,23 @@ function switchDTab(tab){
 }
 async function submitComment(){
   var txt=document.getElementById('detail-comment-text');
-  if(!txt||!txt.value.trim())return;
+  if(!txt||!txt.value.trim()){toast('Please write a note first','info');return;}
+  var shipId=_detailId||currentDetailId;
+  if(!shipId){toast('No shipment selected','error');return;}
+  var btn=document.querySelector('#dtab-notes .btn-primary');
+  var origHtml=btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';}
   var user=typeof getUser==='function'?getUser():null;
   try{
-    await apiFetch('/api/shipments/'+_detailId+'/comments',{method:'POST',
+    await apiFetch('/api/shipments/'+shipId+'/comments',{method:'POST',
       body:JSON.stringify({author:user&&user.name?user.name:'Agent',text:txt.value.trim()})});
     txt.value='';
-    var ship=await apiFetch('/api/shipments/'+_detailId);
+    var ship=await apiFetch('/api/shipments/'+shipId);
     _renderDetail(ship);
     switchDTab('notes');
     toast('Note added','success');
   }catch(e){toast('Error: '+e.message,'error');}
+  finally{if(btn){btn.disabled=false;btn.innerHTML=origHtml;}}
 }
 async function syncDetail(){
   if(!_detailId)return;
