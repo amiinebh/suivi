@@ -406,7 +406,7 @@ textarea.form-control{resize:vertical;min-height:72px}
 @media(max-width:768px){.search-box{display:none}.topbar-title{display:block}.topbar{padding:0 12px;gap:8px;height:52px}}
 
 </style>
-<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/regular/style.css">
 </head>
 <body>
 <script>var formContainers = [];</script>
@@ -1748,8 +1748,9 @@ function showApp(){
   if(pr) pr.textContent=isAdmin()?'Admin':'CS Agent';
 
   // Sentry user context
-  if(typeof Sentry !== 'undefined' && user) {
-    Sentry.setUser({ email: user.email, username: user.name, id: user.id });
+  const _sentryUser = getUser();
+  if(typeof Sentry !== 'undefined' && _sentryUser) {
+    Sentry.setUser({ email: _sentryUser.email, username: _sentryUser.name, id: _sentryUser.id });
   }
 }
 
