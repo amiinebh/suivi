@@ -2364,8 +2364,8 @@ function _renderDetail(ship){
   }
   var cList=document.getElementById('detail-comments-list');
   if(cList){
-    var comments=ship.comments||[];
-    cList.innerHTML=!comments.length
+    var comments = ship.comments || ship.notes || [];
+cList.innerHTML = !comments.length
       ?'<div style="text-align:center;padding:20px;color:var(--text2);font-size:12px">No notes yet</div>'
       :comments.map(function(c){
         return '<div class="comment-bubble"><span class="comment-author">'+(c.author||'Agent')+'</span>'
