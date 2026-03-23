@@ -1555,7 +1555,7 @@ loadDashboard(); loadShipments();
 }
 
 /* ── Edit ── */
-async function editShipment(sid){
+async async function editShipment(sid){
   try{
     const s=await apiFetch(`/api/shipments/${sid}`);
     editId=sid;
