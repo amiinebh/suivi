@@ -1746,13 +1746,12 @@ function showApp(){
   if(pn) pn.textContent=user?.name||'User';
   const pr=document.getElementById('pd-role');
   if(pr) pr.textContent=isAdmin()?'Admin':'CS Agent';
-}
-
 
   // Sentry user context
   if(typeof Sentry !== 'undefined' && user) {
     Sentry.setUser({ email: user.email, username: user.name, id: user.id });
   }
+}
 
 function doLogout(){
   localStorage.removeItem(TOKEN_KEY);
