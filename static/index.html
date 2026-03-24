@@ -2404,6 +2404,33 @@ async function updateShipmentStatus(newStatus) {
     if (sel) sel.disabled = false;
   }
 }
+  async function updateShipmentStatus(newStatus) {
+  const id = detailId || currentDetailId;
+  if (!id) return;
+  const sel = document.getElementById('detail-status-select');
+  if (sel) sel.disabled = true;
+  try {
+    const ship = await apiFetch(`/api/shipments/${id}`);
+    await apiFetch(`/api/shipments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ ...ship, status: newStatus })
+    });
+    const ref = ship.ref || ('#' + id);
+    toast(`Shipment ${ref} status changed to "${newStatus}"`, 'success');
+    const updated = await apiFetch(`/api/shipments/${id}`);
+    renderDetail(updated);
+    loadShipments();
+    loadDashboard();
+  } catch(e) {
+    toast('Status update failed: ' + e.message, 'error');
+    try {
+      const ship = await apiFetch(`/api/shipments/${id}`);
+      if (sel) sel.value = ship.status;
+    } catch(_) {}
+  } finally {
+    if (sel) sel.disabled = false;
+  }
+  }
 function _renderDetail(ship){
   function _s(id,v){var el=document.getElementById(id);if(el)el.textContent=v||'';}
   function _h(id,v){var el=document.getElementById(id);if(el)el.innerHTML=v||'';}
