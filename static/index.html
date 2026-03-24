@@ -1476,8 +1476,8 @@ function renderTable(ships){
       +'<button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment('+sh.id+')"><i class="ph ph-trash"></i></button>'
       +'</div></td></tr>';
   }).join('');
-  wrap.innerHTML=thead+tbody+'</tbody></table>';
-  _updateBulkToolbar();
+  wrap.innerHTML = thead + tbody + '</tbody></table>';
+if (typeof updateBulkToolbar === 'function') updateBulkToolbar();
 }
 
 /* ── Dashboard ── */
