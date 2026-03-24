@@ -92,11 +92,10 @@ class ShipmentUpdate(BaseModel):
 class EventOut(BaseModel):
     id: int
     shipment_id: int
-    event_type: str
+    status: Optional[str] = None
     description: Optional[str] = None
     location: Optional[str] = None
-    event_time: Optional[str] = None
-    created_at: Optional[str] = None
+    timestamp: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -105,7 +104,7 @@ class CommentOut(BaseModel):
     id: int
     shipment_id: int
     author: Optional[str] = None
-    body: str
+    text: Optional[str] = None
     created_at: Optional[str] = None
     class Config:
         from_attributes = True
@@ -113,27 +112,26 @@ class CommentOut(BaseModel):
 
 class CommentCreate(BaseModel):
     author: Optional[str] = None
-    body: str
+    text: str
 
 
 class ContainerOut(BaseModel):
     id: int
     shipment_id: int
     container_no: Optional[str] = None
+    seal_no: Optional[str] = None
     size_type: Optional[str] = None
-    qty: Optional[int] = None
-    teu_each: Optional[float] = None
-    teu_total: Optional[float] = None
+    weight: Optional[str] = None
+    created_at: Optional[str] = None
     class Config:
         from_attributes = True
 
 
 class ContainerCreate(BaseModel):
     container_no: Optional[str] = None
+    seal_no: Optional[str] = None
     size_type: Optional[str] = None
-    qty: Optional[int] = None
-    teu_each: Optional[float] = None
-    teu_total: Optional[float] = None
+    weight: Optional[str] = None
 
 
 class ShipmentOut(BaseModel):
