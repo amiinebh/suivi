@@ -3735,6 +3735,65 @@ function closeDigest(){
   });
 
 })();
+  /* ═══ PATCH v5 — Fix overlay close + Bulk drop zone ═══ */
+(function(){
+
+  /* 1 — Re-attach backdrop click to ALL overlays including late-declared ones */
+  function attachOverlayListeners(){
+    document.querySelectorAll('.overlay').forEach(function(o){
+      if(o._overlayListened) return;
+      o._overlayListened = true;
+      o.addEventListener('click', function(e){
+        if(e.target === o){
+          o.classList.remove('open');
+          document.body.style.overflow = '';
+        }
+      });
+    });
+  }
+  attachOverlayListeners();
+  document.addEventListener('DOMContentLoaded', attachOverlayListeners);
+
+  var _origOpenModal = window.openModal;
+  window.openModal = function(id){
+    if(_origOpenModal) _origOpenModal(id);
+    attachOverlayListeners();
+  };
+
+  /* 2 — Bulk drop zone: re-attach click after _bulkStep(1) resets innerHTML */
+  function attachBulkDrop(){
+    var dz = document.getElementById('bulk-drop-zone');
+    if(!dz) return;
+    dz.onclick = function(e){
+      e.stopPropagation();
+      var fi = document.getElementById('bulk-file');
+      if(!fi){
+        fi = document.createElement('input');
+        fi.type='file'; fi.accept='.xlsx,.xls'; fi.id='bulk-file';
+        fi.style.cssText='position:fixed;top:-9999px;opacity:0;width:1px;height:1px;';
+        fi.onchange = function(){ if(this.files && this.files[0]) bulkFileSelected(this.files[0]); };
+        document.body.appendChild(fi);
+      }
+      fi.value = ''; fi.click();
+    };
+    dz.ondragover  = function(e){ e.preventDefault(); dz.style.borderColor='var(--accent)'; dz.style.background='var(--bg3)'; };
+    dz.ondragleave = function(){ dz.style.borderColor=''; dz.style.background=''; };
+    dz.ondrop      = function(e){ e.preventDefault(); dz.style.borderColor=''; dz.style.background=''; if(e.dataTransfer&&e.dataTransfer.files[0]) bulkFileSelected(e.dataTransfer.files[0]); };
+  }
+
+  var _origBulkStep = window._bulkStep;
+  window._bulkStep = function(n){
+    if(_origBulkStep) _origBulkStep(n);
+    if(n===1) setTimeout(attachBulkDrop, 30);
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    attachBulkDrop();
+    var fi = document.getElementById('bulk-file');
+    if(fi) fi.style.cssText = 'position:fixed;top:-9999px;opacity:0;width:1px;height:1px;';
+  });
+
+})();
 </script>
 </body>
 </html>
