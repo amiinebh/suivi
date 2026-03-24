@@ -971,7 +971,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     </div>
 
     <!-- ═══════ CLIENT MODAL ═══════ -->
-    <div class="modal-backdrop" id="modal-client" style="display:none" onclick="if(event.target===this)closeClientModal()">
+    <div class="overlay" id="modal-client" onclick="if(event.target===this)closeClientModal()">
       <div class="modal" onclick="event.stopPropagation()">
         <div class="modal-header">
           <span id="client-modal-title">New Client</span>
@@ -1018,7 +1018,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     </div>
 
     <!-- ═══════ DIGEST MODAL ═══════ -->
-    <div class="modal-backdrop" id="modal-digest" style="display:none" onclick="if(event.target===this)closeDigest()">
+    <div class="overlay" id="modal-digest" onclick="if(event.target===this)closeDigest()">
       <div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
         <div class="modal-header">
           <span>📋 Daily Briefing</span>
@@ -3021,6 +3021,51 @@ async function generateReport(){
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
 
+
+<script>
+(function(){
+  function bindOverlayClosers(){
+    document.querySelectorAll('.overlay').forEach(function(o){
+      if(o._closeBound) return;
+      o._closeBound = true;
+      o.addEventListener('click', function(e){
+        if(e.target === o){
+          o.classList.remove('open');
+          document.body.style.overflow = '';
+        }
+      });
+    });
+  }
+
+  bindOverlayClosers();
+  document.addEventListener('DOMContentLoaded', bindOverlayClosers);
+
+  var _origOpenModal = window.openModal;
+  window.openModal = function(id){
+    if(typeof _origOpenModal === 'function') _origOpenModal(id);
+    bindOverlayClosers();
+  };
+
+  var _origCloseBulkImport = window.closeBulkImport;
+  window.closeBulkImport = function(){
+    if(typeof closeModal === 'function') closeModal('modal-bulk-import');
+    var m = document.getElementById('modal-bulk-import');
+    if(m) m.classList.remove('open');
+    document.body.style.overflow = '';
+    if(typeof _bulkStep === 'function') setTimeout(function(){ _bulkStep(1); }, 200);
+    else if(typeof _origCloseBulkImport === 'function') _origCloseBulkImport();
+  };
+
+  var _origOpenDigest = window.openDigest;
+  if(typeof _origOpenDigest === 'function'){
+    window.openDigest = function(){
+      bindOverlayClosers();
+      return _origOpenDigest.apply(this, arguments);
+    };
+  }
+})();
+</script>
+
 </body>></html>`;
 
     const w = window.open('','_blank');
@@ -3459,7 +3504,7 @@ function openClientModal(id){
   _clientEditId = null;
   document.getElementById('client-modal-title').textContent = 'New Client';
   ['cf-name','cf-contact','cf-email','cf-phone','cf-address','cf-notes'].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=''; });
-  document.getElementById('modal-client').style.display='flex';
+  openModal('modal-client');
 }
 
 function editClient(id){
@@ -3475,7 +3520,7 @@ function editClient(id){
   document.getElementById('cf-notes').value = c.notes||'';
   var pf = document.getElementById('cf-payment');
   if(pf) pf.value = c.payment||'Cash';
-  document.getElementById('modal-client').style.display='flex';
+  openModal('modal-client');
 }
 
 function saveClient(){
@@ -3517,7 +3562,7 @@ function deleteClient(id){
 }
 
 function closeClientModal(){
-  document.getElementById('modal-client').style.display='none';
+  closeModal('modal-client');
   _clientEditId=null;
 }
 
@@ -3620,180 +3665,12 @@ function openDigest(){
   html += '</div>';
 
   document.getElementById('digest-body').innerHTML = html;
-  document.getElementById('modal-digest').style.display = 'flex';
+  openModal('modal-digest');
 }
 
 function closeDigest(){
-  document.getElementById('modal-digest').style.display = 'none';
+  closeModal('modal-digest');
 }
-
-/* ═══ PATCH v5 — Fix overlay close + Briefing fresh fetch + Bulk drop zone ═══ */
-(function(){
-
-  /* 1 — Re-attach backdrop click to ALL overlays including late-declared ones */
-  function attachOverlayListeners(){
-    document.querySelectorAll('.overlay').forEach(function(o){
-      if(o._overlayListened) return;
-      o._overlayListened = true;
-      o.addEventListener('click', function(e){
-        if(e.target === o){
-          o.classList.remove('open');
-          document.body.style.overflow = '';
-        }
-      });
-    });
-  }
-  attachOverlayListeners();
-  document.addEventListener('DOMContentLoaded', attachOverlayListeners);
-
-  var _origOpenModal = window.openModal;
-  window.openModal = function(id){
-    if(_origOpenModal) _origOpenModal(id);
-    attachOverlayListeners();
-  };
-
-  /* 2 — Briefing: always fetch fresh from API */
-  window.openDigest = function(){
-    var m    = document.getElementById('modal-digest');
-    var body = document.getElementById('digest-body');
-    if(!m || !body) return;
-    m.style.display = 'flex';
-    body.innerHTML  = '<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">Loading briefing&hellip;</div>';
-    var token = localStorage.getItem('fttoken') || localStorage.getItem('ft_token') || '';
-    fetch('/api/shipments', {headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}})
-    .then(function(r){ return r.json(); })
-    .then(function(resp){
-      var ships = Array.isArray(resp) ? resp : (resp.data || resp.shipments || []);
-      window.allShipments = ships;
-      var today = new Date(); today.setHours(0,0,0,0);
-      var in7   = new Date(today); in7.setDate(today.getDate()+7);
-      var overdue   = ships.filter(function(s){ return ['Closed','Canceled','Arrived'].indexOf(s.status)<0 && s.eta && new Date(s.eta)<today; });
-      var arriving  = ships.filter(function(s){ return ['Closed','Canceled','Arrived'].indexOf(s.status)<0 && s.eta && new Date(s.eta)>=today && new Date(s.eta)<=in7; });
-      var departing = ships.filter(function(s){ return ['Closed','Canceled'].indexOf(s.status)<0 && s.etd && new Date(s.etd)>=today && new Date(s.etd)<=in7; });
-      var active    = ships.filter(function(s){ return ['Sailing','Stuffed'].indexOf(s.status)>=0; });
-      var h = '<div style="padding-top:4px"><div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">';
-      [{v:active.length,l:'In Transit',c:'#4f8ef7'},{v:arriving.length,l:'Arriving 7d',c:'#22c55e'},{v:departing.length,l:'Departing 7d',c:'#f97316'},{v:overdue.length,l:'Overdue',c:'#ef4444'}].forEach(function(k){
-        h += '<div style="flex:1;min-width:60px;background:var(--bg3);border-radius:10px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:'+k.c+'">'+k.v+'</div><div style="font-size:10px;color:var(--text2);margin-top:3px">'+k.l+'</div></div>';
-      });
-      h += '</div>';
-      if(overdue.length){
-        h += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px">&#9888; Overdue ('+overdue.length+')</div>';
-        overdue.slice(0,5).forEach(function(s){ var d=Math.floor((today-new Date(s.eta))/86400000); h+='<div class="digest-row"><div><b style="font-size:12px">'+s.ref+'</b><div style="font-size:11px;color:var(--text2)">'+(s.client||'')+'</div></div><span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+d+'d late</span></div>'; });
-        h += '</div>';
-      }
-      if(arriving.length){
-        h += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#22c55e;margin-bottom:8px">&#9989; Arriving This Week ('+arriving.length+')</div>';
-        arriving.slice(0,5).forEach(function(s){ var d=Math.round((new Date(s.eta)-today)/86400000); h+='<div class="digest-row"><div><b style="font-size:12px">'+s.ref+'</b><div style="font-size:11px;color:var(--text2)">'+(s.client||'')+(s.pod?' &rarr; '+s.pod:'')+'</div></div><span style="background:#22c55e22;color:#22c55e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+(d===0?'Today':d===1?'Tomorrow':'In '+d+'d')+'</span></div>'; });
-        h += '</div>';
-      }
-      if(departing.length){
-        h += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#f97316;margin-bottom:8px">&#128674; Departing This Week ('+departing.length+')</div>';
-        departing.slice(0,5).forEach(function(s){ var d=Math.round((new Date(s.etd)-today)/86400000); h+='<div class="digest-row"><div><b style="font-size:12px">'+s.ref+'</b><div style="font-size:11px;color:var(--text2)">'+(s.client||'')+(s.pod?' &rarr; '+s.pod:'')+'</div></div><span style="background:#f9731622;color:#f97316;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+(d===0?'Today':d===1?'Tomorrow':'In '+d+'d')+'</span></div>'; });
-        h += '</div>';
-      }
-      if(!overdue.length && !arriving.length && !departing.length){
-        h += '<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">&#9989; All clear &mdash; no urgent shipments this week.</div>';
-      }
-      h += '<div style="font-size:10px;color:var(--text2);text-align:center;margin-top:8px">Generated '+new Date().toLocaleString()+'</div></div>';
-      body.innerHTML = h;
-    }).catch(function(e){
-      body.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:13px">Error: '+e.message+'</div>';
-    });
-  };
-
-  /* 3 — Bulk drop zone: re-attach click after _bulkStep(1) resets innerHTML */
-  function attachBulkDrop(){
-    var dz = document.getElementById('bulk-drop-zone');
-    if(!dz) return;
-    dz.onclick = function(e){
-      e.stopPropagation();
-      var fi = document.getElementById('bulk-file');
-      if(!fi){
-        fi = document.createElement('input');
-        fi.type='file'; fi.accept='.xlsx,.xls'; fi.id='bulk-file';
-        fi.style.cssText='position:fixed;top:-9999px;opacity:0;width:1px;height:1px;';
-        fi.onchange = function(){ if(this.files && this.files[0]) bulkFileSelected(this.files[0]); };
-        document.body.appendChild(fi);
-      }
-      fi.value = ''; fi.click();
-    };
-    dz.ondragover  = function(e){ e.preventDefault(); dz.style.borderColor='var(--accent)'; dz.style.background='var(--bg3)'; };
-    dz.ondragleave = function(){ dz.style.borderColor=''; dz.style.background=''; };
-    dz.ondrop      = function(e){ e.preventDefault(); dz.style.borderColor=''; dz.style.background=''; if(e.dataTransfer&&e.dataTransfer.files[0]) bulkFileSelected(e.dataTransfer.files[0]); };
-  }
-
-  var _origBulkStep = window._bulkStep;
-  window._bulkStep = function(n){
-    if(_origBulkStep) _origBulkStep(n);
-    if(n===1) setTimeout(attachBulkDrop, 30);
-  };
-
-  document.addEventListener('DOMContentLoaded', function(){
-    attachBulkDrop();
-    var fi = document.getElementById('bulk-file');
-    if(fi) fi.style.cssText = 'position:fixed;top:-9999px;opacity:0;width:1px;height:1px;';
-  });
-
-})();
-  /* ═══ PATCH v5 — Fix overlay close + Bulk drop zone ═══ */
-(function(){
-
-  /* 1 — Re-attach backdrop click to ALL overlays including late-declared ones */
-  function attachOverlayListeners(){
-    document.querySelectorAll('.overlay').forEach(function(o){
-      if(o._overlayListened) return;
-      o._overlayListened = true;
-      o.addEventListener('click', function(e){
-        if(e.target === o){
-          o.classList.remove('open');
-          document.body.style.overflow = '';
-        }
-      });
-    });
-  }
-  attachOverlayListeners();
-  document.addEventListener('DOMContentLoaded', attachOverlayListeners);
-
-  var _origOpenModal = window.openModal;
-  window.openModal = function(id){
-    if(_origOpenModal) _origOpenModal(id);
-    attachOverlayListeners();
-  };
-
-  /* 2 — Bulk drop zone: re-attach click after _bulkStep(1) resets innerHTML */
-  function attachBulkDrop(){
-    var dz = document.getElementById('bulk-drop-zone');
-    if(!dz) return;
-    dz.onclick = function(e){
-      e.stopPropagation();
-      var fi = document.getElementById('bulk-file');
-      if(!fi){
-        fi = document.createElement('input');
-        fi.type='file'; fi.accept='.xlsx,.xls'; fi.id='bulk-file';
-        fi.style.cssText='position:fixed;top:-9999px;opacity:0;width:1px;height:1px;';
-        fi.onchange = function(){ if(this.files && this.files[0]) bulkFileSelected(this.files[0]); };
-        document.body.appendChild(fi);
-      }
-      fi.value = ''; fi.click();
-    };
-    dz.ondragover  = function(e){ e.preventDefault(); dz.style.borderColor='var(--accent)'; dz.style.background='var(--bg3)'; };
-    dz.ondragleave = function(){ dz.style.borderColor=''; dz.style.background=''; };
-    dz.ondrop      = function(e){ e.preventDefault(); dz.style.borderColor=''; dz.style.background=''; if(e.dataTransfer&&e.dataTransfer.files[0]) bulkFileSelected(e.dataTransfer.files[0]); };
-  }
-
-  var _origBulkStep = window._bulkStep;
-  window._bulkStep = function(n){
-    if(_origBulkStep) _origBulkStep(n);
-    if(n===1) setTimeout(attachBulkDrop, 30);
-  };
-
-  document.addEventListener('DOMContentLoaded', function(){
-    attachBulkDrop();
-    var fi = document.getElementById('bulk-file');
-    if(fi) fi.style.cssText = 'position:fixed;top:-9999px;opacity:0;width:1px;height:1px;';
-  });
-
-})();
 </script>
 </body>
 </html>
