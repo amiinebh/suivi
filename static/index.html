@@ -972,7 +972,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     </div>
 
     <!-- ═══════ CLIENT MODAL ═══════ -->
-    <div class="modal-backdrop" id="modal-client" style="display:none" onclick="if(event.target===this)closeClientModal()">
+    <div class="overlay" id="modal-client" onclick="if(event.target===this)closeClientModal()">
       <div class="modal" onclick="event.stopPropagation()">
         <div class="modal-header">
           <span id="client-modal-title">New Client</span>
@@ -1019,7 +1019,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     </div>
 
     <!-- ═══════ DIGEST MODAL ═══════ -->
-    <div class="modal-backdrop" id="modal-digest" style="display:none" onclick="if(event.target===this)closeDigest()">
+    <div class="overlay" id="modal-digest" onclick="if(event.target===this)closeDigest()">
       <div class="modal" onclick="event.stopPropagation()" style="max-width:440px">
         <div class="modal-header">
           <span>📋 Daily Briefing</span>
@@ -3022,6 +3022,51 @@ async function generateReport(){
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
 
+
+<script>
+(function(){
+  function bindOverlayClosers(){
+    document.querySelectorAll('.overlay').forEach(function(o){
+      if(o._closeBound) return;
+      o._closeBound = true;
+      o.addEventListener('click', function(e){
+        if(e.target === o){
+          o.classList.remove('open');
+          document.body.style.overflow = '';
+        }
+      });
+    });
+  }
+
+  bindOverlayClosers();
+  document.addEventListener('DOMContentLoaded', bindOverlayClosers);
+
+  var _origOpenModal = window.openModal;
+  window.openModal = function(id){
+    if(typeof _origOpenModal === 'function') _origOpenModal(id);
+    bindOverlayClosers();
+  };
+
+  var _origCloseBulkImport = window.closeBulkImport;
+  window.closeBulkImport = function(){
+    if(typeof closeModal === 'function') closeModal('modal-bulk-import');
+    var m = document.getElementById('modal-bulk-import');
+    if(m) m.classList.remove('open');
+    document.body.style.overflow = '';
+    if(typeof _bulkStep === 'function') setTimeout(function(){ _bulkStep(1); }, 200);
+    else if(typeof _origCloseBulkImport === 'function') _origCloseBulkImport();
+  };
+
+  var _origOpenDigest = window.openDigest;
+  if(typeof _origOpenDigest === 'function'){
+    window.openDigest = function(){
+      bindOverlayClosers();
+      return _origOpenDigest.apply(this, arguments);
+    };
+  }
+})();
+</script>
+
 </body>></html>`;
 
     const w = window.open('','_blank');
@@ -3461,7 +3506,7 @@ function openClientModal(id){
   _clientEditId = null;
   document.getElementById('client-modal-title').textContent = 'New Client';
   ['cf-name','cf-contact','cf-email','cf-phone','cf-address','cf-notes'].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=''; });
-  document.getElementById('modal-client').style.display='flex';
+  openModal('modal-client');
 }
 
 function editClient(id){
@@ -3477,7 +3522,7 @@ function editClient(id){
   document.getElementById('cf-notes').value = c.notes||'';
   var pf = document.getElementById('cf-payment');
   if(pf) pf.value = c.payment||'Cash';
-  document.getElementById('modal-client').style.display='flex';
+  openModal('modal-client');
 }
 
 function saveClient(){
@@ -3519,7 +3564,7 @@ function deleteClient(id){
 }
 
 function closeClientModal(){
-  document.getElementById('modal-client').style.display='none';
+  closeModal('modal-client');
   _clientEditId=null;
 }
 
@@ -3622,11 +3667,11 @@ function openDigest(){
   html += '</div>';
 
   document.getElementById('digest-body').innerHTML = html;
-  document.getElementById('modal-digest').style.display = 'flex';
+  openModal('modal-digest');
 }
 
 function closeDigest(){
-  document.getElementById('modal-digest').style.display = 'none';
+  closeModal('modal-digest');
 }
 
 /* ═══ PATCH v5 — Fix overlay close + Briefing fresh fetch + Bulk drop zone ═══ */
