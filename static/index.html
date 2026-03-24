@@ -1237,7 +1237,15 @@ textarea.form-control{resize:vertical;min-height:72px}
 <script>
 let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, _detailId=null, allShipments=[];
-
+// Global fmtd available everywhere
+function fmtd(d){
+  if(!d) return '--';
+  try {
+    var dt = new Date(d);
+    if(isNaN(dt.getTime())) return String(d);
+    return dt.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+  } catch(e){ return String(d); }
+  }
 /* ── Nav ── */
 function showPage(id,el){
   if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
