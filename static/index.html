@@ -3246,34 +3246,35 @@ async function deleteAllShipments(){
 }
 
 async function cloneShipment(){
-  if(!detailId) return;
+  var sid = detailId || currentDetailId;
+  if(!sid){ alert('No shipment selected'); return; }
   try {
-    var ship = await apiFetch(`/api/shipments/${detailId}`);
+    var ship = await apiFetch(`/api/shipments/${sid}`);
 
-    // Smart reference: FT-001 → FT-001/A, FT-001/A → FT-001/B, etc.
+    // Smart reference: FT-001 → FT-001/A, FT-001/A → FT-001/B
     var baseRef = ship.ref.replace(//[A-Z]$/, '');
-    var existingRefs = (allShipments || []).map(s => s.ref);
+    var existingRefs = (allShipments || []).map(function(s){ return s.ref; });
     var suffix = 'A';
-    while(existingRefs.includes(baseRef + '/' + suffix)){
+    while(existingRefs.indexOf(baseRef + '/' + suffix) !== -1){
       suffix = String.fromCharCode(suffix.charCodeAt(0) + 1);
     }
     var newRef = baseRef + '/' + suffix;
 
-    // Reset the form first
+    // Reset the form
     resetForm();
     editId = null;
-    document.getElementById('modal-add-title').textContent = 'Clone Shipment';
+    document.getElementById('modal-add-title').textContent = 'Clone: ' + ship.ref;
 
     // Pre-fill all fields
-    var set = (id, v) => { var el = document.getElementById(id); if(el) el.value = v || ''; };
+    var set = function(id, v){ var el = document.getElementById(id); if(el) el.value = v || ''; };
     set('f-ref', newRef);
-    set('f-ref2', '');               // clear container no
-    set('f-booking', '');            // clear booking no
+    set('f-ref2', '');
+    set('f-booking', '');
     set('f-carrier', ship.carrier);
     set('f-shipper', ship.shipper);
     set('f-consignee', ship.consignee);
     set('f-client', ship.client);
-    set('f-client-email', ship.clientemail || ship.client_email);
+    set('f-client-email', ship.clientemail || ship.client_email || '');
     set('f-pol', ship.pol);
     set('f-pod', ship.pod);
     set('f-etd', ship.etd ? ship.etd.split('T')[0] : '');
@@ -3289,14 +3290,15 @@ async function cloneShipment(){
     var fi = document.getElementById('f-incoterm');
     if(fi) fi.value = ship.incoterm || '';
 
-    // Reset containers (fresh — user can add their own)
     formContainers = [];
     if(typeof renderContainerList === 'function') renderContainerList();
 
     openModal('modal-add');
-    toast('Shipment pre-filled — review and save', 'info');
+    if(typeof toast === 'function') toast('Pre-filled from ' + ship.ref + ' — review and save', 'info');
 
-  } catch(e){ toast('Clone failed: ' + e.message, 'error'); }
+  } catch(e){
+    alert('Clone failed: ' + e.message);
+  }
 }
 
 /* ══════════════════════════════════════════════════
@@ -3313,7 +3315,7 @@ function _saveClientStore(arr){ localStorage.setItem(_clientKey(), JSON.stringif
 function loadClients(){
   _clients = _loadClientStore();
   // Enrich with shipment counts from allShipments
-  var ships = (typeof allShipments !== 'undefined' && allShipments) ? allShipments : [];
+  var ships = (typeof allShipments !== 'undefined' pments : [];
   _clients.forEach(function(c){
     c._shipments = ships.filter(function(s){ return (s.client||'').toLowerCase().trim() === (c.name||'').toLowerCase().trim(); }).length;
     c._active    = ships.filter(function(s){ return (s.client||'').toLowerCase().trim() === (c.name||'').toLowerCase().trim() && ['Confirmed','Booked','Stuffed','Sailing'].indexOf(s.status)>=0; }).length;
