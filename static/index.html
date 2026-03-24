@@ -1239,6 +1239,14 @@ textarea.form-control{resize:vertical;min-height:72px}
 
 
 <script>
+  function updateBulkToolbar() {
+  window.selectedShips = window.selectedShips || new Set();
+  var n = window.selectedShips.size;
+  var tb = document.getElementById('bulk-toolbar');
+  var ct = document.getElementById('bulk-count');
+  if (tb) tb.style.display = n > 0 ? 'flex' : 'none';
+  if (ct) ct.textContent = n + ' selected';
+  }
 let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, _detailId=null, allShipments=[];
 // Global fmtd available everywhere
