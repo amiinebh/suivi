@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, text, func
+from sqlalchemy import or_
 import models, schemas
 from datetime import datetime
 from collections import defaultdict
+
 
 def get_shipments(db: Session, search: str = "", status: str = "", mode: str = ""):
     q = db.query(models.Shipment)
@@ -21,6 +22,7 @@ def get_shipments(db: Session, search: str = "", status: str = "", mode: str = "
         q = q.filter(models.Shipment.mode.ilike(mode))
     return q.order_by(models.Shipment.id.desc()).all()
 
+
 def create_shipment(db: Session, s: schemas.ShipmentCreate):
     allowed = {c.name for c in models.Shipment.__table__.columns}
     data = {k: v for k, v in s.model_dump().items() if k in allowed}
@@ -30,11 +32,14 @@ def create_shipment(db: Session, s: schemas.ShipmentCreate):
     db.refresh(dbs)
     return dbs
 
+
 def get_shipment(db: Session, ref: str):
     return db.query(models.Shipment).filter(models.Shipment.ref == ref).first()
 
+
 def get_shipment_by_id(db: Session, sid: int):
     return db.query(models.Shipment).filter(models.Shipment.id == sid).first()
+
 
 def update_shipment(db: Session, sid: int, data: schemas.ShipmentUpdate):
     s = get_shipment_by_id(db, sid)
@@ -46,28 +51,31 @@ def update_shipment(db: Session, sid: int, data: schemas.ShipmentUpdate):
     db.refresh(s)
     return s
 
+
 def delete_shipment(db: Session, sid: int):
     s = get_shipment_by_id(db, sid)
     if s:
         db.delete(s)
         db.commit()
 
-def add_comment(db: Session, sid: int, data: schemas.CommentCreate, author="System"):
-    c = models.ShipmentComment(shipment_id=sid, author=author, text=data.text)
-    db.add(c)
-    db.commit()
-    db.refresh(c)
-    return c
 
+# ── EVENTS ──────────────────────────────────────────────────────────────────
 def get_events(db: Session, sid: int):
     return db.query(models.ShipmentEvent).filter(models.ShipmentEvent.shipment_id == sid).all()
 
-def add_event(db: Session, sid: int, data: schemas.EventCreate):
-    e = models.ShipmentEvent(shipment_id=sid, **data.model_dump())
+
+def add_event(db: Session, sid: int, description: str = "", location: str = "", status: str = ""):
+    e = models.ShipmentEvent(
+        shipment_id=sid,
+        description=description,
+        location=location,
+        status=status
+    )
     db.add(e)
     db.commit()
     db.refresh(e)
     return e
+
 
 def delete_event(db: Session, event_id: int):
     e = db.query(models.ShipmentEvent).filter(models.ShipmentEvent.id == event_id).first()
@@ -75,8 +83,23 @@ def delete_event(db: Session, event_id: int):
         db.delete(e)
         db.commit()
 
+
+# ── COMMENTS ────────────────────────────────────────────────────────────────
 def get_comments(db: Session, sid: int):
     return db.query(models.ShipmentComment).filter(models.ShipmentComment.shipment_id == sid).all()
+
+
+def add_comment(db: Session, sid: int, data: schemas.CommentCreate, author: str = "Agent"):
+    c = models.ShipmentComment(
+        shipment_id=sid,
+        author=data.author or author,
+        text=data.text
+    )
+    db.add(c)
+    db.commit()
+    db.refresh(c)
+    return c
+
 
 def delete_comment(db: Session, comment_id: int):
     c = db.query(models.ShipmentComment).filter(models.ShipmentComment.id == comment_id).first()
@@ -84,8 +107,11 @@ def delete_comment(db: Session, comment_id: int):
         db.delete(c)
         db.commit()
 
+
+# ── CONTAINERS ───────────────────────────────────────────────────────────────
 def get_containers(db: Session, sid: int):
     return db.query(models.Container).filter(models.Container.shipment_id == sid).all()
+
 
 def add_container(db: Session, sid: int, data: schemas.ContainerCreate):
     c = models.Container(shipment_id=sid, **data.model_dump())
@@ -93,6 +119,7 @@ def add_container(db: Session, sid: int, data: schemas.ContainerCreate):
     db.commit()
     db.refresh(c)
     return c
+
 
 def update_container(db: Session, cid: int, data: schemas.ContainerCreate):
     c = db.query(models.Container).filter(models.Container.id == cid).first()
@@ -104,14 +131,18 @@ def update_container(db: Session, cid: int, data: schemas.ContainerCreate):
     db.refresh(c)
     return c
 
+
 def delete_container(db: Session, cid: int):
     c = db.query(models.Container).filter(models.Container.id == cid).first()
     if c:
         db.delete(c)
         db.commit()
 
+
+# ── USERS ────────────────────────────────────────────────────────────────────
 def get_users(db: Session):
     return db.query(models.User).all()
+
 
 def create_user(db: Session, data: schemas.UserCreate):
     from auth import hash_password
@@ -127,12 +158,15 @@ def create_user(db: Session, data: schemas.UserCreate):
     db.refresh(u)
     return u
 
+
 def delete_user(db: Session, uid: int):
     u = db.query(models.User).filter(models.User.id == uid).first()
     if u:
         db.delete(u)
         db.commit()
 
+
+# ── STATS ────────────────────────────────────────────────────────────────────
 def get_stats(db: Session):
     ships = db.query(models.Shipment).all()
     total = len(ships)
@@ -153,31 +187,27 @@ def get_stats(db: Session):
         "delayed_count": delayed_count
     }
 
+
 def get_kpis(db: Session):
     ships = db.query(models.Shipment).all()
     total = len(ships)
     delayed = sum(1 for s in ships if s.status == "Delayed")
     delivered = sum(1 for s in ships if s.status in ("Delivered", "Arrived"))
-    on_time = delivered
     delay_rate = f"{round(delayed/total*100)}%" if total else "0%"
-    on_time_rate = f"{round(on_time/total*100)}%" if total else "0%"
+    on_time_rate = f"{round(delivered/total*100)}%" if total else "0%"
 
     transit_days = []
     for s in ships:
         if s.etd and s.eta:
             try:
-                etd = datetime.fromisoformat(str(s.etd))
-                eta = datetime.fromisoformat(str(s.eta))
-                d = (eta - etd).days
+                d = (datetime.fromisoformat(str(s.eta)) - datetime.fromisoformat(str(s.etd))).days
                 if 0 < d < 200:
                     transit_days.append(d)
             except:
                 pass
     avg_transit = f"{round(sum(transit_days)/len(transit_days))} days" if transit_days else "N/A"
 
-    by_status = {}
-    by_carrier = {}
-    by_client = {}
+    by_status, by_carrier, by_client = {}, {}, {}
     for s in ships:
         st = s.status or "Pending"
         by_status[st] = by_status.get(st, 0) + 1
@@ -190,8 +220,7 @@ def get_kpis(db: Session):
     for s in ships:
         if s.created_at:
             try:
-                dt = datetime.fromisoformat(str(s.created_at))
-                key = dt.strftime("%b %Y")
+                key = datetime.fromisoformat(str(s.created_at)).strftime("%b %Y")
                 monthly[key] += 1
             except:
                 pass
@@ -202,21 +231,12 @@ def get_kpis(db: Session):
     for s in ships:
         if s.eta and s.status not in ("Delivered", "Arrived", "Discharged"):
             try:
-                eta = datetime.fromisoformat(str(s.eta))
-                days_late = (today - eta).days
+                days_late = (today - datetime.fromisoformat(str(s.eta))).days
                 if days_late > 0:
-                    overdue.append({
-                        "ref": s.ref,
-                        "client": s.client or "",
-                        "eta": str(s.eta),
-                        "days_late": days_late
-                    })
+                    overdue.append({"ref": s.ref, "client": s.client or "", "eta": str(s.eta), "days_late": days_late})
             except:
                 pass
     overdue.sort(key=lambda x: x["days_late"], reverse=True)
-
-    by_carrier_list = [{"name": k, "count": v} for k, v in sorted(by_carrier.items(), key=lambda x: -x[1])][:5]
-    by_client_list = [{"name": k, "count": v} for k, v in sorted(by_client.items(), key=lambda x: -x[1])][:5]
 
     return {
         "total": total,
@@ -224,8 +244,8 @@ def get_kpis(db: Session):
         "delay_rate": delay_rate,
         "avg_transit": avg_transit,
         "by_status": by_status,
-        "by_carrier": by_carrier_list,
-        "by_client": by_client_list,
+        "by_carrier": [{"name": k, "count": v} for k, v in sorted(by_carrier.items(), key=lambda x: -x[1])][:5],
+        "by_client": [{"name": k, "count": v} for k, v in sorted(by_client.items(), key=lambda x: -x[1])][:5],
         "monthly": monthly_list,
         "overdue": overdue
     }
