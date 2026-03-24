@@ -11,9 +11,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>FreightTrack Pro</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap');
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap">
+  <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
   /* Brand */
@@ -129,12 +131,6 @@ code,pre,.mono{font-family:'Geist Mono',monospace;letter-spacing:0}
 .search-box input{background:none;border:none;outline:none;color:var(--text1);font-size:var(--fs-sm);width:100%;font-family:inherit;letter-spacing:0}
 .search-box input::placeholder{color:var(--text3)}
 .search-box i{color:var(--text3);font-size:14px;flex-shrink:0}
-/* search-wrap alias */
-.search-wrap{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:7px 12px;width:220px;transition:border-color var(--t),box-shadow var(--t);flex-shrink:0}
-.search-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
-.search-wrap input{background:none;border:none;outline:none;color:var(--text1);font-size:var(--fs-sm);width:100%;font-family:inherit;letter-spacing:0}
-.search-wrap input::placeholder{color:var(--text3)}
-.search-wrap svg,.search-wrap i{color:var(--text3);width:14px;height:14px;font-size:14px;flex-shrink:0}
 /* Topbar right buttons */
 .topbar-right{display:flex;gap:6px;align-items:center}
 .icon-btn{width:32px;height:32px;border-radius:var(--radius);background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--t);position:relative;flex-shrink:0}
