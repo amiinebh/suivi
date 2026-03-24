@@ -389,7 +389,7 @@ def on_startup():
 def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
     from models import User
     user = db.query(User).filter(User.email == body.email, User.isactive == True).first()
-    if not user or not verify_password(body.password, user.hashedpw):
+    if not user or not verify_password(body.password, user.hashed_pw):
         raise HTTPException(401, "Invalid email or password")
     token = create_token(user.id, user.role, user.name)
     return {"access_token": token, "role": user.role, "name": user.name}
@@ -404,9 +404,9 @@ def change_password(body: dict, db: Session = Depends(get_db), current=Depends(g
     if not old_pw or not new_pw: raise HTTPException(400, "Both passwords required")
     if len(new_pw) < 6: raise HTTPException(400, "New password must be at least 6 characters")
     user = db.query(User).filter(User.id == int(current["sub"])).first()
-    if not user or not verify_password(old_pw, user.hashedpw):
+    if not user or not verify_password(old_pw, user.hashed_pw):
         raise HTTPException(401, "Current password is incorrect")
-    user.hashedpw = hash_password(new_pw); db.commit()
+    user.hashed_pw = hash_password(new_pw); db.commit()
     return {"message": "Password changed successfully"}
 
 @app.get("/api/users")
