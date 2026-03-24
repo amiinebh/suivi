@@ -73,7 +73,7 @@ class User(Base):
     email      = Column(String, unique=True, index=True, nullable=False)
     name       = Column(String, nullable=False)
     role       = Column(String, default="cs")
-    hashed_pw  = Column(String, nullable=False)
+    hashedpw = Column(String, nullable=False)
     isactive = Column(Boolean, default=True)
     created_at = Column(String, default=lambda: datetime.utcnow().isoformat())
 
