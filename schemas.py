@@ -31,7 +31,7 @@ class ShipmentCreate(BaseModel):
     notes: Optional[str] = None
     incoterm: Optional[str] = None
     teu: Optional[float] = None
-    quotationnumber: Optional[str] = None
+    quotation_number: Optional[str] = None
 
     @field_validator("ref")
     @classmethod
@@ -86,7 +86,7 @@ class ShipmentUpdate(BaseModel):
     incoterm: Optional[str] = None
     teu: Optional[float] = None
     vessel: Optional[str] = None
-    quotationnumber: Optional[str] = None
+    quotation_number: Optional[str] = None
 
 
 class EventOut(BaseModel):
@@ -105,7 +105,7 @@ class CommentOut(BaseModel):
     shipment_id: int
     author: Optional[str] = None
     text: Optional[str] = None
-    created_at: Optional[str] = None
+    timestamp: Optional[str] = None
     class Config:
         from_attributes = True
 
@@ -155,6 +155,7 @@ class ShipmentOut(BaseModel):
     teu: Optional[float] = None
     shipper: Optional[str] = None
     consignee: Optional[str] = None
+    quotation_number: Optional[str] = None
     shipsgo_id: Optional[int] = None
     last_tracked: Optional[str] = None
     created_at: Optional[str] = None

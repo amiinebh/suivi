@@ -60,6 +60,9 @@ async def create_shipment(request: Request, db: Session = Depends(get_db),
         body = await request.json()
     except Exception:
         raise HTTPException(400, "Invalid JSON body")
+    # Support legacy frontend key "quotationnumber" (no underscore)
+    if "quotationnumber" in body and "quotation_number" not in body:
+        body["quotation_number"] = body.pop("quotationnumber")
     ref = (body.get("ref") or "").strip()
     if not ref: raise HTTPException(400, "Reference is required")
     if crud.get_shipment(db, ref): raise HTTPException(400, "Reference already exists")
