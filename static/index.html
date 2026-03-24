@@ -2186,7 +2186,7 @@ window.addEventListener("DOMContentLoaded", () => {
           <div style="margin-top:6px">Only <strong>ref</strong> required. Dates: <strong>YYYY-MM-DD</strong>.</div>
         </div>
         <div id="bulk-drop-zone"
-          onclick="document.getElementById('bulk-file').click()"
+          onclick="(function(){var fi=document.getElementById('bulk-file');if(fi)fi.click();else{fi=document.createElement('input');fi.type='file';fi.accept='.xlsx,.xls';fi.onchange=function(){bulkFileSelected(this.files[0])};fi.click();}})()"
           ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='var(--bg3)'"
           ondragleave="this.style.borderColor='var(--border)';this.style.background=''"
           ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='';bulkFileSelected(event.dataTransfer.files[0])"
@@ -3021,125 +3021,6 @@ async function generateReport(){
 <datalist id="consignee-list"></datalist>
 <datalist id="carrier-list"></datalist>
 
-
-<!-- ===== FIXES PATCH v1 ===== -->
-<script>
-// FIX 1: Briefing / openDigest — fetches fresh data every time
-async function openDigest() {
-  var m = document.getElementById('modal-digest');
-  var body = document.getElementById('digest-body');
-  if (!m || !body) return;
-  body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">Loading briefing...</div>';
-  m.style.display = 'flex';
-
-  var ships;
-  try {
-    ships = await apiFetch('/api/shipments');
-    if (!Array.isArray(ships)) ships = ships.data || ships.shipments || [];
-    window.allShipments = ships;
-  } catch(e) {
-    body.innerHTML = '<div style="color:var(--red);padding:20px;font-size:13px">Failed to load: ' + e.message + '</div>';
-    return;
-  }
-
-  var today = new Date(); today.setHours(0,0,0,0);
-  var in7 = new Date(today); in7.setDate(today.getDate() + 7);
-
-  var arriving = ships.filter(function(s) {
-    if (['Closed','Canceled','Arrived'].indexOf(s.status) >= 0) return false;
-    if (!s.eta) return false;
-    var d = new Date(s.eta); return d >= today && d <= in7;
-  });
-  var departing = ships.filter(function(s) {
-    if (['Closed','Canceled'].indexOf(s.status) >= 0) return false;
-    if (!s.etd) return false;
-    var d = new Date(s.etd); return d >= today && d <= in7;
-  });
-  var overdue = ships.filter(function(s) {
-    if (['Closed','Canceled','Arrived'].indexOf(s.status) >= 0) return false;
-    if (!s.eta) return false;
-    return new Date(s.eta) < today;
-  });
-  var active = ships.filter(function(s) { return ['Sailing','Stuffed'].indexOf(s.status) >= 0; });
-
-  var html = '<div style="padding-top:4px">';
-  var kpis = [
-    {v: active.length,   l: 'In Transit',  c: '4f8ef7'},
-    {v: arriving.length, l: 'Arriving 7d', c: '22c55e'},
-    {v: departing.length,l: 'Departing 7d',c: 'f97316'},
-    {v: overdue.length,  l: 'Overdue',     c: 'ef4444'}
-  ];
-  html += '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">';
-  kpis.forEach(function(k) {
-    html += '<div style="flex:1;min-width:70px;background:var(--bg3);border-radius:10px;padding:10px;text-align:center">';
-    html += '<div style="font-size:22px;font-weight:800;color:#'+k.c+'">'+k.v+'</div>';
-    html += '<div style="font-size:10px;color:var(--text2);margin-top:3px">'+k.l+'</div></div>';
-  });
-  html += '</div>';
-
-  if (overdue.length) {
-    html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px">&#9888; Overdue ('+overdue.length+')</div>';
-    overdue.slice(0,5).forEach(function(s) {
-      var days = Math.floor((today - new Date(s.eta)) / 86400000);
-      html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+s.ref+'</div>';
-      html += '<div style="font-size:11px;color:var(--text2)">'+(s.client||'')+'</div></div>';
-      html += '<span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+days+'d late</span></div>';
-    });
-    html += '</div>';
-  }
-  if (arriving.length) {
-    html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#22c55e;margin-bottom:8px">&#9989; Arriving This Week ('+arriving.length+')</div>';
-    arriving.slice(0,5).forEach(function(s) {
-      var diff = Math.round((new Date(s.eta) - today) / 86400000);
-      var lbl = diff===0?'Today':diff===1?'Tomorrow':'In '+diff+'d';
-      html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+s.ref+'</div>';
-      html += '<div style="font-size:11px;color:var(--text2)">'+(s.client||'')+' &rarr; '+(s.pod||'')+'</div></div>';
-      html += '<span style="background:#22c55e22;color:#22c55e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+lbl+'</span></div>';
-    });
-    html += '</div>';
-  }
-  if (departing.length) {
-    html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#f97316;margin-bottom:8px">&#128674; Departing This Week ('+departing.length+')</div>';
-    departing.slice(0,5).forEach(function(s) {
-      var diff = Math.round((new Date(s.etd) - today) / 86400000);
-      var lbl = diff===0?'Today':diff===1?'Tomorrow':'In '+diff+'d';
-      html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+s.ref+'</div>';
-      html += '<div style="font-size:11px;color:var(--text2)">'+(s.client||'')+' '+(s.pol||'')+(s.pod?' &rarr; '+s.pod:'')+'</div></div>';
-      html += '<span style="background:#f9731622;color:#f97316;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+lbl+'</span></div>';
-    });
-    html += '</div>';
-  }
-  if (!overdue.length && !arriving.length && !departing.length) {
-    html += '<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">&#9989; All clear — no urgent shipments this week.</div>';
-  }
-  html += '<div style="font-size:10px;color:var(--text2);text-align:center;margin-top:8px">Generated '+new Date().toLocaleString()+'</div></div>';
-  body.innerHTML = html;
-}
-
-function closeDigest() {
-  var m = document.getElementById('modal-digest');
-  if (m) m.style.display = 'none';
-}
-
-// FIX 2: Bulk file input — attach persistent listener after DOM ready
-document.addEventListener('DOMContentLoaded', function() {
-  var fi = document.getElementById('bulk-file');
-  if (fi) {
-    fi.addEventListener('change', function() {
-      if (this.files && this.files[0]) bulkFileSelected(this.files[0]);
-    });
-  }
-  var dz = document.getElementById('bulk-drop-zone');
-  if (dz) {
-    dz.addEventListener('click', function(e) {
-      e.stopPropagation();
-      var f = document.getElementById('bulk-file');
-      if (f) f.click();
-    });
-  }
-});
-</script>
-
 </body>></html>`;
 
     const w = window.open('','_blank');
@@ -3289,28 +3170,55 @@ function closeBulkImport(){
   if(typeof closeModal==="function")closeModal("modal-bulk-import");
   setTimeout(function(){_bulkStep(1);},200);
 }
-function bulkFileSelected(file){
-  if(!file)return;
-  _bulkFile=file;
-  var ps=document.getElementById("bulk-parse-status");
-  var dz=document.getElementById("bulk-drop-zone");
-  if(dz)dz.innerHTML='<i class="ph ph-file-xls" style="font-size:28px;color:#22c55e;display:block"></i><div style="font-size:13px;font-weight:700">'+file.name+'</div><div style="font-size:11px;color:var(--text2)">'+(file.size/1024).toFixed(1)+' KB</div>';
-  if(ps){ps.style.display="block";ps.innerHTML='<i class="ph ph-spinner"></i> Parsing file...';}
-  if(typeof XLSX==="undefined"){if(ps)ps.innerHTML='<span style="color:var(--red)">XLSX library not loaded. Check your internet connection.</span>';return;}
-  var reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      var wb=XLSX.read(e.target.result,{type:"arraybuffer"});
-      var ws=wb.Sheets[wb.SheetNames[0]];
-      var rows=XLSX.utils.sheet_to_json(ws,{defval:""});
-      _bulkRows=rows;
-      if(!rows.length){if(ps)ps.innerHTML='<span style="color:var(--red)">No rows found in file.</span>';return;}
-      if(ps)ps.style.display="none";
-      showBulkPreview(rows);
-    }catch(err){if(ps)ps.innerHTML='<span style="color:var(--red)">Parse error: '+err.message+'</span>';}
+function bulkFileSelected(file) {
+  if (!file) return;
+  var allowed = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                 'application/vnd.ms-excel', ''];
+  if (file.name && !file.name.match(/\.xlsx?$/i)) {
+    toast('Please select an .xlsx or .xls file', 'error'); return;
+  }
+  var ps = document.getElementById('bulk-parse-status');
+  if (ps) { ps.style.display='block'; ps.textContent='Reading file…'; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = new Uint8Array(e.target.result);
+      var wb = XLSX.read(data, {type:'array'});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      if (!rows.length) { toast('File is empty or unreadable','error'); return; }
+      window._bulkRows = rows;
+      // show preview step
+      var s1=document.getElementById('bulk-step-upload'), s2=document.getElementById('bulk-step-preview');
+      var b1=document.getElementById('bstep-1'), b2=document.getElementById('bstep-2');
+      if(s1) s1.style.display='none'; if(s2) s2.style.display='block';
+      if(b1){b1.style.background='var(--bg3)';b1.style.color='var(--text2)';}
+      if(b2){b2.style.background='var(--accent)';b2.style.color='#fff';}
+      var info=document.getElementById('bulk-preview-info');
+      if(info) info.textContent=rows.length+' row(s) found. Review below then click Confirm Import.';
+      // render preview table
+      var tbl=document.getElementById('bulk-preview-table');
+      if(tbl && rows.length){
+        var keys=Object.keys(rows[0]);
+        var thead='<tr>'+keys.map(function(k){return '<th style="padding:6px 10px;font-size:11px;color:var(--text2);white-space:nowrap;border-bottom:2px solid var(--border)">'+k+'</th>';}).join('')+'</tr>';
+        var tbody=rows.slice(0,20).map(function(r){
+          return '<tr>'+keys.map(function(k){return '<td style="padding:6px 10px;font-size:12px;color:var(--text1);border-bottom:1px solid var(--border);white-space:nowrap">'+(r[k]||'')+'</td>';}).join('')+'</tr>';
+        }).join('');
+        tbl.innerHTML='<table style="width:100%;border-collapse:collapse"><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table>';
+        if(rows.length>20) tbl.innerHTML+='<div style="padding:8px;font-size:11px;color:var(--text2);text-align:center">Showing first 20 of '+rows.length+' rows</div>';
+      }
+      var cb=document.getElementById('bulk-confirm-btn');
+      if(cb) cb.style.display='inline-flex';
+      if(ps) ps.style.display='none';
+    } catch(err) {
+      toast('Error reading file: '+err.message,'error');
+      if(ps){ps.textContent='Error: '+err.message;}
+    }
   };
   reader.readAsArrayBuffer(file);
 }
+
+
 function showBulkPreview(rows){
   _bulkStep(2);
   var info=document.getElementById("bulk-preview-info");
@@ -3334,33 +3242,50 @@ function showBulkPreview(rows){
   if(tbl)tbl.innerHTML="<table style=\"width:100%;border-collapse:collapse\">"+thead+tbody+"</table>"+(rows.length>50?'<div style="font-size:11px;padding:8px;text-align:center;color:var(--text2)">Showing first 50 of '+rows.length+" rows</div>":"");
   var cb=document.getElementById("bulk-confirm-btn");if(cb)cb.style.display="";
 }
-async function doBulkUpload(){
-  if(!_bulkFile&&!_bulkRows.length)return;
-  var btn=document.getElementById("bulk-confirm-btn");
-  if(btn){btn.disabled=true;btn.innerHTML='<i class="ph ph-spinner"></i> Importing...';}
-  try{
-    var fd=new FormData();fd.append("file",_bulkFile);
-    var token=typeof getToken==="function"?getToken():null;
-    var r=await fetch("/api/shipments/bulk-import",{method:"POST",headers:token?{"Authorization":"Bearer "+token}:{},body:fd});
-    var d=await r.json();if(!r.ok)throw new Error(d.detail||"Import failed");
-    _bulkStep(3);
-    var rc=document.getElementById("bulk-result-content");
-    if(rc)rc.innerHTML='<div style="font-size:40px;margin-bottom:10px">&#9989;</div>'
-      +'<div style="font-size:16px;font-weight:700;color:var(--text1)">Import Complete!</div>'
-      +'<div style="display:flex;gap:16px;justify-content:center;margin-top:16px">'
-      +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#22c55e">'+d.created+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Created</div></div>'
-      +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#f59e0b">'+d.skipped+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Skipped</div></div></div>'
-      +(d.errors&&d.errors.length?'<div style="margin-top:10px;font-size:12px;color:var(--red)">&#9888; '+d.errors.length+' warning(s)</div>':"")
-      +'<button class="btn btn-primary" style="margin-top:16px" onclick="closeBulkImport()"><i class="ph ph-check"></i> Done</button>';
-    _bulkFile=null;_bulkRows=[];
-    if(typeof toast==="function")toast("Imported "+d.created+" shipments","success");
-    if(typeof loadShipments==="function")loadShipments();
-    if(typeof loadDashboard==="function")loadDashboard();
-  }catch(e){
+async function doBulkUpload() {
+  var rows = window._bulkRows;
+  if (!rows || !rows.length) { toast('No data to import', 'error'); return; }
+  var btn = document.getElementById('bulk-confirm-btn');
+  if (btn) { btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Importing...'; }
+  try {
+    // Convert rows back to xlsx blob and POST to backend
+    var ws = XLSX.utils.json_to_sheet(rows);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    var wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    var blob = new Blob([wbout], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var fd = new FormData();
+    fd.append('file', blob, 'import.xlsx');
+    var token = localStorage.getItem('fttoken');
+    var res = await fetch('/api/shipments/bulk-import', {
+      method: 'POST',
+      headers: token ? {Authorization:'Bearer '+token} : {},
+      body: fd
+    });
+    var d = await res.json();
+    if (!res.ok) throw new Error(d.detail || JSON.stringify(d));
+    // Show result step
+    var s2=document.getElementById('bulk-step-preview'), s3=document.getElementById('bulk-step-result');
+    var b2=document.getElementById('bstep-2'), b3=document.getElementById('bstep-3');
+    if(s2) s2.style.display='none'; if(s3) s3.style.display='block';
+    if(b2){b2.style.background='var(--bg3)';b2.style.color='var(--text2)';}
+    if(b3){b3.style.background='var(--accent)';b3.style.color='#fff';}
+    var rc = document.getElementById('bulk-result-content');
+    if(rc) rc.innerHTML = '<div style="font-size:32px;margin-bottom:12px">&#9989;</div>'
+      +'<div style="font-size:18px;font-weight:800;color:var(--text1);margin-bottom:8px">Import Complete</div>'
+      +'<div style="font-size:13px;color:var(--text2)">Created: <b style="color:#22c55e">'+d.created+'</b>'
+      +'&nbsp;&nbsp;Skipped: <b style="color:#f59e0b">'+d.skipped+'</b>'
+      +(d.errors&&d.errors.length?'&nbsp;&nbsp;Errors: <b style="color:#ef4444">'+d.errors.length+'</b>':'')+'</div>'
+      +'<button onclick="closeBulkImport();loadShipments();loadDashboard();" class="btn btn-primary" style="margin-top:18px">Done</button>';
+    if(btn) btn.style.display='none';
+    loadShipments(); loadDashboard();
+  } catch(e) {
+    toast('Import failed: '+e.message, 'error');
     if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-check-circle"></i> Confirm Import';}
-    if(typeof toast==="function")toast(e.message,"error");
   }
 }
+
+
 function snoozeAlert(key,ref){
   var exp=new Date();exp.setHours(exp.getHours()+24);
   localStorage.setItem("snooze_"+key,exp.getTime());
@@ -3651,95 +3576,77 @@ function viewClientShipments(nameEncoded){
 /* ══════════════════════════════════════════════════
    DAILY BRIEFING / DIGEST
 ══════════════════════════════════════════════════ */
-function openDigest(){
-  if(typeof allShipments==="undefined"||!allShipments||!allShipments.length){
-    if(typeof loadShipments==="function"){loadShipments();}
-  }
-  var ships = (typeof allShipments !== 'undefined' && allShipments) ? allShipments : [];
-  var today = new Date(); today.setHours(0,0,0,0);
-  var in7 = new Date(today); in7.setDate(today.getDate()+7);
+function openDigest() {
+  var m = document.getElementById('modal-digest');
+  var body = document.getElementById('digest-body');
+  if (!m || !body) return;
+  body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">Loading briefing…</div>';
+  m.style.display = 'flex';
 
-  var arriving = ships.filter(function(s){
-    if(['Closed','Canceled','Arrived'].indexOf(s.status)>=0) return false;
-    if(!s.eta) return false;
-    var d = new Date(s.eta); return d>=today && d<=in7;
-  });
-  var departing = ships.filter(function(s){
-    if(['Closed','Canceled'].indexOf(s.status)>=0) return false;
-    if(!s.etd) return false;
-    var d = new Date(s.etd); return d>=today && d<=in7;
-  });
-  var overdue = ships.filter(function(s){
-    if(['Closed','Canceled','Arrived'].indexOf(s.status)>=0) return false;
-    if(!s.eta) return false;
-    return new Date(s.eta) < today;
-  });
-  var active = ships.filter(function(s){ return ['Sailing','Stuffed'].indexOf(s.status)>=0; });
-  var pending = ships.filter(function(s){ return ['Confirmed','Booked'].indexOf(s.status)>=0; });
+  apiFetch('/api/shipments').then(function(resp) {
+    var ships = Array.isArray(resp) ? resp : (resp.data || resp.shipments || []);
+    window.allShipments = ships;
 
-  var html = '<div style="padding-top:4px">';
-  // Summary row
-  html += '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">';
-  var kpis = [
-    {v:active.length, l:'Sailing', c:'#4f8ef7'},
-    {v:arriving.length, l:'Arriving ≤7d', c:'#22c55e'},
-    {v:departing.length, l:'Departing ≤7d', c:'#f97316'},
-    {v:overdue.length, l:'Overdue', c:'#ef4444'}
-  ];
-  kpis.forEach(function(k){
-    html += '<div style="flex:1;min-width:70px;background:var(--bg3);border-radius:10px;padding:10px;text-align:center">'
-      + '<div style="font-size:22px;font-weight:800;color:'+k.c+'">'+k.v+'</div>'
-      + '<div style="font-size:10px;color:var(--text2);margin-top:3px">'+k.l+'</div></div>';
-  });
-  html += '</div>';
+    var today = new Date(); today.setHours(0,0,0,0);
+    var in7   = new Date(today); in7.setDate(today.getDate() + 7);
 
-  // Overdue section
-  if(overdue.length){
-    html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px">⚠️ Overdue ('+overdue.length+')</div>';
-    overdue.slice(0,5).forEach(function(s){
-      var days = Math.floor((today-new Date(s.eta))/(1000*60*60*24));
-      html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+s.ref+'</div>'
-        + '<div style="font-size:11px;color:var(--text2)">'+(s.client||'—')+'</div></div>'
-        + '<span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+days+'d late</span></div>';
+    var overdue   = ships.filter(function(s){ return !['Closed','Canceled','Arrived'].includes(s.status) && s.eta && new Date(s.eta) < today; });
+    var arriving  = ships.filter(function(s){ return !['Closed','Canceled','Arrived'].includes(s.status) && s.eta  && new Date(s.eta)  >= today && new Date(s.eta)  <= in7; });
+    var departing = ships.filter(function(s){ return !['Closed','Canceled'].includes(s.status)            && s.etd && new Date(s.etd) >= today && new Date(s.etd) <= in7; });
+    var active    = ships.filter(function(s){ return ['Sailing','Stuffed'].includes(s.status); });
+
+    var html = '<div style="padding-top:4px">';
+    // KPI row
+    html += '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">';
+    [{v:active.length,l:'In Transit',c:'4f8ef7'},{v:arriving.length,l:'Arriving 7d',c:'22c55e'},
+     {v:departing.length,l:'Departing 7d',c:'f97316'},{v:overdue.length,l:'Overdue',c:'ef4444'}]
+    .forEach(function(k){
+      html += '<div style="flex:1;min-width:70px;background:var(--bg3);border-radius:10px;padding:10px;text-align:center">';
+      html += '<div style="font-size:22px;font-weight:800;color:#'+k.c+'">'+k.v+'</div>';
+      html += '<div style="font-size:10px;color:var(--text2);margin-top:3px">'+k.l+'</div></div>';
     });
     html += '</div>';
-  }
 
-  // Arriving soon
-  if(arriving.length){
-    html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#22c55e;margin-bottom:8px">🚢 Arriving This Week ('+arriving.length+')</div>';
-    arriving.slice(0,5).forEach(function(sh){
-      var diff = Math.round((new Date(sh.eta)-today)/(1000*60*60*24));
-      var lbl = diff===0?'Today':diff===1?'Tomorrow':'In '+diff+'d';
-      html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+sh.ref+'</div>'
-        + '<div style="font-size:11px;color:var(--text2)">'+(sh.client||'—')+' → '+(sh.pod||'—')+'</div></div>'
-        + '<span style="background:#22c55e22;color:#22c55e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+lbl+'</span></div>';
-    });
-    html += '</div>';
-  }
-
-  // Departing soon
-  if(departing.length){
-    html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#f97316;margin-bottom:8px">📦 Departing This Week ('+departing.length+')</div>';
-    departing.slice(0,5).forEach(function(sh){
-      var diff = Math.round((new Date(sh.etd)-today)/(1000*60*60*24));
-      var lbl = diff===0?'Today':diff===1?'Tomorrow':'In '+diff+'d';
-      html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+sh.ref+'</div>'
-        + '<div style="font-size:11px;color:var(--text2)">'+(sh.client||'—')+' '+(sh.pol||'')+(sh.pod?' → '+sh.pod:'')+'</div></div>'
-        + '<span style="background:#f9731622;color:#f97316;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+lbl+'</span></div>';
-    });
-    html += '</div>';
-  }
-
-  if(!overdue.length && !arriving.length && !departing.length){
-    html += '<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">✅ All clear — no urgent shipments this week.</div>';
-  }
-
-  html += '<div style="font-size:10px;color:var(--text2);text-align:center;margin-top:8px">Generated '+new Date().toLocaleString()+'</div>';
-  html += '</div>';
-
-  document.getElementById('digest-body').innerHTML = html;
-  document.getElementById('modal-digest').style.display = 'flex';
+    if (overdue.length) {
+      html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px">&#9888; Overdue ('+overdue.length+')</div>';
+      overdue.slice(0,5).forEach(function(s){
+        var days = Math.floor((today - new Date(s.eta)) / 86400000);
+        html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+s.ref+'</div>';
+        html += '<div style="font-size:11px;color:var(--text2)">'+(s.client||'')+'</div></div>';
+        html += '<span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+days+'d late</span></div>';
+      });
+      html += '</div>';
+    }
+    if (arriving.length) {
+      html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#22c55e;margin-bottom:8px">&#9989; Arriving This Week ('+arriving.length+')</div>';
+      arriving.slice(0,5).forEach(function(s){
+        var diff = Math.round((new Date(s.eta) - today) / 86400000);
+        var lbl = diff===0?'Today':diff===1?'Tomorrow':'In '+diff+'d';
+        html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+s.ref+'</div>';
+        html += '<div style="font-size:11px;color:var(--text2)">'+(s.client||'')+' &rarr; '+(s.pod||'')+'</div></div>';
+        html += '<span style="background:#22c55e22;color:#22c55e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+lbl+'</span></div>';
+      });
+      html += '</div>';
+    }
+    if (departing.length) {
+      html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#f97316;margin-bottom:8px">&#128674; Departing This Week ('+departing.length+')</div>';
+      departing.slice(0,5).forEach(function(s){
+        var diff = Math.round((new Date(s.etd) - today) / 86400000);
+        var lbl = diff===0?'Today':diff===1?'Tomorrow':'In '+diff+'d';
+        html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+s.ref+'</div>';
+        html += '<div style="font-size:11px;color:var(--text2)">'+(s.client||'')+' '+(s.pol||'')+(s.pod?' &rarr; '+s.pod:'')+'</div></div>';
+        html += '<span style="background:#f9731622;color:#f97316;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+lbl+'</span></div>';
+      });
+      html += '</div>';
+    }
+    if (!overdue.length && !arriving.length && !departing.length) {
+      html += '<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">&#9989; All clear — no urgent shipments this week.</div>';
+    }
+    html += '<div style="font-size:10px;color:var(--text2);text-align:center;margin-top:8px">Generated '+new Date().toLocaleString()+'</div></div>';
+    body.innerHTML = html;
+  }).catch(function(e){
+    body.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:13px">Failed to load: '+e.message+'</div>';
+  });
 }
 
 function closeDigest(){
