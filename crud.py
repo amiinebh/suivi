@@ -1,21 +1,20 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, text, func
 import models, schemas
-import time
+from datetime import datetime
+from collections import defaultdict
 
 def get_shipments(db: Session, search: str = "", status: str = "", mode: str = ""):
     q = db.query(models.Shipment)
     if search:
-        search = f"%{search}%"
-        q = q.filter(
-            or_(
-                models.Shipment.ref.ilike(search),
-                models.Shipment.ref2.ilike(search),
-                models.Shipment.booking_no.ilike(search),
-                models.Shipment.client.ilike(search),
-                models.Shipment.quotation_number.ilike(search)
-            )
-        )
+        s = f"%{search}%"
+        q = q.filter(or_(
+            models.Shipment.ref.ilike(s),
+            models.Shipment.ref2.ilike(s),
+            models.Shipment.booking_no.ilike(s),
+            models.Shipment.client.ilike(s),
+            models.Shipment.quotation_number.ilike(s)
+        ))
     if status and status != "All Status":
         q = q.filter(models.Shipment.status.ilike(status))
     if mode and mode != "All Modes":
@@ -39,7 +38,8 @@ def get_shipment_by_id(db: Session, sid: int):
 
 def update_shipment(db: Session, sid: int, data: schemas.ShipmentUpdate):
     s = get_shipment_by_id(db, sid)
-    if not s: return None
+    if not s:
+        return None
     for k, v in data.model_dump(exclude_unset=True).items():
         setattr(s, k, v)
     db.commit()
@@ -59,9 +59,81 @@ def add_comment(db: Session, sid: int, data: schemas.CommentCreate, author="Syst
     db.refresh(c)
     return c
 
+def get_events(db: Session, sid: int):
+    return db.query(models.ShipmentEvent).filter(models.ShipmentEvent.shipment_id == sid).all()
+
+def add_event(db: Session, sid: int, data: schemas.EventCreate):
+    e = models.ShipmentEvent(shipment_id=sid, **data.model_dump())
+    db.add(e)
+    db.commit()
+    db.refresh(e)
+    return e
+
+def delete_event(db: Session, event_id: int):
+    e = db.query(models.ShipmentEvent).filter(models.ShipmentEvent.id == event_id).first()
+    if e:
+        db.delete(e)
+        db.commit()
+
+def get_comments(db: Session, sid: int):
+    return db.query(models.ShipmentComment).filter(models.ShipmentComment.shipment_id == sid).all()
+
+def delete_comment(db: Session, comment_id: int):
+    c = db.query(models.ShipmentComment).filter(models.ShipmentComment.id == comment_id).first()
+    if c:
+        db.delete(c)
+        db.commit()
+
+def get_containers(db: Session, sid: int):
+    return db.query(models.Container).filter(models.Container.shipment_id == sid).all()
+
+def add_container(db: Session, sid: int, data: schemas.ContainerCreate):
+    c = models.Container(shipment_id=sid, **data.model_dump())
+    db.add(c)
+    db.commit()
+    db.refresh(c)
+    return c
+
+def update_container(db: Session, cid: int, data: schemas.ContainerCreate):
+    c = db.query(models.Container).filter(models.Container.id == cid).first()
+    if not c:
+        return None
+    for k, v in data.model_dump().items():
+        setattr(c, k, v)
+    db.commit()
+    db.refresh(c)
+    return c
+
+def delete_container(db: Session, cid: int):
+    c = db.query(models.Container).filter(models.Container.id == cid).first()
+    if c:
+        db.delete(c)
+        db.commit()
+
+def get_users(db: Session):
+    return db.query(models.User).all()
+
+def create_user(db: Session, data: schemas.UserCreate):
+    from auth import hash_password
+    u = models.User(
+        email=data.email,
+        name=data.name,
+        role=data.role,
+        hashedpw=hash_password(data.password),
+        isactive=True
+    )
+    db.add(u)
+    db.commit()
+    db.refresh(u)
+    return u
+
+def delete_user(db: Session, uid: int):
+    u = db.query(models.User).filter(models.User.id == uid).first()
+    if u:
+        db.delete(u)
+        db.commit()
 
 def get_stats(db: Session):
-    from sqlalchemy import func
     ships = db.query(models.Shipment).all()
     total = len(ships)
     by_status = {}
@@ -81,19 +153,15 @@ def get_stats(db: Session):
         "delayed_count": delayed_count
     }
 
-
 def get_kpis(db: Session):
-    from sqlalchemy import func
-    from datetime import datetime, timedelta
     ships = db.query(models.Shipment).all()
     total = len(ships)
     delayed = sum(1 for s in ships if s.status == "Delayed")
     delivered = sum(1 for s in ships if s.status in ("Delivered", "Arrived"))
-    on_time = delivered  # simplified
+    on_time = delivered
     delay_rate = f"{round(delayed/total*100)}%" if total else "0%"
     on_time_rate = f"{round(on_time/total*100)}%" if total else "0%"
 
-    # Transit days
     transit_days = []
     for s in ships:
         if s.etd and s.eta:
@@ -107,7 +175,6 @@ def get_kpis(db: Session):
                 pass
     avg_transit = f"{round(sum(transit_days)/len(transit_days))} days" if transit_days else "N/A"
 
-    # By status
     by_status = {}
     by_carrier = {}
     by_client = {}
@@ -119,8 +186,6 @@ def get_kpis(db: Session):
         if s.client:
             by_client[s.client] = by_client.get(s.client, 0) + 1
 
-    # Monthly volume (last 6 months)
-    from collections import defaultdict
     monthly = defaultdict(int)
     for s in ships:
         if s.created_at:
@@ -132,7 +197,6 @@ def get_kpis(db: Session):
                 pass
     monthly_list = [{"month": k, "count": v} for k, v in sorted(monthly.items())][-6:]
 
-    # Overdue
     today = datetime.utcnow()
     overdue = []
     for s in ships:
@@ -151,7 +215,6 @@ def get_kpis(db: Session):
                 pass
     overdue.sort(key=lambda x: x["days_late"], reverse=True)
 
-    # Top carriers/clients
     by_carrier_list = [{"name": k, "count": v} for k, v in sorted(by_carrier.items(), key=lambda x: -x[1])][:5]
     by_client_list = [{"name": k, "count": v} for k, v in sorted(by_client.items(), key=lambda x: -x[1])][:5]
 
