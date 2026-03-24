@@ -2273,6 +2273,38 @@ async function openDetail(id){
     if(typeof toast==='function')toast(e.message,'error');
   }
 }
+  async function updateShipmentStatus(newStatus) {
+  const id = detailId || currentDetailId;
+  if (!id) { toast('No shipment selected', 'error'); return; }
+
+  const sel = document.getElementById('detail-status-select');
+  if (sel) sel.disabled = true;
+
+  try {
+    // Fetch current shipment data and update only status
+    const ship = await apiFetch(`/api/shipments/${id}`);
+    await apiFetch(`/api/shipments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ ...ship, status: newStatus })
+    });
+    toast(`Status updated to ${newStatus}`, 'success');
+
+    // Refresh detail view + lists
+    const updated = await apiFetch(`/api/shipments/${id}`);
+    renderDetail(updated);
+    loadShipments();
+    loadDashboard();
+  } catch(e) {
+    toast('Failed to update status: ' + e.message, 'error');
+    // Revert dropdown to old value on failure
+    if (sel) {
+      const ship = await apiFetch(`/api/shipments/${id}`).catch(() => null);
+      if (ship && sel) sel.value = ship.status;
+    }
+  } finally {
+    if (sel) sel.disabled = false;
+  }
+  }
 
 async function loadUsers(){
   var cont=document.getElementById('users-list');
