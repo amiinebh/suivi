@@ -3089,28 +3089,51 @@ async function generateReport(){
     });
   }
 
+  function prepareBulkPicker(){
+    var fi = document.getElementById('bulk-file');
+    if(fi){
+      fi.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
+      fi.onchange = function(){
+        if(this.files && this.files[0]) bulkFileSelected(this.files[0]);
+      };
+    }
+    var dz = document.getElementById('bulk-drop-zone');
+    if(dz){
+      dz.onclick = function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        var input = document.getElementById('bulk-file');
+        if(input){ input.value=''; input.click(); }
+      };
+      dz.ondragover = function(e){ e.preventDefault(); dz.style.borderColor='var(--accent)'; dz.style.background='var(--bg3)'; };
+      dz.ondragleave = function(){ dz.style.borderColor='var(--border)'; dz.style.background=''; };
+      dz.ondrop = function(e){
+        e.preventDefault();
+        dz.style.borderColor='var(--border)';
+        dz.style.background='';
+        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) bulkFileSelected(e.dataTransfer.files[0]);
+      };
+    }
+  }
+
   function renderDigest(ships){
     ships = Array.isArray(ships) ? ships : [];
     window.allShipments = ships;
     var today = new Date(); today.setHours(0,0,0,0);
     var in7 = new Date(today); in7.setDate(today.getDate()+7);
-
     var arriving = ships.filter(function(s){ return ['Closed','Canceled','Arrived'].indexOf(s.status)<0 && s.eta && new Date(s.eta)>=today && new Date(s.eta)<=in7; });
     var departing = ships.filter(function(s){ return ['Closed','Canceled'].indexOf(s.status)<0 && s.etd && new Date(s.etd)>=today && new Date(s.etd)<=in7; });
     var overdue = ships.filter(function(s){ return ['Closed','Canceled','Arrived'].indexOf(s.status)<0 && s.eta && new Date(s.eta)<today; });
     var active = ships.filter(function(s){ return ['Sailing','Stuffed'].indexOf(s.status)>=0; });
-
     var h = '<div style="padding-top:4px">';
     h += '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">';
     [{v:active.length,l:'Sailing',c:'#4f8ef7'},{v:arriving.length,l:'Arriving ≤7d',c:'#22c55e'},{v:departing.length,l:'Departing ≤7d',c:'#f97316'},{v:overdue.length,l:'Overdue',c:'#ef4444'}].forEach(function(k){
       h += '<div style="flex:1;min-width:70px;background:var(--bg3);border-radius:10px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:'+k.c+'">'+k.v+'</div><div style="font-size:10px;color:var(--text2);margin-top:3px">'+k.l+'</div></div>';
     });
     h += '</div>';
-
-    function row(s, badgeHtml){
-      return '<div class="digest-row"><div><b style="font-size:12px">'+(s.ref||'—')+'</b><div style="font-size:11px;color:var(--text2)">'+(s.client||'')+((s.pol||s.pod)?' • '+(s.pol||'')+(s.pod?' → '+s.pod:''):'')+'</div></div>'+badgeHtml+'</div>';
+    function row(s, badge){
+      return '<div class="digest-row"><div><b style="font-size:12px">'+(s.ref||'—')+'</b><div style="font-size:11px;color:var(--text2)">'+(s.client||'')+((s.pol||s.pod)?' • '+(s.pol||'')+(s.pod?' → '+s.pod:''):'')+'</div></div>'+badge+'</div>';
     }
-
     if(overdue.length){
       h += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px">⚠ Overdue ('+overdue.length+')</div>';
       overdue.slice(0,5).forEach(function(s){ var d=Math.floor((today-new Date(s.eta))/86400000); h += row(s,'<span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+d+'d late</span>'); });
@@ -3138,10 +3161,6 @@ async function generateReport(){
     var body = document.getElementById('digest-body');
     if(body) body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">Loading briefing…</div>';
     if(typeof openModal === 'function') openModal('modal-digest');
-    else {
-      var m = document.getElementById('modal-digest');
-      if(m) { m.classList.add('open'); document.body.style.overflow = 'hidden'; }
-    }
     try{
       var ships = typeof apiFetch === 'function' ? await apiFetch('/api/shipments') : [];
       renderDigest(ships);
@@ -3154,27 +3173,12 @@ async function generateReport(){
   window.closeClientModal = function(){ forceClose('modal-client'); if(typeof _clientEditId !== 'undefined') _clientEditId = null; };
   window.closeBulkImport = function(){
     forceClose('modal-bulk-import');
-    if(typeof _bulkStep === 'function') setTimeout(function(){ _bulkStep(1); }, 120);
+    if(typeof _bulkStep === 'function') setTimeout(function(){ _bulkStep(1); prepareBulkPicker(); }, 120);
     var fi = document.getElementById('bulk-file');
-    if(fi){ fi.value=''; fi.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;'; }
+    if(fi) fi.value = '';
     if(typeof _bulkFile !== 'undefined') _bulkFile = null;
     if(typeof _bulkRows !== 'undefined') _bulkRows = [];
   };
-
-  function prepareBulkPicker(){
-    var fi = document.getElementById('bulk-file');
-    if(fi){
-      fi.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
-      fi.onchange = function(){ if(this.files && this.files[0]) bulkFileSelected(this.files[0]); };
-    }
-    var dz = document.getElementById('bulk-drop-zone');
-    if(dz){
-      dz.onclick = function(ev){ ev.preventDefault(); ev.stopPropagation(); if(fi){ fi.value=''; fi.click(); } };
-      dz.ondragover = function(e){ e.preventDefault(); dz.style.borderColor='var(--accent)'; dz.style.background='var(--bg3)'; };
-      dz.ondragleave = function(){ dz.style.borderColor='var(--border)'; dz.style.background=''; };
-      dz.ondrop = function(e){ e.preventDefault(); dz.style.borderColor='var(--border)'; dz.style.background=''; if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) bulkFileSelected(e.dataTransfer.files[0]); };
-    }
-  }
 
   var _origBulkStep = window._bulkStep;
   if(typeof _origBulkStep === 'function'){
@@ -3189,7 +3193,6 @@ async function generateReport(){
   prepareBulkPicker();
 })();
 </script>
-
 </body>></html>`;
 
     const w = window.open('','_blank');
@@ -3341,32 +3344,25 @@ function closeBulkImport(){
   setTimeout(function(){_bulkStep(1);},200);
 }
 function bulkFileSelected(file){
-  if(!file) return;
-  _bulkFile = file;
-  var ps = document.getElementById("bulk-parse-status");
-  var dz = document.getElementById("bulk-drop-zone");
-  if(dz) dz.innerHTML = '<i class="ph ph-file-xls" style="font-size:28px;color:#22c55e;display:block"></i><div style="font-size:13px;font-weight:700">'+file.name+'</div><div style="font-size:11px;color:var(--text2)">'+(file.size/1024).toFixed(1)+' KB</div>';
-  if(ps){ ps.style.display = "block"; ps.innerHTML = '<i class="ph ph-spinner"></i> Parsing file...'; }
-  if(typeof XLSX === "undefined"){
-    if(ps) ps.innerHTML = '<span style="color:var(--red)">XLSX library not loaded. Check your internet connection.</span>';
-    return;
-  }
-  var reader = new FileReader();
-  reader.onload = function(e){
+  if(!file)return;
+  _bulkFile=file;
+  var ps=document.getElementById("bulk-parse-status");
+  var dz=document.getElementById("bulk-drop-zone");
+  if(dz)dz.innerHTML='<i class="ph ph-file-xls" style="font-size:28px;color:#22c55e;display:block"></i><div style="font-size:13px;font-weight:700">'+file.name+'</div><div style="font-size:11px;color:var(--text2)">'+(file.size/1024).toFixed(1)+' KB</div>';
+  if(ps){ps.style.display="block";ps.innerHTML='<i class="ph ph-spinner"></i> Parsing file...';}
+  if(typeof XLSX==="undefined"){if(ps)ps.innerHTML='<span style="color:var(--red)">XLSX library not loaded. Check your internet connection.</span>';return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
     try{
-      var data = new Uint8Array(e.target.result);
-      var wb = XLSX.read(data, {type:"array", cellDates:true});
-      var ws = wb.Sheets[wb.SheetNames[0]];
-      var rows = XLSX.utils.sheet_to_json(ws, {defval:"", raw:false});
-      _bulkRows = rows;
-      if(!rows.length){ if(ps) ps.innerHTML = '<span style="color:var(--red)">No rows found in file.</span>'; return; }
-      if(ps) ps.style.display = "none";
+      var wb=XLSX.read(new Uint8Array(e.target.result),{type:"array",cellDates:true});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(ws,{defval:"",raw:false});
+      _bulkRows=rows;
+      if(!rows.length){if(ps)ps.innerHTML='<span style="color:var(--red)">No rows found in file.</span>';return;}
+      if(ps)ps.style.display="none";
       showBulkPreview(rows);
-    }catch(err){
-      if(ps) ps.innerHTML = '<span style="color:var(--red)">Parse error: '+err.message+'</span>';
-    }
+    }catch(err){if(ps)ps.innerHTML='<span style="color:var(--red)">Parse error: '+err.message+'</span>';}
   };
-  reader.onerror = function(){ if(ps) ps.innerHTML = '<span style="color:var(--red)">Could not read the selected file.</span>'; };
   reader.readAsArrayBuffer(file);
 }
 function showBulkPreview(rows){
@@ -3804,7 +3800,6 @@ function closeDigest(){
   closeModal('modal-digest');
 }
 
-</script>
 
 <script>
 (function(){
@@ -3827,28 +3822,51 @@ function closeDigest(){
     });
   }
 
+  function prepareBulkPicker(){
+    var fi = document.getElementById('bulk-file');
+    if(fi){
+      fi.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
+      fi.onchange = function(){
+        if(this.files && this.files[0]) bulkFileSelected(this.files[0]);
+      };
+    }
+    var dz = document.getElementById('bulk-drop-zone');
+    if(dz){
+      dz.onclick = function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        var input = document.getElementById('bulk-file');
+        if(input){ input.value=''; input.click(); }
+      };
+      dz.ondragover = function(e){ e.preventDefault(); dz.style.borderColor='var(--accent)'; dz.style.background='var(--bg3)'; };
+      dz.ondragleave = function(){ dz.style.borderColor='var(--border)'; dz.style.background=''; };
+      dz.ondrop = function(e){
+        e.preventDefault();
+        dz.style.borderColor='var(--border)';
+        dz.style.background='';
+        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) bulkFileSelected(e.dataTransfer.files[0]);
+      };
+    }
+  }
+
   function renderDigest(ships){
     ships = Array.isArray(ships) ? ships : [];
     window.allShipments = ships;
     var today = new Date(); today.setHours(0,0,0,0);
     var in7 = new Date(today); in7.setDate(today.getDate()+7);
-
     var arriving = ships.filter(function(s){ return ['Closed','Canceled','Arrived'].indexOf(s.status)<0 && s.eta && new Date(s.eta)>=today && new Date(s.eta)<=in7; });
     var departing = ships.filter(function(s){ return ['Closed','Canceled'].indexOf(s.status)<0 && s.etd && new Date(s.etd)>=today && new Date(s.etd)<=in7; });
     var overdue = ships.filter(function(s){ return ['Closed','Canceled','Arrived'].indexOf(s.status)<0 && s.eta && new Date(s.eta)<today; });
     var active = ships.filter(function(s){ return ['Sailing','Stuffed'].indexOf(s.status)>=0; });
-
     var h = '<div style="padding-top:4px">';
     h += '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">';
     [{v:active.length,l:'Sailing',c:'#4f8ef7'},{v:arriving.length,l:'Arriving ≤7d',c:'#22c55e'},{v:departing.length,l:'Departing ≤7d',c:'#f97316'},{v:overdue.length,l:'Overdue',c:'#ef4444'}].forEach(function(k){
       h += '<div style="flex:1;min-width:70px;background:var(--bg3);border-radius:10px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:'+k.c+'">'+k.v+'</div><div style="font-size:10px;color:var(--text2);margin-top:3px">'+k.l+'</div></div>';
     });
     h += '</div>';
-
-    function row(s, badgeHtml){
-      return '<div class="digest-row"><div><b style="font-size:12px">'+(s.ref||'—')+'</b><div style="font-size:11px;color:var(--text2)">'+(s.client||'')+((s.pol||s.pod)?' • '+(s.pol||'')+(s.pod?' → '+s.pod:''):'')+'</div></div>'+badgeHtml+'</div>';
+    function row(s, badge){
+      return '<div class="digest-row"><div><b style="font-size:12px">'+(s.ref||'—')+'</b><div style="font-size:11px;color:var(--text2)">'+(s.client||'')+((s.pol||s.pod)?' • '+(s.pol||'')+(s.pod?' → '+s.pod:''):'')+'</div></div>'+badge+'</div>';
     }
-
     if(overdue.length){
       h += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px">⚠ Overdue ('+overdue.length+')</div>';
       overdue.slice(0,5).forEach(function(s){ var d=Math.floor((today-new Date(s.eta))/86400000); h += row(s,'<span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+d+'d late</span>'); });
@@ -3876,10 +3894,6 @@ function closeDigest(){
     var body = document.getElementById('digest-body');
     if(body) body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">Loading briefing…</div>';
     if(typeof openModal === 'function') openModal('modal-digest');
-    else {
-      var m = document.getElementById('modal-digest');
-      if(m) { m.classList.add('open'); document.body.style.overflow = 'hidden'; }
-    }
     try{
       var ships = typeof apiFetch === 'function' ? await apiFetch('/api/shipments') : [];
       renderDigest(ships);
@@ -3892,27 +3906,12 @@ function closeDigest(){
   window.closeClientModal = function(){ forceClose('modal-client'); if(typeof _clientEditId !== 'undefined') _clientEditId = null; };
   window.closeBulkImport = function(){
     forceClose('modal-bulk-import');
-    if(typeof _bulkStep === 'function') setTimeout(function(){ _bulkStep(1); }, 120);
+    if(typeof _bulkStep === 'function') setTimeout(function(){ _bulkStep(1); prepareBulkPicker(); }, 120);
     var fi = document.getElementById('bulk-file');
-    if(fi){ fi.value=''; fi.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;'; }
+    if(fi) fi.value = '';
     if(typeof _bulkFile !== 'undefined') _bulkFile = null;
     if(typeof _bulkRows !== 'undefined') _bulkRows = [];
   };
-
-  function prepareBulkPicker(){
-    var fi = document.getElementById('bulk-file');
-    if(fi){
-      fi.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
-      fi.onchange = function(){ if(this.files && this.files[0]) bulkFileSelected(this.files[0]); };
-    }
-    var dz = document.getElementById('bulk-drop-zone');
-    if(dz){
-      dz.onclick = function(ev){ ev.preventDefault(); ev.stopPropagation(); if(fi){ fi.value=''; fi.click(); } };
-      dz.ondragover = function(e){ e.preventDefault(); dz.style.borderColor='var(--accent)'; dz.style.background='var(--bg3)'; };
-      dz.ondragleave = function(){ dz.style.borderColor='var(--border)'; dz.style.background=''; };
-      dz.ondrop = function(e){ e.preventDefault(); dz.style.borderColor='var(--border)'; dz.style.background=''; if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) bulkFileSelected(e.dataTransfer.files[0]); };
-    }
-  }
 
   var _origBulkStep = window._bulkStep;
   if(typeof _origBulkStep === 'function'){
@@ -3927,6 +3926,5 @@ function closeDigest(){
   prepareBulkPicker();
 })();
 </script>
-
 </body>
 </html>
