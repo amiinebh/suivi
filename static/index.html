@@ -2195,7 +2195,7 @@ window.addEventListener("DOMContentLoaded", () => {
           <div style="font-size:14px;font-weight:700;color:var(--text1)">Drop .xlsx file here</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>
         </div>
-        <input id="bulk-file" type="file" accept=".xlsx,.xls" style="position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;"
+        <input id="bulk-file" type="file" accept=".xlsx,.xls" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
         <div id="bulk-parse-status" style="display:none;margin-top:12px;text-align:center;font-size:13px"></div>
       </div>
       <div id="bulk-step-preview" style="display:none">
@@ -3581,57 +3581,6 @@ function openDigest(){
 function closeDigest(){
   document.getElementById('modal-digest').style.display = 'none';
 }
-/* ═══ PATCH: Briefing fetches fresh data, Bulk reattaches handler ═══ */
-(function(){
-  // Override openDigest to always fetch fresh
-  window.openDigest = function(){
-    var m=document.getElementById('modal-digest');
-    var body=document.getElementById('digest-body');
-    if(!m||!body)return;
-    m.style.display='flex';
-    body.innerHTML='<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">Loading briefing…</div>';
-    var token=localStorage.getItem('fttoken')||localStorage.getItem('ft_token')||'';
-    fetch('/api/shipments',{headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}})
-    .then(function(r){return r.json();})
-    .then(function(resp){
-      var ships=Array.isArray(resp)?resp:(resp.data||resp.shipments||[]);
-      window.allShipments=ships;
-      var today=new Date();today.setHours(0,0,0,0);
-      var in7=new Date(today);in7.setDate(today.getDate()+7);
-      var overdue=ships.filter(function(s){return ['Closed','Canceled','Arrived'].indexOf(s.status)<0&&s.eta&&new Date(s.eta)<today;});
-      var arriving=ships.filter(function(s){return ['Closed','Canceled','Arrived'].indexOf(s.status)<0&&s.eta&&new Date(s.eta)>=today&&new Date(s.eta)<=in7;});
-      var departing=ships.filter(function(s){return ['Closed','Canceled'].indexOf(s.status)<0&&s.etd&&new Date(s.etd)>=today&&new Date(s.etd)<=in7;});
-      var active=ships.filter(function(s){return ['Sailing','Stuffed'].indexOf(s.status)>=0;});
-      var h='<div style="padding-top:4px"><div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">';
-      [{v:active.length,l:'In Transit',c:'#4f8ef7'},{v:arriving.length,l:'Arriving 7d',c:'#22c55e'},{v:departing.length,l:'Departing 7d',c:'#f97316'},{v:overdue.length,l:'Overdue',c:'#ef4444'}].forEach(function(k){h+='<div style="flex:1;min-width:60px;background:var(--bg3);border-radius:10px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:'+k.c+'">'+k.v+'</div><div style="font-size:10px;color:var(--text2);margin-top:3px">'+k.l+'</div></div>';});
-      h+='</div>';
-      if(overdue.length){h+='<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px">&#9888; Overdue ('+overdue.length+')</div>';overdue.slice(0,5).forEach(function(s){var d=Math.floor((today-new Date(s.eta))/86400000);h+='<div class="digest-row"><div><b style="font-size:12px">'+s.ref+'</b><div style="font-size:11px;color:var(--text2)">'+(s.client||'')+'</div></div><span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+d+'d late</span></div>';});h+='</div>';}
-      if(arriving.length){h+='<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#22c55e;margin-bottom:8px">&#9989; Arriving This Week ('+arriving.length+')</div>';arriving.slice(0,5).forEach(function(s){var d=Math.round((new Date(s.eta)-today)/86400000);h+='<div class="digest-row"><div><b style="font-size:12px">'+s.ref+'</b><div style="font-size:11px;color:var(--text2)">'+(s.client||'')+(s.pod?' &rarr; '+s.pod:'')+'</div></div><span style="background:#22c55e22;color:#22c55e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+(d===0?'Today':d===1?'Tomorrow':'In '+d+'d')+'</span></div>';});h+='</div>';}
-      if(departing.length){h+='<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#f97316;margin-bottom:8px">&#128674; Departing This Week ('+departing.length+')</div>';departing.slice(0,5).forEach(function(s){var d=Math.round((new Date(s.etd)-today)/86400000);h+='<div class="digest-row"><div><b style="font-size:12px">'+s.ref+'</b><div style="font-size:11px;color:var(--text2)">'+(s.client||'')+(s.pod?' &rarr; '+s.pod:'')+'</div></div><span style="background:#f9731622;color:#f97316;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+(d===0?'Today':d===1?'Tomorrow':'In '+d+'d')+'</span></div>';});h+='</div>';}
-      if(!overdue.length&&!arriving.length&&!departing.length){h+='<div style="text-align:center;padding:30px;color:var(--text2);font-size:13px">&#9989; All clear &mdash; no urgent shipments this week.</div>';}
-      h+='<div style="font-size:10px;color:var(--text2);text-align:center;margin-top:8px">Generated '+new Date().toLocaleString()+'</div></div>';
-      body.innerHTML=h;
-    }).catch(function(e){body.innerHTML='<div style="color:#ef4444;padding:20px;font-size:13px">Error: '+e.message+'</div>';});
-  };
-
-  // Fix bulk import: ensure drop zone click always works
-  document.addEventListener('DOMContentLoaded',function(){
-    function attachBulkDrop(){
-      var dz=document.getElementById('bulk-drop-zone');
-      if(!dz)return;
-      dz.onclick=function(e){
-        e.stopPropagation();
-        var fi=document.getElementById('bulk-file');
-        if(!fi){fi=document.createElement('input');fi.type='file';fi.accept='.xlsx,.xls';fi.id='bulk-file';fi.style.cssText='position:fixed;top:-9999px;opacity:0;width:1px;height:1px;';fi.onchange=function(){if(this.files&&this.files[0])bulkFileSelected(this.files[0]);};document.body.appendChild(fi);}
-        fi.value='';fi.click();
-      };
-    }
-    attachBulkDrop();
-    // Re-attach every time bulk modal opens
-    var origBulkStep=window._bulkStep;
-    window._bulkStep=function(n){if(origBulkStep)origBulkStep(n);if(n===1)setTimeout(attachBulkDrop,50);};
-  });
-})();
 </script>
 </body>
 </html>
