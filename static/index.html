@@ -1246,6 +1246,23 @@ function fmtd(d){
     return dt.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
   } catch(e){ return String(d); }
   }
+  // Safe stubs — real definitions load later
+function updateBulkToolbar(){
+  window.selectedShips = window.selectedShips || new Set();
+  var n = window.selectedShips.size;
+  var tb = document.getElementById('bulk-toolbar');
+  var ct = document.getElementById('bulk-count');
+  if(tb) tb.style.display = n > 0 ? 'flex' : 'none';
+  if(ct) ct.textContent = n + ' selected';
+}
+function fmtd(d){
+  if(!d) return '--';
+  try {
+    var dt = new Date(d);
+    if(isNaN(dt.getTime())) return String(d);
+    return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  } catch(e){ return String(d); }
+}
 /* ── Nav ── */
 function showPage(id,el){
   if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
