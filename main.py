@@ -453,3 +453,10 @@ if __name__ == "__main__":
 def debug_user_fields():
     from models import User
     return {"columns": [c.key for c in User.__table__.columns]}
+
+@app.get("/debug-main-version")
+def debug_version():
+    import inspect, main
+    lines = inspect.getsource(main.login)
+    return {"login_source": lines}
+
