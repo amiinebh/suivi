@@ -1093,6 +1093,10 @@ textarea.form-control{resize:vertical;min-height:72px}
           <input id="f-ref2" class="form-control" placeholder="MSCU1234567"/>
         </div>
         <div class="form-group">
+  <label>Quotation No.</label>
+  <input id="f-quotation" class="form-control" placeholder="e.g. QT-2026-001">
+        </div>
+        <div class="form-group">
           <label>Booking No</label>
           <input id="f-booking" class="form-control" placeholder="MRO1002308"/>
         </div>
@@ -1326,7 +1330,7 @@ document.querySelectorAll('.overlay').forEach(o=>{
 
 /* ── Helpers ── */
 function resetForm(){
-  ['f-ref','f-ref2','f-booking','f-carrier','f-shipper','f-consignee','f-incoterm','f-client','f-client-email','f-pol','f-pod','f-etd','f-eta','f-note']
+  ['f-ref','f-ref2','f-booking','f-quotation','f-carrier','f-shipper','f-consignee','f-incoterm','f-client','f-client-email','f-pol','f-pod','f-etd','f-eta','f-note']
     .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   _resetContainerForm();
   const fm=document.getElementById('f-mode'); if(fm) fm.value='Ocean';
@@ -1656,7 +1660,7 @@ async function saveShipment(){
   const data={ref,ref2:g('f-ref2'),booking_no:g('f-booking'),
     mode:document.getElementById('f-mode')?.value||'Ocean',
     carrier:formatCarrier(g('f-carrier')),shipper:g('f-shipper'),consignee:g('f-consignee'),incoterm:g('f-incoterm'),client:g('f-client'),client_email:g('f-client-email'),
-    pol:g('f-pol'),pod:g('f-pod'),etd:g('f-etd'),eta:g('f-eta'),vessel:g('f-vessel'),voyage:g('f-voyage'),
+    pol:g('f-pol'),pod:g('f-pod'),etd:g('f-etd'),eta:g('f-eta'),vessel:g('f-vessel'),voyage:g('f-voyage'),quotationnumber: g('f-quotation'),
     status:document.getElementById('f-status')?.value||'Pending',note:g('f-note'),
     teu:totalTeuNow||null};
   try{
@@ -1681,7 +1685,7 @@ async function editShipment(sid){
     editId=sid;
     document.getElementById('modal-add-title').textContent='Edit Shipment';
     const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
-    set('f-ref',s.ref); set('f-ref2',s.ref2); set('f-booking',s.booking_no);
+    set('f-ref',s.ref); set('f-ref2',s.ref2); set('f-booking',s.booking_no);set('f-quotation', s.quotationnumber);
     set('f-carrier',s.carrier); set('f-shipper',s.shipper); set('f-consignee',s.consignee); set('f-incoterm',s.incoterm); set('f-client',s.client);
     set('f-client-email',s.client_email); set('f-pol',s.pol); set('f-pod',s.pod);
     set('f-etd',s.etd?s.etd.split('T')[0]:''); set('f-eta',s.eta?s.eta.split('T')[0]:'');
