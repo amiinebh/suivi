@@ -176,8 +176,8 @@ def add_container(sid: int, data: dict, db: Session = Depends(get_db),
     s = crud.get_shipment_by_id(db, sid)
     if not s: raise HTTPException(404, "Shipment not found")
     from models import Container
-    cont = Container(shipment_id=sid, containerno=data.get("containerno"),
-                     sealno=data.get("sealno"), sizetype=data.get("sizetype"),
+    cont = Container(shipment_id=sid, container_no=data.get("container_no"),
+                     seal_no=data.get("seal_no"), size_type=data.get("size_type"),
                      weight=data.get("weight"))
     db.add(cont); db.commit(); db.refresh(cont)
     return cont
