@@ -74,7 +74,7 @@ class User(Base):
     name       = Column(String, nullable=False)
     role       = Column(String, default="cs")
     hashedpw = Column("hashed_pw", String, nullable=False)
-    isactive = Column(Boolean, default=True)
+    isactive = Column("is_active", Boolean, default=True)
     created_at = Column(String, default=lambda: datetime.utcnow().isoformat())
 
 class AlertLog(Base):
