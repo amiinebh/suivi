@@ -53,7 +53,7 @@ def delete_shipment(db: Session, sid: int):
         db.commit()
 
 def add_comment(db: Session, sid: int, data: schemas.CommentCreate, author="System"):
-    c = models.Comment(shipment_id=sid, author=author, text=data.text)
+    c = models.ShipmentComment(shipment_id=sid, author=author, text=data.text)
     db.add(c)
     db.commit()
     db.refresh(c)
