@@ -68,24 +68,40 @@ def list_shipments(q:str="", search:str="", status:str="", mode:str="", db:Sessi
 
 @app.post("/api/shipments", response_model=schemas.ShipmentOut)
 async def create_shipment(request: Request, db: Session = Depends(get_db), current=Depends(get_current_user)):
-    """Accept both JSON body and handle all optional fields gracefully."""
     try:
         body = await request.json()
     except Exception:
         raise HTTPException(400, "Invalid JSON body")
+
     ref = (body.get("ref") or "").strip()
     if not ref:
         raise HTTPException(400, "Reference is required")
     if crud.get_shipment(db, ref):
         raise HTTPException(400, "Reference already exists")
-    allowed_c = set(schemas.ShipmentCreate.model_fields.keys())
-    s_data = {k: (v if v != "" else None) for k, v in body.items() if k in allowed_c}
-    s_data["ref"] = ref
-    s_data.setdefault("mode", "Ocean")
-    s_data.setdefault("status", "Pending")
-    s = schemas.ShipmentCreate(**s_data)
-    ship = crud.create_shipment(db, s)
-    return ship
+
+    allowed = set(schemas.ShipmentCreate.model_fields.keys())
+    # Clean data: keep None for empty, but don't crash on unexpected keys
+    sdata = {}
+    for k, v in body.items():
+        if k not in allowed:
+            continue
+        if isinstance(v, str):
+            sdata[k] = v.strip() if v.strip() != "" else None
+        else:
+            sdata[k] = v if v is not None else None
+
+    sdata["ref"] = ref
+    sdata.setdefault("mode", "Ocean")
+    sdata.setdefault("status", "Confirmed")
+
+    try:
+        s = schemas.ShipmentCreate(**sdata)
+        ship = crud.create_shipment(db, s)
+        return ship
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(500, f"Failed to create shipment: {str(e)}")
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
 def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
