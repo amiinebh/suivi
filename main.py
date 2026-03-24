@@ -448,3 +448,8 @@ def delete_user(uid: int, db: Session = Depends(get_db), current=Depends(require
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
+
+@app.get("/debug-user-fields")
+def debug_user_fields():
+    from models import User
+    return {"columns": [c.key for c in User.__table__.columns]}
