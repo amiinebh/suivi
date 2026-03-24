@@ -23,11 +23,13 @@ def get_shipments(db: Session, search: str = "", status: str = "", mode: str = "
     return q.order_by(models.Shipment.id.desc()).all()
 
 def create_shipment(db: Session, s: schemas.ShipmentCreate):
-    db_s = models.Shipment(**s.model_dump())
-    db.add(db_s)
+    allowed = {c.name for c in models.Shipment.__table__.columns}
+    data = {k: v for k, v in s.model_dump().items() if k in allowed}
+    dbs = models.Shipment(**data)
+    db.add(dbs)
     db.commit()
-    db.refresh(db_s)
-    return db_s
+    db.refresh(dbs)
+    return dbs
 
 def get_shipment(db: Session, ref: str):
     return db.query(models.Shipment).filter(models.Shipment.ref == ref).first()
