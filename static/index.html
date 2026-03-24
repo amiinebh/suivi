@@ -2194,7 +2194,8 @@ window.addEventListener("DOMContentLoaded", () => {
           <i class="ph ph-file-xls" style="font-size:38px;color:#22c55e;display:block;margin-bottom:10px"></i>
           <div style="font-size:14px;font-weight:700;color:var(--text1)">Drop .xlsx file here</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>
-        </div><input id="bulk-file" type="file" accept=".xlsx,.xls" style="position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;"
+        </div>
+        <input id="bulk-file" type="file" accept=".xlsx,.xls" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
         <div id="bulk-parse-status" style="display:none;margin-top:12px;text-align:center;font-size:13px"></div>
       </div>
       <div id="bulk-step-preview" style="display:none">
