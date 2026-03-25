@@ -3193,6 +3193,207 @@ async function generateReport(){
   prepareBulkPicker();
 })();
 </script>
+
+<script>
+(function(){
+  function normalizeHeader(v, idx){
+    var s = String(v == null ? '' : v).trim();
+    if(!s) return 'col_' + (idx + 1);
+    s = s.toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[.\/\-]+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+    var map = {
+      reference:'ref', shipment_ref:'ref', shipment_reference:'ref', refno:'ref',
+      booking:'booking_no', bookingno:'booking_no', booking_number:'booking_no',
+      quotation:'quotation_no', quotationno:'quotation_no', quotation_number:'quotation_no',
+      clientname:'client', customer:'client', customer_name:'client',
+      origin:'pol', portofloading:'pol', port_of_loading:'pol',
+      destination:'pod', portofdischarge:'pod', port_of_discharge:'pod',
+      etd_date:'etd', eta_date:'eta',
+      line:'carrier', shipping_line:'carrier',
+      shipper_name:'shipper', consignee_name:'consignee'
+    };
+    return map[s] || s || ('col_' + (idx + 1));
+  }
+
+  function escapeHtml(v){
+    return String(v == null ? '' : v)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+  }
+
+  function bindBulkInput(){
+    var fi = document.getElementById('bulk-file');
+    if(fi){
+      fi.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
+      fi.onchange = function(){
+        if(this.files && this.files[0]) window.bulkFileSelected(this.files[0]);
+      };
+    }
+
+    var dz = document.getElementById('bulk-drop-zone');
+    if(dz){
+      dz.onclick = function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        var input = document.getElementById('bulk-file');
+        if(input){ input.value = ''; input.click(); }
+      };
+      dz.ondragover = function(e){
+        e.preventDefault();
+        dz.style.borderColor = 'var(--accent)';
+        dz.style.background = 'var(--bg3)';
+      };
+      dz.ondragleave = function(){
+        dz.style.borderColor = 'var(--border)';
+        dz.style.background = '';
+      };
+      dz.ondrop = function(e){
+        e.preventDefault();
+        dz.style.borderColor = 'var(--border)';
+        dz.style.background = '';
+        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]){
+          window.bulkFileSelected(e.dataTransfer.files[0]);
+        }
+      };
+    }
+  }
+
+  window.showBulkPreview = function(rows){
+    if(typeof _bulkStep === 'function') _bulkStep(2);
+
+    var info = document.getElementById('bulk-preview-info');
+    var tbl = document.getElementById('bulk-preview-table');
+    var cb = document.getElementById('bulk-confirm-btn');
+
+    if(!rows || !rows.length){
+      if(info) info.innerHTML = 'No rows found.';
+      if(tbl) tbl.innerHTML = '';
+      if(cb) cb.style.display = 'none';
+      return;
+    }
+
+    var preferred = ['ref','ref2','mode','carrier','shipper','consignee','client','pol','pod','etd','eta','status','incoterm','booking_no'];
+    var keys = Object.keys(rows[0] || {});
+    var cols = preferred.filter(function(k){ return keys.indexOf(k) >= 0; })
+      .concat(keys.filter(function(k){ return preferred.indexOf(k) < 0; }));
+    if(!cols.length) cols = keys;
+
+    if(info) info.innerHTML = '<strong>' + rows.length + '</strong> shipments ready to import. First 50 shown below.';
+
+    var thead = '<thead><tr>' + cols.map(function(c){
+      return '<th style="background:var(--accent);color:#fff;padding:8px;font-size:11px;text-transform:uppercase;white-space:nowrap;position:sticky;top:0">' + escapeHtml(c) + '</th>';
+    }).join('') + '</tr></thead>';
+
+    var tbody = '<tbody>' + rows.slice(0,50).map(function(row,i){
+      var hasRef = row.ref && String(row.ref).trim();
+      var bg = hasRef ? (i % 2 === 0 ? 'var(--bg)' : 'var(--bg2)') : 'rgba(239,68,68,.07)';
+      return '<tr style="background:' + bg + '">' + cols.map(function(c){
+        var v = row[c] == null ? '' : String(row[c]);
+        var st = 'padding:7px;font-size:12px;border-bottom:1px solid var(--border)';
+        if(c === 'ref' && !v.trim()) st += ';color:var(--red);font-weight:700';
+        if((c === 'etd' || c === 'eta') && v.trim()) st += ';color:var(--accent);font-weight:600';
+        return '<td style="' + st + '">' + escapeHtml(v) + '</td>';
+      }).join('') + '</tr>';
+    }).join('') + '</tbody>';
+
+    if(tbl){
+      tbl.innerHTML = '<table style="width:100%;border-collapse:collapse">' + thead + tbody + '</table>' +
+        (rows.length > 50 ? '<div style="font-size:11px;padding:8px;text-align:center;color:var(--text2)">Showing first 50 of ' + rows.length + ' rows</div>' : '');
+    }
+    if(cb) cb.style.display = '';
+  };
+
+  window.bulkFileSelected = async function(file){
+    if(!file) return;
+    window._bulkFile = file;
+
+    var ps = document.getElementById('bulk-parse-status');
+    var dz = document.getElementById('bulk-drop-zone');
+
+    if(dz){
+      dz.innerHTML = '<i class="ph ph-file-xls" style="font-size:28px;color:#22c55e;display:block"></i>' +
+        '<div style="font-size:13px;font-weight:700">' + escapeHtml(file.name) + '</div>' +
+        '<div style="font-size:11px;color:var(--text2)">' + (file.size / 1024).toFixed(1) + ' KB</div>';
+    }
+
+    if(ps){
+      ps.style.display = 'block';
+      ps.innerHTML = '<i class="ph ph-spinner"></i> Parsing file...';
+    }
+
+    try{
+      if(typeof XLSX === 'undefined') throw new Error('XLSX library not loaded');
+
+      var buf = await file.arrayBuffer();
+      var wb = XLSX.read(new Uint8Array(buf), { type:'array', cellDates:true });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var aoa = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', blankrows:false, raw:false });
+
+      if(!aoa || !aoa.length) throw new Error('No rows found in file');
+
+      var headers = (aoa[0] || []).map(normalizeHeader);
+      var rows = aoa.slice(1)
+        .filter(function(r){
+          return Array.isArray(r) && r.some(function(v){ return String(v == null ? '' : v).trim() !== ''; });
+        })
+        .map(function(r){
+          var obj = {};
+          headers.forEach(function(h, i){ obj[h] = r[i] == null ? '' : String(r[i]); });
+          return obj;
+        });
+
+      window._bulkRows = rows;
+      if(!rows.length) throw new Error('No data rows found under the header row');
+
+      if(ps) ps.style.display = 'none';
+      window.showBulkPreview(rows);
+    }catch(err){
+      if(ps){
+        ps.style.display = 'block';
+        ps.innerHTML = '<span style="color:var(--red)">Parse error: ' + escapeHtml(err.message) + '</span>';
+      }
+    }
+  };
+
+  bulkFileSelected = window.bulkFileSelected;
+  showBulkPreview = window.showBulkPreview;
+
+  window.closeBulkImport = function(){
+    if(typeof closeModal === 'function') closeModal('modal-bulk-import');
+    var m = document.getElementById('modal-bulk-import');
+    if(m) m.classList.remove('open');
+    document.body.style.overflow = '';
+
+    setTimeout(function(){
+      if(typeof _bulkStep === 'function') _bulkStep(1);
+      var fi = document.getElementById('bulk-file');
+      if(fi) fi.value = '';
+      window._bulkFile = null;
+      window._bulkRows = [];
+      bindBulkInput();
+    }, 120);
+  };
+
+  var _origBulkStep = window._bulkStep;
+  if(typeof _origBulkStep === 'function' && !_origBulkStep.__ftWrapped){
+    var wrapped = function(n){
+      _origBulkStep(n);
+      if(n === 1) setTimeout(bindBulkInput, 20);
+    };
+    wrapped.__ftWrapped = true;
+    window._bulkStep = wrapped;
+  }
+
+  document.addEventListener('DOMContentLoaded', bindBulkInput);
+  bindBulkInput();
+})();
+</script>
+
 </body>></html>`;
 
     const w = window.open('','_blank');
@@ -4124,5 +4325,206 @@ function closeDigest(){
 })();
 </script>
 </script>
+
+<script>
+(function(){
+  function normalizeHeader(v, idx){
+    var s = String(v == null ? '' : v).trim();
+    if(!s) return 'col_' + (idx + 1);
+    s = s.toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[.\/\-]+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+    var map = {
+      reference:'ref', shipment_ref:'ref', shipment_reference:'ref', refno:'ref',
+      booking:'booking_no', bookingno:'booking_no', booking_number:'booking_no',
+      quotation:'quotation_no', quotationno:'quotation_no', quotation_number:'quotation_no',
+      clientname:'client', customer:'client', customer_name:'client',
+      origin:'pol', portofloading:'pol', port_of_loading:'pol',
+      destination:'pod', portofdischarge:'pod', port_of_discharge:'pod',
+      etd_date:'etd', eta_date:'eta',
+      line:'carrier', shipping_line:'carrier',
+      shipper_name:'shipper', consignee_name:'consignee'
+    };
+    return map[s] || s || ('col_' + (idx + 1));
+  }
+
+  function escapeHtml(v){
+    return String(v == null ? '' : v)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+  }
+
+  function bindBulkInput(){
+    var fi = document.getElementById('bulk-file');
+    if(fi){
+      fi.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
+      fi.onchange = function(){
+        if(this.files && this.files[0]) window.bulkFileSelected(this.files[0]);
+      };
+    }
+
+    var dz = document.getElementById('bulk-drop-zone');
+    if(dz){
+      dz.onclick = function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        var input = document.getElementById('bulk-file');
+        if(input){ input.value = ''; input.click(); }
+      };
+      dz.ondragover = function(e){
+        e.preventDefault();
+        dz.style.borderColor = 'var(--accent)';
+        dz.style.background = 'var(--bg3)';
+      };
+      dz.ondragleave = function(){
+        dz.style.borderColor = 'var(--border)';
+        dz.style.background = '';
+      };
+      dz.ondrop = function(e){
+        e.preventDefault();
+        dz.style.borderColor = 'var(--border)';
+        dz.style.background = '';
+        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]){
+          window.bulkFileSelected(e.dataTransfer.files[0]);
+        }
+      };
+    }
+  }
+
+  window.showBulkPreview = function(rows){
+    if(typeof _bulkStep === 'function') _bulkStep(2);
+
+    var info = document.getElementById('bulk-preview-info');
+    var tbl = document.getElementById('bulk-preview-table');
+    var cb = document.getElementById('bulk-confirm-btn');
+
+    if(!rows || !rows.length){
+      if(info) info.innerHTML = 'No rows found.';
+      if(tbl) tbl.innerHTML = '';
+      if(cb) cb.style.display = 'none';
+      return;
+    }
+
+    var preferred = ['ref','ref2','mode','carrier','shipper','consignee','client','pol','pod','etd','eta','status','incoterm','booking_no'];
+    var keys = Object.keys(rows[0] || {});
+    var cols = preferred.filter(function(k){ return keys.indexOf(k) >= 0; })
+      .concat(keys.filter(function(k){ return preferred.indexOf(k) < 0; }));
+    if(!cols.length) cols = keys;
+
+    if(info) info.innerHTML = '<strong>' + rows.length + '</strong> shipments ready to import. First 50 shown below.';
+
+    var thead = '<thead><tr>' + cols.map(function(c){
+      return '<th style="background:var(--accent);color:#fff;padding:8px;font-size:11px;text-transform:uppercase;white-space:nowrap;position:sticky;top:0">' + escapeHtml(c) + '</th>';
+    }).join('') + '</tr></thead>';
+
+    var tbody = '<tbody>' + rows.slice(0,50).map(function(row,i){
+      var hasRef = row.ref && String(row.ref).trim();
+      var bg = hasRef ? (i % 2 === 0 ? 'var(--bg)' : 'var(--bg2)') : 'rgba(239,68,68,.07)';
+      return '<tr style="background:' + bg + '">' + cols.map(function(c){
+        var v = row[c] == null ? '' : String(row[c]);
+        var st = 'padding:7px;font-size:12px;border-bottom:1px solid var(--border)';
+        if(c === 'ref' && !v.trim()) st += ';color:var(--red);font-weight:700';
+        if((c === 'etd' || c === 'eta') && v.trim()) st += ';color:var(--accent);font-weight:600';
+        return '<td style="' + st + '">' + escapeHtml(v) + '</td>';
+      }).join('') + '</tr>';
+    }).join('') + '</tbody>';
+
+    if(tbl){
+      tbl.innerHTML = '<table style="width:100%;border-collapse:collapse">' + thead + tbody + '</table>' +
+        (rows.length > 50 ? '<div style="font-size:11px;padding:8px;text-align:center;color:var(--text2)">Showing first 50 of ' + rows.length + ' rows</div>' : '');
+    }
+    if(cb) cb.style.display = '';
+  };
+
+  window.bulkFileSelected = async function(file){
+    if(!file) return;
+    window._bulkFile = file;
+
+    var ps = document.getElementById('bulk-parse-status');
+    var dz = document.getElementById('bulk-drop-zone');
+
+    if(dz){
+      dz.innerHTML = '<i class="ph ph-file-xls" style="font-size:28px;color:#22c55e;display:block"></i>' +
+        '<div style="font-size:13px;font-weight:700">' + escapeHtml(file.name) + '</div>' +
+        '<div style="font-size:11px;color:var(--text2)">' + (file.size / 1024).toFixed(1) + ' KB</div>';
+    }
+
+    if(ps){
+      ps.style.display = 'block';
+      ps.innerHTML = '<i class="ph ph-spinner"></i> Parsing file...';
+    }
+
+    try{
+      if(typeof XLSX === 'undefined') throw new Error('XLSX library not loaded');
+
+      var buf = await file.arrayBuffer();
+      var wb = XLSX.read(new Uint8Array(buf), { type:'array', cellDates:true });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var aoa = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', blankrows:false, raw:false });
+
+      if(!aoa || !aoa.length) throw new Error('No rows found in file');
+
+      var headers = (aoa[0] || []).map(normalizeHeader);
+      var rows = aoa.slice(1)
+        .filter(function(r){
+          return Array.isArray(r) && r.some(function(v){ return String(v == null ? '' : v).trim() !== ''; });
+        })
+        .map(function(r){
+          var obj = {};
+          headers.forEach(function(h, i){ obj[h] = r[i] == null ? '' : String(r[i]); });
+          return obj;
+        });
+
+      window._bulkRows = rows;
+      if(!rows.length) throw new Error('No data rows found under the header row');
+
+      if(ps) ps.style.display = 'none';
+      window.showBulkPreview(rows);
+    }catch(err){
+      if(ps){
+        ps.style.display = 'block';
+        ps.innerHTML = '<span style="color:var(--red)">Parse error: ' + escapeHtml(err.message) + '</span>';
+      }
+    }
+  };
+
+  bulkFileSelected = window.bulkFileSelected;
+  showBulkPreview = window.showBulkPreview;
+
+  window.closeBulkImport = function(){
+    if(typeof closeModal === 'function') closeModal('modal-bulk-import');
+    var m = document.getElementById('modal-bulk-import');
+    if(m) m.classList.remove('open');
+    document.body.style.overflow = '';
+
+    setTimeout(function(){
+      if(typeof _bulkStep === 'function') _bulkStep(1);
+      var fi = document.getElementById('bulk-file');
+      if(fi) fi.value = '';
+      window._bulkFile = null;
+      window._bulkRows = [];
+      bindBulkInput();
+    }, 120);
+  };
+
+  var _origBulkStep = window._bulkStep;
+  if(typeof _origBulkStep === 'function' && !_origBulkStep.__ftWrapped){
+    var wrapped = function(n){
+      _origBulkStep(n);
+      if(n === 1) setTimeout(bindBulkInput, 20);
+    };
+    wrapped.__ftWrapped = true;
+    window._bulkStep = wrapped;
+  }
+
+  document.addEventListener('DOMContentLoaded', bindBulkInput);
+  bindBulkInput();
+})();
+</script>
+
 </body>
 </html>
