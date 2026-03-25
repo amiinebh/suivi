@@ -81,6 +81,52 @@ async def create_shipment(request: Request, db: Session = Depends(get_db),
         import traceback; traceback.print_exc()
         raise HTTPException(500, f"Failed to create shipment: {str(e)}")
 
+
+# Bulk Import
+@app.post("/api/shipments/bulk")
+async def bulk_import_shipments(request: Request, db: Session = Depends(get_db),
+                                 current=Depends(get_current_user)):
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(400, "Invalid JSON body")
+
+    rows = body.get("shipments", [])
+    if not rows:
+        raise HTTPException(400, "No shipments provided")
+
+    allowed = set(schemas.ShipmentCreate.model_fields.keys())
+    created_count = 0
+    skipped = []
+
+    for row in rows:
+        ref = str(row.get("ref", "")).strip()
+        if not ref:
+            skipped.append({"ref": None, "reason": "Missing ref"})
+            continue
+        if crud.get_shipment(db, ref):
+            skipped.append({"ref": ref, "reason": "Already exists"})
+            continue
+        sdata = {}
+        for k, v in row.items():
+            if k not in allowed:
+                continue
+            if isinstance(v, str):
+                sdata[k] = v.strip() if v.strip() != "" else None
+            else:
+                sdata[k] = v
+        sdata["ref"] = ref
+        sdata.setdefault("mode", "Ocean")
+        sdata.setdefault("status", "Confirmed")
+        try:
+            s = schemas.ShipmentCreate(**sdata)
+            crud.create_shipment(db, s)
+            created_count += 1
+        except Exception as e:
+            skipped.append({"ref": ref, "reason": str(e)})
+
+    return {"created": created_count, "skipped": skipped, "total": len(rows)}
+
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
 def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     s = crud.get_shipment_by_id(db, sid)
