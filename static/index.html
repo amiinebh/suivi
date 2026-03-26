@@ -574,7 +574,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="nav-item" onclick="exportXLSX()">
       <i class="ph ph-table"></i><span class="nav-label">Export XLSX</span>
     </div>
-    <div class="nav-item admin-only" onclick="openModal('modal-bulk-import'); setTimeout(function(){ if(typeof _bulkStep==='function') _bulkStep(1); }, 50);">
+    <div class="nav-item admin-only" onclick="openModal('modal-bulk-import');_bulkStep(1)">
       <i class="ph ph-file-arrow-up" style="color:#22c55e"></i><span class="nav-label">Import XLSX</span>
     </div>
 
@@ -655,7 +655,7 @@ textarea.form-control{resize:vertical;min-height:72px}
           <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-shipment')">
             <i class="ph ph-plus"></i> New Shipment
           </button>
-          <button class="btn btn-ghost btn-sm" onclick="openModal('modal-bulk-import'); setTimeout(function(){ if(typeof _bulkStep==='function') _bulkStep(1); }, 50);">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('modal-bulk-import');_bulkStep(1)">
             <i class="ph ph-upload-simple"></i> Bulk Import
           </button>
         </div>
@@ -2196,7 +2196,7 @@ window.addEventListener("DOMContentLoaded", () => {
           <div style="font-size:14px;font-weight:700;color:var(--text1)">Drop .xlsx file here</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>
         </div>
-        <input id="bulk-file" type="file" accept=".xlsx,.xls" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
+        <input id="bulk-file" type="file" accept=".xlsx,.xls" style="display:none" onchange="if(window.bulkFileSelected) window.bulkFileSelected(this.files[0]);"/>
         <div id="bulk-parse-status" style="display:none;margin-top:12px;text-align:center;font-size:13px"></div>
       </div>
       <div id="bulk-step-preview" style="display:none">
@@ -3094,7 +3094,7 @@ async function generateReport(){
     if(fi){
       fi.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
       fi.onchange = function(){
-        if(this.files && this.files[0]) bulkFileSelected(this.files[0]);
+        if(this.files && this.files[0]) { var fn = window.bulkFileSelected || (typeof bulkFileSelected !== 'undefined' && bulkFileSelected); if(fn) fn(this.files[0]); }
       };
     }
     var dz = document.getElementById('bulk-drop-zone');
@@ -3111,7 +3111,7 @@ async function generateReport(){
         e.preventDefault();
         dz.style.borderColor='var(--border)';
         dz.style.background='';
-        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) bulkFileSelected(e.dataTransfer.files[0]);
+        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) { var _f = e.dataTransfer.files[0]; var fn = window.bulkFileSelected || (typeof bulkFileSelected !== 'undefined' && bulkFileSelected); if(fn) fn(_f); }
       };
     }
   }
@@ -3477,6 +3477,7 @@ function bulkFileSelected(file){
   };
   reader.readAsArrayBuffer(file);
 }
+window.bulkFileSelected = bulkFileSelected;
 function showBulkPreview(rows){
   _bulkStep(2);
   var info=document.getElementById("bulk-preview-info");
@@ -3939,7 +3940,7 @@ function closeDigest(){
     if(fi){
       fi.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
       fi.onchange = function(){
-        if(this.files && this.files[0]) bulkFileSelected(this.files[0]);
+        if(this.files && this.files[0]) { var fn = window.bulkFileSelected || (typeof bulkFileSelected !== 'undefined' && bulkFileSelected); if(fn) fn(this.files[0]); }
       };
     }
     var dz = document.getElementById('bulk-drop-zone');
@@ -3956,7 +3957,7 @@ function closeDigest(){
         e.preventDefault();
         dz.style.borderColor='var(--border)';
         dz.style.background='';
-        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) bulkFileSelected(e.dataTransfer.files[0]);
+        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) { var _f = e.dataTransfer.files[0]; var fn = window.bulkFileSelected || (typeof bulkFileSelected !== 'undefined' && bulkFileSelected); if(fn) fn(_f); }
       };
     }
   }
