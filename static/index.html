@@ -3197,86 +3197,27 @@ async function generateReport(){
 <script>
 (function(){
 
-  /* ── Delete ALL shipments ── */
-  window.deleteAllShipments = async function(){
-    if(!confirm('WARNING: Delete ALL shipments? This is irreversible!')) return;
-    if(!confirm('Are you absolutely sure? All shipment data will be permanently deleted.')) return;
-    var btn = document.querySelector('#bulk-toolbar button:last-child');
-    if(btn){ btn.disabled=true; btn.innerHTML='<i class="ph ph-spinner"></i> Deleting...'; }
-    try{
-      var ships = await apiFetch('/api/shipments');
-      for(var i=0; i<ships.length; i++){
-        await apiFetch('/api/shipments/'+ships[i].id, {method:'DELETE'});
+  /* ── Fix 1: renderTable rows store data-sid so toggleAllShipments works reliably ── */
+  var _origRenderTable = window.renderTable;
+  window.renderTable = function(ships){
+    if(typeof _origRenderTable === 'function') _origRenderTable(ships);
+    /* After render, stamp data-sid onto every row checkbox */
+    var boxes = document.querySelectorAll('#ship-table input[type="checkbox"]:not(#check-all)');
+    boxes.forEach(function(cb){
+      if(!cb.dataset.sid){
+        var m = (cb.getAttribute('onchange')||'').match(/\d+/);
+        if(m) cb.dataset.sid = m[0];
       }
-      window._selectedShips = new Set();
-      _updateBulkToolbar();
-      toast('All shipments deleted','success');
-      if(typeof loadShipments==='function') loadShipments();
-      if(typeof loadDashboard==='function') loadDashboard();
-    }catch(e){
-      toast(e.message||'Delete failed','error');
-    }finally{
-      if(btn){ btn.disabled=false; btn.innerHTML='<i class="ph ph-warning"></i> Delete ALL'; }
-    }
+    });
   };
 
-  /* ── Delete SELECTED shipments ── */
-  window.bulkDeleteShipments = async function(){
-    window._selectedShips = window._selectedShips || new Set();
-    var ids = Array.from(window._selectedShips);
-    if(!ids.length){ toast('No shipments selected','error'); return; }
-    if(!confirm('Delete '+ids.length+' selected shipment(s)? This cannot be undone.')) return;
-    var btn = document.querySelector('#bulk-toolbar .btn-danger');
-    if(btn){ btn.disabled=true; btn.innerHTML='<i class="ph ph-spinner"></i> Deleting...'; }
-    try{
-      for(var i=0; i<ids.length; i++){
-        await apiFetch('/api/shipments/'+ids[i], {method:'DELETE'});
-      }
-      window._selectedShips = new Set();
-      _updateBulkToolbar();
-      toast(ids.length+' shipment(s) deleted','success');
-      if(typeof loadShipments==='function') loadShipments();
-      if(typeof loadDashboard==='function') loadDashboard();
-    }catch(e){
-      toast(e.message||'Delete failed','error');
-    }finally{
-      if(btn){ btn.disabled=false; btn.innerHTML='<i class="ph ph-trash"></i> Delete Selected'; }
-    }
-  };
-
-  /* ── Select All (all pages) ── */
-  window.selectAllShipments = function(){
-    window._selectedShips = window._selectedShips || new Set();
-    var ships = window._pgShips || window.allShipments || [];
-    ships.forEach(function(sh){ if(sh.id) window._selectedShips.add(sh.id); });
-    document.querySelectorAll('#ship-table input[type="checkbox"]:not(#check-all)').forEach(function(cb){ cb.checked=true; });
-    document.querySelectorAll('#ship-cards input[type="checkbox"]').forEach(function(cb){ cb.checked=true; });
-    var ca = document.getElementById('check-all');
-    if(ca){ ca.checked=true; ca.indeterminate=false; }
-    _updateBulkToolbar();
-  };
-
-  /* ── Clear selection ── */
-  window.clearSelectionShipments = function(){
-    window._selectedShips = new Set();
-    document.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ cb.checked=false; cb.indeterminate=false; });
-    _updateBulkToolbar();
-  };
-
-  /* ── Toggle single shipment ── */
-  window.toggleShipmentSelect = function(id, checked){
-    window._selectedShips = window._selectedShips || new Set();
-    if(checked) window._selectedShips.add(id);
-    else window._selectedShips.delete(id);
-    _updateBulkToolbar();
-  };
-
-  /* ── Toggle all (header checkbox) ── */
+  /* ── Fix 2: reliable toggleAllShipments using data-sid ── */
   window.toggleAllShipments = function(checked){
     window._selectedShips = window._selectedShips || new Set();
     var boxes = document.querySelectorAll('#ship-table input[type="checkbox"]:not(#check-all)');
     boxes.forEach(function(cb){
       cb.checked = checked;
+      /* get id from data-sid first, fallback to regex on onchange */
       var sid = cb.dataset.sid || ((cb.getAttribute('onchange')||'').match(/\d+/)||[])[0];
       if(!sid) return;
       var id = parseInt(sid, 10);
@@ -3286,20 +3227,74 @@ async function generateReport(){
     _updateBulkToolbar();
   };
 
-  /* ── Update toolbar visibility & count ── */
+  /* ── Fix 3: cards view — always show checkboxes (remove isBulk guard) ── */
+  var _origRenderCards = window.renderCards || null;
+
+  /* Patch renderPage to always show checkboxes on cards */
+  var _origRenderPage = window.renderPage;
+  window.renderPage = function(){
+    if(typeof _origRenderPage === 'function') _origRenderPage();
+    /* Force checkboxes visible on mobile cards */
+    setTimeout(function(){
+      document.querySelectorAll('#ship-cards .ship-card').forEach(function(card){
+        if(card.querySelector('input[type="checkbox"]')) return;
+        var id = (card.getAttribute('onclick')||'').match(/\d+/);
+        if(!id) return;
+        var chk = document.createElement('div');
+        chk.setAttribute('onclick','event.stopPropagation()');
+        chk.style.cssText = 'position:absolute;top:12px;right:12px;z-index:2';
+        var inp = document.createElement('input');
+        inp.type = 'checkbox';
+        inp.style.cssText = 'width:16px;height:16px;cursor:pointer';
+        inp.dataset.sid = id[0];
+        if(window._selectedShips && window._selectedShips.has(parseInt(id[0]))) inp.checked = true;
+        inp.addEventListener('change', function(){
+          window._selectedShips = window._selectedShips || new Set();
+          if(this.checked) window._selectedShips.add(parseInt(id[0]));
+          else window._selectedShips.delete(parseInt(id[0]));
+          _updateBulkToolbar();
+        });
+        chk.appendChild(inp);
+        card.style.position = 'relative';
+        card.appendChild(chk);
+      });
+    }, 50);
+  };
+
+  /* ── Fix 4: _updateBulkToolbar — show toolbar for BOTH table and cards ── */
   window._updateBulkToolbar = function(){
     window._selectedShips = window._selectedShips || new Set();
     var n = window._selectedShips.size;
     var tb = document.getElementById('bulk-toolbar');
     var ct = document.getElementById('bulk-count');
-    if(tb) tb.style.display = n > 0 ? 'flex' : 'none';
-    if(ct) ct.textContent = n + ' selected';
+    if(tb){ tb.style.display = n > 0 ? 'flex' : 'none'; }
+    if(ct){ ct.textContent = n + ' selected'; }
+    /* sync check-all header checkbox */
     var ca = document.getElementById('check-all');
     if(ca){
       var all = document.querySelectorAll('#ship-table input[type="checkbox"]:not(#check-all)');
       ca.checked = all.length > 0 && n >= all.length;
       ca.indeterminate = n > 0 && n < all.length;
     }
+  };
+
+  /* ── Fix 5: selectAllShipments — select ALL pages, not just visible ── */
+  window.selectAllShipments = function(){
+    window._selectedShips = window._selectedShips || new Set();
+    var ships = window._pgShips || window.allShipments || [];
+    ships.forEach(function(sh){ if(sh.id) window._selectedShips.add(sh.id); });
+    /* check all visible checkboxes */
+    document.querySelectorAll('#ship-table input[type="checkbox"]:not(#check-all)').forEach(function(cb){ cb.checked = true; });
+    document.querySelectorAll('#ship-cards input[type="checkbox"]').forEach(function(cb){ cb.checked = true; });
+    var ca = document.getElementById('check-all');
+    if(ca) ca.checked = true;
+    _updateBulkToolbar();
+  };
+
+  window.clearSelectionShipments = function(){
+    window._selectedShips = new Set();
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ cb.checked = false; });
+    _updateBulkToolbar();
   };
 
 })();
@@ -4240,86 +4235,27 @@ function closeDigest(){
 <script>
 (function(){
 
-  /* ── Delete ALL shipments ── */
-  window.deleteAllShipments = async function(){
-    if(!confirm('WARNING: Delete ALL shipments? This is irreversible!')) return;
-    if(!confirm('Are you absolutely sure? All shipment data will be permanently deleted.')) return;
-    var btn = document.querySelector('#bulk-toolbar button:last-child');
-    if(btn){ btn.disabled=true; btn.innerHTML='<i class="ph ph-spinner"></i> Deleting...'; }
-    try{
-      var ships = await apiFetch('/api/shipments');
-      for(var i=0; i<ships.length; i++){
-        await apiFetch('/api/shipments/'+ships[i].id, {method:'DELETE'});
+  /* ── Fix 1: renderTable rows store data-sid so toggleAllShipments works reliably ── */
+  var _origRenderTable = window.renderTable;
+  window.renderTable = function(ships){
+    if(typeof _origRenderTable === 'function') _origRenderTable(ships);
+    /* After render, stamp data-sid onto every row checkbox */
+    var boxes = document.querySelectorAll('#ship-table input[type="checkbox"]:not(#check-all)');
+    boxes.forEach(function(cb){
+      if(!cb.dataset.sid){
+        var m = (cb.getAttribute('onchange')||'').match(/\d+/);
+        if(m) cb.dataset.sid = m[0];
       }
-      window._selectedShips = new Set();
-      _updateBulkToolbar();
-      toast('All shipments deleted','success');
-      if(typeof loadShipments==='function') loadShipments();
-      if(typeof loadDashboard==='function') loadDashboard();
-    }catch(e){
-      toast(e.message||'Delete failed','error');
-    }finally{
-      if(btn){ btn.disabled=false; btn.innerHTML='<i class="ph ph-warning"></i> Delete ALL'; }
-    }
+    });
   };
 
-  /* ── Delete SELECTED shipments ── */
-  window.bulkDeleteShipments = async function(){
-    window._selectedShips = window._selectedShips || new Set();
-    var ids = Array.from(window._selectedShips);
-    if(!ids.length){ toast('No shipments selected','error'); return; }
-    if(!confirm('Delete '+ids.length+' selected shipment(s)? This cannot be undone.')) return;
-    var btn = document.querySelector('#bulk-toolbar .btn-danger');
-    if(btn){ btn.disabled=true; btn.innerHTML='<i class="ph ph-spinner"></i> Deleting...'; }
-    try{
-      for(var i=0; i<ids.length; i++){
-        await apiFetch('/api/shipments/'+ids[i], {method:'DELETE'});
-      }
-      window._selectedShips = new Set();
-      _updateBulkToolbar();
-      toast(ids.length+' shipment(s) deleted','success');
-      if(typeof loadShipments==='function') loadShipments();
-      if(typeof loadDashboard==='function') loadDashboard();
-    }catch(e){
-      toast(e.message||'Delete failed','error');
-    }finally{
-      if(btn){ btn.disabled=false; btn.innerHTML='<i class="ph ph-trash"></i> Delete Selected'; }
-    }
-  };
-
-  /* ── Select All (all pages) ── */
-  window.selectAllShipments = function(){
-    window._selectedShips = window._selectedShips || new Set();
-    var ships = window._pgShips || window.allShipments || [];
-    ships.forEach(function(sh){ if(sh.id) window._selectedShips.add(sh.id); });
-    document.querySelectorAll('#ship-table input[type="checkbox"]:not(#check-all)').forEach(function(cb){ cb.checked=true; });
-    document.querySelectorAll('#ship-cards input[type="checkbox"]').forEach(function(cb){ cb.checked=true; });
-    var ca = document.getElementById('check-all');
-    if(ca){ ca.checked=true; ca.indeterminate=false; }
-    _updateBulkToolbar();
-  };
-
-  /* ── Clear selection ── */
-  window.clearSelectionShipments = function(){
-    window._selectedShips = new Set();
-    document.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ cb.checked=false; cb.indeterminate=false; });
-    _updateBulkToolbar();
-  };
-
-  /* ── Toggle single shipment ── */
-  window.toggleShipmentSelect = function(id, checked){
-    window._selectedShips = window._selectedShips || new Set();
-    if(checked) window._selectedShips.add(id);
-    else window._selectedShips.delete(id);
-    _updateBulkToolbar();
-  };
-
-  /* ── Toggle all (header checkbox) ── */
+  /* ── Fix 2: reliable toggleAllShipments using data-sid ── */
   window.toggleAllShipments = function(checked){
     window._selectedShips = window._selectedShips || new Set();
     var boxes = document.querySelectorAll('#ship-table input[type="checkbox"]:not(#check-all)');
     boxes.forEach(function(cb){
       cb.checked = checked;
+      /* get id from data-sid first, fallback to regex on onchange */
       var sid = cb.dataset.sid || ((cb.getAttribute('onchange')||'').match(/\d+/)||[])[0];
       if(!sid) return;
       var id = parseInt(sid, 10);
@@ -4329,20 +4265,74 @@ function closeDigest(){
     _updateBulkToolbar();
   };
 
-  /* ── Update toolbar visibility & count ── */
+  /* ── Fix 3: cards view — always show checkboxes (remove isBulk guard) ── */
+  var _origRenderCards = window.renderCards || null;
+
+  /* Patch renderPage to always show checkboxes on cards */
+  var _origRenderPage = window.renderPage;
+  window.renderPage = function(){
+    if(typeof _origRenderPage === 'function') _origRenderPage();
+    /* Force checkboxes visible on mobile cards */
+    setTimeout(function(){
+      document.querySelectorAll('#ship-cards .ship-card').forEach(function(card){
+        if(card.querySelector('input[type="checkbox"]')) return;
+        var id = (card.getAttribute('onclick')||'').match(/\d+/);
+        if(!id) return;
+        var chk = document.createElement('div');
+        chk.setAttribute('onclick','event.stopPropagation()');
+        chk.style.cssText = 'position:absolute;top:12px;right:12px;z-index:2';
+        var inp = document.createElement('input');
+        inp.type = 'checkbox';
+        inp.style.cssText = 'width:16px;height:16px;cursor:pointer';
+        inp.dataset.sid = id[0];
+        if(window._selectedShips && window._selectedShips.has(parseInt(id[0]))) inp.checked = true;
+        inp.addEventListener('change', function(){
+          window._selectedShips = window._selectedShips || new Set();
+          if(this.checked) window._selectedShips.add(parseInt(id[0]));
+          else window._selectedShips.delete(parseInt(id[0]));
+          _updateBulkToolbar();
+        });
+        chk.appendChild(inp);
+        card.style.position = 'relative';
+        card.appendChild(chk);
+      });
+    }, 50);
+  };
+
+  /* ── Fix 4: _updateBulkToolbar — show toolbar for BOTH table and cards ── */
   window._updateBulkToolbar = function(){
     window._selectedShips = window._selectedShips || new Set();
     var n = window._selectedShips.size;
     var tb = document.getElementById('bulk-toolbar');
     var ct = document.getElementById('bulk-count');
-    if(tb) tb.style.display = n > 0 ? 'flex' : 'none';
-    if(ct) ct.textContent = n + ' selected';
+    if(tb){ tb.style.display = n > 0 ? 'flex' : 'none'; }
+    if(ct){ ct.textContent = n + ' selected'; }
+    /* sync check-all header checkbox */
     var ca = document.getElementById('check-all');
     if(ca){
       var all = document.querySelectorAll('#ship-table input[type="checkbox"]:not(#check-all)');
       ca.checked = all.length > 0 && n >= all.length;
       ca.indeterminate = n > 0 && n < all.length;
     }
+  };
+
+  /* ── Fix 5: selectAllShipments — select ALL pages, not just visible ── */
+  window.selectAllShipments = function(){
+    window._selectedShips = window._selectedShips || new Set();
+    var ships = window._pgShips || window.allShipments || [];
+    ships.forEach(function(sh){ if(sh.id) window._selectedShips.add(sh.id); });
+    /* check all visible checkboxes */
+    document.querySelectorAll('#ship-table input[type="checkbox"]:not(#check-all)').forEach(function(cb){ cb.checked = true; });
+    document.querySelectorAll('#ship-cards input[type="checkbox"]').forEach(function(cb){ cb.checked = true; });
+    var ca = document.getElementById('check-all');
+    if(ca) ca.checked = true;
+    _updateBulkToolbar();
+  };
+
+  window.clearSelectionShipments = function(){
+    window._selectedShips = new Set();
+    document.querySelectorAll('input[type="checkbox"]').forEach(function(cb){ cb.checked = false; });
+    _updateBulkToolbar();
   };
 
 })();
