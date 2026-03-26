@@ -489,25 +489,13 @@ textarea.form-control{resize:vertical;min-height:72px}
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-window.__ftBulkQ = window.__ftBulkQ || [];
-window.__ftBulkFlush = function(){
-  try {
-    if (!Array.isArray(window.__ftBulkQ)) return;
-    var q = window.__ftBulkQ.slice();
-    window.__ftBulkQ.length = 0;
-    q.forEach(function(item){
-      if(item && item.type === 'step' && typeof window.__ftBulkStepImpl === 'function') window.__ftBulkStepImpl(item.n);
-      if(item && item.type === 'file' && typeof window.__ftBulkFileImpl === 'function') window.__ftBulkFileImpl(item.file);
-    });
-  } catch(e) {}
+window.bulkFileSelected = window.bulkFileSelected || function(file){
+  if (typeof window.__realBulkFileSelected === 'function') return window.__realBulkFileSelected(file);
+  window.__pendingBulkFile = file || null;
 };
 window._bulkStep = window._bulkStep || function(n){
-  if(typeof window.__ftBulkStepImpl === 'function') return window.__ftBulkStepImpl(n);
-  window.__ftBulkQ.push({type:'step', n:n});
-};
-window.bulkFileSelected = window.bulkFileSelected || function(file){
-  if(typeof window.__ftBulkFileImpl === 'function') return window.__ftBulkFileImpl(file);
-  window.__ftBulkQ.push({type:'file', file:file});
+  if (typeof window.__realBulkStep === 'function') return window.__realBulkStep(n);
+  window.__pendingBulkStep = n;
 };
 </script>
 </head>
@@ -3116,7 +3104,9 @@ async function generateReport(){
     if(fi){
       fi.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
       fi.onchange = function(){
-        if(this.files && this.files[0]) window.bulkFileSelected && window.bulkFileSelected(this.files[0]);
+        if(this.files && this.files[0]) {
+          window.bulkFileSelected(this.files[0]);
+        }
       };
     }
     var dz = document.getElementById('bulk-drop-zone');
@@ -3327,6 +3317,32 @@ async function generateReport(){
 })();
 </script>
 
+<script>
+(function(){
+  function bindFinalBulkInput(){
+    var fi = document.getElementById('bulk-file');
+    if (!fi) return;
+    fi.onchange = function(){
+      if (this.files && this.files[0]) {
+        window.bulkFileSelected(this.files[0]);
+      }
+    };
+    var dz = document.getElementById('bulk-drop-zone');
+    if (dz) {
+      dz.ondrop = function(e){
+        e.preventDefault();
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+          window.bulkFileSelected(e.dataTransfer.files[0]);
+        }
+      };
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindFinalBulkInput);
+  else bindFinalBulkInput();
+  window.addEventListener('load', bindFinalBulkInput);
+  setTimeout(bindFinalBulkInput, 300);
+})();
+</script>
 </body>></html>`;
 
     const w = window.open('','_blank');
@@ -3455,7 +3471,7 @@ function fmtd(d){
   }catch(e){return String(d);}
 }
 var _bulkFile=null,_bulkRows=[];
-window.__ftBulkStepImpl = function(n){
+window.__realBulkStep = function(n){
   ["bulk-step-upload","bulk-step-preview","bulk-step-result"].forEach(function(id,i){
     var el=document.getElementById(id);if(el)el.style.display=(i===(n-1))?"":"none";
   });
@@ -3477,7 +3493,7 @@ function closeBulkImport(){
   document.body.style.overflow='';
   setTimeout(function(){window._bulkStep(1);},200);
 }
-window.__ftBulkFileImpl = function(file){
+window.__realBulkFileSelected = function(file){
   if(!file)return;
   _bulkFile=file;
   var ps=document.getElementById("bulk-parse-status");
@@ -3499,10 +3515,16 @@ window.__ftBulkFileImpl = function(file){
   };
   reader.readAsArrayBuffer(file);
 }
-
-window._bulkStep = function(n){ return window.__ftBulkStepImpl(n); };
-window.bulkFileSelected = function(file){ return window.__ftBulkFileImpl(file); };
-window.__ftBulkFlush();
+window.bulkFileSelected = function(file){ return window.__realBulkFileSelected(file); };
+window._bulkStep = function(n){ return window.__realBulkStep(n); };
+if (window.__pendingBulkStep != null && typeof window.__realBulkStep === 'function') {
+  try { window.__realBulkStep(window.__pendingBulkStep); } catch(e) {}
+  window.__pendingBulkStep = null;
+}
+if (window.__pendingBulkFile && typeof window.__realBulkFileSelected === 'function') {
+  try { window.__realBulkFileSelected(window.__pendingBulkFile); } catch(e) {}
+  window.__pendingBulkFile = null;
+}
 function showBulkPreview(rows){
   window._bulkStep(2);
   var info=document.getElementById("bulk-preview-info");
@@ -3965,7 +3987,9 @@ function closeDigest(){
     if(fi){
       fi.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
       fi.onchange = function(){
-        if(this.files && this.files[0]) window.bulkFileSelected && window.bulkFileSelected(this.files[0]);
+        if(this.files && this.files[0]) {
+          window.bulkFileSelected(this.files[0]);
+        }
       };
     }
     var dz = document.getElementById('bulk-drop-zone');
