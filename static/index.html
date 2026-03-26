@@ -574,7 +574,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="nav-item" onclick="exportXLSX()">
       <i class="ph ph-table"></i><span class="nav-label">Export XLSX</span>
     </div>
-    <div class="nav-item admin-only" onclick="openModal('modal-bulk-import');_bulkStep(1)">
+    <div class="nav-item admin-only" onclick="openModal('modal-bulk-import'); setTimeout(function(){ if(typeof _bulkStep==='function') _bulkStep(1); }, 50);">
       <i class="ph ph-file-arrow-up" style="color:#22c55e"></i><span class="nav-label">Import XLSX</span>
     </div>
 
@@ -655,7 +655,7 @@ textarea.form-control{resize:vertical;min-height:72px}
           <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-shipment')">
             <i class="ph ph-plus"></i> New Shipment
           </button>
-          <button class="btn btn-ghost btn-sm" onclick="openModal('modal-bulk-import');_bulkStep(1)">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('modal-bulk-import'); setTimeout(function(){ if(typeof _bulkStep==='function') _bulkStep(1); }, 50);">
             <i class="ph ph-upload-simple"></i> Bulk Import
           </button>
         </div>
@@ -3302,80 +3302,6 @@ async function generateReport(){
     }
   };
 
-})();
-</script>
-
-
-<script>
-(function(){
-  function _getBulkStep(){
-    if (typeof window.bulkStep === 'function') return window.bulkStep;
-    if (typeof bulkStep === 'function') return bulkStep;
-    return null;
-  }
-  function _getBulkFileSelected(){
-    if (typeof window.bulkFileSelected === 'function') return window.bulkFileSelected;
-    if (typeof bulkFileSelected === 'function') return bulkFileSelected;
-    return null;
-  }
-  window.__bulkStep = function(n){
-    var fn = _getBulkStep();
-    if (fn) return fn(n);
-  };
-  window.bulkStep = window.bulkStep || function(n){
-    var fn = _getBulkStep();
-    if (fn && fn !== window.bulkStep) return fn(n);
-  };
-  window.bulkFileSelected = window.bulkFileSelected || function(file){
-    var fn = _getBulkFileSelected();
-    if (fn && fn !== window.bulkFileSelected) return fn(file);
-  };
-  function bindBulkFallback(){
-    var fi = document.getElementById('bulk-file');
-    if (fi) {
-      fi.onchange = function(){
-        if (this.files && this.files[0]) {
-          var fn = _getBulkFileSelected();
-          if (fn) fn(this.files[0]);
-        }
-      };
-    }
-    var dz = document.getElementById('bulk-drop-zone');
-    if (dz) {
-      dz.onclick = function(ev){
-        ev.preventDefault();
-        ev.stopPropagation();
-        var input = document.getElementById('bulk-file');
-        if (input) {
-          input.value = '';
-          input.click();
-        }
-      };
-      dz.ondragover = function(e){
-        e.preventDefault();
-        this.style.borderColor = 'var(--accent)';
-        this.style.background = 'var(--bg3)';
-      };
-      dz.ondragleave = function(){
-        this.style.borderColor = 'var(--border)';
-        this.style.background = '';
-      };
-      dz.ondrop = function(e){
-        e.preventDefault();
-        this.style.borderColor = 'var(--border)';
-        this.style.background = '';
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
-          var fn = _getBulkFileSelected();
-          if (fn) fn(e.dataTransfer.files[0]);
-        }
-      };
-    }
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindBulkFallback);
-  } else {
-    bindBulkFallback();
-  }
 })();
 </script>
 
