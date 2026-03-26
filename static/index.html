@@ -488,6 +488,28 @@ textarea.form-control{resize:vertical;min-height:72px}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+window.__ftBulkQ = window.__ftBulkQ || [];
+window.__ftBulkFlush = function(){
+  try {
+    if (!Array.isArray(window.__ftBulkQ)) return;
+    var q = window.__ftBulkQ.slice();
+    window.__ftBulkQ.length = 0;
+    q.forEach(function(item){
+      if(item && item.type === 'step' && typeof window.__ftBulkStepImpl === 'function') window.__ftBulkStepImpl(item.n);
+      if(item && item.type === 'file' && typeof window.__ftBulkFileImpl === 'function') window.__ftBulkFileImpl(item.file);
+    });
+  } catch(e) {}
+};
+window._bulkStep = window._bulkStep || function(n){
+  if(typeof window.__ftBulkStepImpl === 'function') return window.__ftBulkStepImpl(n);
+  window.__ftBulkQ.push({type:'step', n:n});
+};
+window.bulkFileSelected = window.bulkFileSelected || function(file){
+  if(typeof window.__ftBulkFileImpl === 'function') return window.__ftBulkFileImpl(file);
+  window.__ftBulkQ.push({type:'file', file:file});
+};
+</script>
 </head>
 <body>
 <script>var formContainers = [];</script>
@@ -574,7 +596,7 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="nav-item" onclick="exportXLSX()">
       <i class="ph ph-table"></i><span class="nav-label">Export XLSX</span>
     </div>
-    <div class="nav-item admin-only" onclick="openModal('modal-bulk-import');_bulkStep(1)">
+    <div class="nav-item admin-only" onclick="openModal('modal-bulk-import');window._bulkStep(1)">
       <i class="ph ph-file-arrow-up" style="color:#22c55e"></i><span class="nav-label">Import XLSX</span>
     </div>
 
@@ -655,7 +677,7 @@ textarea.form-control{resize:vertical;min-height:72px}
           <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-shipment')">
             <i class="ph ph-plus"></i> New Shipment
           </button>
-          <button class="btn btn-ghost btn-sm" onclick="openModal('modal-bulk-import');_bulkStep(1)">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('modal-bulk-import');window._bulkStep(1)">
             <i class="ph ph-upload-simple"></i> Bulk Import
           </button>
         </div>
@@ -2196,7 +2218,7 @@ window.addEventListener("DOMContentLoaded", () => {
           <div style="font-size:14px;font-weight:700;color:var(--text1)">Drop .xlsx file here</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>
         </div>
-        <input id="bulk-file" type="file" accept=".xlsx,.xls" style="display:none" onchange="if(window.bulkFileSelected) window.bulkFileSelected(this.files[0]);"/>
+        <input id="bulk-file" type="file" accept=".xlsx,.xls" style="display:none" onchange="window.bulkFileSelected && window.bulkFileSelected(this.files[0])"/>
         <div id="bulk-parse-status" style="display:none;margin-top:12px;text-align:center;font-size:13px"></div>
       </div>
       <div id="bulk-step-preview" style="display:none">
@@ -3053,7 +3075,7 @@ async function generateReport(){
     var m = document.getElementById('modal-bulk-import');
     if(m) m.classList.remove('open');
     document.body.style.overflow = '';
-    if(typeof _bulkStep === 'function') setTimeout(function(){ _bulkStep(1); }, 200);
+    if(typeof _bulkStep === 'function') setTimeout(function(){ window._bulkStep(1); }, 200);
     else if(typeof _origCloseBulkImport === 'function') _origCloseBulkImport();
   };
 
@@ -3094,7 +3116,7 @@ async function generateReport(){
     if(fi){
       fi.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
       fi.onchange = function(){
-        if(this.files && this.files[0]) { var fn = window.bulkFileSelected || (typeof bulkFileSelected !== 'undefined' && bulkFileSelected); if(fn) fn(this.files[0]); }
+        if(this.files && this.files[0]) window.bulkFileSelected && window.bulkFileSelected(this.files[0]);
       };
     }
     var dz = document.getElementById('bulk-drop-zone');
@@ -3111,7 +3133,7 @@ async function generateReport(){
         e.preventDefault();
         dz.style.borderColor='var(--border)';
         dz.style.background='';
-        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) { var _f = e.dataTransfer.files[0]; var fn = window.bulkFileSelected || (typeof bulkFileSelected !== 'undefined' && bulkFileSelected); if(fn) fn(_f); }
+        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) window.bulkFileSelected && window.bulkFileSelected(e.dataTransfer.files[0]);
       };
     }
   }
@@ -3173,7 +3195,7 @@ async function generateReport(){
   window.closeClientModal = function(){ forceClose('modal-client'); if(typeof _clientEditId !== 'undefined') _clientEditId = null; };
   window.closeBulkImport = function(){
     forceClose('modal-bulk-import');
-    if(typeof _bulkStep === 'function') setTimeout(function(){ _bulkStep(1); prepareBulkPicker(); }, 120);
+    if(typeof _bulkStep === 'function') setTimeout(function(){ window._bulkStep(1); prepareBulkPicker(); }, 120);
     var fi = document.getElementById('bulk-file');
     if(fi) fi.value = '';
     if(typeof _bulkFile !== 'undefined') _bulkFile = null;
@@ -3433,7 +3455,7 @@ function fmtd(d){
   }catch(e){return String(d);}
 }
 var _bulkFile=null,_bulkRows=[];
-function _bulkStep(n){
+window.__ftBulkStepImpl = function(n){
   ["bulk-step-upload","bulk-step-preview","bulk-step-result"].forEach(function(id,i){
     var el=document.getElementById(id);if(el)el.style.display=(i===(n-1))?"":"none";
   });
@@ -3453,9 +3475,9 @@ function _bulkStep(n){
 function closeBulkImport(){
   if(typeof closeModal==="function")closeModal("modal-bulk-import");
   document.body.style.overflow='';
-  setTimeout(function(){_bulkStep(1);},200);
+  setTimeout(function(){window._bulkStep(1);},200);
 }
-function bulkFileSelected(file){
+window.__ftBulkFileImpl = function(file){
   if(!file)return;
   _bulkFile=file;
   var ps=document.getElementById("bulk-parse-status");
@@ -3477,9 +3499,12 @@ function bulkFileSelected(file){
   };
   reader.readAsArrayBuffer(file);
 }
-window.bulkFileSelected = bulkFileSelected;
+
+window._bulkStep = function(n){ return window.__ftBulkStepImpl(n); };
+window.bulkFileSelected = function(file){ return window.__ftBulkFileImpl(file); };
+window.__ftBulkFlush();
 function showBulkPreview(rows){
-  _bulkStep(2);
+  window._bulkStep(2);
   var info=document.getElementById("bulk-preview-info");
   if(info)info.innerHTML="<strong>"+rows.length+"</strong> shipments ready to import. First 50 shown below.";
   var cols=["ref","ref2","mode","carrier","shipper","consignee","client","pol","pod","etd","eta","status","incoterm","booking_no"];
@@ -3510,7 +3535,7 @@ async function doBulkUpload(){
     var token=typeof getToken==="function"?getToken():null;
     var r=await fetch("/api/shipments/bulk-import",{method:"POST",headers:token?{"Authorization":"Bearer "+token}:{},body:fd});
     var d=await r.json();if(!r.ok)throw new Error(d.detail||"Import failed");
-    _bulkStep(3);
+    window._bulkStep(3);
     var rc=document.getElementById("bulk-result-content");
     if(rc)rc.innerHTML='<div style="font-size:40px;margin-bottom:10px">&#9989;</div>'
       +'<div style="font-size:16px;font-weight:700;color:var(--text1)">Import Complete!</div>'
@@ -3940,7 +3965,7 @@ function closeDigest(){
     if(fi){
       fi.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;width:1px;height:1px;';
       fi.onchange = function(){
-        if(this.files && this.files[0]) { var fn = window.bulkFileSelected || (typeof bulkFileSelected !== 'undefined' && bulkFileSelected); if(fn) fn(this.files[0]); }
+        if(this.files && this.files[0]) window.bulkFileSelected && window.bulkFileSelected(this.files[0]);
       };
     }
     var dz = document.getElementById('bulk-drop-zone');
@@ -3957,7 +3982,7 @@ function closeDigest(){
         e.preventDefault();
         dz.style.borderColor='var(--border)';
         dz.style.background='';
-        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) { var _f = e.dataTransfer.files[0]; var fn = window.bulkFileSelected || (typeof bulkFileSelected !== 'undefined' && bulkFileSelected); if(fn) fn(_f); }
+        if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) window.bulkFileSelected && window.bulkFileSelected(e.dataTransfer.files[0]);
       };
     }
   }
@@ -4019,7 +4044,7 @@ function closeDigest(){
   window.closeClientModal = function(){ forceClose('modal-client'); if(typeof _clientEditId !== 'undefined') _clientEditId = null; };
   window.closeBulkImport = function(){
     forceClose('modal-bulk-import');
-    if(typeof _bulkStep === 'function') setTimeout(function(){ _bulkStep(1); prepareBulkPicker(); }, 120);
+    if(typeof _bulkStep === 'function') setTimeout(function(){ window._bulkStep(1); prepareBulkPicker(); }, 120);
     var fi = document.getElementById('bulk-file');
     if(fi) fi.value = '';
     if(typeof _bulkFile !== 'undefined') _bulkFile = null;
@@ -4069,7 +4094,7 @@ function closeDigest(){
 
     input.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px;';
     input.onchange = function(){
-      if(this.files && this.files[0]) window.bulkFileSelected(this.files[0]);
+      if(this.files && this.files[0]) window.window.bulkFileSelected && window.bulkFileSelected(this.files[0]);
     };
 
     dz.onclick = function(e){
@@ -4092,13 +4117,13 @@ function closeDigest(){
       dz.style.borderColor = 'var(--border)';
       dz.style.background = '';
       if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]){
-        window.bulkFileSelected(e.dataTransfer.files[0]);
+        window.window.bulkFileSelected && window.bulkFileSelected(e.dataTransfer.files[0]);
       }
     };
   }
 
   window.showBulkPreview = function(rows){
-    if(typeof _bulkStep === 'function') _bulkStep(2);
+    if(typeof _bulkStep === 'function') window._bulkStep(2);
 
     var info = document.getElementById('bulk-preview-info');
     var tbl = document.getElementById('bulk-preview-table');
@@ -4214,7 +4239,7 @@ function closeDigest(){
     document.body.style.overflow = '';
     if(typeof _bulkStep === 'function'){
       setTimeout(function(){
-        _bulkStep(1);
+        window._bulkStep(1);
         bindBulkPicker();
       }, 120);
     }
