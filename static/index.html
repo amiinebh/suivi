@@ -4118,7 +4118,7 @@ function closeDigest(){
 
     input.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px;';
     input.onchange = function(){
-      if(this.files && this.files[0]) window.window.bulkFileSelected && window.bulkFileSelected(this.files[0]);
+      if(this.files && this.files[0]) window.bulkFileSelected && window.bulkFileSelected(this.files[0]);
     };
 
     dz.onclick = function(e){
@@ -4141,7 +4141,7 @@ function closeDigest(){
       dz.style.borderColor = 'var(--border)';
       dz.style.background = '';
       if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]){
-        window.window.bulkFileSelected && window.bulkFileSelected(e.dataTransfer.files[0]);
+        window.bulkFileSelected && window.bulkFileSelected(e.dataTransfer.files[0]);
       }
     };
   }
