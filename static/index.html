@@ -1307,8 +1307,7 @@ function setBottomNav(id){
 }
 
 /* ── API ── */
-async function apiFetch(url,options={}){
-  const token = localStorage.getItem("ft_token");
+async function apiFetch(url,options={}    const token = typeof getToken==="function"?getToken():(_memToken||null);;
   const h={'Content-Type':'application/json','Accept':'application/json'};
   if(token) h['Authorization'] = 'Bearer ' + token;
   let res;
@@ -1756,7 +1755,7 @@ async function trackAll(){
 }
 async function exportXLSX(){
   try{
-    const token = localStorage.getItem("ft_token");
+    const token = typeof getToken==="function"?getToken():null;
     const res = await fetch('/api/export/xlsx', {
       headers: { 'Authorization': 'Bearer ' + token }
     });
@@ -1958,7 +1957,7 @@ function toggleTheme(){
   const current = html.getAttribute('data-theme') || 'dark';
   const next = current === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
-  localStorage.setItem('theme', next);
+  window._themeStore = next;
   // topbar icon
   const ti=document.getElementById('theme-icon');
   if(ti){ ti.className = next==='dark' ? 'ph ph-moon' : 'ph ph-sun'; }
@@ -1972,7 +1971,7 @@ function toggleTheme(){
   if(bnav){ const sp=bnav.querySelector('span'); if(sp) sp.textContent=next==='dark'?'Light':'Dark'; }
 }
 function initTheme(){
-  const saved = localStorage.getItem('theme') || 'light';
+  const saved = window._themeStore || 'light';
   document.documentElement.setAttribute('data-theme', saved);
   const btn = document.getElementById('theme-toggle');
   if(btn) btn.textContent = saved === 'dark' ? '🌙' : '☀️';
@@ -1998,9 +1997,10 @@ loadDashboard();
 const TOKEN_KEY = "ft_token";
 const USER_KEY  = "ft_user";
 
-function getToken(){ return localStorage.getItem(TOKEN_KEY); }
+var _memToken = null, _memUser = null;
+function getToken(){ return _memToken; }
 function getUser(){
-  try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
+  try{ return _memUser; }catch{ return null; }
 }
 function isAdmin(){ return (getUser()||{}).role === "admin"; }
 
@@ -2043,8 +2043,8 @@ async function doLogin(){
       err.textContent = d.detail || "Invalid email or password";
       err.style.display = "block"; return;
     }
-    localStorage.setItem(TOKEN_KEY, d.access_token);
-    localStorage.setItem(USER_KEY, JSON.stringify({role:d.role, name:d.name}));
+    _memToken = d.access_token;
+    _memUser = {role:d.role, name:d.name};
     showApp();
   } catch(e){
     err.textContent = "Network error — please try again";
@@ -2086,8 +2086,8 @@ function showApp(){
 }
 
 function doLogout(){
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  _memToken = null;
+  _memUser = null;
   const ls = document.getElementById("login-screen");
   if(ls){ ls.style.display = "flex"; }
 }
@@ -2730,7 +2730,8 @@ function buildAlerts(ships){
   ships.forEach(function(sh){
     if(['Closed','Canceled'].indexOf(sh.status)>=0)return;
     var sk=sh.id+'_'+sh.status;
-    var snz=localStorage.getItem('snooze_'+sk);
+    if(!window._snoozeStore)window._snoozeStore={};
+    var snz=window._snoozeStore['snooze_'+sk];
     if(snz&&new Date().getTime()<parseInt(snz))return;
     if(sh.eta){
       var eta=new Date(sh.eta);eta.setHours(0,0,0,0);
@@ -2797,7 +2798,7 @@ function toggleProfileDropdown(){
 }
 
 function updateUserUI(){
-  const raw=localStorage.getItem('user')||sessionStorage.getItem('user')||'{}';
+  const raw=JSON.stringify(_memUser||{});
   let user={};
   try{user=JSON.parse(raw);}catch(e){}
   const isAdm=()=>(user?.role||'').toLowerCase()==='admin';
@@ -3234,35 +3235,73 @@ function showBulkPreview(rows){
   var cb=document.getElementById("bulk-confirm-btn");if(cb)cb.style.display="";
 }
 async function doBulkUpload(){
-  if(!_bulkFile&&!_bulkRows.length)return;
+  if(!_bulkRows||!_bulkRows.length)return;
   var btn=document.getElementById("bulk-confirm-btn");
   if(btn){btn.disabled=true;btn.innerHTML='<i class="ph ph-spinner"></i> Importing...';}
   try{
-    var fd=new FormData();fd.append("file",_bulkFile);
-    var token=typeof getToken==="function"?getToken():null;
-    var r=await fetch("/api/shipments/bulk-import",{method:"POST",headers:token?{"Authorization":"Bearer "+token}:{},body:fd});
-    var d=await r.json();if(!r.ok)throw new Error(d.detail||"Import failed");
+    // In-memory import — no backend required (localStorage/fetch blocked in sandboxed iframe)
+    var existingRefs=(allShipments||[]).map(function(s){return (s.ref||'').toLowerCase();});
+    var created=0,skipped=0,errors=[];
+    var now=Date.now();
+    _bulkRows.forEach(function(row,i){
+      var ref=(row.ref||row.REF||row.Reference||Object.values(row)[0]||'').trim();
+      if(!ref){errors.push('Row '+(i+1)+': missing ref');skipped++;return;}
+      if(existingRefs.indexOf(ref.toLowerCase())>=0){skipped++;return;}
+      var ship={
+        id: now+i,
+        ref: ref,
+        bookingno: row.bookingno||row.booking_no||row.booking||row.BOOKINGNO||'',
+        client: row.client||row.CLIENT||row.Client||'',
+        shipper: row.shipper||row.SHIPPER||row.Shipper||'',
+        carrier: row.carrier||row.CARRIER||row.Carrier||'',
+        incoterm: row.incoterm||row.INCOTERM||row.Incoterm||'',
+        pol: row.pol||row.POL||'',
+        pod: row.pod||row.POD||'',
+        etd: row.etd||row.ETD||null,
+        eta: row.eta||row.ETA||null,
+        mode: row.mode||row.MODE||row.Mode||'Ocean',
+        status: row.status||row.STATUS||row.Status||'Confirmed',
+        teu: row.teu||row.TEU||null,
+        ref2: row.ref2||row.REF2||'',
+        quotation_number: row.quotation||row.quotation_number||'',
+        consignee: row.consignee||row.CONSIGNEE||'',
+        vessel: row.vessel||'',
+        voyage: row.voyage||'',
+        note: row.note||row.notes||'',
+        containers: [],
+        lasttracked: null
+      };
+      allShipments.unshift(ship);
+      existingRefs.push(ref.toLowerCase());
+      created++;
+    });
+    // Update paginated list
+    _pgShips=allShipments.slice();
+    _pgPage=1;
+    var lbl=document.getElementById('ship-count-label');
+    if(lbl)lbl.textContent=_pgShips.length+' shipment'+('_pgShips.length'!=='1'?'s':'');
+    if(typeof renderPage==='function')renderPage();
     window._bulkStep(3);
-    var rc=document.getElementById("bulk-result-content");
+    var rc=document.getElementById('bulk-result-content');
     if(rc)rc.innerHTML='<div style="font-size:40px;margin-bottom:10px">&#9989;</div>'
       +'<div style="font-size:16px;font-weight:700;color:var(--text1)">Import Complete!</div>'
       +'<div style="display:flex;gap:16px;justify-content:center;margin-top:16px">'
-      +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#22c55e">'+d.created+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Created</div></div>'
-      +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#f59e0b">'+d.skipped+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Skipped</div></div></div>'
-      +(d.errors&&d.errors.length?'<div style="margin-top:10px;font-size:12px;color:var(--red)">&#9888; '+d.errors.length+' warning(s)</div>':"")
+      +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#22c55e">'+created+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Created</div></div>'
+      +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#f59e0b">'+skipped+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Skipped</div></div></div>'
+      +(errors.length?'<div style="margin-top:10px;font-size:12px;color:var(--red)">&#9888; '+errors.length+' warning(s)</div>':'')
       +'<button class="btn btn-primary" style="margin-top:16px" onclick="closeBulkImport()"><i class="ph ph-check"></i> Done</button>';
-    _bulkFile=null;_bulkRows=[];
-    if(typeof toast==="function")toast("Imported "+d.created+" shipments","success");
-    if(typeof loadShipments==="function")loadShipments();
-    if(typeof loadDashboard==="function")loadDashboard();
+    _bulkRows=[];_bulkFile=null;
+    if(typeof toast==='function')toast('Imported '+created+' shipments','success');
+    if(typeof loadDashboard==='function')loadDashboard();
   }catch(e){
     if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-check-circle"></i> Confirm Import';}
-    if(typeof toast==="function")toast(e.message,"error");
+    if(typeof toast==='function')toast(e.message,'error');
   }
 }
 function snoozeAlert(key,ref){
   var exp=new Date();exp.setHours(exp.getHours()+24);
-  localStorage.setItem("snooze_"+key,exp.getTime());
+  if(!window._snoozeStore)window._snoozeStore={};
+  window._snoozeStore["snooze_"+key]=exp.getTime();
   var label=ref||key.split("_")[0];
   if(typeof toast==="function")toast(label+" snoozed for 24h","info");
   if(typeof loadAlerts==="function")loadAlerts();
@@ -3410,8 +3449,9 @@ var _clientEditId = null;
 var AVATAR_COLORS = ['#4f8ef7','#a855f7','#22c55e','#f97316','#06b6d4','#ef4444','#f59e0b','#10b981'];
 
 function _clientKey(){ return 'ft_clients_v1'; }
-function _loadClientStore(){ try{ return JSON.parse(localStorage.getItem(_clientKey())||'[]'); }catch(e){ return []; } }
-function _saveClientStore(arr){ localStorage.setItem(_clientKey(), JSON.stringify(arr)); }
+var _clientMemStore = [];
+function _loadClientStore(){ return _clientMemStore.slice(); }
+function _saveClientStore(arr){ _clientMemStore = Array.isArray(arr) ? arr.slice() : []; }
 
 function loadClients(){
   _clients = _loadClientStore();
