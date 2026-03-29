@@ -3620,7 +3620,7 @@ async function cloneShipment(){
     var ship = await apiFetch(`/api/shipments/${sid}`);
 
     // Smart reference: FT-001 → FT-001/A, FT-001/A → FT-001/B
-    var baseRef = ship.ref.replace(//[A-Z]$/, '');
+    var baseRef = ship.ref.replace(/\/[A-Z]$/, '');
     var existingRefs = (allShipments || []).map(function(s){ return s.ref; });
     var suffix = 'A';
     while(existingRefs.indexOf(baseRef + '/' + suffix) !== -1){
@@ -3683,7 +3683,7 @@ function _saveClientStore(arr){ localStorage.setItem(_clientKey(), JSON.stringif
 function loadClients(){
   _clients = _loadClientStore();
   // Enrich with shipment counts from allShipments
-  var ships = (typeof allShipments !== 'undefined' pments : [];
+  var ships = (typeof allShipments !== 'undefined' && allShipments) ? allShipments : [];
   _clients.forEach(function(c){
     c._shipments = ships.filter(function(s){ return (s.client||'').toLowerCase().trim() === (c.name||'').toLowerCase().trim(); }).length;
     c._active    = ships.filter(function(s){ return (s.client||'').toLowerCase().trim() === (c.name||'').toLowerCase().trim() && ['Confirmed','Booked','Stuffed','Sailing'].indexOf(s.status)>=0; }).length;
@@ -3912,6 +3912,8 @@ function closeDigest(){
   closeModal('modal-digest');
 }
 
+
+</script>
 
 <script>
 (function(){
