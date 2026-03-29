@@ -4123,6 +4123,10 @@ function closeDigest(){
   };
 
 })();
+  // Expose to global scope for inline HTML handlers
+  window.showPage = showPage;
+  window.openModal = openModal;
+  window.onSearch = onSearch;  
 </script>
 
 </body>
