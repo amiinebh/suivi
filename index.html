@@ -3501,14 +3501,41 @@ function showBulkPreview(rows){
   var cb=document.getElementById("bulk-confirm-btn");if(cb)cb.style.display="";
 }
 async function doBulkUpload(){
-  if(!_bulkFile&&!_bulkRows.length)return;
+  if(!_bulkFile){
+    if(typeof toast==="function")toast("Please choose an Excel file first","error");
+    return;
+  }
+  if(!_bulkRows.length){
+    if(typeof toast==="function")toast("No rows to import. Please parse a valid file first","error");
+    return;
+  }
+  var hasRef=_bulkRows.some(function(row){
+    if(!row||typeof row!=="object")return false;
+    var keys=Object.keys(row);
+    for(var i=0;i<keys.length;i++){
+      var key=String(keys[i]||"").trim().toLowerCase().replace(/\s+/g,"_");
+      if((key==="ref"||key==="reference"||key==="ref_no"||key==="reference_no")
+        && String(row[keys[i]]||"").trim()) return true;
+    }
+    return false;
+  });
+  if(!hasRef){
+    if(typeof toast==="function")toast('Missing reference column. Add "ref" (or reference/ref no) and try again',"error");
+    return;
+  }
   var btn=document.getElementById("bulk-confirm-btn");
   if(btn){btn.disabled=true;btn.innerHTML='<i class="ph ph-spinner"></i> Importing...';}
   try{
     var fd=new FormData();fd.append("file",_bulkFile);
-    var token=typeof getToken==="function"?getToken():null;
+    var token=null;
+    try{ token=typeof getToken==="function"?getToken():null; }
+    catch(_){
+      try{ token=sessionStorage.getItem("ft_token"); }catch(__){ token=null; }
+    }
     var r=await fetch("/api/shipments/bulk-import",{method:"POST",headers:token?{"Authorization":"Bearer "+token}:{},body:fd});
-    var d=await r.json();if(!r.ok)throw new Error(d.detail||"Import failed");
+    var d={};
+    try{ d=await r.json(); }catch(_){}
+    if(!r.ok)throw new Error((d&&d.detail)||("Import failed ("+r.status+")"));
     _bulkStep(3);
     var rc=document.getElementById("bulk-result-content");
     if(rc)rc.innerHTML='<div style="font-size:40px;margin-bottom:10px">&#9989;</div>'
