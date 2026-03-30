@@ -316,11 +316,30 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
                       current=Depends(get_current_user)):
     import openpyxl
     from datetime import datetime
+    import re
     content = await file.read()
     wb = openpyxl.load_workbook(io.BytesIO(content))
     ws = wb.active
-    headers = [str(c.value).strip().lower().replace(" ", "_") if c.value else ""
-               for c in next(ws.iter_rows(min_row=1, max_row=1))]
+    def normalize_header(value):
+        raw = str(value or "").strip().lower()
+        key = re.sub(r"[^a-z0-9]+", "_", raw).strip("_")
+        aliases = {
+            "reference": "ref",
+            "ref_no": "ref",
+            "reference_no": "ref",
+            "booking": "booking_no",
+            "bookingno": "booking_no",
+            "booking_number": "booking_no",
+            "clientemail": "client_email",
+            "email": "client_email",
+            "quotation": "quotation_number",
+            "quotationno": "quotation_number",
+            "quotation_number": "quotation_number",
+            "lasttracked": "last_tracked",
+            "createdat": "created_at",
+        }
+        return aliases.get(key, key)
+    headers = [normalize_header(c.value) for c in next(ws.iter_rows(min_row=1, max_row=1))]
     created, skipped, errors = [], [], []
     VALID = ["Confirmed","Booked","Stuffed","Sailing","Arrived","Closed","Canceled"]
     def parse_date(val):
@@ -342,16 +361,18 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
             try: teu = int(float(teu_raw)) if teu_raw else None
             except: teu = None
             s = models.Shipment(
-                ref=ref, ref2=rd.get("ref2",""), bookingno=rd.get("bookingno",""),
+                ref=ref, ref2=rd.get("ref2",""), booking_no=rd.get("booking_no",""),
                 mode=rd.get("mode","Ocean"), carrier=rd.get("carrier",""),
                 shipper=rd.get("shipper",""), consignee=rd.get("consignee",""),
-                client=rd.get("client",""), clientemail=rd.get("clientemail",""),
+                client=rd.get("client",""), client_email=rd.get("client_email",""),
                 pol=rd.get("pol",""), pod=rd.get("pod",""),
                 etd=parse_date(rd.get("etd")), eta=parse_date(rd.get("eta")),
                 status=raw_status if raw_status in VALID else "Confirmed",
                 incoterm=rd.get("incoterm",""), vessel=rd.get("vessel",""),
                 voyage=rd.get("voyage",""), teu=teu, note=rd.get("note",""),
-                createdat=datetime.utcnow().isoformat()
+                quotation_number=rd.get("quotation_number",""),
+                last_tracked=rd.get("last_tracked",""),
+                created_at=datetime.utcnow().isoformat()
             )
             db.add(s); db.commit(); created.append(ref)
         except Exception as e:
@@ -508,4 +529,3 @@ def debug_version():
     import inspect, main
     lines = inspect.getsource(main.login)
     return {"login_source": lines}
-
