@@ -18,25 +18,32 @@
 :root{
   --green:#22c55e;--green2:#16a34a;--green-glow:rgba(34,197,94,.14);
   --blue:#3b82f6;--yellow:#f59e0b;--red:#ef4444;--cyan:#06b6d4;--purple:#a855f7;--orange:#f97316;
-  --radius:4px;--radius-sm:4px;--radius-lg:6px;
-  --sidebar-w:52px;--sidebar-exp:216px;
-  --t:.18s cubic-bezier(.4,0,.2,1);
+  --radius:6px;--radius-sm:4px;--radius-lg:10px;--radius-xl:14px;
+  --sidebar-w:52px;--sidebar-exp:220px;
+  --t:.15s cubic-bezier(.4,0,.2,1);
   --accent:var(--green);
-  --fs-base:14px;--fs-sm:12px;--fs-xs:11px;
+  --fs-base:13.5px;--fs-sm:12px;--fs-xs:11px;
+  --shadow-xs:0 1px 2px rgba(0,0,0,.06);
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow:0 2px 8px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:0 4px 12px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.12),0 4px 8px rgba(0,0,0,.06);
 }
 [data-theme="dark"]{
-  --bg:#1c1c1c;--bg2:#212121;--bg3:#282828;
-  --card:#212121;--card2:#2a2a2a;--border:rgba(255,255,255,.08);
-  --text1:#ededed;--text2:#a0a0a0;--text3:#555;
-  --shadow:0 4px 24px rgba(0,0,0,.6);--input-bg:#1c1c1c;
+  --bg:#0f172a;--bg2:#1e293b;--bg3:#334155;
+  --card:#1e293b;--card2:#273547;--border:rgba(148,163,184,.10);
+  --text1:#f1f5f9;--text2:#94a3b8;--text3:#475569;
+  --shadow:0 4px 24px rgba(0,0,0,.5),0 1px 3px rgba(0,0,0,.3);
+  --input-bg:#1e293b;
 }
 [data-theme="light"]{
-  --bg:#f2f2f2;--bg2:#ffffff;--bg3:#ebebeb;
-  --card:#ffffff;--card2:#f7f7f7;--border:rgba(0,0,0,.09);
-  --text1:#111;--text2:#666;--text3:#aaa;
-  --shadow:0 2px 16px rgba(0,0,0,.07);--input-bg:#f7f7f7;
+  --bg:#f8fafc;--bg2:#ffffff;--bg3:#f1f5f9;
+  --card:#ffffff;--card2:#f8fafc;--border:rgba(15,23,42,.08);
+  --text1:#0f172a;--text2:#64748b;--text3:#94a3b8;
+  --shadow:0 1px 3px rgba(15,23,42,.07),0 1px 2px rgba(15,23,42,.04);
+  --input-bg:#f8fafc;
 }
-html,body{height:100%;font-family:Geist,system-ui,sans-serif;font-size:var(--fs-base);background:var(--bg);color:var(--text1);letter-spacing:0;line-height:1.5}
+html,body{height:100%;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:var(--fs-base);background:var(--bg);color:var(--text1);letter-spacing:0;line-height:1.5}
 body{overflow:hidden}
 code,pre,.mono{font-family:'Geist Mono',monospace;letter-spacing:0}
 /* LOGIN */
@@ -463,40 +470,6 @@ textarea.form-control{resize:vertical;min-height:72px}
 @keyframes toastIn  { from { opacity:0; transform:translateY(16px) scale(.96); } to { opacity:1; transform:none; } }
 @keyframes toastOut { from { opacity:1; transform:none; } to { opacity:0; transform:translateY(8px) scale(.96); } }
 
-/* ── Mobile bottom nav ── */
-.mobile-bottom-nav {
-  display:none;
-  position:fixed; bottom:0; left:0; right:0; z-index:200;
-  background:var(--bg1); border-top:1px solid var(--bg3);
-  padding:8px 0 max(8px, env(safe-area-inset-bottom));
-  justify-content:space-around; align-items:center;
-}
-.mbn-item {
-  display:flex; flex-direction:column; align-items:center; gap:3px;
-  font-size:10px; font-weight:600; color:var(--text2);
-  cursor:pointer; padding:4px 12px; border-radius:10px;
-  transition:color .15s, background .15s;
-}
-.mbn-item i { font-size:20px; }
-.mbn-item.active, .mbn-item:hover { color:var(--accent); }
-@media (max-width: 768px) {
-  .mobile-bottom-nav { display:flex; }
-  .sidebar { display:none !important; }
-  .main-content { margin-left:0 !important; padding-bottom:72px; }
-}
-
-/* ── Column visibility toggle ── */
-.col-toggle-wrap { position:relative; display:inline-block; }
-.col-toggle-panel {
-  display:none; position:absolute; right:0; top:calc(100% + 6px); z-index:100;
-  background:var(--bg1); border:1px solid var(--bg3); border-radius:12px;
-  padding:12px 14px; min-width:180px;
-  box-shadow:0 8px 32px rgba(0,0,0,.15);
-}
-.col-toggle-panel.open { display:block; }
-.col-toggle-item { display:flex; align-items:center; gap:8px; padding:5px 0;
-  font-size:12px; font-weight:500; color:var(--text1); cursor:pointer; }
-.col-toggle-item input { accent-color:var(--accent); width:14px; height:14px; }
 
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
@@ -3087,25 +3060,6 @@ async function generateReport(){
       +'FreightTrack Pro \u00b7 Report generated '+today.toLocaleString()+' \u00b7 '+total+' shipments \u00b7 '+totalTeu+' TEU'
       +'</div>'
       +'</div>
-<!-- Mobile Bottom Nav -->
-<nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-  <div class="mbn-item active" id="mbn-shipments" onclick="showPage('shipments',this);setMbn('mbn-shipments')">
-    <i class="ph ph-package"></i><span>Shipments</span>
-  </div>
-  <div class="mbn-item" id="mbn-analytics" onclick="showPage('analytics',this);setMbn('mbn-analytics')">
-    <i class="ph ph-chart-bar"></i><span>KPIs</span>
-  </div>
-  <div class="mbn-item" id="mbn-alerts" onclick="showPage('alerts',this);setMbn('mbn-alerts')">
-    <i class="ph ph-bell"></i><span>Alerts</span>
-  </div>
-  <div class="mbn-item" id="mbn-files" onclick="showPage('files',this);setMbn('mbn-files')">
-    <i class="ph ph-folder"></i><span>Files</span>
-  </div>
-  <div class="mbn-item" id="mbn-users" onclick="if(isAdmin())showPage('users',this);setMbn('mbn-users')">
-    <i class="ph ph-users"></i><span>Users</span>
-  </div>
-</nav>
-
 <script>
 /* ── Relative time helper ── */
 function relativeTime(dateStr){
@@ -3864,101 +3818,7 @@ function closeDigest(){
 }
 </script>
 
-<!-- Mobile Bottom Nav -->
-<nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-  <div class="mbn-item active" id="mbn-shipments" onclick="showPage('shipments',this);setMbn('mbn-shipments')">
-    <i class="ph ph-package"></i><span>Shipments</span>
-  </div>
-  <div class="mbn-item" id="mbn-analytics" onclick="showPage('analytics',this);setMbn('mbn-analytics')">
-    <i class="ph ph-chart-bar"></i><span>KPIs</span>
-  </div>
-  <div class="mbn-item" id="mbn-alerts" onclick="showPage('alerts',this);setMbn('mbn-alerts')">
-    <i class="ph ph-bell"></i><span>Alerts</span>
-  </div>
-  <div class="mbn-item" id="mbn-files" onclick="showPage('files',this);setMbn('mbn-files')">
-    <i class="ph ph-folder"></i><span>Files</span>
-  </div>
-  <div class="mbn-item" id="mbn-users" onclick="if(isAdmin())showPage('users',this);setMbn('mbn-users')">
-    <i class="ph ph-users"></i><span>Users</span>
-  </div>
-</nav>
 
-<script>
-/* ── Relative time helper ── */
-function relativeTime(dateStr){
-  if(!dateStr) return '--';
-  var d = new Date(String(dateStr).split('T')[0]);
-  if(isNaN(d)) return dateStr;
-  var diff = Date.now() - d.getTime();
-  var abs  = Math.abs(diff);
-  var future = diff < 0;
-  if(abs < 60000)   return 'just now';
-  if(abs < 3600000) return (future?'in ':'') + Math.floor(abs/60000) + 'm' + (future?'':' ago');
-  if(abs < 86400000)return (future?'in ':'') + Math.floor(abs/3600000) + 'h' + (future?'':' ago');
-  if(abs < 2592000) return (future?'in ':'') + Math.floor(abs/86400000) + 'd' + (future?'':' ago');
-  if(abs < 31536000)return (future?'in ':'') + Math.floor(abs/2592000) + 'mo' + (future?'':' ago');
-  return (future?'in ':'') + Math.floor(abs/31536000) + 'y' + (future?'':' ago');
-}
-
-/* ── Skeleton builder ── */
-function skeletonRows(n, cols){
-  var widths=['60%','80%','45%','70%','55%','90%','40%'];
-  var rows='';
-  for(var i=0;i<n;i++){
-    var cells='';
-    for(var j=0;j<cols;j++){
-      cells+='<td><div class="skeleton skeleton-line" style="width:'+widths[(i*cols+j)%widths.length]+';height:11px"></div></td>';
-    }
-    rows+='<tr>'+cells+'</tr>';
-  }
-  return rows;
-}
-function showSkeleton(tableBodyId, cols, n){
-  n = n||6; cols = cols||7;
-  var el = document.getElementById(tableBodyId);
-  if(el) el.innerHTML = skeletonRows(n, cols);
-}
-
-/* ── Empty state ── */
-function emptyState(icon, title, sub){
-  return '<div class="empty-state-box"><div class="es-icon">'+icon+'</div>'
-    +'<div class="es-title">'+title+'</div>'
-    +'<div class="es-sub">'+sub+'</div></div>';
-}
-
-/* ── Mobile bottom nav active state ── */
-function setMbn(id){
-  document.querySelectorAll('.mbn-item').forEach(function(el){ el.classList.remove('active'); });
-  var el = document.getElementById(id);
-  if(el) el.classList.add('active');
-}
-
-/* ── Column visibility toggle ── */
-function initColToggle(btnId, panelId, tableId){
-  var btn   = document.getElementById(btnId);
-  var panel = document.getElementById(panelId);
-  var table = document.getElementById(tableId);
-  if(!btn||!panel||!table) return;
-  btn.addEventListener('click', function(e){ e.stopPropagation(); panel.classList.toggle('open'); });
-  document.addEventListener('click', function(){ panel.classList.remove('open'); });
-  panel.addEventListener('click', function(e){ e.stopPropagation(); });
-  var headers = table.querySelectorAll('thead th');
-  var html='<div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Columns</div>';
-  headers.forEach(function(th,i){
-    var label = th.textContent.trim()||('Col '+(i+1));
-    html+='<label class="col-toggle-item"><input type="checkbox" checked data-col="'+i+'" onchange="toggleCol(''+tableId+'','+i+',this.checked)">'+label+'</label>';
-  });
-  panel.innerHTML = html;
-}
-function toggleCol(tableId, idx, visible){
-  var table = document.getElementById(tableId);
-  if(!table) return;
-  table.querySelectorAll('tr').forEach(function(row){
-    var cells = row.children;
-    if(cells[idx]) cells[idx].style.display = visible?'':'none';
-  });
-}
-</script>
 
 </body>
 </html>
