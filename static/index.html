@@ -3144,85 +3144,8 @@ async function generateReport(){
       +'<div style="text-align:center;padding:20px 0 8px;font-size:11px;color:#94a3b8">'
       +'FreightTrack Pro \u00b7 Report generated '+today.toLocaleString()+' \u00b7 '+total+' shipments \u00b7 '+totalTeu+' TEU'
       +'</div>'
-      +'</div>
-<script>
-/* ── Relative time helper ── */
-function relativeTime(dateStr){
-  if(!dateStr) return '--';
-  var d = new Date(String(dateStr).split('T')[0]);
-  if(isNaN(d)) return dateStr;
-  var diff = Date.now() - d.getTime();
-  var abs  = Math.abs(diff);
-  var future = diff < 0;
-  if(abs < 60000)   return 'just now';
-  if(abs < 3600000) return (future?'in ':'') + Math.floor(abs/60000) + 'm' + (future?'':' ago');
-  if(abs < 86400000)return (future?'in ':'') + Math.floor(abs/3600000) + 'h' + (future?'':' ago');
-  if(abs < 2592000) return (future?'in ':'') + Math.floor(abs/86400000) + 'd' + (future?'':' ago');
-  if(abs < 31536000)return (future?'in ':'') + Math.floor(abs/2592000) + 'mo' + (future?'':' ago');
-  return (future?'in ':'') + Math.floor(abs/31536000) + 'y' + (future?'':' ago');
-}
-
-/* ── Skeleton builder ── */
-function skeletonRows(n, cols){
-  var widths=['60%','80%','45%','70%','55%','90%','40%'];
-  var rows='';
-  for(var i=0;i<n;i++){
-    var cells='';
-    for(var j=0;j<cols;j++){
-      cells+='<td><div class="skeleton skeleton-line" style="width:'+widths[(i*cols+j)%widths.length]+';height:11px"></div></td>';
-    }
-    rows+='<tr>'+cells+'</tr>';
-  }
-  return rows;
-}
-function showSkeleton(tableBodyId, cols, n){
-  n = n||6; cols = cols||7;
-  var el = document.getElementById(tableBodyId);
-  if(el) el.innerHTML = skeletonRows(n, cols);
-}
-
-/* ── Empty state ── */
-function emptyState(icon, title, sub){
-  return '<div class="empty-state-box"><div class="es-icon">'+icon+'</div>'
-    +'<div class="es-title">'+title+'</div>'
-    +'<div class="es-sub">'+sub+'</div></div>';
-}
-
-/* ── Mobile bottom nav active state ── */
-function setMbn(id){
-  document.querySelectorAll('.mbn-item').forEach(function(el){ el.classList.remove('active'); });
-  var el = document.getElementById(id);
-  if(el) el.classList.add('active');
-}
-
-/* ── Column visibility toggle ── */
-function initColToggle(btnId, panelId, tableId){
-  var btn   = document.getElementById(btnId);
-  var panel = document.getElementById(panelId);
-  var table = document.getElementById(tableId);
-  if(!btn||!panel||!table) return;
-  btn.addEventListener('click', function(e){ e.stopPropagation(); panel.classList.toggle('open'); });
-  document.addEventListener('click', function(){ panel.classList.remove('open'); });
-  panel.addEventListener('click', function(e){ e.stopPropagation(); });
-  var headers = table.querySelectorAll('thead th');
-  var html='<div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Columns</div>';
-  headers.forEach(function(th,i){
-    var label = th.textContent.trim()||('Col '+(i+1));
-    html+='<label class="col-toggle-item"><input type="checkbox" checked data-col="'+i+'" onchange="toggleCol(''+tableId+'','+i+',this.checked)">'+label+'</label>';
-  });
-  panel.innerHTML = html;
-}
-function toggleCol(tableId, idx, visible){
-  var table = document.getElementById(tableId);
-  if(!table) return;
-  table.querySelectorAll('tr').forEach(function(row){
-    var cells = row.children;
-    if(cells[idx]) cells[idx].style.display = visible?'':'none';
-  });
-}
-</script>
-
-</body></html>';
+      +'</div>'
+      +'</body></html>';
 
     var win=window.open('','_blank');
     if(win){win.document.write(h);win.document.close();}
