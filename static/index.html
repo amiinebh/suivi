@@ -1300,7 +1300,7 @@ function showPage(id,el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el) el.classList.add('active');
   else {
-    var autoNav=document.querySelector('.sidebar .nav-item[onclick*="showPage(''+id+''"]');
+    var autoNav=document.querySelector('.sidebar .nav-item[onclick*="showPage(\''+id+'\'"]');
     if(autoNav) autoNav.classList.add('active');
   }
   if(typeof setBottomNav==='function') setBottomNav(id);
@@ -2083,7 +2083,7 @@ function showApp(){
   if(pn) pn.textContent=user?.name||'User';
   const pr=document.getElementById('pd-role');
   if(pr) pr.textContent=isAdmin()?'Admin':'CS Agent';
-  var overviewNav=document.querySelector('.sidebar .nav-item[onclick*="showPage('dashboard'"]');
+  var overviewNav=document.querySelector('.sidebar .nav-item[onclick*="showPage(\'dashboard\'"]');
   showPage('dashboard', overviewNav || null);
   setTimeout(preloadCoreData, 0);
 }
