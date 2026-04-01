@@ -2015,7 +2015,6 @@ function showApp(){
 }
 
 function doLogout(){
-  localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   const ls = document.getElementById("login-screen");
   if(ls){ ls.style.display = "flex"; }
