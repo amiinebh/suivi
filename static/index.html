@@ -623,11 +623,7 @@ textarea.form-control{resize:vertical;min-height:72px}
           <option value="">All Modes</option>
           <option>Ocean</option><option>Road</option>
         </select>
-        <select class="filter" id="fil-direction" onchange="loadShipments()">
-          <option value="">All Directions</option>
-          <option value="Export">↑ Export</option>
-          <option value="Import">↓ Import</option>
-        </select>
+        <select class="filter" id="fil-direction" onchange="loadShipments()"><option value="">All Directions</option><option value="Export">↑ Export</option><option value="Import">↓ Import</option></select>
         <select class="filter" id="fil-incoterm" onchange="loadShipments()">
           <option value="">All Incoterms</option>
           <option>EXW</option><option>FCA</option><option>CPT</option><option>CIP</option>
@@ -681,28 +677,21 @@ textarea.form-control{resize:vertical;min-height:72px}
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <div style="display:flex;background:var(--bg3);border-radius:8px;padding:3px;gap:2px">
-            <button class="kpi-ptab active-ptab" data-p="all"  onclick="setKpiPeriod('all',this)"  style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff">All</button>
-            <button class="kpi-ptab" data-p="3m"  onclick="setKpiPeriod('3m',this)"  style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2)">3M</button>
-            <button class="kpi-ptab" data-p="6m"  onclick="setKpiPeriod('6m',this)"  style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2)">6M</button>
-            <button class="kpi-ptab" data-p="1y"  onclick="setKpiPeriod('1y',this)"  style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2)">1Y</button>
+            <button class="kpi-ptab" onclick="setKpiPeriod('all',this)" style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff">All</button>
+            <button class="kpi-ptab" onclick="setKpiPeriod('3m',this)"  style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2)">3M</button>
+            <button class="kpi-ptab" onclick="setKpiPeriod('6m',this)"  style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2)">6M</button>
+            <button class="kpi-ptab" onclick="setKpiPeriod('1y',this)"  style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2)">1Y</button>
           </div>
           <button class="btn btn-primary btn-sm" onclick="generateReport()"><i class="ph ph-file-arrow-down"></i> Export</button>
         </div>
       </div>
-
-      <!-- Direction tabs -->
       <div style="display:flex;background:var(--bg3);border-radius:10px;padding:4px;gap:3px;margin-bottom:14px;width:fit-content">
         <button id="kpi-dir-all"    onclick="setKpiDir('all',this)"    style="padding:6px 16px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;transition:all .15s">All</button>
         <button id="kpi-dir-export" onclick="setKpiDir('export',this)" style="padding:6px 16px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2);transition:all .15s">&#8593; Export</button>
         <button id="kpi-dir-import" onclick="setKpiDir('import',this)" style="padding:6px 16px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2);transition:all .15s">&#8595; Import</button>
       </div>
-
-      <!-- KPI cards row 1 -->
       <div id="kpi-cards-r1" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px"></div>
-      <!-- KPI cards row 2 -->
       <div id="kpi-cards-r2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px"></div>
-
-      <!-- Monthly + Status -->
       <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
@@ -713,8 +702,6 @@ textarea.form-control{resize:vertical;min-height:72px}
           <div style="height:190px;position:relative"><canvas id="kpi-chart-status"></canvas></div>
         </div></div>
       </div>
-
-      <!-- Mode + Direction -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-boat" style="color:var(--accent)"></i> Transport Mode</div>
@@ -725,8 +712,6 @@ textarea.form-control{resize:vertical;min-height:72px}
           <div style="height:180px;position:relative"><canvas id="kpi-chart-dir"></canvas></div>
         </div></div>
       </div>
-
-      <!-- Clients shipments + TEU -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-users" style="color:var(--accent)"></i> Shipments per Client</div>
@@ -737,8 +722,6 @@ textarea.form-control{resize:vertical;min-height:72px}
           <div id="kpi-bar-teu"></div>
         </div></div>
       </div>
-
-      <!-- Carriers + POD -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-shipping-container" style="color:var(--accent)"></i> Top Carriers</div>
@@ -749,8 +732,6 @@ textarea.form-control{resize:vertical;min-height:72px}
           <div id="kpi-bar-pod"></div>
         </div></div>
       </div>
-
-      <!-- POL + Routing -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-map-pin-line" style="color:#22c55e"></i> Top Origins (POL)</div>
@@ -761,8 +742,6 @@ textarea.form-control{resize:vertical;min-height:72px}
           <div id="kpi-bar-routes"></div>
         </div></div>
       </div>
-
-      <!-- Overdue -->
       <div class="card" style="margin-bottom:20px"><div class="card__body">
         <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-warning" style="color:#ef4444"></i> Overdue Shipments</div>
         <div id="kpi-overdue"></div>
@@ -1041,11 +1020,7 @@ textarea.form-control{resize:vertical;min-height:72px}
         </div>
         <div class="form-group">
           <label>Direction</label>
-          <select id="f-direction" class="form-control">
-            <option value="">— Select —</option>
-            <option value="Export">Export ↑</option>
-            <option value="Import">Import ↓</option>
-          </select>
+          <select id="f-direction" class="form-control"><option value="">— Select —</option><option value="Export">Export ↑</option><option value="Import">Import ↓</option></select>
         </div>
         <div class="form-group">
           <label>Container / AWB</label>
@@ -1260,7 +1235,7 @@ document.querySelectorAll('.overlay').forEach(o=>{
 
 /* ── Helpers ── */
 function resetForm(){
-  ['f-ref','f-ref2','f-booking','f-carrier','f-shipper','f-consignee','f-incoterm','f-client','f-client-email','f-pol','f-pod','f-etd','f-eta','f-note','f-vessel','f-voyage']
+  ['f-ref','f-ref2','f-booking','f-carrier','f-shipper','f-consignee','f-incoterm','f-client','f-client-email','f-pol','f-pod','f-etd','f-eta','f-note']
     .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   _resetContainerForm();
   const fm=document.getElementById('f-mode'); if(fm) fm.value='Ocean';
@@ -1270,72 +1245,20 @@ function resetForm(){
   editId=null;
 }
 function statusBadge(st){
-  var m={
-    'Pending':'pending','Confirmed':'confirmed','Booked':'booked',
+  var m={'Pending':'pending','Confirmed':'confirmed','Booked':'booked',
     'Stuffed':'stuffed','Sailing':'sailing','Arrived':'arrived',
-    'Closed':'closed','Canceled':'canceled'
-  };
+    'Closed':'closed','Canceled':'canceled'};
   var cls=m[st]||'confirmed';
   return '<span class="badge badge-'+cls+'">'+( st||'Confirmed')+'</span>';
 }
-
-/* ── Normalisers ── */
-var CARRIER_NORM={
-  'MSK':'Maersk','MAERSK':'Maersk','MAERSK LINE':'Maersk','MAERSKLINE':'Maersk',
-  'CMA':'CMA-CGM','CMA CGM':'CMA-CGM','CMACGM':'CMA-CGM',
-  'MSC':'MSC','MEDITERRANEAN SHIPPING':'MSC',
-  'HPL':'Hapag-Lloyd','HAPAG':'Hapag-Lloyd','HAPAG LLOYD':'Hapag-Lloyd','HAPAG-LLOYD':'Hapag-Lloyd',
-  'EVE':'Evergreen','EVERGREEN':'Evergreen','EMC':'Evergreen',
-  'COS':'COSCO','COSCO':'COSCO','ONE':'ONE','YML':'Yang Ming',
-  'YANG MING':'Yang Ming','YANGMING':'Yang Ming','HMM':'HMM',
-  'PIL':'PIL','ZIM':'ZIM','ARKAS':'Arkas','MARFRET':'Marfret',
-  'COMANAV':'Comanav','IMTC':'IMTC'
-};
+var CARRIER_NORM={'MSK':'Maersk','MAERSK':'Maersk','MAERSK LINE':'Maersk','MAERSKLINE':'Maersk','CMA':'CMA-CGM','CMA CGM':'CMA-CGM','CMACGM':'CMA-CGM','MSC':'MSC','MEDITERRANEAN SHIPPING':'MSC','HPL':'Hapag-Lloyd','HAPAG':'Hapag-Lloyd','HAPAG LLOYD':'Hapag-Lloyd','HAPAG-LLOYD':'Hapag-Lloyd','EVE':'Evergreen','EVERGREEN':'Evergreen','EMC':'Evergreen','COS':'COSCO','COSCO':'COSCO','ONE':'ONE','YML':'Yang Ming','YANG MING':'Yang Ming','YANGMING':'Yang Ming','HMM':'HMM','PIL':'PIL','ZIM':'ZIM','ARKAS':'Arkas','MARFRET':'Marfret','COMANAV':'Comanav','IMTC':'IMTC'};
 var CLIENT_NORM={'COPAG':'COPAG','Copag':'COPAG','copag':'COPAG'};
-
-function normalizeCarrier(n){
-  if(!n) return n;
-  var k=n.trim().toUpperCase().replace(/[^A-Z0-9 ]/g,' ').trim();
-  if(CARRIER_NORM[k]) return CARRIER_NORM[k];
-  var k2=k.replace(/\s+/g,'');
-  for(var p in CARRIER_NORM){ if(p.replace(/[^A-Z0-9]/g,'')===k2) return CARRIER_NORM[p]; }
-  return n.trim().charAt(0).toUpperCase()+n.trim().slice(1);
-}
-function normalizeClient(n){
-  if(!n) return n;
-  var u=n.trim().toUpperCase();
-  if(CLIENT_NORM[u]) return CLIENT_NORM[u];
-  return n.trim().charAt(0).toUpperCase()+n.trim().slice(1);
-}
-function normalizeMode(m){
-  if(!m) return 'Ocean';
-  var v=m.trim().toLowerCase();
-  return ['road','ftl','truck','road (ftl)'].includes(v)?'Road':'Ocean';
-}
-function normalizeDirection(d){
-  if(!d) return '';
-  var v=d.trim().toLowerCase();
-  if(['export','exp','x'].includes(v)) return 'Export';
-  if(['import','imp','m'].includes(v)) return 'Import';
-  return d.trim().charAt(0).toUpperCase()+d.trim().slice(1);
-}
-
-/* ── Auto-status (client-side) ── */
-function computeAutoStatus(etd,eta,hasCont){
-  if(!hasCont) return 'Pending';
-  var t=new Date(); t.setHours(0,0,0,0);
-  function pd(s){ if(!s) return null; var d=new Date(s.split('T')[0]); return isNaN(d)?null:d; }
-  var e=pd(etd),a=pd(eta);
-  if(e && t<e) return 'Confirmed';
-  if(e && a && t>=e && t<a) return 'Sailing';
-  if(a && t>=a) return 'Arrived';
-  if(e && t>=e) return 'Sailing';
-  return 'Confirmed';
-}
-function shipStatus(s){
-  var hc=(Array.isArray(s.containers)&&s.containers.length>0)||(s.teu&&s.teu>0);
-  return computeAutoStatus(s.etd,s.eta,hc);
-}
+function normalizeCarrier(n){if(!n)return n;var k=n.trim().toUpperCase().replace(/[^A-Z0-9 ]/g,' ').trim();if(CARRIER_NORM[k])return CARRIER_NORM[k];var k2=k.replace(/\s+/g,'');for(var p in CARRIER_NORM){if(p.replace(/[^A-Z0-9]/g,'')===k2)return CARRIER_NORM[p];}return n.trim().charAt(0).toUpperCase()+n.trim().slice(1);}
+function normalizeClient(n){if(!n)return n;var u=n.trim().toUpperCase();if(CLIENT_NORM[u])return CLIENT_NORM[u];return n.trim().charAt(0).toUpperCase()+n.trim().slice(1);}
+function normalizeMode(m){if(!m)return 'Ocean';var v=m.trim().toLowerCase();return['road','ftl','truck','road (ftl)'].includes(v)?'Road':'Ocean';}
+function normalizeDirection(d){if(!d)return '';var v=d.trim().toLowerCase();if(['export','exp','x'].includes(v))return 'Export';if(['import','imp','m'].includes(v))return 'Import';return d.trim().charAt(0).toUpperCase()+d.trim().slice(1);}
+function computeAutoStatus(etd,eta,hc){if(!hc)return 'Pending';var t=new Date();t.setHours(0,0,0,0);function pd(s){if(!s)return null;var d=new Date(s.split('T')[0]);return isNaN(d)?null:d;}var e=pd(etd),a=pd(eta);if(e&&t<e)return 'Confirmed';if(e&&a&&t>=e&&t<a)return 'Sailing';if(a&&t>=a)return 'Arrived';if(e&&t>=e)return 'Sailing';return 'Confirmed';}
+function shipStatus(s){var hc=(Array.isArray(s.containers)&&s.containers.length>0)||(s.teu&&s.teu>0);return computeAutoStatus(s.etd,s.eta,hc);}
 function modeBadge(m){
   return `<span class="badge badge-mode badge-${(m||'ocean').toLowerCase()}">${m||'Ocean'}</span>`;
 }
@@ -1579,8 +1502,8 @@ async function loadShipments(){
     allShipments=ships;
     const inc=document.getElementById('fil-incoterm')?.value||'';
     const _dirF=document.getElementById('fil-direction')?.value||'';
-    let _fShips = inc ? ships.filter(s=>(s.incoterm||'')===inc) : ships;
-    _pgShips = _dirF ? _fShips.filter(s=>(s.direction||'')===_dirF) : _fShips;
+    let _fs=inc?ships.filter(s=>(s.incoterm||'')===inc):ships;
+    _pgShips=_dirF?_fs.filter(s=>(s.direction||'')===_dirF):_fs;
     _pgPage = 1;
     const lbl=document.getElementById('ship-count-label');
     if(lbl) lbl.textContent=`${_pgShips.length} shipment${_pgShips.length!==1?'s':''}`;
@@ -1751,17 +1674,16 @@ async function loadAnalytics(){
   try{
     var k=await apiFetch('/api/kpi-report');
     if(!k||typeof k!=='object') k={};
-    var total=k.total||0, totalTeu=k.total_teu||0;
-    var byStatus=k.by_status||{}, byMode=k.by_mode||{}, byDir=k.by_direction||{};
-    var byCarrier=k.by_carrier||[], monthly=k.monthly||[];
-    var topPol=k.top_pol||[], topPod=k.top_pod||[], topRouting=k.top_routing||[];
-    var clientAll=k.by_client_all||[], clientExp=k.by_client_export||[], clientImp=k.by_client_import||[];
+    var total=k.total||0,totalTeu=k.total_teu||0;
+    var byStatus=k.by_status||{},byMode=k.by_mode||{},byDir=k.by_direction||{};
+    var byCarrier=k.by_carrier||[],monthly=k.monthly||[];
+    var topPol=k.top_pol||[],topPod=k.top_pod||[],topRouting=k.top_routing||[];
+    var clientAll=k.by_client_all||[],clientExp=k.by_client_export||[],clientImp=k.by_client_import||[];
     var _dir=window._kpiDir||'all';
     var activeClients=_dir==='export'?clientExp:(_dir==='import'?clientImp:clientAll);
 
-    // ── KPI CARD HELPER ──────────────────────────────────────
     function kpiCard(icon,color,val,label,sub){
-      var d=document.createElement('div'); d.className='card';
+      var d=document.createElement('div');d.className='card';
       d.innerHTML='<div class="card__body" style="padding:14px 16px">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
         +'<div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">'+label+'</div>'
@@ -1772,128 +1694,92 @@ async function loadAnalytics(){
       return d;
     }
 
-    // ── ROW 1 CARDS ──────────────────────────────────────────
     var r1=document.getElementById('kpi-cards-r1');
     if(r1){
       r1.innerHTML='';
-      var expC=byDir['Export']||0, impC=byDir['Import']||0;
+      var expC=byDir['Export']||0,impC=byDir['Import']||0;
       r1.appendChild(kpiCard('ph-package','#4f8ef7',total,'Total Shipments',expC+' Exp · '+impC+' Imp'));
       r1.appendChild(kpiCard('ph-shipping-container','#6c63ff',totalTeu||'—','Total TEU','Across all shipments'));
-      r1.appendChild(kpiCard('ph-boat','#3b82f6',byStatus['Sailing']||0,'Sailing','Currently at sea / road'));
+      r1.appendChild(kpiCard('ph-boat','#3b82f6',byStatus['Sailing']||0,'Sailing','At sea / road'));
       r1.appendChild(kpiCard('ph-check-circle','#f59e0b',byStatus['Confirmed']||0,'Confirmed','Awaiting departure'));
     }
-
-    // ── ROW 2 CARDS ──────────────────────────────────────────
     var r2=document.getElementById('kpi-cards-r2');
     if(r2){
       r2.innerHTML='';
       var arrivedC=(byStatus['Arrived']||0)+(byStatus['Closed']||0);
-      var pendingC=byStatus['Pending']||0;
-      var roadC=byMode['Road']||0, oceanC=byMode['Ocean']||0;
       var topCl=activeClients.length?activeClients[0].name:'—';
-      var topTeu=activeClients.length?activeClients[0].teu:0;
+      var topTeu=activeClients.length?(activeClients[0].teu||0):0;
       r2.appendChild(kpiCard('ph-flag-banner','#22c55e',arrivedC,'Arrived / Closed','Completed'));
-      r2.appendChild(kpiCard('ph-hourglass','#ef4444',pendingC,'Pending','No container data'));
-      r2.appendChild(kpiCard('ph-truck','#06b6d4',roadC,'Road (FTL)',oceanC+' Ocean (FCL)'));
+      r2.appendChild(kpiCard('ph-hourglass','#ef4444',byStatus['Pending']||0,'Pending','No container data'));
+      r2.appendChild(kpiCard('ph-truck','#06b6d4',byMode['Road']||0,'Road (FTL)',(byMode['Ocean']||0)+' Ocean (FCL)'));
       r2.appendChild(kpiCard('ph-star','#f59e0b',topCl,'Top Client',topTeu+' TEU'));
     }
 
-    // ── CHART HELPERS ─────────────────────────────────────────
-    function dc(id){ destroyChart(id); }
-    function tc(){ return isDark()?'#8892b0':'#5a6a8a'; }
-    function gc(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)'; }
+    function dc(id){destroyChart(id);}
+    function tc(){return isDark()?'#8892b0':'#5a6a8a';}
+    function gc(){return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)';}
 
-    // ── MONTHLY BAR ───────────────────────────────────────────
     dc('kpi-chart-monthly');
     var mcEl=document.getElementById('kpi-chart-monthly');
     if(mcEl){
       if(monthly.length){
-        chartRegistry['kpi-chart-monthly']=new Chart(mcEl,{
-          type:'bar',
-          data:{
-            labels:monthly.map(function(m){return m.month;}),
+        chartRegistry['kpi-chart-monthly']=new Chart(mcEl,{type:'bar',
+          data:{labels:monthly.map(function(m){return m.month;}),
             datasets:[{label:'Shipments',data:monthly.map(function(m){return m.count;}),
-              backgroundColor:'rgba(79,142,247,.7)',borderRadius:5,borderSkipped:false}]
-          },
+              backgroundColor:'rgba(79,142,247,.7)',borderRadius:5,borderSkipped:false}]},
           options:{responsive:true,maintainAspectRatio:false,
             plugins:{legend:{display:false}},
             scales:{x:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}}},
-                    y:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}},beginAtZero:true}}}
-        });
+                    y:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}},beginAtZero:true}}}});
       } else {
         mcEl.parentElement.innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:12px">No monthly data yet<br><span style="font-size:10px">Add ETD dates to shipments</span></div>';
       }
     }
 
-    // ── STATUS DONUT ──────────────────────────────────────────
     dc('kpi-chart-status');
     var scEl=document.getElementById('kpi-chart-status');
     if(scEl){
-      var sKeys=Object.keys(byStatus), sVals=Object.values(byStatus);
+      var sKeys=Object.keys(byStatus),sVals=Object.values(byStatus);
       var sTot=sVals.reduce(function(a,b){return a+b;},0)||1;
-      var sCols={'Pending':'#f59e0b','Confirmed':'#4f8ef7','Booked':'#06b6d4','Stuffed':'#8b5cf6',
-                 'Sailing':'#3b82f6','Arrived':'#22c55e','Closed':'#6b7280','Canceled':'#ef4444'};
-      if(sKeys.length){
-        chartRegistry['kpi-chart-status']=new Chart(scEl,{
-          type:'doughnut',
-          data:{labels:sKeys,datasets:[{data:sVals,
-            backgroundColor:sKeys.map(function(s){return sCols[s]||'#aaa';}),
-            borderWidth:0,hoverOffset:8}]},
-          options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-            plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},boxWidth:10,padding:6}},
-              tooltip:{callbacks:{label:function(c){return c.label+': '+c.parsed+' ('+Math.round(c.parsed/sTot*100)+'%)';}}}}}
-        });
-      }
+      var sCols={'Pending':'#f59e0b','Confirmed':'#4f8ef7','Booked':'#06b6d4','Stuffed':'#8b5cf6','Sailing':'#3b82f6','Arrived':'#22c55e','Closed':'#6b7280','Canceled':'#ef4444'};
+      if(sKeys.length) chartRegistry['kpi-chart-status']=new Chart(scEl,{type:'doughnut',
+        data:{labels:sKeys,datasets:[{data:sVals,backgroundColor:sKeys.map(function(s){return sCols[s]||'#aaa';}),borderWidth:0,hoverOffset:8}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+          plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},boxWidth:10,padding:6}},
+            tooltip:{callbacks:{label:function(c){return c.label+': '+c.parsed+' ('+Math.round(c.parsed/sTot*100)+'%)';}}}}}});
     }
 
-    // ── MODE DONUT ────────────────────────────────────────────
     dc('kpi-chart-mode');
     var modeEl=document.getElementById('kpi-chart-mode');
     if(modeEl){
       var mKeys=Object.keys(byMode).filter(function(x){return byMode[x]>0;});
-      var mVals=mKeys.map(function(x){return byMode[x];});
-      if(mKeys.length){
-        chartRegistry['kpi-chart-mode']=new Chart(modeEl,{
-          type:'doughnut',
-          data:{labels:mKeys,datasets:[{data:mVals,
-            backgroundColor:['#4f8ef7','#22c55e','#f59e0b'],borderWidth:0,hoverOffset:8}]},
-          options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-            plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},boxWidth:10,padding:6}}}}
-        });
-      } else {
-        modeEl.parentElement.innerHTML='<div style="text-align:center;padding:50px;color:var(--text2);font-size:12px">No mode data</div>';
-      }
+      if(mKeys.length) chartRegistry['kpi-chart-mode']=new Chart(modeEl,{type:'doughnut',
+        data:{labels:mKeys,datasets:[{data:mKeys.map(function(x){return byMode[x];}),backgroundColor:['#4f8ef7','#22c55e','#f59e0b'],borderWidth:0,hoverOffset:8}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+          plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},boxWidth:10,padding:6}}}}});
+      else modeEl.parentElement.innerHTML='<div style="text-align:center;padding:50px;color:var(--text2);font-size:12px">No mode data</div>';
     }
 
-    // ── DIRECTION DONUT ───────────────────────────────────────
     dc('kpi-chart-dir');
     var dirEl=document.getElementById('kpi-chart-dir');
     if(dirEl){
       var dVals=[byDir['Export']||0,byDir['Import']||0];
-      if(dVals[0]+dVals[1]>0){
-        chartRegistry['kpi-chart-dir']=new Chart(dirEl,{
-          type:'doughnut',
-          data:{labels:['Export','Import'],datasets:[{data:dVals,
-            backgroundColor:['#4f8ef7','#22c55e'],borderWidth:0,hoverOffset:8}]},
-          options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
-            plugins:{legend:{position:'right',labels:{color:tc(),font:{size:11},boxWidth:12,padding:8}},
-              tooltip:{callbacks:{label:function(c){var t=(dVals[0]+dVals[1])||1;return c.label+': '+c.parsed+' ('+Math.round(c.parsed/t*100)+'%)';}}}}}
-        });
-      } else {
-        dirEl.parentElement.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No direction data<br><span style="font-size:10px">Set Export/Import on shipments</span></div>';
-      }
+      if(dVals[0]+dVals[1]>0) chartRegistry['kpi-chart-dir']=new Chart(dirEl,{type:'doughnut',
+        data:{labels:['Export','Import'],datasets:[{data:dVals,backgroundColor:['#4f8ef7','#22c55e'],borderWidth:0,hoverOffset:8}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
+          plugins:{legend:{position:'right',labels:{color:tc(),font:{size:11},boxWidth:12,padding:8}},
+            tooltip:{callbacks:{label:function(c){var t=(dVals[0]+dVals[1])||1;return c.label+': '+c.parsed+' ('+Math.round(c.parsed/t*100)+'%)';}}}}}});
+      else dirEl.parentElement.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No direction data<br><span style="font-size:10px">Set Export/Import on shipments</span></div>';
     }
 
-    // ── BAR LIST HELPER ───────────────────────────────────────
-    function barList(id,items,nKey,vKey,fallbackColor){
-      var el=document.getElementById(id); if(!el) return;
+    function barList(id,items,nKey,vKey,fbColor){
+      var el=document.getElementById(id);if(!el)return;
       if(!items||!items.length){el.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px 0">No data yet</div>';return;}
       var maxV=Math.max.apply(null,items.map(function(i){return i[vKey]||0;}))||1;
       var totV=items.reduce(function(s,i){return s+(i[vKey]||0);},0)||1;
       var PAL=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444','#f97316','#ec4899'];
       el.innerHTML=items.slice(0,8).map(function(item,i){
-        var v=item[vKey]||0, pct=Math.round(v/totV*100), w=Math.round(v/maxV*100);
-        var c=fallbackColor||PAL[i%8];
+        var v=item[vKey]||0,pct=Math.round(v/totV*100),w=Math.round(v/maxV*100),c=fbColor||PAL[i%8];
         return '<div style="margin-bottom:9px">'
           +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
           +'<span style="color:var(--text1);font-weight:600;max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(item[nKey]||'—')+'</span>'
@@ -1903,14 +1789,12 @@ async function loadAnalytics(){
       }).join('');
     }
 
-    barList('kpi-bar-carriers', byCarrier, 'name','count', null);
-    barList('kpi-bar-clients',  activeClients, 'name','shipments', '#4f8ef7');
-    var teuSorted=activeClients.slice().sort(function(a,b){return (b.teu||0)-(a.teu||0);});
-    barList('kpi-bar-teu',      teuSorted, 'name','teu', '#6c63ff');
-    barList('kpi-bar-pod',      topPod, 'name','count', '#ef4444');
-    barList('kpi-bar-pol',      topPol, 'name','count', '#22c55e');
+    barList('kpi-bar-carriers',byCarrier,'name','count',null);
+    barList('kpi-bar-clients',activeClients,'name','shipments','#4f8ef7');
+    barList('kpi-bar-teu',activeClients.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
+    barList('kpi-bar-pod',topPod,'name','count','#ef4444');
+    barList('kpi-bar-pol',topPol,'name','count','#22c55e');
 
-    // ── TOP ROUTING ───────────────────────────────────────────
     var rEl=document.getElementById('kpi-bar-routes');
     if(rEl){
       if(topRouting.length){
@@ -1918,35 +1802,30 @@ async function loadAnalytics(){
         var totR=topRouting.reduce(function(s,r){return s+r.count;},0)||1;
         var PAL=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444','#f97316','#ec4899'];
         rEl.innerHTML=topRouting.slice(0,8).map(function(r,i){
-          var pct=Math.round(r.count/totR*100), w=Math.round(r.count/maxR*100), c=PAL[i%8];
+          var pct=Math.round(r.count/totR*100),w=Math.round(r.count/maxR*100),c=PAL[i%8];
           return '<div style="margin-bottom:9px">'
             +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
-            +'<span style="color:var(--text1);font-weight:600;display:flex;align-items:center;gap:4px">'
-            +'<i class="ph ph-arrow-right" style="color:'+c+';font-size:10px"></i>'+(r.route||'—')+'</span>'
+            +'<span style="color:var(--text1);font-weight:600">→ '+(r.route||'—')+'</span>'
             +'<span style="color:var(--text2)">'+r.count+' <b style="color:'+c+'">'+pct+'%</b></span></div>'
             +'<div style="height:6px;background:var(--bg3);border-radius:4px">'
             +'<div style="height:6px;border-radius:4px;background:'+c+';width:'+w+'%;transition:width .6s ease"></div></div></div>';
         }).join('');
-      } else {
-        rEl.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px 0">No routing data yet</div>';
-      }
+      } else rEl.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px 0">No routing data yet</div>';
     }
 
-    // ── OVERDUE ───────────────────────────────────────────────
     var odEl=document.getElementById('kpi-overdue');
     if(odEl){
-      var now=new Date(); now.setHours(0,0,0,0);
+      var now=new Date();now.setHours(0,0,0,0);
       var ships=(typeof allShipments!=='undefined')?allShipments:[];
       var od=ships.filter(function(s){
-        if(!s.eta) return false;
+        if(!s.eta)return false;
         var eD=new Date(s.eta.split('T')[0]);
         var st=shipStatus(s);
         return !isNaN(eD)&&now>eD&&st!=='Arrived'&&st!=='Closed'&&st!=='Canceled';
       }).sort(function(a,b){return new Date(a.eta)-new Date(b.eta);});
       if(od.length){
         odEl.innerHTML=od.slice(0,10).map(function(s){
-          var eD=new Date(s.eta.split('T')[0]);
-          var dl=Math.floor((now-eD)/86400000);
+          var eD=new Date(s.eta.split('T')[0]),dl=Math.floor((now-eD)/86400000);
           var ug=dl>7?'#ef4444':dl>3?'#f97316':'#f59e0b';
           return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;margin-bottom:7px;background:var(--bg3);border-left:3px solid '+ug+'">'
             +'<div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+s.ref+'</div>'
@@ -1956,32 +1835,88 @@ async function loadAnalytics(){
             +'<button onclick="openDetail('+s.id+')" style="padding:5px 10px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button>'
             +'</div></div>';
         }).join('');
-      } else {
-        odEl.innerHTML='<div style="text-align:center;padding:28px;color:var(--green);font-size:14px;font-weight:600">✓ No overdue shipments</div>';
-      }
+      } else odEl.innerHTML='<div style="text-align:center;padding:28px;color:var(--green);font-size:14px;font-weight:600">✓ No overdue shipments</div>';
     }
 
-  }catch(e){ console.error('loadAnalytics:',e); toast('KPI load error: '+e.message,'error'); }
+  }catch(e){console.error('loadAnalytics:',e);toast('KPI load error: '+e.message,'error');}
 }
 
 function setKpiDir(dir,btn){
   window._kpiDir=dir;
   document.querySelectorAll('#page-analytics button[id^="kpi-dir-"]').forEach(function(b){
-    b.style.background='transparent'; b.style.color='var(--text2)'; b.style.fontWeight='600';
+    b.style.background='transparent';b.style.color='var(--text2)';b.style.fontWeight='600';
   });
   if(btn){btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.fontWeight='700';}
   loadAnalytics();
 }
-
 function setKpiPeriod(p,btn){
   window._kpiPeriod=p;
   document.querySelectorAll('.kpi-ptab').forEach(function(b){
-    b.style.background='transparent'; b.style.color='var(--text2)'; b.style.fontWeight='600';
+    b.style.background='transparent';b.style.color='var(--text2)';b.style.fontWeight='600';
   });
   if(btn){btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.fontWeight='700';}
   loadAnalytics();
 }
 
+
+const TOKEN_KEY = "ft_token";
+const USER_KEY  = "ft_user";
+
+function getToken(){ return localStorage.getItem(TOKEN_KEY); }
+function getUser(){
+  try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
+}
+function isAdmin(){ return (getUser()||{}).role === "admin"; }
+
+function authFetch(url, opts={}){
+  opts.headers = opts.headers || {};
+  const t = getToken();
+  if(t) opts.headers["Authorization"] = "Bearer " + t;
+  return fetch(url, opts).then(r => {
+    if(r.status === 401){
+      doLogout();
+      const ls = document.getElementById("login-screen");
+      if(ls){ ls.style.display="flex"; }
+      // Show message
+      const err = document.getElementById("login-error");
+      if(err){ err.textContent="Your account has been deactivated. Contact admin."; err.style.display="block"; }
+    }
+    return r;
+  });
+}
+
+async function doLogin(){
+  const email = document.getElementById("login-email").value.trim();
+  const pw    = document.getElementById("login-password").value;
+  const err   = document.getElementById("login-error");
+  const btn   = document.getElementById("login-btn");
+  err.style.display = "none";
+  if(!email || !pw){
+    err.textContent = "Please enter email and password";
+    err.style.display = "block"; return;
+  }
+  btn.textContent = "Signing in…"; btn.disabled = true;
+  try {
+    const r = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({email, password: pw})
+    });
+    const d = await r.json();
+    if(!r.ok){
+      err.textContent = d.detail || "Invalid email or password";
+      err.style.display = "block"; return;
+    }
+    localStorage.setItem(TOKEN_KEY, d.access_token);
+    localStorage.setItem(USER_KEY, JSON.stringify({role:d.role, name:d.name}));
+    showApp();
+  } catch(e){
+    err.textContent = "Network error — please try again";
+    err.style.display = "block";
+  } finally {
+    btn.textContent = "Sign In →"; btn.disabled = false;
+  }
+}
 
 document.addEventListener("keydown", e => {
   const ls = document.getElementById("login-screen");
@@ -2015,6 +1950,7 @@ function showApp(){
 }
 
 function doLogout(){
+  localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   const ls = document.getElementById("login-screen");
   if(ls){ ls.style.display = "flex"; }
@@ -3060,14 +2996,7 @@ function bulkFileSelected(file){
       var wb=XLSX.read(e.target.result,{type:"arraybuffer"});
       var ws=wb.Sheets[wb.SheetNames[0]];
       var rows=XLSX.utils.sheet_to_json(ws,{defval:""});
-      rows=rows.map(function(r){
-        var o=Object.assign({},r);
-        if(o.carrier) o.carrier=normalizeCarrier(String(o.carrier));
-        if(o.client)  o.client=normalizeClient(String(o.client));
-        if(o.mode)    o.mode=normalizeMode(String(o.mode));
-        if(o.direction) o.direction=normalizeDirection(String(o.direction));
-        return o;
-      });
+      rows=rows.map(function(r){var o=Object.assign({},r);if(o.carrier)o.carrier=normalizeCarrier(String(o.carrier));if(o.client)o.client=normalizeClient(String(o.client));if(o.mode)o.mode=normalizeMode(String(o.mode));if(o.direction)o.direction=normalizeDirection(String(o.direction));return o;});
       _bulkRows=rows;
       if(!rows.length){if(ps)ps.innerHTML='<span style="color:var(--red)">No rows found in file.</span>';return;}
       if(ps)ps.style.display="none";
