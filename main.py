@@ -526,7 +526,7 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
 
     def parse_date(val):
         if not val: return None
-        for fmt in ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"]:
+        for fmt in ["%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y", "%m/%d/%Y", "%d.%m.%Y"]:
             try: return datetime.strptime(str(val).strip(), fmt).strftime("%Y-%m-%d")
             except: pass
         return None
