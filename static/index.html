@@ -184,7 +184,10 @@ select.filter option{background:var(--bg2)}
 .badge-sailing{background:rgba(6,182,212,.13);color:#06b6d4}.badge-sailing::before{background:#06b6d4}
 .badge-arrived{background:rgba(34,197,94,.12);color:#22c55e}.badge-arrived::before{background:#22c55e}
 .badge-closed{background:rgba(16,185,129,.13);color:#10b981}.badge-closed::before{background:#10b981}
-.badge-canceled{background:rgba(239,68,68,.1);color:#ef4444}.badge-pending{background:rgba(245,158,11,.12);color:#d97706}.badge-sailing{background:rgba(59,130,246,.12);color:#2563eb}.badge-road{background:rgba(34,197,94,.1);color:#16a34a}.badge-canceled::before{background:#ef4444}
+.badge-canceled{background:rgba(239,68,68,.1);color:#ef4444}.badge-pending{background:rgba(245,158,11,.12);color:#d97706}.badge-sailing{background:rgba(59,130,246,.12);color:#2563eb}.badge-road{background:rgba(34,197,94,.1);color:#16a34a}
+.kpi-mini-tabs{display:flex;background:var(--bg3);border-radius:6px;padding:2px;gap:2px}
+.kmtab{padding:3px 8px;border:none;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2);transition:all .15s}
+.kmtab.active{background:var(--accent);color:#fff}.badge-canceled::before{background:#ef4444}
 .badge-discharged{background:rgba(6,182,212,.1);color:var(--cyan)}.badge-discharged::before{background:var(--cyan)}
 .badge-booked,.badge-on-board,.badge-loading{background:rgba(59,130,246,.1);color:var(--blue)}.badge-booked::before,.badge-on-board::before,.badge-loading::before{background:var(--blue)}
 .badge-blue{background:rgba(59,130,246,.1);color:var(--blue)}.badge-blue::before{background:var(--blue)}
@@ -671,10 +674,8 @@ textarea.form-control{resize:vertical;min-height:72px}
     <!-- ─── ANALYTICS / KPI PAGE ─── -->
     <div class="page" id="page-analytics">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-        <div>
-          <div style="font-size:17px;font-weight:800;color:var(--text1)"><i class="ph ph-chart-line" style="color:var(--accent)"></i> KPI &amp; Analytics</div>
-          <div style="font-size:11px;color:var(--text2);margin-top:2px">Live operational intelligence</div>
-        </div>
+        <div><div style="font-size:17px;font-weight:800;color:var(--text1)"><i class="ph ph-chart-line" style="color:var(--accent)"></i> KPI &amp; Analytics</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:2px">Live operational intelligence</div></div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <div style="display:flex;background:var(--bg3);border-radius:8px;padding:3px;gap:2px">
             <button class="kpi-ptab" onclick="setKpiPeriod('all',this)" style="padding:5px 11px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff">All</button>
@@ -684,11 +685,6 @@ textarea.form-control{resize:vertical;min-height:72px}
           </div>
           <button class="btn btn-primary btn-sm" onclick="generateReport()"><i class="ph ph-file-arrow-down"></i> Export</button>
         </div>
-      </div>
-      <div style="display:flex;background:var(--bg3);border-radius:10px;padding:4px;gap:3px;margin-bottom:14px;width:fit-content">
-        <button id="kpi-dir-all"    onclick="setKpiDir('all',this)"    style="padding:6px 16px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;transition:all .15s">All</button>
-        <button id="kpi-dir-export" onclick="setKpiDir('export',this)" style="padding:6px 16px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2);transition:all .15s">&#8593; Export</button>
-        <button id="kpi-dir-import" onclick="setKpiDir('import',this)" style="padding:6px 16px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2);transition:all .15s">&#8595; Import</button>
       </div>
       <div id="kpi-cards-r1" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px"></div>
       <div id="kpi-cards-r2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px"></div>
@@ -714,32 +710,44 @@ textarea.form-control{resize:vertical;min-height:72px}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-users" style="color:var(--accent)"></i> Shipments per Client</div>
-          <div id="kpi-bar-clients"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-users" style="color:var(--accent)"></i> Top Clients — Shipments</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-clients','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-clients','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-clients','imp')">&#8595; Imp</button></div>
+          </div><div id="kpi-bar-clients"></div>
         </div></div>
         <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-shipping-container" style="color:#6c63ff"></i> TEU per Client</div>
-          <div id="kpi-bar-teu"></div>
-        </div></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-        <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-shipping-container" style="color:var(--accent)"></i> Top Carriers</div>
-          <div id="kpi-bar-carriers"></div>
-        </div></div>
-        <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-map-pin" style="color:#ef4444"></i> Top Destinations (POD)</div>
-          <div id="kpi-bar-pod"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-shipping-container" style="color:#6c63ff"></i> Top Clients — TEU</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-teu','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-teu','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-teu','imp')">&#8595; Imp</button></div>
+          </div><div id="kpi-bar-teu"></div>
         </div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-map-pin-line" style="color:#22c55e"></i> Top Origins (POL)</div>
-          <div id="kpi-bar-pol"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-shipping-container" style="color:var(--accent)"></i> Top Carriers</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-carriers','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers','imp')">&#8595; Imp</button></div>
+          </div><div id="kpi-bar-carriers"></div>
         </div></div>
         <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-path" style="color:#f59e0b"></i> Top Routings (POL &#8594; POD)</div>
-          <div id="kpi-bar-routes"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-map-pin" style="color:#ef4444"></i> Top Destinations (POD)</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-pod','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pod','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pod','imp')">&#8595; Imp</button></div>
+          </div><div id="kpi-bar-pod"></div>
+        </div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="card"><div class="card__body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-map-pin-line" style="color:#22c55e"></i> Top Origins (POL)</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-pol','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pol','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pol','imp')">&#8595; Imp</button></div>
+          </div><div id="kpi-bar-pol"></div>
+        </div></div>
+        <div class="card"><div class="card__body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-path" style="color:#f59e0b"></i> Top Routings (POL &#8594; POD)</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-routes','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-routes','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-routes','imp')">&#8595; Imp</button></div>
+          </div><div id="kpi-bar-routes"></div>
         </div></div>
       </div>
       <div class="card" style="margin-bottom:20px"><div class="card__body">
@@ -1245,17 +1253,14 @@ function resetForm(){
   editId=null;
 }
 function statusBadge(st){
-  var m={'Pending':'pending','Confirmed':'confirmed','Booked':'booked',
-    'Stuffed':'stuffed','Sailing':'sailing','Arrived':'arrived',
-    'Closed':'closed','Canceled':'canceled'};
+  var m={'Pending':'pending','Confirmed':'confirmed','Booked':'booked','Stuffed':'stuffed','Sailing':'sailing','Arrived':'arrived','Closed':'closed','Canceled':'canceled'};
   var cls=m[st]||'confirmed';
   return '<span class="badge badge-'+cls+'">'+( st||'Confirmed')+'</span>';
 }
-var CARRIER_NORM={'MSK':'Maersk','MAERSK':'Maersk','MAERSK LINE':'Maersk','MAERSKLINE':'Maersk','CMA':'CMA-CGM','CMA CGM':'CMA-CGM','CMACGM':'CMA-CGM','MSC':'MSC','MEDITERRANEAN SHIPPING':'MSC','HPL':'Hapag-Lloyd','HAPAG':'Hapag-Lloyd','HAPAG LLOYD':'Hapag-Lloyd','HAPAG-LLOYD':'Hapag-Lloyd','EVE':'Evergreen','EVERGREEN':'Evergreen','EMC':'Evergreen','COS':'COSCO','COSCO':'COSCO','ONE':'ONE','YML':'Yang Ming','YANG MING':'Yang Ming','YANGMING':'Yang Ming','HMM':'HMM','PIL':'PIL','ZIM':'ZIM','ARKAS':'Arkas','MARFRET':'Marfret','COMANAV':'Comanav','IMTC':'IMTC'};
-var CLIENT_NORM={'COPAG':'COPAG','Copag':'COPAG','copag':'COPAG'};
-function normalizeCarrier(n){if(!n)return n;var k=n.trim().toUpperCase().replace(/[^A-Z0-9 ]/g,' ').trim();if(CARRIER_NORM[k])return CARRIER_NORM[k];var k2=k.replace(/\s+/g,'');for(var p in CARRIER_NORM){if(p.replace(/[^A-Z0-9]/g,'')===k2)return CARRIER_NORM[p];}return n.trim().charAt(0).toUpperCase()+n.trim().slice(1);}
-function normalizeClient(n){if(!n)return n;var u=n.trim().toUpperCase();if(CLIENT_NORM[u])return CLIENT_NORM[u];return n.trim().charAt(0).toUpperCase()+n.trim().slice(1);}
-function normalizeMode(m){if(!m)return 'Ocean';var v=m.trim().toLowerCase();return['road','ftl','truck','road (ftl)'].includes(v)?'Road':'Ocean';}
+var CARRIER_NORM={'MSK':'Maersk','MAERSK':'Maersk','MAERSK LINE':'Maersk','MAERSKLINE':'Maersk','CMA':'CMA-CGM','CMA CGM':'CMA-CGM','CMACGM':'CMA-CGM','MSC':'MSC','HPL':'Hapag-Lloyd','HAPAG LLOYD':'Hapag-Lloyd','HAPAG-LLOYD':'Hapag-Lloyd','EVE':'Evergreen','EVERGREEN':'Evergreen','COSCO':'COSCO','ONE':'ONE','ZIM':'ZIM','ARKAS':'Arkas','MARFRET':'Marfret','COMANAV':'Comanav'};
+function normalizeCarrier(n){if(!n)return n;var k=n.trim().toUpperCase().replace(/[^A-Z0-9 ]/g,' ').trim();if(CARRIER_NORM[k])return CARRIER_NORM[k];return n.trim().charAt(0).toUpperCase()+n.trim().slice(1);}
+function normalizeClient(n){if(!n)return n;var M={'COPAG':'COPAG'};return M[n.trim().toUpperCase()]||n.trim().charAt(0).toUpperCase()+n.trim().slice(1);}
+function normalizeMode(m){if(!m)return 'Ocean';return['road','ftl','truck','road (ftl)'].includes(m.trim().toLowerCase())?'Road':'Ocean';}
 function normalizeDirection(d){if(!d)return '';var v=d.trim().toLowerCase();if(['export','exp','x'].includes(v))return 'Export';if(['import','imp','m'].includes(v))return 'Import';return d.trim().charAt(0).toUpperCase()+d.trim().slice(1);}
 function computeAutoStatus(etd,eta,hc){if(!hc)return 'Pending';var t=new Date();t.setHours(0,0,0,0);function pd(s){if(!s)return null;var d=new Date(s.split('T')[0]);return isNaN(d)?null:d;}var e=pd(etd),a=pd(eta);if(e&&t<e)return 'Confirmed';if(e&&a&&t>=e&&t<a)return 'Sailing';if(a&&t>=a)return 'Arrived';if(e&&t>=e)return 'Sailing';return 'Confirmed';}
 function shipStatus(s){var hc=(Array.isArray(s.containers)&&s.containers.length>0)||(s.teu&&s.teu>0);return computeAutoStatus(s.etd,s.eta,hc);}
@@ -1674,13 +1679,11 @@ async function loadAnalytics(){
   try{
     var k=await apiFetch('/api/kpi-report');
     if(!k||typeof k!=='object') k={};
+    window._kpiData=k;
     var total=k.total||0,totalTeu=k.total_teu||0;
     var byStatus=k.by_status||{},byMode=k.by_mode||{},byDir=k.by_direction||{};
-    var byCarrier=k.by_carrier||[],monthly=k.monthly||[];
-    var topPol=k.top_pol||[],topPod=k.top_pod||[],topRouting=k.top_routing||[];
-    var clientAll=k.by_client_all||[],clientExp=k.by_client_export||[],clientImp=k.by_client_import||[];
-    var _dir=window._kpiDir||'all';
-    var activeClients=_dir==='export'?clientExp:(_dir==='import'?clientImp:clientAll);
+    var monthly=k.monthly||[];
+    var clientAll=k.by_client_all||[];
 
     function kpiCard(icon,color,val,label,sub){
       var d=document.createElement('div');d.className='card';
@@ -1693,10 +1696,8 @@ async function loadAnalytics(){
         +'<div style="font-size:11px;margin-top:5px;color:var(--text2)">'+sub+'</div></div>';
       return d;
     }
-
     var r1=document.getElementById('kpi-cards-r1');
-    if(r1){
-      r1.innerHTML='';
+    if(r1){r1.innerHTML='';
       var expC=byDir['Export']||0,impC=byDir['Import']||0;
       r1.appendChild(kpiCard('ph-package','#4f8ef7',total,'Total Shipments',expC+' Exp · '+impC+' Imp'));
       r1.appendChild(kpiCard('ph-shipping-container','#6c63ff',totalTeu||'—','Total TEU','Across all shipments'));
@@ -1704,75 +1705,50 @@ async function loadAnalytics(){
       r1.appendChild(kpiCard('ph-check-circle','#f59e0b',byStatus['Confirmed']||0,'Confirmed','Awaiting departure'));
     }
     var r2=document.getElementById('kpi-cards-r2');
-    if(r2){
-      r2.innerHTML='';
-      var arrivedC=(byStatus['Arrived']||0)+(byStatus['Closed']||0);
-      var topCl=activeClients.length?activeClients[0].name:'—';
-      var topTeu=activeClients.length?(activeClients[0].teu||0):0;
-      r2.appendChild(kpiCard('ph-flag-banner','#22c55e',arrivedC,'Arrived / Closed','Completed'));
+    if(r2){r2.innerHTML='';
+      var topCl=clientAll.length?clientAll[0].name:'—',topTeu=clientAll.length?(clientAll[0].teu||0):0;
+      r2.appendChild(kpiCard('ph-flag-banner','#22c55e',(byStatus['Arrived']||0)+(byStatus['Closed']||0),'Arrived / Closed','Completed'));
       r2.appendChild(kpiCard('ph-hourglass','#ef4444',byStatus['Pending']||0,'Pending','No container data'));
       r2.appendChild(kpiCard('ph-truck','#06b6d4',byMode['Road']||0,'Road (FTL)',(byMode['Ocean']||0)+' Ocean (FCL)'));
       r2.appendChild(kpiCard('ph-star','#f59e0b',topCl,'Top Client',topTeu+' TEU'));
     }
-
     function dc(id){destroyChart(id);}
     function tc(){return isDark()?'#8892b0':'#5a6a8a';}
     function gc(){return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)';}
 
     dc('kpi-chart-monthly');
     var mcEl=document.getElementById('kpi-chart-monthly');
-    if(mcEl){
-      if(monthly.length){
-        chartRegistry['kpi-chart-monthly']=new Chart(mcEl,{type:'bar',
-          data:{labels:monthly.map(function(m){return m.month;}),
-            datasets:[{label:'Shipments',data:monthly.map(function(m){return m.count;}),
-              backgroundColor:'rgba(79,142,247,.7)',borderRadius:5,borderSkipped:false}]},
-          options:{responsive:true,maintainAspectRatio:false,
-            plugins:{legend:{display:false}},
-            scales:{x:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}}},
-                    y:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}},beginAtZero:true}}}});
-      } else {
-        mcEl.parentElement.innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:12px">No monthly data yet<br><span style="font-size:10px">Add ETD dates to shipments</span></div>';
-      }
-    }
+    if(mcEl&&monthly.length){
+      chartRegistry['kpi-chart-monthly']=new Chart(mcEl,{type:'bar',
+        data:{labels:monthly.map(function(m){return m.month;}),datasets:[{label:'Shipments',data:monthly.map(function(m){return m.count;}),backgroundColor:'rgba(79,142,247,.7)',borderRadius:5,borderSkipped:false}]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}}},y:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}},beginAtZero:true}}}});
+    } else if(mcEl) mcEl.parentElement.innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:12px">No monthly data yet</div>';
 
     dc('kpi-chart-status');
     var scEl=document.getElementById('kpi-chart-status');
-    if(scEl){
-      var sKeys=Object.keys(byStatus),sVals=Object.values(byStatus);
-      var sTot=sVals.reduce(function(a,b){return a+b;},0)||1;
+    if(scEl){var sKeys=Object.keys(byStatus),sVals=Object.values(byStatus),sTot=sVals.reduce(function(a,b){return a+b;},0)||1;
       var sCols={'Pending':'#f59e0b','Confirmed':'#4f8ef7','Booked':'#06b6d4','Stuffed':'#8b5cf6','Sailing':'#3b82f6','Arrived':'#22c55e','Closed':'#6b7280','Canceled':'#ef4444'};
       if(sKeys.length) chartRegistry['kpi-chart-status']=new Chart(scEl,{type:'doughnut',
         data:{labels:sKeys,datasets:[{data:sVals,backgroundColor:sKeys.map(function(s){return sCols[s]||'#aaa';}),borderWidth:0,hoverOffset:8}]},
-        options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-          plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},boxWidth:10,padding:6}},
-            tooltip:{callbacks:{label:function(c){return c.label+': '+c.parsed+' ('+Math.round(c.parsed/sTot*100)+'%)';}}}}}});
-    }
+        options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},boxWidth:10,padding:6}},tooltip:{callbacks:{label:function(c){return c.label+': '+c.parsed+' ('+Math.round(c.parsed/sTot*100)+'%)';}}}}}});}
 
     dc('kpi-chart-mode');
     var modeEl=document.getElementById('kpi-chart-mode');
-    if(modeEl){
-      var mKeys=Object.keys(byMode).filter(function(x){return byMode[x]>0;});
+    if(modeEl){var mKeys=Object.keys(byMode).filter(function(x){return byMode[x]>0;});
       if(mKeys.length) chartRegistry['kpi-chart-mode']=new Chart(modeEl,{type:'doughnut',
         data:{labels:mKeys,datasets:[{data:mKeys.map(function(x){return byMode[x];}),backgroundColor:['#4f8ef7','#22c55e','#f59e0b'],borderWidth:0,hoverOffset:8}]},
-        options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-          plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},boxWidth:10,padding:6}}}}});
-      else modeEl.parentElement.innerHTML='<div style="text-align:center;padding:50px;color:var(--text2);font-size:12px">No mode data</div>';
-    }
+        options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},boxWidth:10,padding:6}}}}});
+      else modeEl.parentElement.innerHTML='<div style="text-align:center;padding:50px;color:var(--text2);font-size:12px">No mode data</div>';}
 
     dc('kpi-chart-dir');
     var dirEl=document.getElementById('kpi-chart-dir');
-    if(dirEl){
-      var dVals=[byDir['Export']||0,byDir['Import']||0];
+    if(dirEl){var dVals=[byDir['Export']||0,byDir['Import']||0];
       if(dVals[0]+dVals[1]>0) chartRegistry['kpi-chart-dir']=new Chart(dirEl,{type:'doughnut',
         data:{labels:['Export','Import'],datasets:[{data:dVals,backgroundColor:['#4f8ef7','#22c55e'],borderWidth:0,hoverOffset:8}]},
-        options:{responsive:true,maintainAspectRatio:false,cutout:'55%',
-          plugins:{legend:{position:'right',labels:{color:tc(),font:{size:11},boxWidth:12,padding:8}},
-            tooltip:{callbacks:{label:function(c){var t=(dVals[0]+dVals[1])||1;return c.label+': '+c.parsed+' ('+Math.round(c.parsed/t*100)+'%)';}}}}}});
-      else dirEl.parentElement.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No direction data<br><span style="font-size:10px">Set Export/Import on shipments</span></div>';
-    }
+        options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'right',labels:{color:tc(),font:{size:11},boxWidth:12,padding:8}},tooltip:{callbacks:{label:function(c){var t=(dVals[0]+dVals[1])||1;return c.label+': '+c.parsed+' ('+Math.round(c.parsed/t*100)+'%)';}}}}}});
+      else dirEl.parentElement.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No direction data yet</div>';}
 
-    function barList(id,items,nKey,vKey,fbColor){
+    window._barListFn=function(id,items,nKey,vKey,fbColor){
       var el=document.getElementById(id);if(!el)return;
       if(!items||!items.length){el.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px 0">No data yet</div>';return;}
       var maxV=Math.max.apply(null,items.map(function(i){return i[vKey]||0;}))||1;
@@ -1780,83 +1756,72 @@ async function loadAnalytics(){
       var PAL=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444','#f97316','#ec4899'];
       el.innerHTML=items.slice(0,8).map(function(item,i){
         var v=item[vKey]||0,pct=Math.round(v/totV*100),w=Math.round(v/maxV*100),c=fbColor||PAL[i%8];
-        return '<div style="margin-bottom:9px">'
-          +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
+        return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
           +'<span style="color:var(--text1);font-weight:600;max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(item[nKey]||'—')+'</span>'
           +'<span style="color:var(--text2)">'+v+' <b style="color:'+c+'">'+pct+'%</b></span></div>'
-          +'<div style="height:6px;background:var(--bg3);border-radius:4px">'
-          +'<div style="height:6px;border-radius:4px;background:'+c+';width:'+w+'%;transition:width .6s ease"></div></div></div>';
+          +'<div style="height:6px;background:var(--bg3);border-radius:4px"><div style="height:6px;border-radius:4px;background:'+c+';width:'+w+'%;transition:width .6s ease"></div></div></div>';
       }).join('');
-    }
-
-    barList('kpi-bar-carriers',byCarrier,'name','count',null);
-    barList('kpi-bar-clients',activeClients,'name','shipments','#4f8ef7');
-    barList('kpi-bar-teu',activeClients.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
-    barList('kpi-bar-pod',topPod,'name','count','#ef4444');
-    barList('kpi-bar-pol',topPol,'name','count','#22c55e');
+    };
+    var bl=window._barListFn;
+    bl('kpi-bar-carriers',k.by_carrier||[],'name','count',null);
+    bl('kpi-bar-clients',clientAll,'name','shipments','#4f8ef7');
+    bl('kpi-bar-teu',clientAll.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
+    bl('kpi-bar-pod',k.top_pod||[],'name','count','#ef4444');
+    bl('kpi-bar-pol',k.top_pol||[],'name','count','#22c55e');
 
     var rEl=document.getElementById('kpi-bar-routes');
-    if(rEl){
-      if(topRouting.length){
-        var maxR=Math.max.apply(null,topRouting.map(function(r){return r.count;}))||1;
-        var totR=topRouting.reduce(function(s,r){return s+r.count;},0)||1;
+    if(rEl){var tr=k.top_routing||[];
+      if(tr.length){var maxR=Math.max.apply(null,tr.map(function(r){return r.count;}))||1,totR=tr.reduce(function(s,r){return s+r.count;},0)||1;
         var PAL=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444','#f97316','#ec4899'];
-        rEl.innerHTML=topRouting.slice(0,8).map(function(r,i){
-          var pct=Math.round(r.count/totR*100),w=Math.round(r.count/maxR*100),c=PAL[i%8];
-          return '<div style="margin-bottom:9px">'
-            +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
+        rEl.innerHTML=tr.slice(0,8).map(function(r,i){var pct=Math.round(r.count/totR*100),w=Math.round(r.count/maxR*100),c=PAL[i%8];
+          return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
             +'<span style="color:var(--text1);font-weight:600">→ '+(r.route||'—')+'</span>'
             +'<span style="color:var(--text2)">'+r.count+' <b style="color:'+c+'">'+pct+'%</b></span></div>'
-            +'<div style="height:6px;background:var(--bg3);border-radius:4px">'
-            +'<div style="height:6px;border-radius:4px;background:'+c+';width:'+w+'%;transition:width .6s ease"></div></div></div>';
+            +'<div style="height:6px;background:var(--bg3);border-radius:4px"><div style="height:6px;border-radius:4px;background:'+c+';width:'+w+'%;transition:width .6s ease"></div></div></div>';
         }).join('');
-      } else rEl.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px 0">No routing data yet</div>';
-    }
+      } else rEl.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px 0">No routing data yet</div>';}
 
     var odEl=document.getElementById('kpi-overdue');
-    if(odEl){
-      var now=new Date();now.setHours(0,0,0,0);
-      var ships=(typeof allShipments!=='undefined')?allShipments:[];
-      var od=ships.filter(function(s){
-        if(!s.eta)return false;
-        var eD=new Date(s.eta.split('T')[0]);
-        var st=shipStatus(s);
-        return !isNaN(eD)&&now>eD&&st!=='Arrived'&&st!=='Closed'&&st!=='Canceled';
-      }).sort(function(a,b){return new Date(a.eta)-new Date(b.eta);});
-      if(od.length){
-        odEl.innerHTML=od.slice(0,10).map(function(s){
-          var eD=new Date(s.eta.split('T')[0]),dl=Math.floor((now-eD)/86400000);
-          var ug=dl>7?'#ef4444':dl>3?'#f97316':'#f59e0b';
-          return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;margin-bottom:7px;background:var(--bg3);border-left:3px solid '+ug+'">'
-            +'<div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+s.ref+'</div>'
-            +'<div style="font-size:11px;color:var(--text2);margin-top:1px">'+(s.client||'--')+' · ETA '+s.eta.split('T')[0]+'</div></div>'
-            +'<div style="display:flex;align-items:center;gap:8px">'
-            +'<span style="background:'+ug+'22;color:'+ug+';font-weight:800;font-size:12px;padding:3px 10px;border-radius:20px">'+dl+'d late</span>'
-            +'<button onclick="openDetail('+s.id+')" style="padding:5px 10px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button>'
-            +'</div></div>';
-        }).join('');
-      } else odEl.innerHTML='<div style="text-align:center;padding:28px;color:var(--green);font-size:14px;font-weight:600">✓ No overdue shipments</div>';
-    }
+    if(odEl){var now=new Date();now.setHours(0,0,0,0);var ships=(typeof allShipments!=='undefined')?allShipments:[];
+      var od=ships.filter(function(s){if(!s.eta)return false;var eD=new Date(s.eta.split('T')[0]);var st=shipStatus(s);return !isNaN(eD)&&now>eD&&st!=='Arrived'&&st!=='Closed'&&st!=='Canceled';}).sort(function(a,b){return new Date(a.eta)-new Date(b.eta);});
+      if(od.length){odEl.innerHTML=od.slice(0,10).map(function(s){var eD=new Date(s.eta.split('T')[0]),dl=Math.floor((now-eD)/86400000),ug=dl>7?'#ef4444':dl>3?'#f97316':'#f59e0b';
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;margin-bottom:7px;background:var(--bg3);border-left:3px solid '+ug+'">'
+          +'<div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+s.ref+'</div><div style="font-size:11px;color:var(--text2);margin-top:1px">'+(s.client||'--')+' · ETA '+s.eta.split('T')[0]+'</div></div>'
+          +'<div style="display:flex;align-items:center;gap:8px"><span style="background:'+ug+'22;color:'+ug+';font-weight:800;font-size:12px;padding:3px 10px;border-radius:20px">'+dl+'d late</span>'
+          +'<button onclick="openDetail('+s.id+')" style="padding:5px 10px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button></div></div>';
+      }).join('');}
+      else odEl.innerHTML='<div style="text-align:center;padding:28px;color:var(--green);font-size:14px;font-weight:600">✓ No overdue shipments</div>';}
 
   }catch(e){console.error('loadAnalytics:',e);toast('KPI load error: '+e.message,'error');}
 }
 
-function setKpiDir(dir,btn){
-  window._kpiDir=dir;
-  document.querySelectorAll('#page-analytics button[id^="kpi-dir-"]').forEach(function(b){
-    b.style.background='transparent';b.style.color='var(--text2)';b.style.fontWeight='600';
-  });
-  if(btn){btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.fontWeight='700';}
-  loadAnalytics();
+function kpiMiniTab(btn,targetId,dir){
+  var k=window._kpiData||{},bl=window._barListFn;if(!bl)return;
+  btn.closest('.kpi-mini-tabs').querySelectorAll('.kmtab').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  if(targetId==='kpi-bar-clients'){bl(targetId,dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]),'name','shipments','#4f8ef7');}
+  else if(targetId==='kpi-bar-teu'){var src=dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]);bl(targetId,src.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');}
+  else if(targetId==='kpi-bar-carriers'){bl(targetId,dir==='exp'?(k.by_carrier_export||[]):dir==='imp'?(k.by_carrier_import||[]):(k.by_carrier||[]),'name','count',null);}
+  else if(targetId==='kpi-bar-pod'){bl(targetId,dir==='exp'?(k.top_pod_export||[]):dir==='imp'?(k.top_pod_import||[]):(k.top_pod||[]),'name','count','#ef4444');}
+  else if(targetId==='kpi-bar-pol'){bl(targetId,dir==='exp'?(k.top_pol_export||[]):dir==='imp'?(k.top_pol_import||[]):(k.top_pol||[]),'name','count','#22c55e');}
+  else if(targetId==='kpi-bar-routes'){
+    var tr=dir==='exp'?(k.top_routing_export||[]):dir==='imp'?(k.top_routing_import||[]):(k.top_routing||[]);
+    var el=document.getElementById(targetId);if(!el)return;
+    if(!tr.length){el.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px 0">No data for this direction</div>';return;}
+    var maxR=Math.max.apply(null,tr.map(function(r){return r.count;}))||1,totR=tr.reduce(function(s,r){return s+r.count;},0)||1;
+    var PAL=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444','#f97316','#ec4899'];
+    el.innerHTML=tr.slice(0,8).map(function(r,i){var pct=Math.round(r.count/totR*100),w=Math.round(r.count/maxR*100),c=PAL[i%8];
+      return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
+        +'<span style="color:var(--text1);font-weight:600">→ '+(r.route||'—')+'</span>'
+        +'<span style="color:var(--text2)">'+r.count+' <b style="color:'+c+'">'+pct+'%</b></span></div>'
+        +'<div style="height:6px;background:var(--bg3);border-radius:4px"><div style="height:6px;border-radius:4px;background:'+c+';width:'+w+'%;transition:width .6s ease"></div></div></div>';
+    }).join('');}
 }
-function setKpiPeriod(p,btn){
-  window._kpiPeriod=p;
-  document.querySelectorAll('.kpi-ptab').forEach(function(b){
-    b.style.background='transparent';b.style.color='var(--text2)';b.style.fontWeight='600';
-  });
-  if(btn){btn.style.background='var(--accent)';btn.style.color='#fff';btn.style.fontWeight='700';}
-  loadAnalytics();
-}
+function setKpiDir(dir,btn){window._kpiDir=dir;loadAnalytics();}
+function setKpiPeriod(p,btn){window._kpiPeriod=p;
+  document.querySelectorAll('.kpi-ptab').forEach(function(b){b.style.background='transparent';b.style.color='var(--text2)';});
+  if(btn){btn.style.background='var(--accent)';btn.style.color='#fff';}
+  loadAnalytics();}
 
 
 const TOKEN_KEY = "ft_token";
