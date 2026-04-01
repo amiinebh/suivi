@@ -1671,6 +1671,17 @@ function getChartColors(n){
 }
 
 function isDark(){ return document.documentElement.getAttribute('data-theme')==='dark'; }
+function toggleTheme(){
+  var root=document.documentElement;
+  var cur=root.getAttribute('data-theme')||'light';
+  var next=cur==='dark'?'light':'dark';
+  root.setAttribute('data-theme',next);
+  var btn=document.getElementById('theme-toggle-btn');
+  if(btn) btn.innerHTML=next==='dark'
+    ?'<i class="ph ph-sun" style="font-size:16px"></i>'
+    :'<i class="ph ph-moon" style="font-size:16px"></i>';
+}
+
 function chartTextColor(){ return isDark()?'#8892b0':'#5a6a8a'; }
 function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)'; }
 
@@ -2617,7 +2628,7 @@ async function updateAlertsBadge(){
 }
 
 /* ── Generate Report ── */
-async async function generateReport(){
+async async async function generateReport(){
   const btn=document.querySelector('[onclick="generateReport()"]');
   if(btn){btn.disabled=true;btn.textContent='Generating…';}
   try{
