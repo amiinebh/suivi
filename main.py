@@ -5,15 +5,130 @@ from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
 import models, schemas, crud, export
 from database import SessionLocal, engine
-import os, logging, io, re
-from datetime import date, datetime
-
+import os, logging, io
 logging.basicConfig(level=logging.INFO)
 models.Base.metadata.create_all(bind=engine)
 from database import run_migrations
 run_migrations()
 
 app = FastAPI(title="FreightTrack Pro")
+
+
+from collections import defaultdict
+from datetime import datetime
+import re
+
+REF_IMPORT_RE = re.compile(r'^RO(\d{2})(\d{2})(\d{3,4})$', re.I)
+REF_EXPORT_RE = re.compile(r'^ROE(\d{2})(\d{2})(\d{2,4})$', re.I)
+VALID_KPI_STATUSES = ["Confirmed", "Booked", "Stuffed", "Sailing", "Arrived", "Closed", "Canceled"]
+
+
+def _safe_date(value):
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value.date()
+    txt = str(value).strip()
+    if not txt:
+        return None
+    try:
+        return datetime.fromisoformat(txt.replace('Z', '+00:00')).date()
+    except Exception:
+        pass
+    for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d-%m-%Y'):
+        try:
+            return datetime.strptime(txt[:10], fmt).date()
+        except Exception:
+            pass
+    return None
+
+
+def _ref_parts(ref):
+    ref = (ref or '').strip().upper()
+    m = REF_EXPORT_RE.match(ref)
+    if m:
+        yy, mm, seq = m.groups()
+        return {'kind': 'export', 'key': f'20{yy}-{mm}', 'seq': int(seq)}
+    m = REF_IMPORT_RE.match(ref)
+    if m:
+        yy, mm, seq = m.groups()
+        return {'kind': 'import', 'key': f'20{yy}-{mm}', 'seq': int(seq)}
+    return None
+
+
+def _build_reference_kpis(db):
+    shipments = db.query(models.Shipment).all()
+    total = len(shipments)
+    bystatus = {k: 0 for k in VALID_KPI_STATUSES}
+    bymode = defaultdict(int)
+    carrier_map = defaultdict(int)
+    client_map = defaultdict(int)
+    route_map = defaultdict(int)
+    overdue = []
+    transit_days = []
+    month_import = defaultdict(int)
+    month_export = defaultdict(int)
+    today = datetime.utcnow().date()
+
+    for s in shipments:
+        status = (getattr(s, 'status', None) or 'Confirmed').strip()
+        bystatus[status] = bystatus.get(status, 0) + 1
+        mode = (getattr(s, 'mode', None) or 'Unknown').strip()
+        bymode[mode] += 1
+        carrier = (getattr(s, 'carrier', None) or '').strip()
+        if carrier:
+            carrier_map[carrier] += 1
+        client = (getattr(s, 'client', None) or '').strip()
+        if client:
+            client_map[client] += 1
+        pol = (getattr(s, 'pol', None) or '').strip()
+        pod = (getattr(s, 'pod', None) or '').strip()
+        if pol and pod:
+            route_map[f'{pol} to {pod}'] += 1
+        eta = _safe_date(getattr(s, 'eta', None))
+        etd = _safe_date(getattr(s, 'etd', None))
+        if etd and eta and eta >= etd:
+            transit_days.append((eta - etd).days)
+        if eta and status not in ('Closed', 'Arrived', 'Canceled') and eta < today:
+            overdue.append({'id': getattr(s, 'id', None), 'ref': getattr(s, 'ref', None), 'client': getattr(s, 'client', None), 'eta': getattr(s, 'eta', None), 'dayslate': (today - eta).days})
+        parts = _ref_parts(getattr(s, 'ref', None))
+        if parts:
+            if parts['kind'] == 'import':
+                month_import[parts['key']] = max(month_import[parts['key']], parts['seq'])
+            else:
+                month_export[parts['key']] = max(month_export[parts['key']], parts['seq'])
+
+    monthly = []
+    for key in sorted(set(month_import) | set(month_export)):
+        monthly.append({'month': key, 'count': month_import.get(key, 0) + month_export.get(key, 0), 'import_count': month_import.get(key, 0), 'export_count': month_export.get(key, 0)})
+
+    delivered = bystatus.get('Closed', 0) + bystatus.get('Arrived', 0)
+    delayed = len(overdue)
+    active_non_canceled = max(total - bystatus.get('Canceled', 0), 1)
+    ontime_rate = round((max(active_non_canceled - delayed, 0) / active_non_canceled) * 100) if total else 0
+    delay_rate = round((delayed / active_non_canceled) * 100) if total else 0
+    avg_transit = round(sum(transit_days) / len(transit_days)) if transit_days else None
+    bycarrier = [{'name': k, 'count': v} for k, v in sorted(carrier_map.items(), key=lambda x: (-x[1], x[0]))[:10]]
+    byclient = [{'name': k, 'count': v} for k, v in sorted(client_map.items(), key=lambda x: (-x[1], x[0]))[:10]]
+    toproutes = [{'route': k, 'count': v} for k, v in sorted(route_map.items(), key=lambda x: (-x[1], x[0]))[:12]]
+    overdue.sort(key=lambda x: (-x['dayslate'], (x.get('ref') or '')))
+
+    return {
+        'total': total,
+        'delivered': delivered,
+        'delayed': delayed,
+        'ontimerate': ontime_rate,
+        'delayrate': delay_rate,
+        'avgtransit': avg_transit,
+        'bystatus': bystatus,
+        'bycarrier': bycarrier,
+        'byclient': byclient,
+        'bymode': dict(sorted(bymode.items())),
+        'monthly': monthly,
+        'overdue': overdue[:10],
+        'toproutes': toproutes,
+    }
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def get_db():
@@ -21,91 +136,6 @@ def get_db():
     try: yield db
     finally: db.close()
 
-# ─────────────────────────────────────────────
-# NAME NORMALISATION MAPS
-# ─────────────────────────────────────────────
-CARRIER_MAP = {
-    "MSK": "Maersk", "MAERSK": "Maersk", "MAERSK LINE": "Maersk", "MAERSKLINE": "Maersk",
-    "CMA": "CMA-CGM", "CMA CGM": "CMA-CGM", "CMACGM": "CMA-CGM", "CMA-CGM": "CMA-CGM",
-    "MSC": "MSC", "MEDITERRANEAN SHIPPING": "MSC",
-    "HPL": "Hapag-Lloyd", "HAPAG": "Hapag-Lloyd", "HAPAG LLOYD": "Hapag-Lloyd", "HAPAG-LLOYD": "Hapag-Lloyd",
-    "EVE": "Evergreen", "EVERGREEN": "Evergreen", "EMC": "Evergreen",
-    "COS": "COSCO", "COSCO": "COSCO",
-    "ONE": "ONE", "OCEAN NETWORK EXPRESS": "ONE",
-    "YML": "Yang Ming", "YANG MING": "Yang Ming", "YANGMING": "Yang Ming",
-    "HMM": "HMM", "HYUNDAI": "HMM",
-    "PIL": "PIL", "PACIFIC INTERNATIONAL LINES": "PIL",
-    "ZIM": "ZIM",
-    "ARKAS": "Arkas", "MARFRET": "Marfret",
-    "COMANAV": "Comanav", "IMTC": "IMTC",
-}
-
-CLIENT_MAP = {
-    "COPAG": "COPAG", "Copag": "COPAG", "copag": "COPAG",
-}
-
-def normalize_carrier(name: str) -> str:
-    if not name: return name
-    key = re.sub(r"[^A-Z0-9 ]", " ", name.strip().upper()).strip()
-    # Try full key first, then collapse spaces
-    if key in CARRIER_MAP: return CARRIER_MAP[key]
-    key2 = re.sub(r"\s+", "", key)
-    for k, v in CARRIER_MAP.items():
-        if re.sub(r"[^A-Z0-9]", "", k) == key2:
-            return v
-    return name.strip().title()
-
-def normalize_client(name: str) -> str:
-    if not name: return name
-    upper = name.strip().upper()
-    if upper in CLIENT_MAP: return CLIENT_MAP[upper]
-    # Title-case as fallback canonical form
-    return name.strip().title()
-
-def normalize_mode(mode: str) -> str:
-    if not mode: return "Ocean"
-    m = mode.strip().upper()
-    if m in ("ROAD","FTL","TRUCK","ROAD (FTL)","LTL","CAMION"): return "Road"
-    if m in ("OCEAN","FCL","LCL","SEA","OCE","FCL OCEAN","LCL OCEAN"): return "Ocean"
-    return mode.strip()
-
-def normalize_direction(d: str) -> str:
-    if not d: return None
-    d = d.strip().lower()
-    if d in ("export", "exp", "x"): return "Export"
-    if d in ("import", "imp", "m"): return "Import"
-    return d.capitalize()
-
-def compute_status(etd, eta, has_container: bool) -> str:
-    """
-    Compute auto-status from dates and container presence.
-    - No container data → Pending
-    - today < ETD → Confirmed
-    - ETD <= today < ETA → Sailing
-    - today >= ETA → Arrived
-    """
-    if not has_container:
-        return "Pending"
-    today = date.today()
-    def parse(d):
-        if not d: return None
-        try: return date.fromisoformat(str(d).split("T")[0])
-        except: return None
-    etd_d = parse(etd)
-    eta_d = parse(eta)
-    if etd_d and today < etd_d:
-        return "Confirmed"
-    if etd_d and eta_d and etd_d <= today < eta_d:
-        return "Sailing"
-    if eta_d and today >= eta_d:
-        return "Arrived"
-    if etd_d and today >= etd_d:
-        return "Sailing"
-    return "Confirmed"
-
-# ─────────────────────────────────────────────
-# ROUTES
-# ─────────────────────────────────────────────
 @app.get("/")
 def root():
     from fastapi.responses import HTMLResponse
@@ -114,7 +144,7 @@ def root():
     content = html_path.read_text(encoding="utf-8") if html_path.exists() else "<h1>Loading...</h1>"
     return HTMLResponse(content=content, headers={
         "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache", "Expires": "0", "X-Version": "v27"
+        "Pragma": "no-cache", "Expires": "0", "X-Version": "v26"
     })
 
 @app.get("/track/{ref}")
@@ -134,7 +164,7 @@ def portal_data(ref: str, db: Session = Depends(get_db)):
                    for e in sorted(s.events, key=lambda x: x.timestamp, reverse=True)]
     }
 
-# ── Shipments ──────────────────────────────────
+# Shipments
 @app.get("/api/shipments", response_model=list[schemas.ShipmentOut])
 def list_shipments(q: str = "", search: str = "", status: str = "", mode: str = "",
                    db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -147,6 +177,7 @@ async def create_shipment(request: Request, db: Session = Depends(get_db),
         body = await request.json()
     except Exception:
         raise HTTPException(400, "Invalid JSON body")
+    # Support legacy frontend key "quotationnumber" (no underscore)
     if "quotationnumber" in body and "quotation_number" not in body:
         body["quotation_number"] = body.pop("quotationnumber")
     ref = (body.get("ref") or "").strip()
@@ -158,11 +189,6 @@ async def create_shipment(request: Request, db: Session = Depends(get_db),
         if k not in allowed: continue
         sdata[k] = v.strip() if isinstance(v, str) and v.strip() != "" else (None if isinstance(v, str) else v)
     sdata["ref"] = ref
-    # Normalise
-    if sdata.get("carrier"): sdata["carrier"] = normalize_carrier(sdata["carrier"])
-    if sdata.get("client"): sdata["client"] = normalize_client(sdata["client"])
-    if sdata.get("mode"): sdata["mode"] = normalize_mode(sdata["mode"])
-    if sdata.get("direction"): sdata["direction"] = normalize_direction(sdata["direction"])
     sdata.setdefault("mode", "Ocean")
     sdata.setdefault("status", "Confirmed")
     try:
@@ -172,7 +198,8 @@ async def create_shipment(request: Request, db: Session = Depends(get_db),
         import traceback; traceback.print_exc()
         raise HTTPException(500, f"Failed to create shipment: {str(e)}")
 
-# ── Bulk Import (JSON) ─────────────────────────
+
+# Bulk Import
 @app.post("/api/shipments/bulk")
 async def bulk_import_shipments(request: Request, db: Session = Depends(get_db),
                                  current=Depends(get_current_user)):
@@ -180,80 +207,42 @@ async def bulk_import_shipments(request: Request, db: Session = Depends(get_db),
         body = await request.json()
     except Exception:
         raise HTTPException(400, "Invalid JSON body")
-    rows = body.get("shipments", [])
-    if not rows: raise HTTPException(400, "No shipments provided")
-    SAFE_FIELDS = {"ref","ref2","booking_no","mode","carrier","teu","pol","pod",
-                   "eta","etd","status","client","client_email","direction",
-                   "incoterm","shipper","consignee","agent","note","notes",
-                   "vessel","voyage","quotation_number","stuffing_date","container"}
-    created_count = 0
-    updated_count = 0
-    skipped = []
 
-    def _pd(val):
-        if not val: return None
-        if hasattr(val, "strftime"): return val.strftime("%Y-%m-%d")
-        s = str(val).strip().split(" ")[0].split("T")[0]
-        for fmt in ["%Y-%m-%d","%Y/%m/%d","%d/%m/%Y","%d-%m-%Y","%m/%d/%Y","%d.%m.%Y"]:
-            try: return datetime.strptime(s, fmt).strftime("%Y-%m-%d")
-            except: pass
-        return None
+    rows = body.get("shipments", [])
+    if not rows:
+        raise HTTPException(400, "No shipments provided")
+
+    allowed = set(schemas.ShipmentCreate.model_fields.keys())
+    created_count = 0
+    skipped = []
 
     for row in rows:
         ref = str(row.get("ref", "")).strip()
         if not ref:
-            skipped.append({"ref": None, "reason": "Missing ref"}); continue
+            skipped.append({"ref": None, "reason": "Missing ref"})
+            continue
+        if crud.get_shipment(db, ref):
+            skipped.append({"ref": ref, "reason": "Already exists"})
+            continue
         sdata = {}
         for k, v in row.items():
-            key = k.strip().lower()
-            if key not in SAFE_FIELDS: continue
-            sdata[key] = v.strip() if isinstance(v, str) and v.strip() != "" else (None if isinstance(v, str) else v)
+            if k not in allowed:
+                continue
+            if isinstance(v, str):
+                sdata[k] = v.strip() if v.strip() != "" else None
+            else:
+                sdata[k] = v
         sdata["ref"] = ref
-        # Normalise fields
-        if sdata.get("carrier"):   sdata["carrier"]   = normalize_carrier(sdata["carrier"])
-        if sdata.get("client"):    sdata["client"]    = normalize_client(sdata["client"])
-        if sdata.get("mode"):      sdata["mode"]      = normalize_mode(sdata["mode"])
-        if sdata.get("direction"): sdata["direction"] = normalize_direction(sdata["direction"])
-        # Parse dates
-        sdata["etd"] = _pd(sdata.get("etd"))
-        sdata["eta"] = _pd(sdata.get("eta"))
-        # Parse TEU
-        if sdata.get("teu") is not None:
-            try: sdata["teu"] = int(float(str(sdata["teu"])))
-            except: sdata["teu"] = None
         sdata.setdefault("mode", "Ocean")
         sdata.setdefault("status", "Confirmed")
-
-        existing = crud.get_shipment(db, ref)
         try:
-            if existing:
-                # Upsert — update existing shipment
-                for attr, val in sdata.items():
-                    if val is not None and hasattr(existing, attr):
-                        setattr(existing, attr, val)
-                db.commit()
-                # Handle containers
-                if sdata.get("container"):
-                    import re as _re
-                    db.query(models.Container).filter(models.Container.shipment_id == existing.id).delete()
-                    for cno in _re.split(r"[,;/\|]", str(sdata["container"])):
-                        cno = cno.strip()
-                        if cno: db.add(models.Container(shipment_id=existing.id, container_no=cno))
-                    db.commit()
-                updated_count += 1
-            else:
-                s = schemas.ShipmentCreate(**{k: v for k, v in sdata.items() if k != "container"})
-                new_ship = crud.create_shipment(db, s)
-                if sdata.get("container") and new_ship:
-                    import re as _re
-                    for cno in _re.split(r"[,;/\|]", str(sdata["container"])):
-                        cno = cno.strip()
-                        if cno: db.add(models.Container(shipment_id=new_ship.id, container_no=cno))
-                    db.commit()
-                created_count += 1
+            s = schemas.ShipmentCreate(**sdata)
+            crud.create_shipment(db, s)
+            created_count += 1
         except Exception as e:
             skipped.append({"ref": ref, "reason": str(e)})
-    return {"created": created_count, "updated": updated_count, "skipped": skipped, "total": len(rows)}
+
+    return {"created": created_count, "skipped": skipped, "total": len(rows)}
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
 def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -267,10 +256,6 @@ async def update_shipment(sid: int, request: Request, db: Session = Depends(get_
     body = await request.json()
     allowed = set(schemas.ShipmentUpdate.model_fields.keys())
     filtered = {k: (v if v != "" else None) for k, v in body.items() if k in allowed}
-    if filtered.get("carrier"): filtered["carrier"] = normalize_carrier(filtered["carrier"])
-    if filtered.get("client"): filtered["client"] = normalize_client(filtered["client"])
-    if filtered.get("mode"): filtered["mode"] = normalize_mode(filtered["mode"])
-    if filtered.get("direction"): filtered["direction"] = normalize_direction(filtered["direction"])
     data = schemas.ShipmentUpdate(**filtered)
     s = crud.update_shipment(db, sid, data)
     if not s: raise HTTPException(404, "Not found")
@@ -293,7 +278,23 @@ async def update_status(sid: int, request: Request, db: Session = Depends(get_db
     db.commit(); db.refresh(s)
     return s
 
-# ── Comments ───────────────────────────────────
+# Tracking
+@app.post("/api/shipments/{sid}/track")
+def track_one(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    import tracker
+    s = crud.get_shipment_by_id(db, sid)
+    if not s: raise HTTPException(404, "Not found")
+    return tracker.track_and_update(db, s)
+
+@app.post("/api/track-all")
+def track_all(db: Session = Depends(get_db), current=Depends(get_current_user)):
+    import tracker
+    for s in crud.get_shipments(db, "", "", ""):
+        try: tracker.track_and_update(db, s)
+        except: pass
+    return {"ok": True}
+
+# Comments
 @app.post("/api/shipments/{sid}/comments", response_model=schemas.CommentOut)
 def add_comment(sid: int, data: schemas.CommentCreate, db: Session = Depends(get_db),
                 current=Depends(get_current_user)):
@@ -301,7 +302,7 @@ def add_comment(sid: int, data: schemas.CommentCreate, db: Session = Depends(get
     if not s: raise HTTPException(404, "Not found")
     return crud.add_comment(db, sid, data)
 
-# ── Export XLSX ────────────────────────────────
+# Export
 @app.get("/api/export/xlsx")
 def export_xlsx(search: str = "", status: str = "", mode: str = "",
                 db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -311,164 +312,15 @@ def export_xlsx(search: str = "", status: str = "", mode: str = "",
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers={"Content-Disposition": "attachment; filename=shipments.xlsx"})
 
-# ── KPIs & Stats ───────────────────────────────
+# KPIs & Stats
 @app.get("/api/kpis")
 def get_kpis(db: Session = Depends(get_db), current=Depends(get_current_user)):
-    return crud.get_kpis(db)
+    return _build_reference_kpis(db)
 
 @app.get("/api/stats")
 def stats(db: Session = Depends(get_db), current=Depends(get_current_user)):
     return crud.get_stats(db)
 
-# ── Full KPI Report ────────────────────────────
-@app.get("/api/kpi-report")
-def kpi_report(db: Session = Depends(get_db), current=Depends(get_current_user)):
-    """
-    Rich KPI report with:
-    - per-client shipment count + TEU, split by direction
-    - top POL, top POD, top routing (POL->POD)
-    - by_carrier, by_status, by_mode, by_direction
-    - auto-status computed server-side for accuracy
-    """
-    from collections import defaultdict
-    today = date.today()
-
-    all_ships = crud.get_shipments(db, "", "", "")
-
-    def has_container(s):
-        return bool(getattr(s, "containers", None) and len(s.containers) > 0) or bool(getattr(s, "teu", None) and s.teu)
-
-    def auto_status(s):
-        return compute_status(s.etd, s.eta, has_container(s))
-
-    # Counters
-    by_client_exp = defaultdict(lambda: {"shipments": 0, "teu": 0})
-    by_client_imp = defaultdict(lambda: {"shipments": 0, "teu": 0})
-    by_carrier    = defaultdict(int)
-    by_carrier_exp= defaultdict(int)
-    by_carrier_imp= defaultdict(int)
-    by_status     = defaultdict(int)
-    by_mode       = defaultdict(int)
-    by_pol        = defaultdict(int)
-    by_pol_exp    = defaultdict(int)
-    by_pol_imp    = defaultdict(int)
-    by_pod        = defaultdict(int)
-    by_pod_exp    = defaultdict(int)
-    by_pod_imp    = defaultdict(int)
-    by_routing    = defaultdict(int)
-    by_routing_exp= defaultdict(int)
-    by_routing_imp= defaultdict(int)
-    by_direction  = {"Export": 0, "Import": 0, "Unknown": 0}
-    total_teu     = 0
-    monthly       = defaultdict(int)
-
-    for s in all_ships:
-        cn = normalize_client(s.client or "Unknown")
-        car = normalize_carrier(s.carrier or "Unknown")
-        st  = auto_status(s)
-        mod = normalize_mode(s.mode or "Ocean")
-        teu = s.teu or 0
-        total_teu += teu
-
-        direction = normalize_direction(s.direction or "") or "Unknown"
-        if direction not in ("Export", "Import"):
-            direction = "Unknown"
-        by_direction[direction] = by_direction.get(direction, 0) + 1
-
-        if direction == "Export":
-            by_client_exp[cn]["shipments"] += 1
-            by_client_exp[cn]["teu"] += teu
-        elif direction == "Import":
-            by_client_imp[cn]["shipments"] += 1
-            by_client_imp[cn]["teu"] += teu
-        else:
-            # Count in both aggregate but not split
-            by_client_exp[cn]["shipments"] += 0  # keep key present
-            by_client_imp[cn]["shipments"] += 0
-
-        by_carrier[car] += 1
-        if direction=="Export": by_carrier_exp[car]+=1
-        elif direction=="Import": by_carrier_imp[car]+=1
-        by_status[st] += 1
-        by_mode[mod] += 1
-        if s.pol:
-            by_pol[s.pol.upper()]+=1
-            if direction=="Export": by_pol_exp[s.pol.upper()]+=1
-            elif direction=="Import": by_pol_imp[s.pol.upper()]+=1
-        if s.pod:
-            by_pod[s.pod.upper()]+=1
-            if direction=="Export": by_pod_exp[s.pod.upper()]+=1
-            elif direction=="Import": by_pod_imp[s.pod.upper()]+=1
-        if s.pol and s.pod:
-            route=f"{s.pol.upper()} → {s.pod.upper()}"
-            by_routing[route]+=1
-            if direction=="Export": by_routing_exp[route]+=1
-            elif direction=="Import": by_routing_imp[route]+=1
-
-        # Monthly (by ETD)
-        if s.etd:
-            try:
-                m = str(s.etd)[:7]  # YYYY-MM
-                monthly[m] += 1
-            except: pass
-
-    def top(d, n=10):
-        return sorted([{"name": k, "count": v} for k, v in d.items()], key=lambda x: -x["count"])[:n]
-
-    def top_str(d, n=10):
-        return sorted([{"name": k, "count": v} for k, v in d.items()], key=lambda x: -x["count"])[:n]
-
-    # All-clients combined (for overall view)
-    all_clients = defaultdict(lambda: {"shipments": 0, "teu": 0})
-    for s in all_ships:
-        cn = normalize_client(s.client or "Unknown")
-        all_clients[cn]["shipments"] += 1
-        all_clients[cn]["teu"] += (s.teu or 0)
-
-    # Build monthly list sorted
-    monthly_list = sorted([{"month": k, "count": v} for k, v in monthly.items()], key=lambda x: x["month"])
-
-    return {
-        "total": len(all_ships),
-        "total_teu": total_teu,
-        "by_direction": by_direction,
-        "by_status": dict(by_status),
-        "by_mode": dict(by_mode),
-        "by_carrier": top(by_carrier, 10),
-        "by_carrier_export": top(by_carrier_exp,10),
-        "by_carrier_import": top(by_carrier_imp,10),
-        "by_client_all": sorted(
-            [{"name": k, "shipments": v["shipments"], "teu": v["teu"]} for k, v in all_clients.items()],
-            key=lambda x: -x["shipments"]
-        )[:15],
-        "by_client_export": sorted(
-            [{"name": k, "shipments": v["shipments"], "teu": v["teu"]} for k, v in by_client_exp.items() if v["shipments"] > 0],
-            key=lambda x: -x["shipments"]
-        )[:15],
-        "by_client_import": sorted(
-            [{"name": k, "shipments": v["shipments"], "teu": v["teu"]} for k, v in by_client_imp.items() if v["shipments"] > 0],
-            key=lambda x: -x["shipments"]
-        )[:15],
-        "top_pol": top_str(by_pol,8),
-        "top_pol_export": top_str(by_pol_exp,8),
-        "top_pol_import": top_str(by_pol_imp,8),
-        "top_pod": top_str(by_pod,8),
-        "top_pod_export": top_str(by_pod_exp,8),
-        "top_pod_import": top_str(by_pod_imp,8),
-        "top_routing": sorted([{"route":k,"count":v} for k,v in by_routing.items()],key=lambda x:-x["count"])[:10],
-        "top_routing_export": sorted([{"route":k,"count":v} for k,v in by_routing_exp.items()],key=lambda x:-x["count"])[:10],
-        "top_routing_import": sorted([{"route":k,"count":v} for k,v in by_routing_imp.items()],key=lambda x:-x["count"])[:10],
-        "monthly": monthly_list,
-        # Legacy fields for backward compat
-        "by_client": top(by_carrier, 10),  # kept for old frontend
-        "top_routes": [{"route": k, "count": v} for k, v in sorted(by_routing.items(), key=lambda x: -x[1])[:10]],
-        "overdue": [],
-        "on_time_rate": 0,
-        "delay_rate": 0,
-        "avg_transit": None,
-    }
-
-# ── Health ─────────────────────────────────────
 @app.get("/api/health")
 def health(db: Session = Depends(get_db)):
     try:
@@ -477,7 +329,7 @@ def health(db: Session = Depends(get_db)):
     except Exception as e:
         return {"status": "error", "db": str(e)}
 
-# ── Containers ─────────────────────────────────
+# Containers
 @app.get("/api/shipments/{sid}/containers")
 def get_containers(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     s = crud.get_shipment_by_id(db, sid)
@@ -504,7 +356,7 @@ def delete_container(cid: int, db: Session = Depends(get_db), current=Depends(ge
     db.delete(cont); db.commit()
     return {"ok": True}
 
-# ── Email ──────────────────────────────────────
+# Email
 @app.post("/api/shipments/{sid}/send-email")
 async def send_email(sid: int, request: Request, db: Session = Depends(get_db),
                      current=Depends(get_current_user)):
@@ -544,170 +396,120 @@ def email_log(sid: int, db: Session = Depends(get_db), current=Depends(get_curre
     try: return crud.get_email_log(db, sid)
     except: return []
 
-# ── Bulk Import (file upload) ──────────────────
+# Webhook
+@app.post("/api/webhook/shipsgo")
+async def webhook(payload: dict, db: Session = Depends(get_db)):
+    ref = payload.get("reference") or payload.get("container_number")
+    if ref:
+        s = crud.get_shipment(db, ref)
+        if s:
+            import tracker; tracker.track_and_update(db, s)
+    return {"ok": True}
+
+# Shipsgo Proxy
+import httpx
+SHIPSGO_BASE = "https://api.shipsgo.com/v2"
+
+@app.api_route("/proxy/shipsgo/{path:path}", methods=["GET","POST","PATCH","DELETE"])
+async def shipsgo_proxy(path: str, request: Request):
+    api_key = request.headers.get("X-Shipsgo-User-Token", "")
+    body = await request.body()
+    params = dict(request.query_params)
+    hdrs = {"X-Shipsgo-User-Token": api_key, "Accept": "application/json",
+            "Content-Type": "application/json"}
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp = await client.request(request.method, f"{SHIPSGO_BASE}/{path}",
+                                    headers=hdrs, params=params, content=body)
+    try: data = resp.json()
+    except: data = resp.text
+    return JSONResponse(content=data, status_code=resp.status_code)
+
+@app.get("/debug")
+def debug_page(): return FileResponse("static/debug.html")
+
+# Bulk Import
 @app.post("/api/shipments/bulk-import")
 async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db),
                       current=Depends(get_current_user)):
     import openpyxl
+    from datetime import datetime
+    import re
     content = await file.read()
     wb = openpyxl.load_workbook(io.BytesIO(content))
     ws = wb.active
-
-    def norm_header(value):
+    def normalize_header(value):
         raw = str(value or "").strip().lower()
         key = re.sub(r"[^a-z0-9]+", "_", raw).strip("_")
         aliases = {
-            "reference": "ref", "ref_no": "ref", "reference_no": "ref",
-            "booking": "booking_no", "bookingno": "booking_no", "booking_number": "booking_no",
-            "clientemail": "client_email", "email": "client_email",
-            "quotation": "quotation_number", "quotationno": "quotation_number",
-            "lasttracked": "last_tracked", "createdat": "created_at",
-            "containers": "container", "truck_plate": "container", "plate": "container",
-            "conteneur": "container", "ctr": "container", "cntr": "container",
-            "nb_teu": "teu", "teus": "teu", "teu": "teu",
-            "etd": "etd", "departure": "etd", "date_etd": "etd", "etd_date": "etd",
-            "eta": "eta", "arrival": "eta", "date_eta": "eta", "eta_date": "eta",
-            "pol": "pol", "port_of_loading": "pol", "origin_port": "pol",
-            "pod": "pod", "port_of_discharge": "pod", "destination_port": "pod",
-            "direction": "direction", "flow": "direction", "type": "direction",
-            "shipper": "shipper", "expediteur": "shipper",
-            "consignee": "consignee", "destinataire": "consignee",
+            "reference": "ref",
+            "ref_no": "ref",
+            "reference_no": "ref",
+            "booking": "booking_no",
+            "bookingno": "booking_no",
+            "booking_number": "booking_no",
+            "clientemail": "client_email",
+            "email": "client_email",
+            "quotation": "quotation_number",
+            "quotationno": "quotation_number",
+            "quotation_number": "quotation_number",
+            "lasttracked": "last_tracked",
+            "createdat": "created_at",
         }
         return aliases.get(key, key)
-
-    headers = [norm_header(c.value) for c in next(ws.iter_rows(min_row=1, max_row=1))]
-
+    headers = [normalize_header(c.value) for c in next(ws.iter_rows(min_row=1, max_row=1))]
+    created, skipped, errors = [], [], []
+    VALID = ["Confirmed","Booked","Stuffed","Sailing","Arrived","Closed","Canceled"]
     def parse_date(val):
         if not val: return None
-        # openpyxl returns datetime objects directly
-        if hasattr(val, 'strftime'):
-            return val.strftime("%Y-%m-%d")
-        s = str(val).strip()
-        # Strip time portion: "2026-01-29 00:00:00" → "2026-01-29"
-        if ' ' in s: s = s.split(' ')[0]
-        if 'T' in s: s = s.split('T')[0]
-        for fmt in ["%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y", "%m/%d/%Y", "%d.%m.%Y"]:
-            try: return datetime.strptime(s, fmt).strftime("%Y-%m-%d")
+        for fmt in ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"]:
+            try: return datetime.strptime(str(val).strip(), fmt).strftime("%Y-%m-%d")
             except: pass
         return None
-
-    created, skipped, errors = [], [], []
-
-    updated = []
-
     for row in ws.iter_rows(min_row=2, values_only=True):
         rd = {headers[i]: (str(v).strip() if v is not None else "")
               for i, v in enumerate(row) if i < len(headers)}
         ref = rd.get("ref", "").strip()
         if not ref: continue
+        if db.query(models.Shipment).filter(models.Shipment.ref == ref).first():
+            skipped.append(ref); continue
         try:
-            teu_raw = rd.get("teu", "")
+            raw_status = rd.get("status", "").strip()
+            teu_raw = rd.get("teu")
             try: teu = int(float(teu_raw)) if teu_raw else None
             except: teu = None
-
-            raw_status = rd.get("status", "").strip()
-            carrier_norm = normalize_carrier(rd.get("carrier", ""))
-            client_norm  = normalize_client(rd.get("client", ""))
-            mode_norm    = normalize_mode(rd.get("mode", "Ocean"))
-            dir_norm     = normalize_direction(rd.get("direction", ""))
-
-            # Auto-status: check container field from excel
-            container_val = rd.get("container", "").strip()
-            has_cont = bool(container_val) or bool(teu)
-
-            auto_st = compute_status(
-                parse_date(rd.get("etd")),
-                parse_date(rd.get("eta")),
-                has_cont
-            )
-
-            existing = db.query(models.Shipment).filter(models.Shipment.ref == ref).first()
-            if existing:
-                if rd.get("ref2"):         existing.ref2         = rd["ref2"]
-                if rd.get("booking_no"):   existing.booking_no   = rd["booking_no"]
-                if mode_norm:              existing.mode         = mode_norm
-                if carrier_norm:           existing.carrier      = carrier_norm
-                if rd.get("shipper"):      existing.shipper      = rd["shipper"]
-                if rd.get("consignee"):    existing.consignee    = rd["consignee"]
-                if client_norm:            existing.client       = client_norm
-                if rd.get("client_email"): existing.client_email = rd["client_email"]
-                if rd.get("pol"):          existing.pol          = rd["pol"]
-                if rd.get("pod"):          existing.pod          = rd["pod"]
-                if rd.get("etd"):          existing.etd          = parse_date(rd["etd"])
-                if rd.get("eta"):          existing.eta          = parse_date(rd["eta"])
-                if rd.get("incoterm"):     existing.incoterm     = rd["incoterm"]
-                if teu is not None:        existing.teu          = teu
-                if dir_norm:               existing.direction    = dir_norm
-                existing.status = auto_st
-                db.commit()
-                if container_val:
-                    from models import Container as Cont
-                    db.query(Cont).filter(Cont.shipment_id == existing.id).delete()
-                    for cno in re.split(r"[,;/\\|]", container_val):
-                        cno = cno.strip()
-                        if cno: db.add(Cont(shipment_id=existing.id, container_no=cno))
-                    db.commit()
-                updated.append(ref)
-                continue
             s = models.Shipment(
-                ref=ref,
-                ref2=rd.get("ref2", "") or None,
-                booking_no=rd.get("booking_no", "") or None,
-                mode=mode_norm,
-                carrier=carrier_norm or None,
-                shipper=rd.get("shipper", "") or None,
-                consignee=rd.get("consignee", "") or None,
-                client=client_norm or None,
-                client_email=rd.get("client_email", "") or None,
-                pol=rd.get("pol", "") or None,
-                pod=rd.get("pod", "") or None,
-                etd=parse_date(rd.get("etd")),
-                eta=parse_date(rd.get("eta")),
-                status=auto_st,
-                incoterm=rd.get("incoterm", "") or None,
-                vessel=rd.get("vessel", "") or None,
-                voyage=rd.get("voyage", "") or None,
-                teu=teu,
-                note=rd.get("note", "") or None,
-                quotation_number=rd.get("quotation_number", "") or None,
-                direction=dir_norm,
+                ref=ref, ref2=rd.get("ref2",""), booking_no=rd.get("booking_no",""),
+                mode=rd.get("mode","Ocean"), carrier=rd.get("carrier",""),
+                shipper=rd.get("shipper",""), consignee=rd.get("consignee",""),
+                client=rd.get("client",""), client_email=rd.get("client_email",""),
+                pol=rd.get("pol",""), pod=rd.get("pod",""),
+                etd=parse_date(rd.get("etd")), eta=parse_date(rd.get("eta")),
+                status=raw_status if raw_status in VALID else "Confirmed",
+                incoterm=rd.get("incoterm",""), vessel=rd.get("vessel",""),
+                voyage=rd.get("voyage",""), teu=teu, note=rd.get("note",""),
+                quotation_number=rd.get("quotation_number",""),
+                last_tracked=rd.get("last_tracked",""),
                 created_at=datetime.utcnow().isoformat()
             )
-            db.add(s)
-            db.commit()
-
-            # If container column has value, create Container record
-            if container_val:
-                from models import Container as Cont
-                for cno in re.split(r"[,;/\\|]", container_val):
-                    cno = cno.strip()
-                    if cno:
-                        db.add(Cont(shipment_id=s.id, container_no=cno))
-                db.commit()
-
-            created.append(ref)
+            db.add(s); db.commit(); created.append(ref)
         except Exception as e:
             errors.append({"ref": ref, "error": str(e)})
+    return {"created": len(created), "skipped": len(skipped), "errors": errors, "refs": created}
 
-    return {"created": len(created), "updated": len(updated), "skipped": len(skipped), "errors": errors}
-
-# ── Seed Samples ───────────────────────────────
+# Seed Samples
 @app.post("/api/seed-samples")
 def seed_samples(db: Session = Depends(get_db)):
     allowed = {c.name for c in models.Shipment.__table__.columns}
     samples = [
-        {"ref":"FT-2026-001","mode":"Ocean","carrier":"MSC","client":"COPAG","pol":"Shanghai","pod":"Casablanca","etd":"2026-01-05","eta":"2026-02-10","status":"Arrived","incoterm":"FOB","vessel":"MSC DIANA","teu":2,"direction":"Import"},
-        {"ref":"FT-2026-002","mode":"Ocean","carrier":"CMA-CGM","client":"Atlas Pharma","pol":"Casablanca","pod":"Marseille","etd":"2026-01-12","eta":"2026-01-18","status":"Arrived","incoterm":"CIF","teu":4,"direction":"Export"},
-        {"ref":"FT-2026-003","mode":"Road","carrier":"CTM","client":"COPAG","pol":"Casablanca","pod":"Madrid","etd":"2026-01-20","eta":"2026-01-22","status":"Arrived","incoterm":"DAP","direction":"Export"},
-        {"ref":"FT-2026-004","mode":"Ocean","carrier":"Maersk","client":"Atlas Pharma","pol":"Casablanca","pod":"Hamburg","etd":"2026-01-25","eta":"2026-02-15","status":"Arrived","incoterm":"FOB","vessel":"MAERSK ELBA","teu":6,"direction":"Export"},
-        {"ref":"FT-2026-005","mode":"Ocean","carrier":"MSC","client":"Casa Ceramics","pol":"Valencia","pod":"Casablanca","etd":"2026-02-01","eta":"2026-02-08","status":"Arrived","incoterm":"CFR","vessel":"MSC ANNA","teu":2,"direction":"Import"},
-        {"ref":"FT-2026-006","mode":"Ocean","carrier":"Hapag-Lloyd","client":"Maroc Textiles","pol":"Casablanca","pod":"Antwerp","etd":"2026-02-18","eta":"2026-03-01","status":"Arrived","incoterm":"CIF","vessel":"HAPAG BERLIN","teu":4,"direction":"Export"},
-        {"ref":"FT-2026-007","mode":"Ocean","carrier":"MSC","client":"Maroc Textiles","pol":"Chennai","pod":"Casablanca","etd":"2026-02-20","eta":"2026-03-25","status":"Arrived","incoterm":"FOB","vessel":"MSC ROMA","teu":3,"direction":"Import"},
-        {"ref":"FT-2026-008","mode":"Ocean","carrier":"CMA-CGM","client":"Casa Ceramics","pol":"Casablanca","pod":"Rotterdam","etd":"2026-03-03","eta":"2026-03-10","status":"Arrived","incoterm":"CFR","teu":2,"direction":"Export"},
-        {"ref":"FT-2026-009","mode":"Ocean","carrier":"MSC","client":"COPAG","pol":"Ningbo","pod":"Casablanca","etd":"2026-03-06","eta":"2026-04-15","status":"Sailing","incoterm":"EXW","vessel":"MSC FIAMMETTA","teu":5,"direction":"Import"},
-        {"ref":"FT-2026-010","mode":"Road","carrier":"ONCF","client":"Atlas Pharma","pol":"Rabat","pod":"Lyon","etd":"2026-03-20","eta":"2026-03-23","status":"Confirmed","incoterm":"DAP","direction":"Export"},
-        {"ref":"FT-2026-011","mode":"Ocean","carrier":"Maersk","client":"Maroc Textiles","pol":"Casablanca","pod":"Hamburg","etd":"2026-04-10","eta":"2026-05-01","status":"Confirmed","incoterm":"FOB","vessel":"MAERSK MILAN","teu":4,"direction":"Export"},
-        {"ref":"FT-2026-012","mode":"Ocean","carrier":"Evergreen","client":"Casa Ceramics","pol":"Kaohsiung","pod":"Casablanca","etd":"2026-04-15","eta":"2026-05-20","status":"Confirmed","incoterm":"CIF","teu":2,"direction":"Import"},
+        {"ref":"FT-2026-001","mode":"Ocean","carrier":"MSC","client":"Maroc Textiles","pol":"Shanghai","pod":"Casablanca","etd":"2026-01-05","eta":"2026-02-10","status":"Closed","incoterm":"FOB","vessel":"MSC DIANA"},
+        {"ref":"FT-2026-002","mode":"Ocean","carrier":"CMA CGM","client":"Atlas Pharma","pol":"Casablanca","pod":"Marseille","etd":"2026-01-12","eta":"2026-01-18","status":"Closed","incoterm":"CIF"},
+        {"ref":"FT-2026-003","mode":"Air","carrier":"Royal Air Maroc","client":"TechImport MA","pol":"Hong Kong","pod":"Casablanca","etd":"2026-01-20","eta":"2026-01-21","status":"Closed","incoterm":"EXW"},
+        {"ref":"FT-2026-004","mode":"Ocean","carrier":"Maersk","client":"Maroc Textiles","pol":"Casablanca","pod":"Hamburg","etd":"2026-01-25","eta":"2026-02-15","status":"Closed","incoterm":"FOB","vessel":"MAERSK ELBA"},
+        {"ref":"FT-2026-005","mode":"Ocean","carrier":"MSC","client":"Casa Ceramics","pol":"Valencia","pod":"Casablanca","etd":"2026-02-01","eta":"2026-02-08","status":"Closed","incoterm":"CFR","vessel":"MSC ANNA"},
+        {"ref":"FT-2026-009","mode":"Ocean","carrier":"Maersk","client":"Casa Ceramics","pol":"Casablanca","pod":"Antwerp","etd":"2026-02-18","eta":"2026-03-01","status":"Sailing","incoterm":"CIF","vessel":"MAERSK COPENHAGEN"},
+        {"ref":"FT-2026-010","mode":"Ocean","carrier":"MSC","client":"Maroc Textiles","pol":"Chennai","pod":"Casablanca","etd":"2026-02-20","eta":"2026-03-25","status":"Sailing","incoterm":"FOB","vessel":"MSC ROMA"},
+        {"ref":"FT-2026-013","mode":"Ocean","carrier":"CMA CGM","client":"Maroc Textiles","pol":"Istanbul","pod":"Casablanca","etd":"2026-03-03","eta":"2026-03-10","status":"Confirmed","incoterm":"CFR"},
+        {"ref":"FT-2026-015","mode":"Ocean","carrier":"MSC","client":"TechImport MA","pol":"Ningbo","pod":"Casablanca","etd":"2026-03-06","eta":"2026-04-15","status":"Confirmed","incoterm":"EXW","vessel":"MSC FIAMMETTA"},
     ]
     added = 0
     for s in samples:
@@ -717,7 +519,20 @@ def seed_samples(db: Session = Depends(get_db)):
     db.commit()
     return {"added": added, "message": f"Seeded {added} sample shipments"}
 
-# ── PDF ────────────────────────────────────────
+@app.get("/api/kpi-report")
+def kpi_report(db: Session = Depends(get_db)):
+    k = _build_reference_kpis(db)
+    insights = []
+    total = k.get("total", 0)
+    if total:
+        insights.append(f"Network volume stands at {total} shipments.")
+        insights.append(f"Delivered: {k.get('delivered',0)}, delayed: {k.get('delayed',0)}.")
+    if k.get("bycarrier"):
+        top = k["bycarrier"][0]
+        insights.append(f"Top carrier: {top['name']} with {top['count']} shipments.")
+    return {"kpis": k, "insights": insights}
+
+# PDF
 @app.get("/api/shipments/{sid}/pdf")
 def shipment_pdf(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     import pdfexport
@@ -729,11 +544,12 @@ def shipment_pdf(sid: int, db: Session = Depends(get_db), current=Depends(get_cu
 @app.get("/api/dashboard/pdf")
 def dashboard_pdf(db: Session = Depends(get_db), current=Depends(get_current_user)):
     import pdfexport
+    from datetime import datetime
     pdf_bytes = pdfexport.generate_dashboard_pdf(crud.get_stats(db), crud.get_shipments(db,"","",""))
     return Response(content=pdf_bytes, media_type="application/pdf",
                     headers={"Content-Disposition": f"attachment; filename=dashboard_{datetime.now().strftime('%Y%m%d')}.pdf"})
 
-# ── Auth & Users ───────────────────────────────
+# Auth & Users
 def ensure_admin(db):
     from models import User
     if not db.query(User).filter(User.role == "admin").first():
@@ -773,52 +589,60 @@ def change_password(body: dict, db: Session = Depends(get_db), current=Depends(g
     from models import User
     old_pw = body.get("old_password", ""); new_pw = body.get("new_password", "")
     if not old_pw or not new_pw: raise HTTPException(400, "Both passwords required")
-    if len(new_pw) < 6: raise HTTPException(400, "Password too short")
-    uid = current.get("id") if isinstance(current, dict) else None
-    if not uid: raise HTTPException(401, "Not authenticated")
-    user = db.query(User).filter(User.id == uid).first()
+    if len(new_pw) < 6: raise HTTPException(400, "New password must be at least 6 characters")
+    user = db.query(User).filter(User.id == int(current["sub"])).first()
     if not user or not verify_password(old_pw, user.hashedpw):
-        raise HTTPException(400, "Current password is incorrect")
-    user.hashedpw = hash_password(new_pw)
-    db.commit()
-    return {"ok": True}
+        raise HTTPException(401, "Current password is incorrect")
+    user.hashedpw = hash_password(new_pw); db.commit()
+    return {"message": "Password changed successfully"}
 
 @app.get("/api/users")
 def list_users(db: Session = Depends(get_db), current=Depends(require_admin)):
     from models import User
-    return db.query(User).all()
+    return [{"id": u.id, "email": u.email, "name": u.name, "role": u.role,
+             "isactive": u.isactive, "createdat": str(u.createdat)}
+            for u in db.query(User).order_by(User.id).all()]
 
 @app.post("/api/users")
-def create_user(body: dict, db: Session = Depends(get_db), current=Depends(require_admin)):
+def create_user(body: schemas.UserCreate, db: Session = Depends(get_db),
+                current=Depends(require_admin)):
     from models import User
-    email = body.get("email", "").strip().lower()
-    name  = body.get("name", "").strip()
-    pw    = body.get("password", "").strip()
-    role  = body.get("role", "cs")
-    if not email or not name or not pw: raise HTTPException(400, "Email, name and password required")
-    if len(pw) < 6: raise HTTPException(400, "Password must be at least 6 characters")
-    if db.query(User).filter(User.email == email).first():
-        raise HTTPException(400, "Email already in use")
-    user = User(email=email, name=name, role=role,
-                hashedpw=hash_password(pw), isactive=True)
-    db.add(user); db.commit(); db.refresh(user)
-    return user
-
-@app.delete("/api/users/{uid}")
-def delete_user(uid: int, db: Session = Depends(get_db), current=Depends(require_admin)):
-    from models import User
-    u = db.query(User).filter(User.id == uid).first()
-    if not u: raise HTTPException(404, "User not found")
-    db.delete(u); db.commit()
-    return {"ok": True}
+    if db.query(User).filter(User.email == body.email).first():
+        raise HTTPException(409, "Email already exists")
+    u = User(email=body.email, name=body.name, role=body.role,
+             hashedpw=hash_password(body.password), isactive=True)
+    db.add(u); db.commit(); db.refresh(u)
+    return {"id": u.id, "email": u.email, "name": u.name, "role": u.role}
 
 @app.patch("/api/users/{uid}/toggle")
 def toggle_user(uid: int, db: Session = Depends(get_db), current=Depends(require_admin)):
     from models import User
     u = db.query(User).filter(User.id == uid).first()
     if not u: raise HTTPException(404, "User not found")
+    if u.role == "admin": raise HTTPException(400, "Cannot deactivate admin")
     u.isactive = not u.isactive; db.commit()
-    return {"ok": True, "active": u.isactive}
+    return {"id": u.id, "isactive": u.isactive}
 
-@app.get("/debug")
-def debug_page(): return FileResponse("static/debug.html")
+@app.delete("/api/users/{uid}")
+def delete_user(uid: int, db: Session = Depends(get_db), current=Depends(require_admin)):
+    from models import User
+    u = db.query(User).filter(User.id == uid).first()
+    if not u: raise HTTPException(404, "User not found")
+    if u.role == "admin": raise HTTPException(400, "Cannot delete admin")
+    db.delete(u); db.commit()
+    return {"deleted": uid}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
+
+@app.get("/debug-user-fields")
+def debug_user_fields():
+    from models import User
+    return {"columns": [c.key for c in User.__table__.columns]}
+
+@app.get("/debug-main-version")
+def debug_version():
+    import inspect, main
+    lines = inspect.getsource(main.login)
+    return {"login_source": lines}
