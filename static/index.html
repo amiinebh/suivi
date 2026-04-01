@@ -2643,15 +2643,14 @@ async function generateReport(){
     var monthly=k.monthly||[];
     var clientAll=k.by_client_all||[];
     var clientExp=k.by_client_export||[],clientImp=k.by_client_import||[];
-    var carriers=k.by_carrier||[],carriersExp=k.by_carrier_export||[],carriersImp=k.by_carrier_import||[];
-    var topPod=k.top_pod||[],topPodExp=k.top_pod_export||[],topPodImp=k.top_pod_import||[];
-    var topPol=k.top_pol||[],topPolExp=k.top_pol_export||[],topPolImp=k.top_pol_import||[];
-    var topR=k.top_routing||[],topRExp=k.top_routing_export||[],topRImp=k.top_routing_import||[];
+    var carriersExp=k.by_carrier_export||[],carriersImp=k.by_carrier_import||[];
+    var topPodExp=k.top_pod_export||[],topPodImp=k.top_pod_import||[];
+    var topPolExp=k.top_pol_export||[],topPolImp=k.top_pol_import||[];
+    var topRExp=k.top_routing_export||[],topRImp=k.top_routing_import||[];
     var expC=byDir['Export']||0,impC=byDir['Import']||0;
     var sCols={'Pending':'#f59e0b','Confirmed':'#4f8ef7','Booked':'#06b6d4','Stuffed':'#8b5cf6','Sailing':'#3b82f6','Arrived':'#22c55e','Closed':'#6b7280','Canceled':'#ef4444'};
     var sBg=function(s){return(sCols[s]||'#888')+'22';};
     var sFg=function(s){return sCols[s]||'#888';};
-    var PAL=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444','#f97316','#ec4899'];
     var nowMs=new Date().setHours(0,0,0,0);
     var overdue=ships.filter(function(s){
       if(!s.eta)return false;
@@ -2660,278 +2659,332 @@ async function generateReport(){
       return !isNaN(eD)&&nowMs>eD&&['Arrived','Closed','Canceled'].indexOf(st)===-1;
     }).sort(function(a,b){return new Date(a.eta)-new Date(b.eta);});
 
-    /* ── helpers ── */
-    function miniBar(val,tot,color){
-      var pct=tot?Math.round(val/tot*100):0;
-      return '<div style="display:flex;align-items:center;gap:6px">'
-        +'<div style="flex:1;height:7px;background:#f0f4f8;border-radius:4px;overflow:hidden">'
-        +'<div style="height:7px;border-radius:4px;background:'+color+';width:'+pct+'%"></div></div>'
-        +'<span style="font-size:10px;color:#888;width:30px;text-align:right">'+pct+'%</span></div>';
-    }
-
-    /* Single-direction ranked table */
-    function rankTable(items,nKey,vKey,color,title,icon){
-      if(!items||!items.length) return '<p style="color:#aaa;font-size:12px;padding:8px 0">No data</p>';
+    /* ── rank table (single direction) ── */
+    function rankTable(items,nKey,vKey,accent){
+      if(!items||!items.length) return '<div class="empty-state">No data available</div>';
       var tot=items.reduce(function(s,i){return s+(i[vKey]||0);},0)||1;
       var rows='';
-      items.slice(0,10).forEach(function(item,i){
-        var v=item[nKey]||'--', cnt=item[vKey]||0;
+      items.slice(0,8).forEach(function(item,i){
+        var name=item[nKey]||'--', cnt=item[vKey]||0;
+        var pct=Math.round(cnt/tot*100);
+        var medals=['&#129351;','&#129352;','&#129353;'];
+        var rank=i<3?'<span style="font-size:14px">'+medals[i]+'</span>':'<span style="color:#cbd5e1;font-size:12px;font-weight:600">'+(i+1)+'</span>';
         rows+='<tr>'
-          +'<td style="color:#aaa;width:26px;text-align:center">'+(i+1)+'</td>'
-          +'<td style="font-weight:700;color:#1a2040">'+v+'</td>'
-          +'<td style="text-align:right;font-weight:700;padding-right:8px;color:'+color+'">'+cnt+'</td>'
-          +'<td style="width:140px">'+miniBar(cnt,tot,color)+'</td>'
+          +'<td style="width:32px;text-align:center">'+rank+'</td>'
+          +'<td><div style="font-weight:600;color:#0f172a;font-size:13px">'+name+'</div></td>'
+          +'<td style="width:50px;text-align:right"><span style="font-weight:800;font-size:15px;color:'+accent+'">'+cnt+'</span></td>'
+          +'<td style="width:110px;padding-right:4px">'
+          +'<div style="display:flex;align-items:center;gap:5px">'
+          +'<div style="flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden">'
+          +'<div style="height:8px;border-radius:99px;background:'+accent+';width:'+pct+'%;transition:width .4s ease"></div></div>'
+          +'<span style="font-size:10px;font-weight:700;color:'+accent+';width:28px;text-align:right">'+pct+'%</span>'
+          +'</div></td>'
           +'</tr>';
       });
-      return '<table><thead><tr>'
-        +'<th style="width:26px">#</th><th>'+title+'</th>'
-        +'<th style="text-align:right;padding-right:8px">Count</th><th>Share</th>'
-        +'</tr></thead><tbody>'+rows+'</tbody></table>';
+      return '<table class="rank-table"><tbody>'+rows+'</tbody></table>';
     }
 
-    function routeTable(items,color){
-      if(!items||!items.length) return '<p style="color:#aaa;font-size:12px;padding:8px 0">No data</p>';
+    function routeRankTable(items,accent){
+      if(!items||!items.length) return '<div class="empty-state">No data available</div>';
       var tot=items.reduce(function(s,r){return s+r.count;},0)||1;
       var rows='';
-      items.slice(0,10).forEach(function(r,i){
+      items.slice(0,8).forEach(function(r,i){
+        var pct=Math.round(r.count/tot*100);
         rows+='<tr>'
-          +'<td style="color:#aaa;width:26px;text-align:center">'+(i+1)+'</td>'
-          +'<td style="font-weight:700;color:#1a2040">&#8594; '+r.route+'</td>'
-          +'<td style="text-align:right;font-weight:700;padding-right:8px;color:'+color+'">'+r.count+'</td>'
-          +'<td style="width:140px">'+miniBar(r.count,tot,color)+'</td>'
+          +'<td style="width:32px;text-align:center"><span style="color:#cbd5e1;font-size:12px;font-weight:600">'+(i+1)+'</span></td>'
+          +'<td><div style="font-weight:600;color:#0f172a;font-size:12px">'+r.route+'</div></td>'
+          +'<td style="width:50px;text-align:right"><span style="font-weight:800;font-size:15px;color:'+accent+'">'+r.count+'</span></td>'
+          +'<td style="width:110px;padding-right:4px">'
+          +'<div style="display:flex;align-items:center;gap:5px">'
+          +'<div style="flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden">'
+          +'<div style="height:8px;border-radius:99px;background:'+accent+';width:'+pct+'%;transition:width .4s ease"></div></div>'
+          +'<span style="font-size:10px;font-weight:700;color:'+accent+';width:28px;text-align:right">'+pct+'%</span>'
+          +'</div></td>'
           +'</tr>';
       });
-      return '<table><thead><tr>'
-        +'<th style="width:26px">#</th><th>Route</th>'
-        +'<th style="text-align:right;padding-right:8px">Count</th><th>Share</th>'
-        +'</tr></thead><tbody>'+rows+'</tbody></table>';
+      return '<table class="rank-table"><tbody>'+rows+'</tbody></table>';
     }
 
-    /* Two-column Export|Import section */
-    function splitSection(title,icon,expContent,impContent){
-      return '<div class="section">'
-        +'<div class="section-title">'+icon+' '+title+'</div>'
-        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">'
-        +'<div>'
-          +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;padding:6px 10px;background:#4f8ef711;border-radius:8px;border-left:3px solid #4f8ef7">'
-          +'<span style="font-size:13px;font-weight:800;color:#4f8ef7">&#8593; Export</span>'
-          +'<span style="font-size:11px;color:#888">('+expC+' shipments)</span></div>'
-          +expContent+'</div>'
-        +'<div>'
-          +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:10px;padding:6px 10px;background:#22c55e11;border-radius:8px;border-left:3px solid #22c55e">'
-          +'<span style="font-size:13px;font-weight:800;color:#22c55e">&#8595; Import</span>'
-          +'<span style="font-size:11px;color:#888">('+impC+' shipments)</span></div>'
-          +impContent+'</div>'
+    /* ── split card (Export left, Import right) ── */
+    function splitCard(title,icon,expContent,impContent){
+      return '<div class="card">'
+        +'<div class="card-title">'+icon+' '+title+'</div>'
+        +'<div class="split-grid">'
+        +'<div class="split-col exp-col">'
+          +'<div class="dir-badge exp-badge">&#8593; Export <span class="dir-count">'+expC+'</span></div>'
+          +expContent
+        +'</div>'
+        +'<div class="split-divider"></div>'
+        +'<div class="split-col imp-col">'
+          +'<div class="dir-badge imp-badge">&#8595; Import <span class="dir-count">'+impC+'</span></div>'
+          +impContent
+        +'</div>'
         +'</div></div>';
     }
 
-    /* Monthly chart (CSS bars) */
+    /* ── monthly bars ── */
     var maxM=Math.max.apply(null,monthly.map(function(m){return m.count;}).concat([1]));
     var monthBars='';
     monthly.forEach(function(m){
-      var h=Math.max(Math.round((m.count/maxM)*100),4);
-      monthBars+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">'
-        +'<span style="font-size:10px;font-weight:700;color:#4f8ef7">'+m.count+'</span>'
-        +'<div style="width:100%;height:'+h+'px;background:#4f8ef7;border-radius:4px 4px 0 0;min-height:4px"></div>'
-        +'<span style="font-size:9px;color:#888;writing-mode:vertical-rl;transform:rotate(180deg);height:32px;overflow:hidden">'+m.month+'</span>'
+      var h=Math.max(Math.round((m.count/maxM)*90),4);
+      monthBars+='<div class="month-bar-wrap">'
+        +'<span class="month-val">'+m.count+'</span>'
+        +'<div class="month-bar" style="height:'+h+'px"></div>'
+        +'<span class="month-lbl">'+m.month+'</span>'
         +'</div>';
     });
-    var monthChart='<div class="section">'
-      +'<div class="section-title">&#128200; Monthly Volume</div>'
-      +'<div style="display:flex;align-items:flex-end;gap:5px;height:130px;padding:0 4px">'+monthBars+'</div></div>';
 
-    /* Status + Mode/Dir */
-    function statusBadgeR(s){return '<span style="display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;background:'+sBg(s)+';color:'+sFg(s)+'">'+s+'</span>';}
+    /* ── status rows ── */
     var statusRows='';
     Object.entries(byStatus).sort(function(a,b){return b[1]-a[1];}).forEach(function(e){
       var pct=total?Math.round(e[1]/total*100):0;
-      statusRows+='<tr><td>'+statusBadgeR(e[0])+'</td>'
-        +'<td style="text-align:right;font-weight:700;padding-right:8px">'+e[1]+'</td>'
-        +'<td style="width:130px">'+miniBar(e[1],total,sFg(e[0]))+'</td></tr>';
+      statusRows+='<div class="stat-row">'
+        +'<span class="badge" style="background:'+sBg(e[0])+';color:'+sFg(e[0])+'">'+e[0]+'</span>'
+        +'<span style="font-weight:700;font-size:14px;color:#0f172a;min-width:32px;text-align:right">'+e[1]+'</span>'
+        +'<div style="flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin:0 8px">'
+        +'<div style="height:8px;border-radius:99px;background:'+sFg(e[0])+';width:'+pct+'%"></div></div>'
+        +'<span style="font-size:11px;font-weight:700;color:'+sFg(e[0])+';width:32px">'+pct+'%</span>'
+        +'</div>';
     });
+
+    /* ── mode + direction rows ── */
+    var PAL=['#4f8ef7','#a78bfa','#f59e0b','#06b6d4','#f97316'];
     var modeRows='';
     Object.entries(byMode).filter(function(e){return e[1]>0;}).sort(function(a,b){return b[1]-a[1];}).forEach(function(e,i){
-      modeRows+='<tr><td style="font-weight:600">'+e[0]+'</td>'
-        +'<td style="text-align:right;font-weight:700;padding-right:8px">'+e[1]+'</td>'
-        +'<td style="width:130px">'+miniBar(e[1],total,PAL[i])+'</td></tr>';
+      var pct=total?Math.round(e[1]/total*100):0;
+      modeRows+='<div class="stat-row">'
+        +'<span style="font-weight:600;font-size:13px;color:#0f172a;min-width:70px">'+e[0]+'</span>'
+        +'<span style="font-weight:700;font-size:14px;min-width:32px;text-align:right;color:'+PAL[i]+'">'+e[1]+'</span>'
+        +'<div style="flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin:0 8px">'
+        +'<div style="height:8px;border-radius:99px;background:'+PAL[i]+';width:'+pct+'%"></div></div>'
+        +'<span style="font-size:11px;font-weight:700;color:'+PAL[i]+';width:32px">'+pct+'%</span>'
+        +'</div>';
     });
-    var dirRows='<tr><td style="font-weight:700;color:#4f8ef7">&#8593; Export</td>'
-      +'<td style="text-align:right;font-weight:700;padding-right:8px">'+expC+'</td>'
-      +'<td style="width:130px">'+miniBar(expC,total,'#4f8ef7')+'</td></tr>'
-      +'<tr><td style="font-weight:700;color:#22c55e">&#8595; Import</td>'
-      +'<td style="text-align:right;font-weight:700;padding-right:8px">'+impC+'</td>'
-      +'<td style="width:130px">'+miniBar(impC,total,'#22c55e')+'</td></tr>';
-    var overviewSection='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">'
-      +'<div class="section"><div class="section-title">&#128230; Status</div>'
-      +'<table><thead><tr><th>Status</th><th style="text-align:right">Count</th><th>Share</th></tr></thead>'
-      +'<tbody>'+statusRows+'</tbody></table></div>'
-      +'<div class="section"><div class="section-title">&#128674; Mode</div>'
-      +'<table><thead><tr><th>Mode</th><th style="text-align:right">Count</th><th>Share</th></tr></thead>'
-      +'<tbody>'+modeRows+'</tbody></table></div>'
-      +'<div class="section"><div class="section-title">&#8597; Direction</div>'
-      +'<table><thead><tr><th>Direction</th><th style="text-align:right">Count</th><th>Share</th></tr></thead>'
-      +'<tbody>'+dirRows+'</tbody></table></div>'
-      +'</div>';
 
-    /* Overdue */
-    var overdueRows='';
-    overdue.forEach(function(s){
-      var dl=Math.floor((nowMs-new Date(s.eta.split('T')[0]).getTime())/86400000);
-      var ug=dl>7?'#ef4444':dl>3?'#f97316':'#f59e0b';
-      overdueRows+='<tr style="background:#fff5f5">'
-        +'<td style="font-weight:700;color:#4f8ef7">'+s.ref+'</td>'
-        +'<td>'+fmtN(s.client)+'</td>'
-        +'<td style="font-size:11px">'+fmtN(s.pol)+' &#8594; '+fmtN(s.pod)+'</td>'
-        +'<td>'+fmtN(s.carrier)+'</td>'
-        +'<td><span style="background:'+(s.direction==='Export'?'#4f8ef7':'#22c55e')+'22;color:'+(s.direction==='Export'?'#4f8ef7':'#22c55e')+';font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">'+fmtN(s.direction)+'</span></td>'
-        +'<td style="font-weight:700">'+fmt(s.eta)+'</td>'
-        +'<td><span style="background:'+ug+'22;color:'+ug+';font-weight:800;padding:2px 8px;border-radius:10px;font-size:11px">'+dl+'d late</span></td>'
-        +'</tr>';
-    });
-    var overdueSection=overdue.length
-      ?'<div class="section" style="border-left:4px solid #ef4444">'
-        +'<div class="section-title" style="color:#dc2626">&#9888;&#65039; Overdue Shipments ('+overdue.length+')</div>'
-        +'<table><thead><tr><th>Ref</th><th>Client</th><th>Route</th><th>Carrier</th><th>Dir</th><th>ETA</th><th>Days Late</th></tr></thead>'
-        +'<tbody>'+overdueRows+'</tbody></table></div>'
-      :'<div class="section" style="border-left:4px solid #22c55e">'
-        +'<div style="text-align:center;padding:16px;color:#22c55e;font-weight:700">&#10003; No overdue shipments</div></div>';
-
-    /* Full shipment list split by direction */
-    function shipTable(list,label,color){
-      if(!list.length) return '<div style="color:#aaa;padding:16px;text-align:center;font-size:12px">No '+label+' shipments</div>';
+    /* ── ship list table ── */
+    function shipListTable(list,accent){
+      if(!list.length) return '<div class="empty-state" style="padding:24px">No shipments</div>';
       var rows='';
       list.forEach(function(s,i){
         var st=typeof shipStatus==='function'?shipStatus(s):s.status;
         rows+='<tr>'
-          +'<td style="color:#aaa;font-size:11px">'+(i+1)+'</td>'
-          +'<td style="font-weight:700;color:#4f8ef7">'+fmtN(s.ref)+'</td>'
-          +'<td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmtN(s.client)+'</td>'
-          +'<td>'+fmtN(s.carrier)+'</td>'
-          +'<td>'+fmtN(s.mode)+'</td>'
-          +'<td style="font-size:11px">'+fmtN(s.pol)+'</td>'
-          +'<td style="font-size:11px">'+fmtN(s.pod)+'</td>'
-          +'<td>'+fmt(s.etd)+'</td>'
-          +'<td>'+fmt(s.eta)+'</td>'
-          +'<td style="font-weight:600;color:#6c63ff">'+(s.teu||'--')+'</td>'
-          +'<td><span style="background:'+sBg(st)+';color:'+sFg(st)+';font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">'+st+'</span></td>'
+          +'<td class="td-num">'+(i+1)+'</td>'
+          +'<td><span class="ref-link">'+fmtN(s.ref)+'</span></td>'
+          +'<td class="td-sm">'+fmtN(s.client)+'</td>'
+          +'<td class="td-sm">'+fmtN(s.carrier)+'</td>'
+          +'<td><span class="mode-chip">'+fmtN(s.mode)+'</span></td>'
+          +'<td class="td-port">'+fmtN(s.pol)+'</td>'
+          +'<td class="td-port">'+fmtN(s.pod)+'</td>'
+          +'<td class="td-date">'+fmt(s.etd)+'</td>'
+          +'<td class="td-date">'+fmt(s.eta)+'</td>'
+          +'<td style="text-align:center;font-weight:700;color:#6c63ff">'+(s.teu||'--')+'</td>'
+          +'<td><span class="badge" style="background:'+sBg(st)+';color:'+sFg(st)+'">'+st+'</span></td>'
           +'</tr>';
       });
-      return '<table><thead><tr>'
-        +'<th>#</th><th>Ref</th><th>Client</th><th>Carrier</th><th>Mode</th>'
-        +'<th>POL</th><th>POD</th><th>ETD</th><th>ETA</th><th>TEU</th><th>Status</th>'
-        +'</tr></thead><tbody>'+rows+'</tbody></table>';
+      return '<div class="table-wrap"><table class="ship-table"><thead><tr>'
+        +'<th class="td-num">#</th><th>Ref</th><th>Client</th><th>Carrier</th>'
+        +'<th>Mode</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th>'
+        +'<th style="text-align:center">TEU</th><th>Status</th>'
+        +'</tr></thead><tbody>'+rows+'</tbody></table></div>';
     }
-    var expShips=[].concat(ships).filter(function(s){return (s.direction||'').toLowerCase()==='export';}).sort(function(a,b){return new Date(b.etd||0)-new Date(a.etd||0);});
-    var impShips=[].concat(ships).filter(function(s){return (s.direction||'').toLowerCase()==='import';}).sort(function(a,b){return new Date(b.etd||0)-new Date(a.etd||0);});
 
-    /* KPI summary cards */
-    var kpiCards='<div class="kpi-row">'
-      +'<div class="kpi-card"><div class="kpi-val">'+total+'</div><div class="kpi-lbl">Total</div></div>'
-      +'<div class="kpi-card"><div class="kpi-val" style="color:#4f8ef7">'+expC+'</div><div class="kpi-lbl">&#8593; Export</div></div>'
-      +'<div class="kpi-card"><div class="kpi-val" style="color:#22c55e">'+impC+'</div><div class="kpi-lbl">&#8595; Import</div></div>'
-      +'<div class="kpi-card"><div class="kpi-val" style="color:#6c63ff">'+(totalTeu||'--')+'</div><div class="kpi-lbl">Total TEU</div></div>'
-      +'<div class="kpi-card"><div class="kpi-val" style="color:#3b82f6">'+(byStatus['Sailing']||0)+'</div><div class="kpi-lbl">Sailing</div></div>'
-      +'<div class="kpi-card"><div class="kpi-val" style="color:#22c55e">'+((byStatus['Arrived']||0)+(byStatus['Closed']||0))+'</div><div class="kpi-lbl">Arrived</div></div>'
-      +'<div class="kpi-card"><div class="kpi-val" style="color:#ef4444">'+overdue.length+'</div><div class="kpi-lbl">Overdue</div></div>'
-      +'<div class="kpi-card"><div class="kpi-val" style="color:#f59e0b">'+(byStatus['Pending']||0)+'</div><div class="kpi-lbl">Pending</div></div>'
-      +'</div>';
+    var expShips=[].concat(ships).filter(function(s){return(s.direction||'').toLowerCase()==='export';}).sort(function(a,b){return new Date(b.etd||0)-new Date(a.etd||0);});
+    var impShips=[].concat(ships).filter(function(s){return(s.direction||'').toLowerCase()==='import';}).sort(function(a,b){return new Date(b.etd||0)-new Date(a.etd||0);});
 
-    var css='*{margin:0;padding:0;box-sizing:border-box}'
-      +'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;background:#f0f4f8;color:#1a2040;padding:28px;font-size:13px}'
-      +'.page-header{background:linear-gradient(135deg,#1a2040,#2d3a6a);color:#fff;border-radius:16px;padding:24px 28px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start}'
-      +'.page-header h1{font-size:18px;font-weight:800;margin-bottom:4px}'
-      +'.hstats{display:flex;gap:20px;margin-top:10px}'
-      +'.hstat{text-align:center}.hstat-val{font-size:20px;font-weight:800}.hstat-lbl{font-size:10px;opacity:.65;text-transform:uppercase;letter-spacing:.5px}'
-      +'.print-btn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}'
-      +'.section{background:#fff;border-radius:14px;padding:18px 20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.05)}'
-      +'.section-title{font-size:13px;font-weight:700;color:#1a2040;margin-bottom:12px;padding-bottom:9px;border-bottom:2px solid #f0f4f8}'
-      +'.kpi-row{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:14px}'
-      +'.kpi-card{background:#fff;border:1px solid #e8eef6;border-radius:12px;padding:14px 10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.04)}'
-      +'.kpi-val{font-size:24px;font-weight:800;line-height:1}.kpi-lbl{font-size:10px;color:#8892b0;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}'
-      +'table{width:100%;border-collapse:collapse}'
-      +'th{background:#f8fafc;color:#5a6a8a;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;padding:8px 10px;text-align:left;border-bottom:2px solid #e8eef6}'
-      +'td{padding:8px 10px;border-bottom:1px solid #f4f6fa;color:#1a2040;vertical-align:middle}'
-      +'tr:last-child td{border-bottom:none}'
-      +'tbody tr:hover td{background:#fafbff}'
-      +'.dir-header{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-weight:800;font-size:14px;margin-bottom:12px}'
-      +'.footer{text-align:center;font-size:11px;color:#aaa;margin-top:16px;padding:12px 0}'
-      +'@media print{body{background:#fff;padding:16px}.no-print{display:none!important}'
-      +'.section{box-shadow:none;border:1px solid #e8eef6;break-inside:avoid}'
-      +'.page-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-      +'.page-break{page-break-before:always;break-before:page}}';
+    /* ── overdue ── */
+    var overdueRows='';
+    overdue.forEach(function(s){
+      var dl=Math.floor((nowMs-new Date(s.eta.split('T')[0]).getTime())/86400000);
+      var ug=dl>7?'#ef4444':dl>3?'#f97316':'#f59e0b';
+      overdueRows+='<tr>'
+        +'<td><span class="ref-link">'+s.ref+'</span></td>'
+        +'<td class="td-sm">'+fmtN(s.client)+'</td>'
+        +'<td class="td-port" style="font-size:11px">'+fmtN(s.pol)+' &#8594; '+fmtN(s.pod)+'</td>'
+        +'<td class="td-sm">'+fmtN(s.carrier)+'</td>'
+        +'<td class="td-date">'+fmt(s.eta)+'</td>'
+        +'<td><span class="badge" style="background:'+ug+'18;color:'+ug+'">'+dl+'d late</span></td>'
+        +'</tr>';
+    });
+    var overdueSection=overdue.length
+      ?'<div class="card overdue-card"><div class="card-title" style="color:#dc2626">&#9888;&#65039; Overdue Shipments <span class="count-chip red">'+overdue.length+'</span></div>'
+        +'<div class="table-wrap"><table class="ship-table"><thead><tr><th>Ref</th><th>Client</th><th>Route</th><th>Carrier</th><th>ETA</th><th>Delay</th></tr></thead>'
+        +'<tbody>'+overdueRows+'</tbody></table></div></div>'
+      :'<div class="card" style="border-left:4px solid #22c55e"><div style="text-align:center;padding:20px;color:#22c55e;font-weight:700;font-size:14px">&#10003; No overdue shipments</div></div>';
 
-    var reportHtml='<!DOCTYPE html><html lang="en"><head>'
-      +'<meta charset="UTF-8"><title>FreightTrack Pro \u2014 Report '+today.toLocaleDateString()+'</title>'
-      +'<style>'+css+'</style></head><body>'
-
+    /* ── CSS ── */
+    var css=''
+      +'*{margin:0;padding:0;box-sizing:border-box}'
+      +'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,sans-serif;background:#f8fafc;color:#1e293b;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+      +'.page{max-width:1200px;margin:0 auto;padding:28px 24px}'
       /* Header */
-      +'<div class="page-header">'
-      +'<div><h1>&#9875; FreightTrack Pro \u2014 Operations Report</h1>'
-      +'<div style="font-size:11px;opacity:.7;margin-top:3px">Generated '+today.toLocaleString()+'</div>'
-      +'<div class="hstats">'
-      +'<div class="hstat"><div class="hstat-val">'+total+'</div><div class="hstat-lbl">Total</div></div>'
-      +'<div class="hstat"><div class="hstat-val" style="color:#4ade80">'+expC+'</div><div class="hstat-lbl">&#8593; Export</div></div>'
-      +'<div class="hstat"><div class="hstat-val" style="color:#93c5fd">'+impC+'</div><div class="hstat-lbl">&#8595; Import</div></div>'
-      +'<div class="hstat"><div class="hstat-val" style="color:#c4b5fd">'+(totalTeu||'--')+'</div><div class="hstat-lbl">TEU</div></div>'
-      +'<div class="hstat"><div class="hstat-val" style="color:#fca5a5">'+overdue.length+'</div><div class="hstat-lbl">Overdue</div></div>'
+      +'.report-header{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 60%,#1d4ed8 100%);color:#fff;border-radius:20px;padding:28px 32px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start}'
+      +'.rh-title{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px}'
+      +'.rh-sub{font-size:12px;opacity:.6;margin-bottom:14px}'
+      +'.kpi-strip{display:flex;gap:24px;flex-wrap:wrap}'
+      +'.kpi-item{text-align:center}'
+      +'.kpi-num{font-size:26px;font-weight:800;line-height:1}'
+      +'.kpi-lbl{font-size:10px;opacity:.55;text-transform:uppercase;letter-spacing:.8px;margin-top:2px}'
+      +'.print-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:9px 20px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;backdrop-filter:blur(4px)}'
+      /* Cards */
+      +'.card{background:#fff;border-radius:16px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);border:1px solid #f1f5f9}'
+      +'.card-title{font-size:13px;font-weight:700;color:#0f172a;margin-bottom:16px;padding-bottom:12px;border-bottom:1.5px solid #f1f5f9;display:flex;align-items:center;gap:7px}'
+      +'.overdue-card{border-left:4px solid #ef4444}'
+      /* Split layout */
+      +'.split-grid{display:grid;grid-template-columns:1fr 1.5px 1fr;gap:0}'
+      +'.split-divider{background:#f1f5f9;margin:0 18px}'
+      +'.split-col{padding:0 4px}'
+      +'.dir-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;margin-bottom:12px}'
+      +'.dir-count{font-size:11px;opacity:.7;font-weight:600}'
+      +'.exp-badge{background:#eff6ff;color:#1d4ed8}'
+      +'.imp-badge{background:#f0fdf4;color:#15803d}'
+      /* Rank table */
+      +'.rank-table{width:100%;border-collapse:collapse}'
+      +'.rank-table tr{border-radius:8px}'
+      +'.rank-table td{padding:7px 6px;vertical-align:middle;border-bottom:1px solid #f8fafc}'
+      +'.rank-table tr:last-child td{border-bottom:none}'
+      +'.rank-table tr:hover td{background:#fafbff}'
+      /* Ship table */
+      +'.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #f1f5f9}'
+      +'.ship-table{width:100%;border-collapse:collapse;min-width:800px}'
+      +'.ship-table thead th{background:#f8fafc;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap}'
+      +'.ship-table tbody td{padding:9px 12px;border-bottom:1px solid #f8fafc;font-size:12px;color:#1e293b;vertical-align:middle}'
+      +'.ship-table tbody tr:last-child td{border-bottom:none}'
+      +'.ship-table tbody tr:hover td{background:#fafbff}'
+      /* Misc */
+      +'.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}'
+      +'.mode-chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#f1f5f9;color:#475569}'
+      +'.ref-link{font-weight:700;color:#1d4ed8;font-size:12px}'
+      +'.td-num{color:#94a3b8;font-size:11px;text-align:center;width:32px}'
+      +'.td-sm{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+      +'.td-port{font-size:11px;color:#475569}'
+      +'.td-date{font-size:11px;color:#64748b;white-space:nowrap}'
+      +'.count-chip{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;margin-left:6px}'
+      +'.count-chip.red{background:#fee2e2;color:#dc2626}'
+      +'.empty-state{color:#94a3b8;font-size:12px;text-align:center;padding:20px 0}'
+      +'.stat-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f8fafc}'
+      +'.stat-row:last-child{border-bottom:none}'
+      +'.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8;margin-bottom:12px}'
+      /* Monthly */
+      +'.month-chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding:0 2px}'
+      +'.month-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}'
+      +'.month-val{font-size:10px;font-weight:700;color:#1d4ed8}'
+      +'.month-bar{width:100%;background:linear-gradient(180deg,#3b82f6,#1d4ed8);border-radius:5px 5px 0 0;min-height:4px}'
+      +'.month-lbl{font-size:9px;color:#94a3b8;writing-mode:vertical-rl;transform:rotate(180deg);height:28px;overflow:hidden;text-overflow:ellipsis}'
+      /* Page sections */
+      +'.dir-section-header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-radius:14px;margin-bottom:14px;color:#fff}'
+      +'.dir-section-header h2{font-size:17px;font-weight:800}'
+      +'.dir-section-header .sub{font-size:12px;opacity:.75}'
+      /* Grid helpers */
+      +'.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}'
+      +'.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}'
+      /* Print */
+      +'@media print{body{background:#fff}.page{padding:16px}.no-print{display:none!important}'
+      +'.card{box-shadow:none;break-inside:avoid;border:1px solid #e2e8f0}'
+      +'.page-break{page-break-before:always;break-before:page}'
+      +'.dir-section-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+      +'.report-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
+
+    /* ── ASSEMBLE ── */
+    var h='<!DOCTYPE html><html lang="en"><head>'
+      +'<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+      +'<title>FreightTrack Pro \u2014 Report</title>'
+      +'<style>'+css+'</style></head><body><div class="page">'
+
+      /* ── HEADER ── */
+      +'<div class="report-header">'
+      +'<div>'
+      +'<div class="rh-title">&#9875; FreightTrack Pro \u2014 Operations Report</div>'
+      +'<div class="rh-sub">Generated '+today.toLocaleString()+'</div>'
+      +'<div class="kpi-strip">'
+      +'<div class="kpi-item"><div class="kpi-num">'+total+'</div><div class="kpi-lbl">Shipments</div></div>'
+      +'<div class="kpi-item"><div class="kpi-num" style="color:#93c5fd">'+expC+'</div><div class="kpi-lbl">&#8593; Export</div></div>'
+      +'<div class="kpi-item"><div class="kpi-num" style="color:#6ee7b7">'+impC+'</div><div class="kpi-lbl">&#8595; Import</div></div>'
+      +'<div class="kpi-item"><div class="kpi-num" style="color:#c4b5fd">'+(totalTeu||'--')+'</div><div class="kpi-lbl">TEU</div></div>'
+      +'<div class="kpi-item"><div class="kpi-num" style="color:#fca5a5">'+overdue.length+'</div><div class="kpi-lbl">Overdue</div></div>'
       +'</div></div>'
       +'<button class="print-btn no-print" onclick="window.print()">&#128424;&#65039; Print / PDF</button>'
       +'</div>'
 
-      /* KPI Cards */
-      +kpiCards
+      /* ── OVERVIEW ROW ── */
+      +'<div class="grid-3">'
+      /* Monthly */
+      +'<div class="card" style="grid-column:1/3">'
+      +'<div class="card-title">&#128200; Monthly Shipment Volume</div>'
+      +'<div class="month-chart">'+monthBars+'</div>'
+      +'</div>'
+      /* Status */
+      +'<div class="card">'
+      +'<div class="card-title">&#128230; Status</div>'
+      +statusRows
+      +'</div></div>'
 
-      /* Monthly + Overview */
-      +monthChart
-      +overviewSection
+      /* Mode + Direction */
+      +'<div class="grid-2">'
+      +'<div class="card"><div class="card-title">&#128674; Transport Mode</div>'+modeRows+'</div>'
+      +'<div class="card"><div class="card-title">&#8597;&#65039; Export vs Import</div>'
+      +'<div class="stat-row">'
+      +'<span class="badge" style="background:#eff6ff;color:#1d4ed8;min-width:70px;text-align:center">&#8593; Export</span>'
+      +'<span style="font-weight:800;font-size:16px;color:#1d4ed8;min-width:36px;text-align:right">'+expC+'</span>'
+      +'<div style="flex:1;height:10px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin:0 10px">'
+      +'<div style="height:10px;border-radius:99px;background:#3b82f6;width:'+(total?Math.round(expC/total*100):0)+'%"></div></div>'
+      +'<span style="font-size:11px;font-weight:700;color:#3b82f6;width:35px">'+(total?Math.round(expC/total*100):0)+'%</span></div>'
+      +'<div class="stat-row">'
+      +'<span class="badge" style="background:#f0fdf4;color:#15803d;min-width:70px;text-align:center">&#8595; Import</span>'
+      +'<span style="font-weight:800;font-size:16px;color:#15803d;min-width:36px;text-align:right">'+impC+'</span>'
+      +'<div style="flex:1;height:10px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin:0 10px">'
+      +'<div style="height:10px;border-radius:99px;background:#22c55e;width:'+(total?Math.round(impC/total*100):0)+'%"></div></div>'
+      +'<span style="font-size:11px;font-weight:700;color:#22c55e;width:35px">'+(total?Math.round(impC/total*100):0)+'%</span></div>'
+      +'</div></div>'
 
-      /* ── EXPORT SECTION ── */
-      +'<div class="page-break"></div>'
-      +'<div style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(90deg,#4f8ef7,#2563eb);border-radius:12px;margin-bottom:14px;color:#fff">'
-      +'<span style="font-size:20px">&#8593;</span>'
-      +'<div><div style="font-size:16px;font-weight:800">Export</div>'
-      +'<div style="font-size:11px;opacity:.8">'+expC+' shipments</div></div></div>'
+      /* ── RANKINGS — SPLIT CARDS ── */
+      +'<div style="page-break-before:always;break-before:page"></div>'
+      +splitCard('Top Clients \u2014 Shipments','&#128101;',
+        rankTable(clientExp,'name','shipments','#2563eb'),
+        rankTable(clientImp,'name','shipments','#16a34a'))
+      +splitCard('Top Clients \u2014 TEU','&#128230;',
+        rankTable(clientExp.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#2563eb'),
+        rankTable(clientImp.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#16a34a'))
+      +splitCard('Top Carriers','&#128674;',
+        rankTable(carriersExp,'name','count','#2563eb'),
+        rankTable(carriersImp,'name','count','#16a34a'))
+      +splitCard('Top Destinations (POD)','&#128205;',
+        rankTable(topPodExp,'name','count','#2563eb'),
+        rankTable(topPodImp,'name','count','#16a34a'))
+      +splitCard('Top Origins (POL)','&#128204;',
+        rankTable(topPolExp,'name','count','#2563eb'),
+        rankTable(topPolImp,'name','count','#16a34a'))
+      +splitCard('Top Routings (POL \u2192 POD)','&#128256;',
+        routeRankTable(topRExp,'#2563eb'),
+        routeRankTable(topRImp,'#16a34a'))
 
-      +splitSection('Top Clients \u2014 Shipments','&#128101;',
-        rankTable(clientExp,'name','shipments','#4f8ef7','Client'),
-        rankTable(clientImp,'name','shipments','#22c55e','Client'))
-      +splitSection('Top Clients \u2014 TEU','&#128230;',
-        rankTable(clientExp.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#4f8ef7','Client'),
-        rankTable(clientImp.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#22c55e','Client'))
-      +splitSection('Top Carriers','&#128674;',
-        rankTable(carriersExp,'name','count','#4f8ef7','Carrier'),
-        rankTable(carriersImp,'name','count','#22c55e','Carrier'))
-      +splitSection('Top Destinations (POD)','&#128205;',
-        rankTable(topPodExp,'name','count','#4f8ef7','Port'),
-        rankTable(topPodImp,'name','count','#22c55e','Port'))
-      +splitSection('Top Origins (POL)','&#128204;',
-        rankTable(topPolExp,'name','count','#4f8ef7','Port'),
-        rankTable(topPolImp,'name','count','#22c55e','Port'))
-      +splitSection('Top Routings (POL \u2192 POD)','&#128256;',
-        routeTable(topRExp,'#4f8ef7'),
-        routeTable(topRImp,'#22c55e'))
-
-      /* Overdue */
-      +'<div class="page-break"></div>'
+      /* ── OVERDUE ── */
+      +'<div style="page-break-before:always;break-before:page"></div>'
       +overdueSection
 
-      /* Full lists — Export */
-      +'<div class="section">'
-      +'<div class="dir-header" style="background:#4f8ef711;color:#2563eb">&#8593; All Export Shipments ('+expShips.length+')</div>'
-      +shipTable(expShips,'Export','#4f8ef7')
+      /* ── SHIPMENT TABLES ── */
+      +'<div class="card">'
+      +'<div class="card-title">'
+      +'<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:#eff6ff;color:#1d4ed8;border-radius:8px">&#8593; Export Shipments</span>'
+      +'<span class="count-chip" style="background:#eff6ff;color:#1d4ed8">'+expShips.length+'</span>'
+      +'</div>'
+      +shipListTable(expShips,'#2563eb')
       +'</div>'
 
-      /* Full lists — Import */
-      +'<div class="section">'
-      +'<div class="dir-header" style="background:#22c55e11;color:#16a34a">&#8595; All Import Shipments ('+impShips.length+')</div>'
-      +shipTable(impShips,'Import','#22c55e')
+      +'<div class="card">'
+      +'<div class="card-title">'
+      +'<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:#f0fdf4;color:#15803d;border-radius:8px">&#8595; Import Shipments</span>'
+      +'<span class="count-chip" style="background:#f0fdf4;color:#15803d">'+impShips.length+'</span>'
+      +'</div>'
+      +shipListTable(impShips,'#16a34a')
       +'</div>'
 
-      +'<div class="footer">FreightTrack Pro \u00b7 '+today.toLocaleString()+' \u00b7 '+total+' shipments \u00b7 '+totalTeu+' TEU</div>'
-      +'</body></html>';
+      +'<div style="text-align:center;padding:20px 0 8px;font-size:11px;color:#94a3b8">'
+      +'FreightTrack Pro \u00b7 Report generated '+today.toLocaleString()+' \u00b7 '+total+' shipments \u00b7 '+totalTeu+' TEU'
+      +'</div>'
+      +'</div></body></html>';
 
     var win=window.open('','_blank');
-    if(win){win.document.write(reportHtml);win.document.close();}
+    if(win){win.document.write(h);win.document.close();}
     else toast('Pop-up blocked \u2014 allow pop-ups','error');
   }catch(e){console.error('generateReport:',e);toast('Report error: '+e.message,'error');}
   finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-file-arrow-down"></i> Export';}}
