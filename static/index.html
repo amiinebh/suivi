@@ -1285,22 +1285,34 @@ let _pgPage=1, _pgSize=20, _pgShips=[];
 let editId=null, currentDetailId=null, _detailId=null, allShipments=[];
 
 /* ── Nav ── */
+var _currentPage='dashboard';
+var _pageLoaded={dashboard:false,shipments:false,analytics:false,alerts:false,users:false,clients:false};
+function preloadCoreData(){
+  apiFetch('/api/stats').catch(function(){});
+  apiFetch('/api/shipments').catch(function(){});
+}
 function showPage(id,el){
   if((id==='analytics'||id==='users') && !isAdmin()){ id='shipments'; }
+  _currentPage=id;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pageEl = document.getElementById('page-'+id);
   if(pageEl) pageEl.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el) el.classList.add('active');
+  else {
+    var autoNav=document.querySelector('.sidebar .nav-item[onclick*="showPage(''+id+''"]');
+    if(autoNav) autoNav.classList.add('active');
+  }
+  if(typeof setBottomNav==='function') setBottomNav(id);
   const titles={dashboard:'Overview',shipments:'Shipments',analytics:'KPI & Analytics',alerts:'Alerts',users:'Team',detail:'Detail'};
   const pt = document.getElementById('page-title');
   if(pt) pt.textContent = titles[id]||id;
-  if(id==='shipments') loadShipments();
-  if(id==='analytics') loadAnalytics();
-  if(id==='alerts') loadAlerts();
-  if(id==='users') setTimeout(loadUsers,150);
-  if(id==='dashboard'){ loadDashboard(); }
-  if(id==='clients'){ loadClients(); }
+  if(id==='shipments'){ _pageLoaded.shipments=true; loadShipments(); }
+  if(id==='analytics'){ _pageLoaded.analytics=true; loadAnalytics(); }
+  if(id==='alerts'){ _pageLoaded.alerts=true; loadAlerts(); }
+  if(id==='users'){ _pageLoaded.users=true; setTimeout(loadUsers,60); }
+  if(id==='dashboard'){ _pageLoaded.dashboard=true; loadDashboard(); }
+  if(id==='clients'){ _pageLoaded.clients=true; loadClients(); }
 }
 function setBottomNav(id){
   document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
@@ -1309,20 +1321,45 @@ function setBottomNav(id){
 }
 
 /* ── API ── */
+var _apiCache={};
+var _apiInflight={};
+function _apiTtl(url){
+  if(url.indexOf('/api/shipments')===0) return 15000;
+  if(url.indexOf('/api/stats')===0) return 15000;
+  if(url.indexOf('/api/alerts')===0) return 10000;
+  if(url.indexOf('/api/clients')===0) return 15000;
+  return 0;
+}
+function clearApiCache(prefix){
+  Object.keys(_apiCache).forEach(function(k){ if(!prefix || k.indexOf(prefix)===0) delete _apiCache[k]; });
+}
 async function apiFetch(url,options={}){
+  const method=(options.method||'GET').toUpperCase();
+  const ttl=_apiTtl(url);
+  const useCache=method==='GET' && ttl>0;
+  const now=Date.now();
+  if(useCache && _apiCache[url] && now-_apiCache[url].ts < ttl) return _apiCache[url].data;
+  if(useCache && _apiInflight[url]) return _apiInflight[url];
   const token = localStorage.getItem("ft_token");
   const h={'Content-Type':'application/json','Accept':'application/json'};
   if(token) h['Authorization'] = 'Bearer ' + token;
-  let res;
-  try{ res=await fetch(url,{...options,headers:{...h,...(options.headers||{})}}); }
-  catch(e){ throw new Error('Network error: '+e.message); }
-  if(res.status===401){ doLogout(); throw new Error('Session expired — please log in again'); }
-  if(!res.ok){
-    let msg=`HTTP ${res.status}`;
-    try{ const b=await res.json(); msg=b.detail||b.message||JSON.stringify(b); }catch{ msg=await res.text().catch(()=>msg); }
-    throw new Error(msg);
-  }
-  const txt=await res.text(); return txt?JSON.parse(txt):{};
+  const req=(async function(){
+    let res;
+    try{ res=await fetch(url,{...options,headers:{...h,...(options.headers||{})}}); }
+    catch(e){ throw new Error('Network error: '+e.message); }
+    if(res.status===401){ doLogout(); throw new Error('Session expired — please log in again'); }
+    if(!res.ok){
+      let msg=`HTTP ${res.status}`;
+      try{ const b=await res.json(); msg=b.detail||b.message||JSON.stringify(b); }catch{ msg=await res.text().catch(()=>msg); }
+      throw new Error(msg);
+    }
+    const txt=await res.text();
+    const data=txt?JSON.parse(txt):{};
+    if(useCache) _apiCache[url]={ts:Date.now(),data:data};
+    return data;
+  })();
+  if(useCache) _apiInflight[url]=req;
+  try{return await req;} finally { if(useCache) delete _apiInflight[url]; }
 }
 
 /* ── Toast ── */
@@ -1705,7 +1742,7 @@ async function saveShipment(){
   try{
     let r;
     if(editId) r=await apiFetch(`/api/shipments/${editId}`,{method:'PUT',body:JSON.stringify(data)});
-    else r=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
+    else r=clearApiCache('/api/shipments'); clearApiCache('/api/stats'); await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(data)});
     if(r&&r.id){
       try{ await _saveContainers(r.id); } catch(e){}
       // teu already included in main save payload above
@@ -2036,7 +2073,6 @@ function showApp(){
   if(r) r.textContent = isAdmin() ? "Admin" : "CS Agent";
   const a = document.getElementById("sidebar-avatar");
   if(a) a.textContent = (user?.name||"U")[0].toUpperCase();
-  // topbar profile
   const ta=document.getElementById('topbar-avatar');
   if(ta) ta.textContent=(user?.name||'U')[0].toUpperCase();
   const tn=document.getElementById('topbar-user-name');
@@ -2047,6 +2083,9 @@ function showApp(){
   if(pn) pn.textContent=user?.name||'User';
   const pr=document.getElementById('pd-role');
   if(pr) pr.textContent=isAdmin()?'Admin':'CS Agent';
+  var overviewNav=document.querySelector('.sidebar .nav-item[onclick*="showPage('dashboard'"]');
+  showPage('dashboard', overviewNav || null);
+  setTimeout(preloadCoreData, 0);
 }
 
 function doLogout(){
@@ -3609,7 +3648,7 @@ async function cloneShipment(){
       voyage:ship.voyage||'',
       note:'Cloned from '+ship.ref
     };
-    var created=await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(payload)});
+    var created=clearApiCache('/api/shipments'); clearApiCache('/api/stats'); await apiFetch('/api/shipments',{method:'POST',body:JSON.stringify(payload)});
     toast('Shipment cloned as '+payload.ref,'success');
     if(created&&created.id){
       if(typeof openDetail==='function')openDetail(created.id);
