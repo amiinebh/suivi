@@ -64,9 +64,10 @@ def normalize_client(name: str) -> str:
 
 def normalize_mode(mode: str) -> str:
     if not mode: return "Ocean"
-    m = mode.strip().lower()
-    if m in ("road", "ftl", "truck", "road (ftl)"): return "Road"
-    return "Ocean"
+    m = mode.strip().upper()
+    if m in ("ROAD","FTL","TRUCK","ROAD (FTL)","LTL","CAMION"): return "Road"
+    if m in ("OCEAN","FCL","LCL","SEA","OCE","FCL OCEAN","LCL OCEAN"): return "Ocean"
+    return mode.strip()
 
 def normalize_direction(d: str) -> str:
     if not d: return None
@@ -181,33 +182,78 @@ async def bulk_import_shipments(request: Request, db: Session = Depends(get_db),
         raise HTTPException(400, "Invalid JSON body")
     rows = body.get("shipments", [])
     if not rows: raise HTTPException(400, "No shipments provided")
-    allowed = set(schemas.ShipmentCreate.model_fields.keys())
+    SAFE_FIELDS = {"ref","ref2","booking_no","mode","carrier","teu","pol","pod",
+                   "eta","etd","status","client","client_email","direction",
+                   "incoterm","shipper","consignee","agent","note","notes",
+                   "vessel","voyage","quotation_number","stuffing_date","container"}
     created_count = 0
+    updated_count = 0
     skipped = []
+
+    def _pd(val):
+        if not val: return None
+        if hasattr(val, "strftime"): return val.strftime("%Y-%m-%d")
+        s = str(val).strip().split(" ")[0].split("T")[0]
+        for fmt in ["%Y-%m-%d","%Y/%m/%d","%d/%m/%Y","%d-%m-%Y","%m/%d/%Y","%d.%m.%Y"]:
+            try: return datetime.strptime(s, fmt).strftime("%Y-%m-%d")
+            except: pass
+        return None
+
     for row in rows:
         ref = str(row.get("ref", "")).strip()
         if not ref:
             skipped.append({"ref": None, "reason": "Missing ref"}); continue
-        if crud.get_shipment(db, ref):
-            skipped.append({"ref": ref, "reason": "Already exists"}); continue
         sdata = {}
         for k, v in row.items():
-            if k not in allowed: continue
-            sdata[k] = v.strip() if isinstance(v, str) and v.strip() != "" else (None if isinstance(v, str) else v)
+            key = k.strip().lower()
+            if key not in SAFE_FIELDS: continue
+            sdata[key] = v.strip() if isinstance(v, str) and v.strip() != "" else (None if isinstance(v, str) else v)
         sdata["ref"] = ref
-        if sdata.get("carrier"): sdata["carrier"] = normalize_carrier(sdata["carrier"])
-        if sdata.get("client"): sdata["client"] = normalize_client(sdata["client"])
-        if sdata.get("mode"): sdata["mode"] = normalize_mode(sdata["mode"])
+        # Normalise fields
+        if sdata.get("carrier"):   sdata["carrier"]   = normalize_carrier(sdata["carrier"])
+        if sdata.get("client"):    sdata["client"]    = normalize_client(sdata["client"])
+        if sdata.get("mode"):      sdata["mode"]      = normalize_mode(sdata["mode"])
         if sdata.get("direction"): sdata["direction"] = normalize_direction(sdata["direction"])
+        # Parse dates
+        sdata["etd"] = _pd(sdata.get("etd"))
+        sdata["eta"] = _pd(sdata.get("eta"))
+        # Parse TEU
+        if sdata.get("teu") is not None:
+            try: sdata["teu"] = int(float(str(sdata["teu"])))
+            except: sdata["teu"] = None
         sdata.setdefault("mode", "Ocean")
         sdata.setdefault("status", "Confirmed")
+
+        existing = crud.get_shipment(db, ref)
         try:
-            s = schemas.ShipmentCreate(**sdata)
-            crud.create_shipment(db, s)
-            created_count += 1
+            if existing:
+                # Upsert — update existing shipment
+                for attr, val in sdata.items():
+                    if val is not None and hasattr(existing, attr):
+                        setattr(existing, attr, val)
+                db.commit()
+                # Handle containers
+                if sdata.get("container"):
+                    import re as _re
+                    db.query(models.Container).filter(models.Container.shipment_id == existing.id).delete()
+                    for cno in _re.split(r"[,;/\|]", str(sdata["container"])):
+                        cno = cno.strip()
+                        if cno: db.add(models.Container(shipment_id=existing.id, container_no=cno))
+                    db.commit()
+                updated_count += 1
+            else:
+                s = schemas.ShipmentCreate(**{k: v for k, v in sdata.items() if k != "container"})
+                new_ship = crud.create_shipment(db, s)
+                if sdata.get("container") and new_ship:
+                    import re as _re
+                    for cno in _re.split(r"[,;/\|]", str(sdata["container"])):
+                        cno = cno.strip()
+                        if cno: db.add(models.Container(shipment_id=new_ship.id, container_no=cno))
+                    db.commit()
+                created_count += 1
         except Exception as e:
             skipped.append({"ref": ref, "reason": str(e)})
-    return {"created": created_count, "skipped": skipped, "total": len(rows)}
+    return {"created": created_count, "updated": updated_count, "skipped": skipped, "total": len(rows)}
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
 def get_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -299,11 +345,19 @@ def kpi_report(db: Session = Depends(get_db), current=Depends(get_current_user))
     by_client_exp = defaultdict(lambda: {"shipments": 0, "teu": 0})
     by_client_imp = defaultdict(lambda: {"shipments": 0, "teu": 0})
     by_carrier    = defaultdict(int)
+    by_carrier_exp= defaultdict(int)
+    by_carrier_imp= defaultdict(int)
     by_status     = defaultdict(int)
     by_mode       = defaultdict(int)
     by_pol        = defaultdict(int)
+    by_pol_exp    = defaultdict(int)
+    by_pol_imp    = defaultdict(int)
     by_pod        = defaultdict(int)
+    by_pod_exp    = defaultdict(int)
+    by_pod_imp    = defaultdict(int)
     by_routing    = defaultdict(int)
+    by_routing_exp= defaultdict(int)
+    by_routing_imp= defaultdict(int)
     by_direction  = {"Export": 0, "Import": 0, "Unknown": 0}
     total_teu     = 0
     monthly       = defaultdict(int)
@@ -333,13 +387,23 @@ def kpi_report(db: Session = Depends(get_db), current=Depends(get_current_user))
             by_client_imp[cn]["shipments"] += 0
 
         by_carrier[car] += 1
+        if direction=="Export": by_carrier_exp[car]+=1
+        elif direction=="Import": by_carrier_imp[car]+=1
         by_status[st] += 1
         by_mode[mod] += 1
-
-        if s.pol: by_pol[s.pol.upper()] += 1
-        if s.pod: by_pod[s.pod.upper()] += 1
+        if s.pol:
+            by_pol[s.pol.upper()]+=1
+            if direction=="Export": by_pol_exp[s.pol.upper()]+=1
+            elif direction=="Import": by_pol_imp[s.pol.upper()]+=1
+        if s.pod:
+            by_pod[s.pod.upper()]+=1
+            if direction=="Export": by_pod_exp[s.pod.upper()]+=1
+            elif direction=="Import": by_pod_imp[s.pod.upper()]+=1
         if s.pol and s.pod:
-            by_routing[f"{s.pol.upper()} → {s.pod.upper()}"] += 1
+            route=f"{s.pol.upper()} → {s.pod.upper()}"
+            by_routing[route]+=1
+            if direction=="Export": by_routing_exp[route]+=1
+            elif direction=="Import": by_routing_imp[route]+=1
 
         # Monthly (by ETD)
         if s.etd:
@@ -371,6 +435,8 @@ def kpi_report(db: Session = Depends(get_db), current=Depends(get_current_user))
         "by_status": dict(by_status),
         "by_mode": dict(by_mode),
         "by_carrier": top(by_carrier, 10),
+        "by_carrier_export": top(by_carrier_exp,10),
+        "by_carrier_import": top(by_carrier_imp,10),
         "by_client_all": sorted(
             [{"name": k, "shipments": v["shipments"], "teu": v["teu"]} for k, v in all_clients.items()],
             key=lambda x: -x["shipments"]
@@ -383,12 +449,15 @@ def kpi_report(db: Session = Depends(get_db), current=Depends(get_current_user))
             [{"name": k, "shipments": v["shipments"], "teu": v["teu"]} for k, v in by_client_imp.items() if v["shipments"] > 0],
             key=lambda x: -x["shipments"]
         )[:15],
-        "top_pol": top_str(by_pol, 8),
-        "top_pod": top_str(by_pod, 8),
-        "top_routing": sorted(
-            [{"route": k, "count": v} for k, v in by_routing.items()],
-            key=lambda x: -x["count"]
-        )[:10],
+        "top_pol": top_str(by_pol,8),
+        "top_pol_export": top_str(by_pol_exp,8),
+        "top_pol_import": top_str(by_pol_imp,8),
+        "top_pod": top_str(by_pod,8),
+        "top_pod_export": top_str(by_pod_exp,8),
+        "top_pod_import": top_str(by_pod_imp,8),
+        "top_routing": sorted([{"route":k,"count":v} for k,v in by_routing.items()],key=lambda x:-x["count"])[:10],
+        "top_routing_export": sorted([{"route":k,"count":v} for k,v in by_routing_exp.items()],key=lambda x:-x["count"])[:10],
+        "top_routing_import": sorted([{"route":k,"count":v} for k,v in by_routing_imp.items()],key=lambda x:-x["count"])[:10],
         "monthly": monthly_list,
         # Legacy fields for backward compat
         "by_client": top(by_carrier, 10),  # kept for old frontend
@@ -494,8 +563,15 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
             "quotation": "quotation_number", "quotationno": "quotation_number",
             "lasttracked": "last_tracked", "createdat": "created_at",
             "containers": "container", "truck_plate": "container", "plate": "container",
-            "nb_teu": "teu", "teus": "teu",
+            "conteneur": "container", "ctr": "container", "cntr": "container",
+            "nb_teu": "teu", "teus": "teu", "teu": "teu",
+            "etd": "etd", "departure": "etd", "date_etd": "etd", "etd_date": "etd",
+            "eta": "eta", "arrival": "eta", "date_eta": "eta", "eta_date": "eta",
+            "pol": "pol", "port_of_loading": "pol", "origin_port": "pol",
+            "pod": "pod", "port_of_discharge": "pod", "destination_port": "pod",
             "direction": "direction", "flow": "direction", "type": "direction",
+            "shipper": "shipper", "expediteur": "shipper",
+            "consignee": "consignee", "destinataire": "consignee",
         }
         return aliases.get(key, key)
 
@@ -503,20 +579,27 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
 
     def parse_date(val):
         if not val: return None
-        for fmt in ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"]:
-            try: return datetime.strptime(str(val).strip(), fmt).strftime("%Y-%m-%d")
+        # openpyxl returns datetime objects directly
+        if hasattr(val, 'strftime'):
+            return val.strftime("%Y-%m-%d")
+        s = str(val).strip()
+        # Strip time portion: "2026-01-29 00:00:00" → "2026-01-29"
+        if ' ' in s: s = s.split(' ')[0]
+        if 'T' in s: s = s.split('T')[0]
+        for fmt in ["%Y-%m-%d", "%Y/%m/%d", "%d/%m/%Y", "%d-%m-%Y", "%m/%d/%Y", "%d.%m.%Y"]:
+            try: return datetime.strptime(s, fmt).strftime("%Y-%m-%d")
             except: pass
         return None
 
     created, skipped, errors = [], [], []
+
+    updated = []
 
     for row in ws.iter_rows(min_row=2, values_only=True):
         rd = {headers[i]: (str(v).strip() if v is not None else "")
               for i, v in enumerate(row) if i < len(headers)}
         ref = rd.get("ref", "").strip()
         if not ref: continue
-        if db.query(models.Shipment).filter(models.Shipment.ref == ref).first():
-            skipped.append(ref); continue
         try:
             teu_raw = rd.get("teu", "")
             try: teu = int(float(teu_raw)) if teu_raw else None
@@ -538,6 +621,34 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
                 has_cont
             )
 
+            existing = db.query(models.Shipment).filter(models.Shipment.ref == ref).first()
+            if existing:
+                if rd.get("ref2"):         existing.ref2         = rd["ref2"]
+                if rd.get("booking_no"):   existing.booking_no   = rd["booking_no"]
+                if mode_norm:              existing.mode         = mode_norm
+                if carrier_norm:           existing.carrier      = carrier_norm
+                if rd.get("shipper"):      existing.shipper      = rd["shipper"]
+                if rd.get("consignee"):    existing.consignee    = rd["consignee"]
+                if client_norm:            existing.client       = client_norm
+                if rd.get("client_email"): existing.client_email = rd["client_email"]
+                if rd.get("pol"):          existing.pol          = rd["pol"]
+                if rd.get("pod"):          existing.pod          = rd["pod"]
+                if rd.get("etd"):          existing.etd          = parse_date(rd["etd"])
+                if rd.get("eta"):          existing.eta          = parse_date(rd["eta"])
+                if rd.get("incoterm"):     existing.incoterm     = rd["incoterm"]
+                if teu is not None:        existing.teu          = teu
+                if dir_norm:               existing.direction    = dir_norm
+                existing.status = auto_st
+                db.commit()
+                if container_val:
+                    from models import Container as Cont
+                    db.query(Cont).filter(Cont.shipment_id == existing.id).delete()
+                    for cno in re.split(r"[,;/\\|]", container_val):
+                        cno = cno.strip()
+                        if cno: db.add(Cont(shipment_id=existing.id, container_no=cno))
+                    db.commit()
+                updated.append(ref)
+                continue
             s = models.Shipment(
                 ref=ref,
                 ref2=rd.get("ref2", "") or None,
@@ -578,7 +689,7 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
         except Exception as e:
             errors.append({"ref": ref, "error": str(e)})
 
-    return {"created": len(created), "skipped": len(skipped), "errors": errors, "refs": created}
+    return {"created": len(created), "updated": len(updated), "skipped": len(skipped), "errors": errors}
 
 # ── Seed Samples ───────────────────────────────
 @app.post("/api/seed-samples")
