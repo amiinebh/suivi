@@ -471,6 +471,30 @@ textarea.form-control{resize:vertical;min-height:72px}
 @keyframes toastOut { from { opacity:1; transform:none; } to { opacity:0; transform:translateY(8px) scale(.96); } }
 
 
+
+/* ── Transport mode dots ── */
+.nav-mode-dots{display:flex;align-items:center;gap:4px;padding:2px 12px 10px 44px;flex-wrap:wrap}
+.mode-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.mode-dot-label{font-size:10px;color:var(--text2);margin-right:6px;font-weight:500}
+/* ── Three-dot row menu ── */
+.row-menu-wrap{position:relative;display:inline-block}
+.row-menu-btn{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:var(--radius-sm);color:var(--text2);transition:background var(--t),color var(--t)}
+.row-menu-btn:hover{background:var(--bg3);color:var(--text1)}
+.row-menu{display:none;position:absolute;right:0;top:calc(100% + 4px);z-index:100;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);min-width:140px;padding:4px}
+.row-menu.open{display:block;animation:toastIn .15s ease forwards}
+.row-menu-item{display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:12px;font-weight:500;color:var(--text1);cursor:pointer;border-radius:var(--radius-sm);transition:background var(--t)}
+.row-menu-item:hover{background:var(--bg3)}
+.row-menu-item.danger{color:#ef4444}
+.row-menu-item.danger:hover{background:rgba(239,68,68,.08)}
+/* ── Activity feed ── */
+.activity-feed-item{display:flex;align-items:flex-start;gap:10px;padding:9px 16px;transition:background var(--t);cursor:default}
+.activity-feed-item:hover{background:var(--bg3)}
+.activity-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.activity-body{flex:1;min-width:0}
+.activity-ref{font-size:12px;font-weight:600;color:var(--text1)}
+.activity-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.activity-time{font-size:10px;color:var(--text3);white-space:nowrap;margin-top:3px}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -541,6 +565,12 @@ textarea.form-control{resize:vertical;min-height:72px}
     <div class="nav-item" onclick="showPage('shipments',this)">
       <i class="ph ph-boat"></i><span class="nav-label">Shipments</span>
       <span class="nav-badge" id="nav-count">0</span>
+    </div>
+    <div class="nav-mode-dots">
+      <span class="mode-dot" style="background:#3b82f6"></span><span class="mode-dot-label">Sea</span>
+      <span class="mode-dot" style="background:#a855f7"></span><span class="mode-dot-label">Air</span>
+      <span class="mode-dot" style="background:#f97316"></span><span class="mode-dot-label">Road</span>
+      <span class="mode-dot" style="background:#22c55e"></span><span class="mode-dot-label">Rail</span>
     </div>
     <div class="nav-section">Clients</div>
     <div class="nav-item" id="nav-clients" onclick="showPage('clients',this)">
@@ -672,6 +702,13 @@ textarea.form-control{resize:vertical;min-height:72px}
       <div class="mobile-cards" id="recent-cards"></div>
       <div class="desktop-table table-wrap" id="recent-table-wrap" style="margin-top:0">
         <div id="recent-table"></div>
+      </div>
+      <div class="card" style="padding:0;margin-top:16px">
+        <div style="padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700;font-size:13px">Recent Activity</div>
+          <div style="font-size:11px;color:var(--text2)">Last 10 shipments</div>
+        </div>
+        <div id="activity-feed" style="max-height:320px;overflow-y:auto"></div>
       </div>
     </div>
 
@@ -1454,10 +1491,14 @@ function renderTable(ships){
       +'<td style="font-size:12px;color:'+etaColor+'">'+fmtd(sh.eta)+etaTag+'</td>'
       +'<td><span class="badge badge-blue" style="font-size:11px">'+(sh.teu?sh.teu+' TEU':'--')+'</span></td>'
       +'<td>'+statusBadge(shipStatus(sh))+'</td>'
-      +'<td><div class="actions">'
-      +'<button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment('+sh.id+')"><i class="ph ph-pencil"></i></button>'
-      +'<button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment('+sh.id+')"><i class="ph ph-trash"></i></button>'
-      +'</div></td></tr>';
+      +'<td onclick="event.stopPropagation()">'
+      +'<div class="row-menu-wrap">'
+      +'<button class="row-menu-btn" onclick="toggleRowMenu(event,'+sh.id+')"><i class="ph ph-dots-three" style="font-size:16px"></i></button>'
+      +'<div class="row-menu" id="row-menu-'+sh.id+'">'
+      +'<div class="row-menu-item" onclick="openDetail('+sh.id+')"><i class="ph ph-eye"></i> View</div>'
+      +'<div class="row-menu-item" onclick="editShipment('+sh.id+')"><i class="ph ph-pencil"></i> Edit</div>'
+      +'<div class="row-menu-item danger" onclick="deleteShipment('+sh.id+')"><i class="ph ph-trash"></i> Delete</div>'
+      +'</div></div></td></tr>';
   }).join('');
   wrap.innerHTML=thead+tbody+'</tbody></table>';
   _updateBulkToolbar();
@@ -1545,6 +1586,7 @@ async function loadDashboard(){
     }
     var recent=list.slice(0,6);
     if(typeof renderCards==='function')renderCards(recent,'recent-cards');
+    renderActivityFeed();
     var tw=document.getElementById('recent-table');
     if(tw){
       if(!recent.length){
@@ -1563,10 +1605,14 @@ async function loadDashboard(){
             +'<td>'+(typeof modeBadge==='function'?modeBadge(sh.mode):sh.mode||'--')+'</td>'
             +'<td style="color:'+ec+';font-size:12px">'+fmtd(sh.eta)+'<br><span style="font-size:10px;font-weight:700">'+el+'</span></td>'
             +'<td>'+(typeof statusBadge==='function'?statusBadge(sh.status):sh.status||'--')+'</td>'
-            +'<td><div class="actions">'
-            +'<button class="btn btn-secondary btn-sm btn-icon" onclick="event.stopPropagation();editShipment('+sh.id+')"><i class="ph ph-pencil"></i></button>'
-            +'<button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteShipment('+sh.id+')"><i class="ph ph-trash"></i></button>'
-            +'</div></td></tr>';
+            +'<td onclick="event.stopPropagation()">'
+            +'<div class="row-menu-wrap">'
+            +'<button class="row-menu-btn" onclick="toggleRowMenu(event,'+sh.id+')"><i class="ph ph-dots-three" style="font-size:16px"></i></button>'
+            +'<div class="row-menu" id="row-menu-'+sh.id+'">'
+            +'<div class="row-menu-item" onclick="openDetail('+sh.id+')"><i class="ph ph-eye"></i> View</div>'
+            +'<div class="row-menu-item" onclick="editShipment('+sh.id+')"><i class="ph ph-pencil"></i> Edit</div>'
+            +'<div class="row-menu-item danger" onclick="deleteShipment('+sh.id+')"><i class="ph ph-trash"></i> Delete</div>'
+            +'</div></div></td></tr>';
         }).join('');
         tw.innerHTML='<table><thead><tr><th>Reference</th><th>Client</th><th>Route</th><th>Mode</th><th>ETA</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
       }
@@ -3816,6 +3862,33 @@ function openDigest(){
 function closeDigest(){
   document.getElementById('modal-digest').style.display = 'none';
 }
+
+function toggleRowMenu(e,id){
+  e.stopPropagation();
+  document.querySelectorAll('.row-menu.open').forEach(function(m){m.classList.remove('open');});
+  var m=document.getElementById('row-menu-'+id);
+  if(m)m.classList.toggle('open');
+}
+document.addEventListener('click',function(){
+  document.querySelectorAll('.row-menu.open').forEach(function(m){m.classList.remove('open');});
+});
+function renderActivityFeed(){
+  var feed=document.getElementById('activity-feed');
+  if(!feed||!window.allShipments)return;
+  var colors={Delivered:'#22c55e','In Transit':'#3b82f6',Pending:'#f59e0b',Overdue:'#ef4444'};
+  var icons={Delivered:'ph-check-circle','In Transit':'ph-truck',Pending:'ph-clock',Overdue:'ph-warning'};
+  var recent=window.allShipments.slice().sort(function(a,b){return new Date(b.updated_at||b.eta||b.etd||0)-new Date(a.updated_at||a.eta||a.etd||0);}).slice(0,10);
+  feed.innerHTML=recent.map(function(s){
+    var st=(typeof shipStatus==='function')?shipStatus(s):(s.status||'Pending');
+    var cl=colors[st]||'#94a3b8', ic=icons[st]||'ph-package';
+    return '<div class="activity-feed-item">'
+      +'<div class="activity-avatar" style="background:'+cl+'18"><i class="ph '+ic+'" style="color:'+cl+'"></i></div>'
+      +'<div class="activity-body"><div class="activity-ref">'+(s.ref||'--')+' <span style="font-weight:400;color:var(--text2)">· '+(s.client||'--')+'</span></div>'
+      +'<div class="activity-sub">'+(s.pol||'--')+' → '+(s.pod||'--')+'</div></div>'
+      +'<div class="activity-time">'+(typeof fmtd==='function'?fmtd(s.eta||s.updated_at||s.etd):'')+'</div></div>';
+  }).join('');
+}
+
 </script>
 
 
