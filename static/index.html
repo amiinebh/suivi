@@ -1849,12 +1849,35 @@ function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240
 /* ── KPI Page ── */
 async function loadAnalytics(){
   try{
-    var k=await apiFetch('/api/kpi-report');
-    if(!k||typeof k!=='object') k={};
+    var resp=await apiFetch('/api/kpi-report');
+    var raw=(resp&&resp.kpis&&typeof resp.kpis==='object')?resp.kpis:((resp&&typeof resp==='object')?resp:{});
+    var k={
+      total: raw.total||0,
+      total_teu: raw.total_teu!=null?raw.total_teu:(raw.totalteu||0),
+      by_status: raw.by_status||raw.bystatus||{},
+      by_mode: raw.by_mode||raw.bymode||{},
+      by_direction: raw.by_direction||raw.bydirection||{},
+      monthly: raw.monthly||[],
+      by_client_all: raw.by_client_all||raw.byclientall||raw.byclient||[],
+      by_client_import: raw.by_client_import||raw.byclientimport||[],
+      by_client_export: raw.by_client_export||raw.byclientexport||[],
+      by_carrier: raw.by_carrier||raw.bycarrier||[],
+      by_carrier_import: raw.by_carrier_import||raw.bycarrierimport||[],
+      by_carrier_export: raw.by_carrier_export||raw.bycarrierexport||[],
+      top_pol: raw.top_pol||raw.toppol||[],
+      top_pol_import: raw.top_pol_import||raw.toppolimport||[],
+      top_pol_export: raw.top_pol_export||raw.toppolexport||[],
+      top_pod: raw.top_pod||raw.toppod||[],
+      top_pod_import: raw.top_pod_import||raw.toppodimport||[],
+      top_pod_export: raw.top_pod_export||raw.toppodexport||[],
+      top_routing: raw.top_routing||raw.toproutes||[],
+      top_routing_import: raw.top_routing_import||raw.toproutesimport||[],
+      top_routing_export: raw.top_routing_export||raw.toproutesexport||[]
+    };
     window._kpiData=k;
     var total=k.total||0,totalTeu=k.total_teu||0;
     var byStatus=k.by_status||{},byMode=k.by_mode||{},byDir=k.by_direction||{};
-    var monthly=k.monthly||[]; var monthlyVolumeRule="Monthly Volume = import RO max sequence + export ROE max sequence for each month.";
+    var monthly=k.monthly||[];
     var clientAll=k.by_client_all||[];
 
     function kpiCard(icon,color,val,label,sub){
@@ -1871,7 +1894,7 @@ async function loadAnalytics(){
     var r1=document.getElementById('kpi-cards-r1');
     if(r1){r1.innerHTML='';
       var expC=byDir['Export']||0,impC=byDir['Import']||0;
-      r1.appendChild(kpiCard('ph-package','#4f8ef7',total,'Total Shipments',expC+' Exp · '+impC+' Imp'));
+      r1.appendChild(kpiCard('ph-package','#4f8ef7',total,'Total Shipments','RO + ROE monthly logic'));
       r1.appendChild(kpiCard('ph-shipping-container','#6c63ff',totalTeu||'—','Total TEU','Across all shipments'));
       r1.appendChild(kpiCard('ph-boat','#3b82f6',byStatus['Sailing']||0,'Sailing','At sea / road'));
       r1.appendChild(kpiCard('ph-check-circle','#f59e0b',byStatus['Confirmed']||0,'Confirmed','Awaiting departure'));
@@ -2803,7 +2826,7 @@ async function generateReport(){
     var fmtN=function(v){return(v!==null&&v!==undefined&&v!=='')?v:'--';};
     var byStatus=k.by_status||{},byMode=k.by_mode||{},byDir=k.by_direction||{};
     var total=k.total||0,totalTeu=k.total_teu||0;
-    var monthly=k.monthly||[]; var monthlyVolumeRule="Monthly Volume = import RO max sequence + export ROE max sequence for each month.";
+    var monthly=k.monthly||[];
     var clientAll=k.by_client_all||[];
     var clientExp=k.by_client_export||[],clientImp=k.by_client_import||[];
     var carriersExp=k.by_carrier_export||[],carriersImp=k.by_carrier_import||[];
