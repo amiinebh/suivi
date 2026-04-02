@@ -1849,31 +1849,8 @@ function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240
 /* ── KPI Page ── */
 async function loadAnalytics(){
   try{
-    var resp=await apiFetch('/api/kpi-report');
-    var raw=(resp&&resp.kpis&&typeof resp.kpis==='object')?resp.kpis:((resp&&typeof resp==='object')?resp:{});
-    var k={
-      total: raw.total||0,
-      total_teu: raw.total_teu!=null?raw.total_teu:(raw.totalteu||0),
-      by_status: raw.by_status||raw.bystatus||{},
-      by_mode: raw.by_mode||raw.bymode||{},
-      by_direction: raw.by_direction||raw.bydirection||{},
-      monthly: raw.monthly||[],
-      by_client_all: raw.by_client_all||raw.byclientall||raw.byclient||[],
-      by_client_import: raw.by_client_import||raw.byclientimport||[],
-      by_client_export: raw.by_client_export||raw.byclientexport||[],
-      by_carrier: raw.by_carrier||raw.bycarrier||[],
-      by_carrier_import: raw.by_carrier_import||raw.bycarrierimport||[],
-      by_carrier_export: raw.by_carrier_export||raw.bycarrierexport||[],
-      top_pol: raw.top_pol||raw.toppol||[],
-      top_pol_import: raw.top_pol_import||raw.toppolimport||[],
-      top_pol_export: raw.top_pol_export||raw.toppolexport||[],
-      top_pod: raw.top_pod||raw.toppod||[],
-      top_pod_import: raw.top_pod_import||raw.toppodimport||[],
-      top_pod_export: raw.top_pod_export||raw.toppodexport||[],
-      top_routing: raw.top_routing||raw.toproutes||[],
-      top_routing_import: raw.top_routing_import||raw.toproutesimport||[],
-      top_routing_export: raw.top_routing_export||raw.toproutesexport||[]
-    };
+    var k=await apiFetch('/api/kpi-report');
+    if(!k||typeof k!=='object') k={};
     window._kpiData=k;
     var total=k.total||0,totalTeu=k.total_teu||0;
     var byStatus=k.by_status||{},byMode=k.by_mode||{},byDir=k.by_direction||{};
@@ -1894,7 +1871,7 @@ async function loadAnalytics(){
     var r1=document.getElementById('kpi-cards-r1');
     if(r1){r1.innerHTML='';
       var expC=byDir['Export']||0,impC=byDir['Import']||0;
-      r1.appendChild(kpiCard('ph-package','#4f8ef7',total,'Total Shipments','RO + ROE monthly logic'));
+      r1.appendChild(kpiCard('ph-package','#4f8ef7',total,'Total Shipments',expC+' Exp · '+impC+' Imp'));
       r1.appendChild(kpiCard('ph-shipping-container','#6c63ff',totalTeu||'—','Total TEU','Across all shipments'));
       r1.appendChild(kpiCard('ph-boat','#3b82f6',byStatus['Sailing']||0,'Sailing','At sea / road'));
       r1.appendChild(kpiCard('ph-check-circle','#f59e0b',byStatus['Confirmed']||0,'Confirmed','Awaiting departure'));
@@ -2821,366 +2798,321 @@ async function generateReport(){
     var ships=await apiFetch('/api/shipments');
     var k=await apiFetch('/api/kpi-report');
     if(!k)k={};
-    var today=new Date();
+    var today=new Date(); var nowMs=new Date(); nowMs.setHours(0,0,0,0);
     var fmt=function(d){return d?String(d).slice(0,10):'--';};
-    var fmtN=function(v){return(v!==null&&v!==undefined&&v!=='')?v:'--';};
-    var byStatus=k.by_status||{},byMode=k.by_mode||{},byDir=k.by_direction||{};
-    var total=k.total||0,totalTeu=k.total_teu||0;
+    var fmtN=function(v){return (v!==null&&v!==undefined&&v!=='')?v:'--';};
+    var byStatus=k.by_status||{}, byMode=k.by_mode||{}, byDir=k.by_direction||{};
+    var total=k.total||0, totalTeu=k.total_teu||0;
     var monthly=k.monthly||[];
-    var clientAll=k.by_client_all||[];
-    var clientExp=k.by_client_export||[],clientImp=k.by_client_import||[];
-    var carriersExp=k.by_carrier_export||[],carriersImp=k.by_carrier_import||[];
-    var topPodExp=k.top_pod_export||[],topPodImp=k.top_pod_import||[];
-    var topPolExp=k.top_pol_export||[],topPolImp=k.top_pol_import||[];
-    var topRExp=k.top_routing_export||[],topRImp=k.top_routing_import||[];
-    var expC=byDir['Export']||0,impC=byDir['Import']||0;
-    var sCols={'Pending':'#f59e0b','Confirmed':'#4f8ef7','Booked':'#06b6d4','Stuffed':'#8b5cf6','Sailing':'#3b82f6','Arrived':'#22c55e','Closed':'#6b7280','Canceled':'#ef4444'};
-    var sBg=function(s){return(sCols[s]||'#888')+'22';};
-    var sFg=function(s){return sCols[s]||'#888';};
-    var nowMs=new Date().setHours(0,0,0,0);
+    var clientExp=k.by_client_export||[], clientImp=k.by_client_import||[];
+    var carriersExp=k.by_carrier_export||[], carriersImp=k.by_carrier_import||[];
+    var topPodExp=k.top_pod_export||[], topPodImp=k.top_pod_import||[];
+    var topPolExp=k.top_pol_export||[], topPolImp=k.top_pol_import||[];
+    var topRExp=k.top_routing_export||[], topRImp=k.top_routing_import||[];
+    var expC=byDir['Export']||0, impC=byDir['Import']||0;
+    var sColors={Pending:'#f59e0b',Confirmed:'#4f8ef7',Booked:'#06b6d4',Stuffed:'#8b5cf6',Sailing:'#3b82f6',Arrived:'#22c55e',Closed:'#6b7280',Canceled:'#ef4444'};
     var overdue=ships.filter(function(s){
       if(!s.eta)return false;
       var eD=new Date(s.eta.split('T')[0]);
-      var st=typeof shipStatus==='function'?shipStatus(s):s.status;
+      var st=(typeof shipStatus==='function')?shipStatus(s):s.status;
       return !isNaN(eD)&&nowMs>eD&&['Arrived','Closed','Canceled'].indexOf(st)===-1;
     }).sort(function(a,b){return new Date(a.eta)-new Date(b.eta);});
 
-    /* ── rank table (single direction) ── */
-    function rankTable(items,nKey,vKey,accent){
-      if(!items||!items.length) return '<div class="empty-state">No data available</div>';
-      var tot=items.reduce(function(s,i){return s+(i[vKey]||0);},0)||1;
-      var rows='';
-      items.slice(0,8).forEach(function(item,i){
-        var name=item[nKey]||'--', cnt=item[vKey]||0;
-        var pct=Math.round(cnt/tot*100);
-        var medals=['&#129351;','&#129352;','&#129353;'];
-        var rank=i<3?'<span style="font-size:14px">'+medals[i]+'</span>':'<span style="color:#cbd5e1;font-size:12px;font-weight:600">'+(i+1)+'</span>';
-        rows+='<tr>'
-          +'<td style="width:32px;text-align:center">'+rank+'</td>'
-          +'<td><div style="font-weight:600;color:#0f172a;font-size:13px">'+name+'</div></td>'
-          +'<td style="width:50px;text-align:right"><span style="font-weight:800;font-size:15px;color:'+accent+'">'+cnt+'</span></td>'
-          +'<td style="width:110px;padding-right:4px">'
-          +'<div style="display:flex;align-items:center;gap:5px">'
-          +'<div style="flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden">'
-          +'<div style="height:8px;border-radius:99px;background:'+accent+';width:'+pct+'%;transition:width .4s ease"></div></div>'
-          +'<span style="font-size:10px;font-weight:700;color:'+accent+';width:28px;text-align:right">'+pct+'%</span>'
-          +'</div></td>'
-          +'</tr>';
-      });
-      return '<table class="rank-table"><tbody>'+rows+'</tbody></table>';
+    /* helpers */
+    function barRows(items,nKey,vKey,color,limit){
+      if(!items||!items.length)return '<div style="color:#94a3b8;font-size:12px;padding:12px 0">No data</div>';
+      var top=items.slice(0,limit||7);
+      var maxV=Math.max.apply(null,top.map(function(i){return i[vKey]||0;}).concat([1]));
+      var totV=top.reduce(function(s,i){return s+(i[vKey]||0);},0)||1;
+      return top.map(function(item){
+        var v=item[vKey]||0, pct=Math.round(v/totV*100), w=Math.round(v/maxV*100);
+        return '<div style="margin-bottom:10px">'
+          +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">'
+          +'<span style="font-weight:600;color:#1e293b;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+item[nKey]+'</span>'
+          +'<span style="color:#64748b">'+v+' <b style="color:'+color+'">'+pct+'%</b></span></div>'
+          +'<div style="height:7px;background:#f1f5f9;border-radius:99px;overflow:hidden">'
+          +'<div style="height:7px;border-radius:99px;background:'+color+';width:'+w+'%;transition:width .5s ease"></div></div></div>';
+      }).join('');
+    }
+    function clientRows(items,color,limit){
+      if(!items||!items.length)return '<div style="color:#94a3b8;font-size:12px;padding:12px 0">No data</div>';
+      var top=items.slice(0,limit||7);
+      var maxV=Math.max.apply(null,top.map(function(i){return i.shipments||0;}).concat([1]));
+      return top.map(function(c,i){
+        var w=Math.round((c.shipments||0)/maxV*100);
+        return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+          +'<div style="width:20px;height:20px;border-radius:6px;background:'+color+'22;color:'+color+';font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center">'+(i+1)+'</div>'
+          +'<div style="flex:1;min-width:0">'
+          +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
+          +'<span style="font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.name+'</span>'
+          +'<span style="color:#64748b;white-space:nowrap">'+c.shipments+' shp &nbsp;<span style="color:'+color+';font-weight:700">'+c.teu+' TEU</span></span></div>'
+          +'<div style="height:5px;background:#f1f5f9;border-radius:99px"><div style="height:5px;border-radius:99px;background:'+color+';width:'+w+'%"></div></div></div></div>';
+      }).join('');
+    }
+    function shipTable(list,dirColor){
+      if(!list||!list.length)return '<div style="color:#94a3b8;font-size:12px;text-align:center;padding:16px">No shipments</div>';
+      var stC={Pending:'#f59e0b',Confirmed:'#4f8ef7',Booked:'#06b6d4',Stuffed:'#8b5cf6',Sailing:'#3b82f6',Arrived:'#22c55e',Closed:'#6b7280',Canceled:'#ef4444'};
+      return '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+        +'<thead><tr style="border-bottom:2px solid #f1f5f9">'
+        +'<th style="padding:6px 8px;text-align:left;color:#64748b;font-weight:600">REF</th>'
+        +'<th style="padding:6px 8px;text-align:left;color:#64748b;font-weight:600">CLIENT</th>'
+        +'<th style="padding:6px 8px;text-align:left;color:#64748b;font-weight:600">POL → POD</th>'
+        +'<th style="padding:6px 8px;text-align:left;color:#64748b;font-weight:600">ETD</th>'
+        +'<th style="padding:6px 8px;text-align:left;color:#64748b;font-weight:600">ETA</th>'
+        +'<th style="padding:6px 8px;text-align:left;color:#64748b;font-weight:600">TEU</th>'
+        +'<th style="padding:6px 8px;text-align:left;color:#64748b;font-weight:600">STATUS</th>'
+        +'</tr></thead><tbody>'
+        +list.slice(0,20).map(function(s,i){
+          var st=(typeof shipStatus==='function')?shipStatus(s):s.status;
+          var sc=stC[st]||'#6b7280';
+          return '<tr style="border-bottom:1px solid #f8fafc;background:'+(i%2===0?'#fff':'#f8fafc')+'">'
+            +'<td style="padding:6px 8px;font-weight:700;color:#1e293b">'+s.ref+'</td>'
+            +'<td style="padding:6px 8px;color:#374151;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(s.client||'--')+'</td>'
+            +'<td style="padding:6px 8px;color:#64748b">'+(s.pol||'--')+' → '+(s.pod||'--')+'</td>'
+            +'<td style="padding:6px 8px;color:#64748b">'+(s.etd?s.etd.slice(0,10):'--')+'</td>'
+            +'<td style="padding:6px 8px;color:#64748b">'+(s.eta?s.eta.slice(0,10):'--')+'</td>'
+            +'<td style="padding:6px 8px;color:#6c63ff;font-weight:600">'+(s.teu?s.teu+' TEU':'--')+'</td>'
+            +'<td style="padding:6px 8px"><span style="background:'+sc+'22;color:'+sc+';font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">'+st+'</span></td>'
+            +'</tr>';
+        }).join('')
+        +'</tbody></table>';
+    }
+    function sectionTitle(icon,label,color){
+      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">'
+        +'<div style="width:4px;height:24px;border-radius:2px;background:'+color+'"></div>'
+        +'<span style="font-size:13px;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:.05em">'+icon+' '+label+'</span></div>';
     }
 
-    function routeRankTable(items,accent){
-      if(!items||!items.length) return '<div class="empty-state">No data available</div>';
-      var tot=items.reduce(function(s,r){return s+r.count;},0)||1;
-      var rows='';
-      items.slice(0,8).forEach(function(r,i){
-        var pct=Math.round(r.count/tot*100);
-        rows+='<tr>'
-          +'<td style="width:32px;text-align:center"><span style="color:#cbd5e1;font-size:12px;font-weight:600">'+(i+1)+'</span></td>'
-          +'<td><div style="font-weight:600;color:#0f172a;font-size:12px">'+r.route+'</div></td>'
-          +'<td style="width:50px;text-align:right"><span style="font-weight:800;font-size:15px;color:'+accent+'">'+r.count+'</span></td>'
-          +'<td style="width:110px;padding-right:4px">'
-          +'<div style="display:flex;align-items:center;gap:5px">'
-          +'<div style="flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden">'
-          +'<div style="height:8px;border-radius:99px;background:'+accent+';width:'+pct+'%;transition:width .4s ease"></div></div>'
-          +'<span style="font-size:10px;font-weight:700;color:'+accent+';width:28px;text-align:right">'+pct+'%</span>'
-          +'</div></td>'
-          +'</tr>';
-      });
-      return '<table class="rank-table"><tbody>'+rows+'</tbody></table>';
-    }
-
-    /* ── split card (Export left, Import right) ── */
-    function splitCard(title,icon,expContent,impContent){
-      return '<div class="card">'
-        +'<div class="card-title">'+icon+' '+title+'</div>'
-        +'<div class="split-grid">'
-        +'<div class="split-col exp-col">'
-          +'<div class="dir-badge exp-badge">&#8593; Export <span class="dir-count">'+expC+'</span></div>'
-          +expContent
+    /* MONTHLY DUAL BARS */
+    var maxM=Math.max.apply(null,monthly.map(function(m){return Math.max(m.import_count||0,m.export_count||0);}).concat([1]));
+    var monthBarsHTML=monthly.length?monthly.map(function(m){
+      var hE=Math.max(Math.round((m.export_count||0)/maxM*80),m.export_count?4:0);
+      var hI=Math.max(Math.round((m.import_count||0)/maxM*80),m.import_count?4:0);
+      var lbl=m.month?(m.month.slice(0,7).replace('-',' ').replace(/(\d{4})-?(\d{2})/,'$2\'$1'.slice(-3))):m.month;
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">'
+        +'<div style="display:flex;align-items:flex-end;gap:2px;height:90px">'
+        +'<div title="Export: '+(m.export_count||0)+'" style="width:14px;background:#3b82f6;border-radius:4px 4px 0 0;height:'+hE+'px;min-height:'+(m.export_count?4:0)+'px"></div>'
+        +'<div title="Import: '+(m.import_count||0)+'" style="width:14px;background:#22c55e;border-radius:4px 4px 0 0;height:'+hI+'px;min-height:'+(m.import_count?4:0)+'px"></div>'
         +'</div>'
+        +'<div style="font-size:9px;color:#94a3b8;text-align:center;white-space:nowrap">'+m.month+'</div></div>';
+    }).join(''):'<div style="color:#94a3b8;font-size:12px;padding:20px;text-align:center">No monthly data</div>';
+
+    /* STATUS ROWS */
+    var statusRowsHTML=Object.entries(byStatus).sort(function(a,b){return b[1]-a[1];}).map(function(e){
+      var pct=total?Math.round(e[1]/total*100):0, c=sColors[e[0]]||'#6b7280';
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
+        +'<span style="min-width:70px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:'+c+'22;color:'+c+';text-align:center">'+e[0]+'</span>'
+        +'<div style="flex:1;height:7px;background:#f1f5f9;border-radius:99px;overflow:hidden">'
+        +'<div style="height:7px;background:'+c+';width:'+pct+'%;border-radius:99px"></div></div>'
+        +'<span style="font-size:12px;font-weight:700;color:#1e293b;min-width:28px;text-align:right">'+e[1]+'</span>'
+        +'<span style="font-size:10px;color:#94a3b8;min-width:28px">'+pct+'%</span></div>';
+    }).join('');
+
+    /* TRANSPORT MODE */
+    var modeRowsHTML=Object.entries(byMode).filter(function(e){return e[1]>0;}).map(function(e){
+      var mc={Ocean:'#3b82f6',Road:'#f59e0b',Air:'#8b5cf6'}[e[0]]||'#6b7280';
+      var pct=total?Math.round(e[1]/total*100):0;
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
+        +'<span style="min-width:50px;font-size:11px;font-weight:700;color:'+mc+'">'+e[0]+'</span>'
+        +'<div style="flex:1;height:7px;background:#f1f5f9;border-radius:99px;overflow:hidden">'
+        +'<div style="height:7px;background:'+mc+';width:'+pct+'%;border-radius:99px"></div></div>'
+        +'<span style="font-size:12px;font-weight:700;color:#1e293b;min-width:24px;text-align:right">'+e[1]+'</span>'
+        +'<span style="font-size:10px;color:#94a3b8;min-width:28px">'+pct+'%</span></div>';
+    }).join('');
+
+    /* OVERDUE CARDS */
+    var overdueHTML=overdue.length?overdue.slice(0,10).map(function(s){
+      var eD=new Date(s.eta.split('T')[0]);
+      var dl=Math.floor((nowMs-eD)/86400000);
+      var ug=dl>=7?'#ef4444':dl>=3?'#f97316':'#f59e0b';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;margin-bottom:8px;background:#fff;border-left:4px solid '+ug+';box-shadow:0 1px 4px rgba(0,0,0,.06)">'
+        +'<div><div style="font-weight:700;font-size:13px;color:#1e293b">'+s.ref+'</div>'
+        +'<div style="font-size:11px;color:#64748b;margin-top:2px">'+(s.client||'--')+' · ETA '+s.eta.slice(0,10)+'</div></div>'
+        +'<span style="background:'+ug+'22;color:'+ug+';font-weight:800;font-size:12px;padding:4px 12px;border-radius:20px">'+dl+'d late</span></div>';
+    }).join(''):'<div style="text-align:center;padding:24px;color:#22c55e;font-weight:600;font-size:14px">✓ No overdue shipments</div>';
+
+    /* EXPORT / IMPORT SHIP LISTS */
+    var expShips=ships.filter(function(s){return (s.direction||'').toLowerCase().indexOf('exp')>=0||(s.ref||'').toUpperCase().startsWith('ROE');});
+    var impShips=ships.filter(function(s){return !expShips.includes(s);});
+
+    /* CSS */
+    var css=`
+      *{margin:0;padding:0;box-sizing:border-box;}
+      body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1e293b;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+      .page{max-width:1100px;margin:0 auto;padding:28px 24px;}
+      /* HERO HEADER */
+      .hero{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,#1d4ed8 100%);color:#fff;border-radius:20px;padding:28px 32px 24px;margin-bottom:20px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+      .hero-brand{font-size:11px;font-weight:700;opacity:.5;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;}
+      .hero-title{font-size:24px;font-weight:800;letter-spacing:-.4px;}
+      .hero-sub{font-size:12px;opacity:.55;margin-top:4px;}
+      .hero-date{font-size:11px;opacity:.45;text-align:right;}
+      .kpi-row{display:flex;gap:10px;flex-wrap:wrap;}
+      .kpi-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:10px 18px;text-align:center;backdrop-filter:blur(4px);min-width:100px;}
+      .kpi-chip-num{font-size:22px;font-weight:800;line-height:1;}
+      .kpi-chip-lbl{font-size:10px;opacity:.55;text-transform:uppercase;letter-spacing:.08em;margin-top:3px;}
+      .kpi-exp{border-color:rgba(59,130,246,.5);background:rgba(59,130,246,.15);}
+      .kpi-imp{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.15);}
+      .kpi-over{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.15);}
+      /* CARDS */
+      .card{background:#fff;border-radius:16px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);border:1px solid #f1f5f9;}
+      /* GRIDS */
+      .grid-3{display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:14px;margin-bottom:16px;}
+      .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+      .grid-half{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+      /* SPLIT */
+      .split-card{background:#fff;border-radius:16px;padding:0;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);border:1px solid #f1f5f9;}
+      .split-header{padding:14px 20px 12px;border-bottom:1px solid #f1f5f9;}
+      .split-body{display:grid;grid-template-columns:1fr 1px 1fr;}
+      .split-col{padding:16px 20px;}
+      .split-divider{background:#f1f5f9;}
+      .dir-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:12px;}
+      .exp-badge{background:#eff6ff;color:#1d4ed8;}
+      .imp-badge{background:#f0fdf4;color:#15803d;}
+      /* MONTHLY */
+      .month-chart{display:flex;align-items:flex-end;gap:4px;padding:12px 0 0;}
+      .month-legend{display:flex;gap:16px;margin-top:10px;font-size:11px;}
+      .leg-dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:4px;}
+      /* PRINT */
+      @media print{
+        body{background:#fff;}
+        .page{padding:16px;}
+        .no-print{display:none!important;}
+        .card,.split-card{box-shadow:none;border:1px solid #e2e8f0;}
+        .hero{border-radius:12px;}
+        .grid-3,.grid-2,.grid-half{gap:10px;}
+        @page{margin:14mm 12mm;}
+      }
+    `;
+
+    function splitCard(title,icon,color,expContent,impContent){
+      return '<div class="split-card">'
+        +'<div class="split-header">'+sectionTitle(icon,title,color)+'</div>'
+        +'<div class="split-body">'
+        +'<div class="split-col"><div class="dir-badge exp-badge">&#8593; Export <span style="margin-left:4px;font-size:13px;font-weight:800;color:#1d4ed8">'+expC+'</span></div>'+expContent+'</div>'
         +'<div class="split-divider"></div>'
-        +'<div class="split-col imp-col">'
-          +'<div class="dir-badge imp-badge">&#8595; Import <span class="dir-count">'+impC+'</span></div>'
-          +impContent
-        +'</div>'
+        +'<div class="split-col"><div class="dir-badge imp-badge">&#8595; Import <span style="margin-left:4px;font-size:13px;font-weight:800;color:#15803d">'+impC+'</span></div>'+impContent+'</div>'
         +'</div></div>';
     }
 
-    /* ── monthly bars ── */
-    var maxM=Math.max.apply(null,monthly.map(function(m){return m.count;}).concat([1]));
-    var monthBars='';
-    monthly.forEach(function(m){
-      var h=Math.max(Math.round((m.count/maxM)*90),4);
-      monthBars+='<div class="month-bar-wrap">'
-        +'<span class="month-val">'+m.count+'</span>'
-        +'<div class="month-bar" style="height:'+h+'px"></div>'
-        +'<span class="month-lbl">'+m.month+'</span>'
-        +'</div>';
-    });
-
-    /* ── status rows ── */
-    var statusRows='';
-    Object.entries(byStatus).sort(function(a,b){return b[1]-a[1];}).forEach(function(e){
-      var pct=total?Math.round(e[1]/total*100):0;
-      statusRows+='<div class="stat-row">'
-        +'<span class="badge" style="background:'+sBg(e[0])+';color:'+sFg(e[0])+'">'+e[0]+'</span>'
-        +'<span style="font-weight:700;font-size:14px;color:#0f172a;min-width:32px;text-align:right">'+e[1]+'</span>'
-        +'<div style="flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin:0 8px">'
-        +'<div style="height:8px;border-radius:99px;background:'+sFg(e[0])+';width:'+pct+'%"></div></div>'
-        +'<span style="font-size:11px;font-weight:700;color:'+sFg(e[0])+';width:32px">'+pct+'%</span>'
-        +'</div>';
-    });
-
-    /* ── mode + direction rows ── */
-    var PAL=['#4f8ef7','#a78bfa','#f59e0b','#06b6d4','#f97316'];
-    var modeRows='';
-    Object.entries(byMode).filter(function(e){return e[1]>0;}).sort(function(a,b){return b[1]-a[1];}).forEach(function(e,i){
-      var pct=total?Math.round(e[1]/total*100):0;
-      modeRows+='<div class="stat-row">'
-        +'<span style="font-weight:600;font-size:13px;color:#0f172a;min-width:70px">'+e[0]+'</span>'
-        +'<span style="font-weight:700;font-size:14px;min-width:32px;text-align:right;color:'+PAL[i]+'">'+e[1]+'</span>'
-        +'<div style="flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin:0 8px">'
-        +'<div style="height:8px;border-radius:99px;background:'+PAL[i]+';width:'+pct+'%"></div></div>'
-        +'<span style="font-size:11px;font-weight:700;color:'+PAL[i]+';width:32px">'+pct+'%</span>'
-        +'</div>';
-    });
-
-    /* ── ship list table ── */
-    function shipListTable(list,accent){
-      if(!list.length) return '<div class="empty-state" style="padding:24px">No shipments</div>';
-      var rows='';
-      list.forEach(function(s,i){
-        var st=typeof shipStatus==='function'?shipStatus(s):s.status;
-        rows+='<tr>'
-          +'<td class="td-num">'+(i+1)+'</td>'
-          +'<td><span class="ref-link">'+fmtN(s.ref)+'</span></td>'
-          +'<td class="td-sm">'+fmtN(s.client)+'</td>'
-          +'<td class="td-sm">'+fmtN(s.carrier)+'</td>'
-          +'<td><span class="mode-chip">'+fmtN(s.mode)+'</span></td>'
-          +'<td class="td-port">'+fmtN(s.pol)+'</td>'
-          +'<td class="td-port">'+fmtN(s.pod)+'</td>'
-          +'<td class="td-date">'+fmt(s.etd)+'</td>'
-          +'<td class="td-date">'+fmt(s.eta)+'</td>'
-          +'<td style="text-align:center;font-weight:700;color:#6c63ff">'+(s.teu||'--')+'</td>'
-          +'<td><span class="badge" style="background:'+sBg(st)+';color:'+sFg(st)+'">'+st+'</span></td>'
-          +'</tr>';
-      });
-      return '<div class="table-wrap"><table class="ship-table"><thead><tr>'
-        +'<th class="td-num">#</th><th>Ref</th><th>Client</th><th>Carrier</th>'
-        +'<th>Mode</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th>'
-        +'<th style="text-align:center">TEU</th><th>Status</th>'
-        +'</tr></thead><tbody>'+rows+'</tbody></table></div>';
-    }
-
-    var expShips=[].concat(ships).filter(function(s){return(s.direction||'').toLowerCase()==='export';}).sort(function(a,b){return new Date(b.etd||0)-new Date(a.etd||0);});
-    var impShips=[].concat(ships).filter(function(s){return(s.direction||'').toLowerCase()==='import';}).sort(function(a,b){return new Date(b.etd||0)-new Date(a.etd||0);});
-
-    /* ── overdue ── */
-    var overdueRows='';
-    overdue.forEach(function(s){
-      var dl=Math.floor((nowMs-new Date(s.eta.split('T')[0]).getTime())/86400000);
-      var ug=dl>7?'#ef4444':dl>3?'#f97316':'#f59e0b';
-      overdueRows+='<tr>'
-        +'<td><span class="ref-link">'+s.ref+'</span></td>'
-        +'<td class="td-sm">'+fmtN(s.client)+'</td>'
-        +'<td class="td-port" style="font-size:11px">'+fmtN(s.pol)+' &#8594; '+fmtN(s.pod)+'</td>'
-        +'<td class="td-sm">'+fmtN(s.carrier)+'</td>'
-        +'<td class="td-date">'+fmt(s.eta)+'</td>'
-        +'<td><span class="badge" style="background:'+ug+'18;color:'+ug+'">'+dl+'d late</span></td>'
-        +'</tr>';
-    });
-    var overdueSection=overdue.length
-      ?'<div class="card overdue-card"><div class="card-title" style="color:#dc2626">&#9888;&#65039; Overdue Shipments <span class="count-chip red">'+overdue.length+'</span></div>'
-        +'<div class="table-wrap"><table class="ship-table"><thead><tr><th>Ref</th><th>Client</th><th>Route</th><th>Carrier</th><th>ETA</th><th>Delay</th></tr></thead>'
-        +'<tbody>'+overdueRows+'</tbody></table></div></div>'
-      :'<div class="card" style="border-left:4px solid #22c55e"><div style="text-align:center;padding:20px;color:#22c55e;font-weight:700;font-size:14px">&#10003; No overdue shipments</div></div>';
-
-    /* ── CSS ── */
-    var css=''
-      +'*{margin:0;padding:0;box-sizing:border-box}'
-      +'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,sans-serif;background:#f8fafc;color:#1e293b;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-      +'.page{max-width:1200px;margin:0 auto;padding:28px 24px}'
-      /* Header */
-      +'.report-header{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 60%,#1d4ed8 100%);color:#fff;border-radius:20px;padding:28px 32px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start}'
-      +'.rh-title{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:4px}'
-      +'.rh-sub{font-size:12px;opacity:.6;margin-bottom:14px}'
-      +'.kpi-strip{display:flex;gap:24px;flex-wrap:wrap}'
-      +'.kpi-item{text-align:center}'
-      +'.kpi-num{font-size:26px;font-weight:800;line-height:1}'
-      +'.kpi-lbl{font-size:10px;opacity:.55;text-transform:uppercase;letter-spacing:.8px;margin-top:2px}'
-      +'.print-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:9px 20px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;backdrop-filter:blur(4px)}'
-      /* Cards */
-      +'.card{background:#fff;border-radius:16px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);border:1px solid #f1f5f9}'
-      +'.card-title{font-size:13px;font-weight:700;color:#0f172a;margin-bottom:16px;padding-bottom:12px;border-bottom:1.5px solid #f1f5f9;display:flex;align-items:center;gap:7px}'
-      +'.overdue-card{border-left:4px solid #ef4444}'
-      /* Split layout */
-      +'.split-grid{display:grid;grid-template-columns:1fr 1.5px 1fr;gap:0}'
-      +'.split-divider{background:#f1f5f9;margin:0 18px}'
-      +'.split-col{padding:0 4px}'
-      +'.dir-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 12px;border-radius:8px;margin-bottom:12px}'
-      +'.dir-count{font-size:11px;opacity:.7;font-weight:600}'
-      +'.exp-badge{background:#eff6ff;color:#1d4ed8}'
-      +'.imp-badge{background:#f0fdf4;color:#15803d}'
-      /* Rank table */
-      +'.rank-table{width:100%;border-collapse:collapse}'
-      +'.rank-table tr{border-radius:8px}'
-      +'.rank-table td{padding:7px 6px;vertical-align:middle;border-bottom:1px solid #f8fafc}'
-      +'.rank-table tr:last-child td{border-bottom:none}'
-      +'.rank-table tr:hover td{background:#fafbff}'
-      /* Ship table */
-      +'.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #f1f5f9}'
-      +'.ship-table{width:100%;border-collapse:collapse;min-width:800px}'
-      +'.ship-table thead th{background:#f8fafc;color:#64748b;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap}'
-      +'.ship-table tbody td{padding:9px 12px;border-bottom:1px solid #f8fafc;font-size:12px;color:#1e293b;vertical-align:middle}'
-      +'.ship-table tbody tr:last-child td{border-bottom:none}'
-      +'.ship-table tbody tr:hover td{background:#fafbff}'
-      /* Misc */
-      +'.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}'
-      +'.mode-chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:#f1f5f9;color:#475569}'
-      +'.ref-link{font-weight:700;color:#1d4ed8;font-size:12px}'
-      +'.td-num{color:#94a3b8;font-size:11px;text-align:center;width:32px}'
-      +'.td-sm{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
-      +'.td-port{font-size:11px;color:#475569}'
-      +'.td-date{font-size:11px;color:#64748b;white-space:nowrap}'
-      +'.count-chip{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;margin-left:6px}'
-      +'.count-chip.red{background:#fee2e2;color:#dc2626}'
-      +'.empty-state{color:#94a3b8;font-size:12px;text-align:center;padding:20px 0}'
-      +'.stat-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f8fafc}'
-      +'.stat-row:last-child{border-bottom:none}'
-      +'.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8;margin-bottom:12px}'
-      /* Monthly */
-      +'.month-chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding:0 2px}'
-      +'.month-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}'
-      +'.month-val{font-size:10px;font-weight:700;color:#1d4ed8}'
-      +'.month-bar{width:100%;background:linear-gradient(180deg,#3b82f6,#1d4ed8);border-radius:5px 5px 0 0;min-height:4px}'
-      +'.month-lbl{font-size:9px;color:#94a3b8;writing-mode:vertical-rl;transform:rotate(180deg);height:28px;overflow:hidden;text-overflow:ellipsis}'
-      /* Page sections */
-      +'.dir-section-header{display:flex;align-items:center;gap:12px;padding:16px 20px;border-radius:14px;margin-bottom:14px;color:#fff}'
-      +'.dir-section-header h2{font-size:17px;font-weight:800}'
-      +'.dir-section-header .sub{font-size:12px;opacity:.75}'
-      /* Grid helpers */
-      +'.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}'
-      +'.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}'
-      /* Print */
-      +'@media print{body{background:#fff}.page{padding:16px}.no-print{display:none!important}'
-      +'.card{box-shadow:none;break-inside:avoid;border:1px solid #e2e8f0}'
-      +'.page-break{page-break-before:always;break-before:page}'
-      +'.dir-section-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-      +'.report-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
-
-    /* ── ASSEMBLE ── */
     var h='<!DOCTYPE html><html lang="en"><head>'
       +'<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-      +'<title>FreightTrack Pro \u2014 Report</title>'
-      +'<style>'+css+'</style></head><body><div class="page">'
+      +'<title>FreightTrack Pro \u2014 Operations Report</title>'
+      +'<style>'+css+'</style></head><body>'
+      +'<div class="page">'
 
-      /* ── HEADER ── */
-      +'<div class="report-header">'
-      +'<div>'
-      +'<div class="rh-title">&#9875; FreightTrack Pro \u2014 Operations Report</div>'
-      +'<div class="rh-sub">Generated '+today.toLocaleString()+'</div>'
-      +'<div class="kpi-strip">'
-      +'<div class="kpi-item"><div class="kpi-num">'+total+'</div><div class="kpi-lbl">Shipments</div></div>'
-      +'<div class="kpi-item"><div class="kpi-num" style="color:#93c5fd">'+expC+'</div><div class="kpi-lbl">&#8593; Export</div></div>'
-      +'<div class="kpi-item"><div class="kpi-num" style="color:#6ee7b7">'+impC+'</div><div class="kpi-lbl">&#8595; Import</div></div>'
-      +'<div class="kpi-item"><div class="kpi-num" style="color:#c4b5fd">'+(totalTeu||'--')+'</div><div class="kpi-lbl">TEU</div></div>'
-      +'<div class="kpi-item"><div class="kpi-num" style="color:#fca5a5">'+overdue.length+'</div><div class="kpi-lbl">Overdue</div></div>'
+      /* ── HERO HEADER ─────────────────────────────────────────────── */
+      +'<div class="hero">'
+      +'<div class="hero-top">'
+      +'<div><div class="hero-brand">FreightTrack Pro</div>'
+      +'<div class="hero-title">Operations Report</div>'
+      +'<div class="hero-sub">Generated '+today.toLocaleString()+'</div></div>'
+      +'<div class="hero-date no-print"><button onclick="window.print()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:9px 20px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">&#128424; Print PDF</button></div>'
+      +'</div>'
+      +'<div class="kpi-row">'
+      +'<div class="kpi-chip"><div class="kpi-chip-num">'+total+'</div><div class="kpi-chip-lbl">Shipments</div></div>'
+      +'<div class="kpi-chip kpi-exp"><div class="kpi-chip-num">'+expC+'</div><div class="kpi-chip-lbl">&#8593; Export</div></div>'
+      +'<div class="kpi-chip kpi-imp"><div class="kpi-chip-num">'+impC+'</div><div class="kpi-chip-lbl">&#8595; Import</div></div>'
+      +'<div class="kpi-chip"><div class="kpi-chip-num">'+(totalTeu||0)+'</div><div class="kpi-chip-lbl">Total TEU</div></div>'
+      +'<div class="kpi-chip kpi-over"><div class="kpi-chip-num">'+overdue.length+'</div><div class="kpi-chip-lbl">Overdue</div></div>'
       +'</div></div>'
-      +'<button class="print-btn no-print" onclick="window.print()">&#128424;&#65039; Print / PDF</button>'
+
+      /* ── ROW 1: Monthly + Status + Mode ───────────────────────────── */
+      +'<div class="grid-3">'
+
+      /* Monthly */
+      +'<div class="card">'
+      +sectionTitle('&#128200;','Monthly Volume','#3b82f6')
+      +'<div class="month-chart">'+monthBarsHTML+'</div>'
+      +'<div class="month-legend"><span><span class="leg-dot" style="background:#3b82f6"></span>Export</span>'
+      +'<span><span class="leg-dot" style="background:#22c55e"></span>Import</span></div>'
       +'</div>'
 
-      /* ── OVERVIEW ROW ── */
-      +'<div class="grid-3">'
-      /* Monthly */
-      +'<div class="card" style="grid-column:1/3">'
-      +'<div class="card-title">&#128200; Monthly Shipment Volume</div>'
-      +'<div class="month-chart">'+monthBars+'</div>'
-      +'</div>'
       /* Status */
       +'<div class="card">'
-      +'<div class="card-title">&#128230; Status</div>'
-      +statusRows
-      +'</div></div>'
+      +sectionTitle('&#128230;','Status','#6b7280')
+      +statusRowsHTML
+      +'</div>'
 
-      /* Mode + Direction */
-      +'<div class="grid-2">'
-      +'<div class="card"><div class="card-title">&#128674; Transport Mode</div>'+modeRows+'</div>'
-      +'<div class="card"><div class="card-title">&#8597;&#65039; Export vs Import</div>'
-      +'<div class="stat-row">'
-      +'<span class="badge" style="background:#eff6ff;color:#1d4ed8;min-width:70px;text-align:center">&#8593; Export</span>'
-      +'<span style="font-weight:800;font-size:16px;color:#1d4ed8;min-width:36px;text-align:right">'+expC+'</span>'
-      +'<div style="flex:1;height:10px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin:0 10px">'
-      +'<div style="height:10px;border-radius:99px;background:#3b82f6;width:'+(total?Math.round(expC/total*100):0)+'%"></div></div>'
-      +'<span style="font-size:11px;font-weight:700;color:#3b82f6;width:35px">'+(total?Math.round(expC/total*100):0)+'%</span></div>'
-      +'<div class="stat-row">'
-      +'<span class="badge" style="background:#f0fdf4;color:#15803d;min-width:70px;text-align:center">&#8595; Import</span>'
-      +'<span style="font-weight:800;font-size:16px;color:#15803d;min-width:36px;text-align:right">'+impC+'</span>'
-      +'<div style="flex:1;height:10px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin:0 10px">'
-      +'<div style="height:10px;border-radius:99px;background:#22c55e;width:'+(total?Math.round(impC/total*100):0)+'%"></div></div>'
-      +'<span style="font-size:11px;font-weight:700;color:#22c55e;width:35px">'+(total?Math.round(impC/total*100):0)+'%</span></div>'
-      +'</div></div>'
-
-      /* ── RANKINGS — SPLIT CARDS ── */
-      +'<div style="page-break-before:always;break-before:page"></div>'
-      +splitCard('Top Clients \u2014 Shipments','&#128101;',
-        rankTable(clientExp,'name','shipments','#2563eb'),
-        rankTable(clientImp,'name','shipments','#16a34a'))
-      +splitCard('Top Clients \u2014 TEU','&#128230;',
-        rankTable(clientExp.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#2563eb'),
-        rankTable(clientImp.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#16a34a'))
-      +splitCard('Top Carriers','&#128674;',
-        rankTable(carriersExp,'name','count','#2563eb'),
-        rankTable(carriersImp,'name','count','#16a34a'))
-      +splitCard('Top Destinations (POD)','&#128205;',
-        rankTable(topPodExp,'name','count','#2563eb'),
-        rankTable(topPodImp,'name','count','#16a34a'))
-      +splitCard('Top Origins (POL)','&#128204;',
-        rankTable(topPolExp,'name','count','#2563eb'),
-        rankTable(topPolImp,'name','count','#16a34a'))
-      +splitCard('Top Routings (POL \u2192 POD)','&#128256;',
-        routeRankTable(topRExp,'#2563eb'),
-        routeRankTable(topRImp,'#16a34a'))
-
-      /* ── OVERDUE ── */
-      +'<div style="page-break-before:always;break-before:page"></div>'
-      +overdueSection
-
-      /* ── SHIPMENT TABLES ── */
+      /* Mode */
       +'<div class="card">'
-      +'<div class="card-title">'
-      +'<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:#eff6ff;color:#1d4ed8;border-radius:8px">&#8593; Export Shipments</span>'
-      +'<span class="count-chip" style="background:#eff6ff;color:#1d4ed8">'+expShips.length+'</span>'
-      +'</div>'
-      +shipListTable(expShips,'#2563eb')
+      +sectionTitle('&#9875;','Transport Mode','#8b5cf6')
+      +modeRowsHTML
+      +'<div style="margin-top:16px;border-top:1px solid #f1f5f9;padding-top:14px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
+      +'<span style="min-width:58px;font-size:11px;font-weight:700;color:#3b82f6">&#8593; Export</span>'
+      +'<div style="flex:1;height:9px;background:#eff6ff;border-radius:99px;overflow:hidden">'
+      +'<div style="height:9px;background:#3b82f6;width:'+(total?Math.round(expC/total*100):0)+'%;border-radius:99px"></div></div>'
+      +'<span style="font-size:12px;font-weight:800;color:#1d4ed8;min-width:26px;text-align:right">'+expC+'</span></div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<span style="min-width:58px;font-size:11px;font-weight:700;color:#22c55e">&#8595; Import</span>'
+      +'<div style="flex:1;height:9px;background:#f0fdf4;border-radius:99px;overflow:hidden">'
+      +'<div style="height:9px;background:#22c55e;width:'+(total?Math.round(impC/total*100):0)+'%;border-radius:99px"></div></div>'
+      +'<span style="font-size:12px;font-weight:800;color:#15803d;min-width:26px;text-align:right">'+impC+'</span></div></div>'
       +'</div>'
 
+      +'</div>'
+
+      /* ── CLIENTS ─────────────────────────────────────────────────── */
+      +splitCard('Top Clients','&#128100;','#4f8ef7',
+        clientRows(clientExp,'#3b82f6'),
+        clientRows(clientImp,'#22c55e'))
+
+      /* ── CARRIERS ────────────────────────────────────────────────── */
+      +splitCard('Top Carriers','&#128674;','#8b5cf6',
+        barRows(carriersExp,'name','count','#8b5cf6'),
+        barRows(carriersImp,'name','count','#8b5cf6'))
+
+      /* ── POD ─────────────────────────────────────────────────────── */
+      +splitCard('Top Destinations (POD)','&#128205;','#ef4444',
+        barRows(topPodExp,'name','count','#ef4444'),
+        barRows(topPodImp,'name','count','#ef4444'))
+
+      /* ── POL ─────────────────────────────────────────────────────── */
+      +splitCard('Top Origins (POL)','&#128204;','#22c55e',
+        barRows(topPolExp,'name','count','#22c55e'),
+        barRows(topPolImp,'name','count','#22c55e'))
+
+      /* ── ROUTING ─────────────────────────────────────────────────── */
+      +splitCard('Top Routings','&#10132;','#f59e0b',
+        barRows(topRExp,'route','count','#f59e0b'),
+        barRows(topRImp,'route','count','#f59e0b'))
+
+      /* ── OVERDUE ─────────────────────────────────────────────────── */
       +'<div class="card">'
-      +'<div class="card-title">'
-      +'<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:#f0fdf4;color:#15803d;border-radius:8px">&#8595; Import Shipments</span>'
-      +'<span class="count-chip" style="background:#f0fdf4;color:#15803d">'+impShips.length+'</span>'
-      +'</div>'
-      +shipListTable(impShips,'#16a34a')
+      +sectionTitle('&#9888;','Overdue Shipments','#ef4444')
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+overdueHTML+'</div>'
       +'</div>'
 
-      +'<div style="text-align:center;padding:20px 0 8px;font-size:11px;color:#94a3b8">'
-      +'FreightTrack Pro \u00b7 Report generated '+today.toLocaleString()+' \u00b7 '+total+' shipments \u00b7 '+totalTeu+' TEU'
+      /* ── SHIPMENT LISTS ──────────────────────────────────────────── */
+      +'<div class="split-card">'
+      +'<div class="split-header">'+sectionTitle('&#128674;','Active Shipments','#3b82f6')+'</div>'
+      +'<div style="padding:16px 20px 6px">'
+      +'<div class="dir-badge exp-badge" style="margin-bottom:10px">&#8593; Export &nbsp;<b style="color:#1d4ed8">'+expShips.length+'</b></div>'
+      +shipTable(expShips,'#3b82f6')
+      +'</div>'
+      +'<div style="padding:16px 20px 6px">'
+      +'<div class="dir-badge imp-badge" style="margin-bottom:10px">&#8595; Import &nbsp;<b style="color:#15803d">'+impShips.length+'</b></div>'
+      +shipTable(impShips,'#22c55e')
       +'</div>'
       +'</div>'
-      +'</body></html>';
+
+      /* ── FOOTER ───────────────────────────────────────────────────── */
+      +'<div style="text-align:center;padding:20px 0 8px;font-size:11px;color:#94a3b8;border-top:1px solid #f1f5f9;margin-top:8px">'
+      +'FreightTrack Pro &middot; Report generated '+today.toLocaleString()+' &middot; '+total+' shipments &middot; '+totalTeu+' TEU'
+      +'</div>'
+      +'</div></body></html>';
 
     var win=window.open('','_blank');
     if(win){win.document.write(h);win.document.close();}
-    else toast('Pop-up blocked \u2014 allow pop-ups','error');
-  }catch(e){console.error('generateReport:',e);toast('Report error: '+e.message,'error');}
+    else{toast('Pop-up blocked \u2014 allow pop-ups','error');}
+  }catch(e){console.error('generateReport',e);toast('Report error: '+e.message,'error');}
   finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-file-arrow-down"></i> Export';}}
 }
 
 function _teuFromType(t){ return t&&t.startsWith('20')?1:t?2:0; }
-
-function addContainerRow(){
-  const qty = parseInt(document.getElementById('new-cont-qty')?.value)||0;
+ementById('new-cont-qty')?.value)||0;
   const type = document.getElementById('new-cont-type').value;
   if(!qty||qty<1){ showToast('Enter quantity','error'); return; }
   if(!type){ showToast('Select container type','error'); return; }
