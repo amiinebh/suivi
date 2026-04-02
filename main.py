@@ -481,10 +481,10 @@ def _build_legacy_kpi_report(db):
         mode = norm_mode(s)
         teu = num(getattr(s, 'teu', 0))
         ref = getattr(s, 'ref', None)
-        client = (getattr(s, 'client', None) or 'Unknown').strip() or 'Unknown'
-        carrier = (getattr(s, 'carrier', None) or 'Unknown').strip() or 'Unknown'
-        pol = (getattr(s, 'pol', None) or '').strip()
-        pod = (getattr(s, 'pod', None) or '').strip()
+        client = (getattr(s, 'client', None) or '').strip() or None
+        carrier = (getattr(s, 'carrier', None) or '').strip() or None
+        pol = (getattr(s, 'pol', None) or '').strip().upper()
+        pod = (getattr(s, 'pod', None) or '').strip().upper()
 
         by_status[status] += 1
         by_mode[mode] += 1
@@ -497,20 +497,22 @@ def _build_legacy_kpi_report(db):
             else:
                 monthly_export[parts['month']] = max(monthly_export[parts['month']], parts['seq'])
 
-        carrier_all[carrier] += 1
-        if direction == 'Import':
-            carrier_import[carrier] += 1
-        else:
-            carrier_export[carrier] += 1
+        if carrier:
+            carrier_all[carrier] += 1
+            if direction == 'Import':
+                carrier_import[carrier] += 1
+            else:
+                carrier_export[carrier] += 1
 
-        client_all[client]['shipments'] += 1
-        client_all[client]['teu'] += teu
-        if direction == 'Import':
-            client_import[client]['shipments'] += 1
-            client_import[client]['teu'] += teu
-        else:
-            client_export[client]['shipments'] += 1
-            client_export[client]['teu'] += teu
+        if client:
+            client_all[client]['shipments'] += 1
+            client_all[client]['teu'] += teu
+            if direction == 'Import':
+                client_import[client]['shipments'] += 1
+                client_import[client]['teu'] += teu
+            else:
+                client_export[client]['shipments'] += 1
+                client_export[client]['teu'] += teu
 
         if pol:
             pol_all[pol] += 1
