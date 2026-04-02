@@ -344,9 +344,27 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
     VALID = ["Confirmed","Booked","Stuffed","Sailing","Arrived","Closed","Canceled"]
     def parse_date(val):
         if not val: return None
-        for fmt in ["%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"]:
-            try: return datetime.strptime(str(val).strip(), fmt).strftime("%Y-%m-%d")
+        # openpyxl native datetime / date object
+        if hasattr(val, 'strftime'):
+            return val.strftime('%Y-%m-%d')
+        s = str(val).strip()
+        if not s or s.lower() in ('none', 'null', '-', '--'): return None
+        # try many string formats including YYYY/MM/DD
+        for fmt in (
+            '%Y-%m-%d', '%Y/%m/%d',
+            '%d/%m/%Y', '%d-%m-%Y', '%d.%m.%Y',
+            '%m/%d/%Y', '%m-%d-%Y',
+            '%d %b %Y', '%d %B %Y',
+            '%b %d %Y', '%B %d %Y',
+            '%Y%m%d',
+        ):
+            try: return datetime.strptime(s, fmt).strftime('%Y-%m-%d')
             except: pass
+        # last resort: dateutil
+        try:
+            from dateutil import parser as _dp
+            return _dp.parse(s, dayfirst=True).strftime('%Y-%m-%d')
+        except: pass
         return None
     for row in ws.iter_rows(min_row=2, values_only=True):
         rd = {headers[i]: (str(v).strip() if v is not None else "")
