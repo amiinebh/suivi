@@ -3112,7 +3112,9 @@ async function generateReport(){
 }
 
 function _teuFromType(t){ return t&&t.startsWith('20')?1:t?2:0; }
-ementById('new-cont-qty')?.value)||0;
+
+function addContainerRow(){
+  const qty = parseInt(document.getElementById('new-cont-qty')?.value)||0;
   const type = document.getElementById('new-cont-type').value;
   if(!qty||qty<1){ showToast('Enter quantity','error'); return; }
   if(!type){ showToast('Select container type','error'); return; }
