@@ -12,123 +12,6 @@ from database import run_migrations
 run_migrations()
 
 app = FastAPI(title="FreightTrack Pro")
-
-
-from collections import defaultdict
-from datetime import datetime
-import re
-
-REF_IMPORT_RE = re.compile(r'^RO(\d{2})(\d{2})(\d{3,4})$', re.I)
-REF_EXPORT_RE = re.compile(r'^ROE(\d{2})(\d{2})(\d{2,4})$', re.I)
-VALID_KPI_STATUSES = ["Confirmed", "Booked", "Stuffed", "Sailing", "Arrived", "Closed", "Canceled"]
-
-
-def _safe_date(value):
-    if not value:
-        return None
-    if isinstance(value, datetime):
-        return value.date()
-    txt = str(value).strip()
-    if not txt:
-        return None
-    try:
-        return datetime.fromisoformat(txt.replace('Z', '+00:00')).date()
-    except Exception:
-        pass
-    for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d-%m-%Y'):
-        try:
-            return datetime.strptime(txt[:10], fmt).date()
-        except Exception:
-            pass
-    return None
-
-
-def _ref_parts(ref):
-    ref = (ref or '').strip().upper()
-    m = REF_EXPORT_RE.match(ref)
-    if m:
-        yy, mm, seq = m.groups()
-        return {'kind': 'export', 'key': f'20{yy}-{mm}', 'seq': int(seq)}
-    m = REF_IMPORT_RE.match(ref)
-    if m:
-        yy, mm, seq = m.groups()
-        return {'kind': 'import', 'key': f'20{yy}-{mm}', 'seq': int(seq)}
-    return None
-
-
-def _build_reference_kpis(db):
-    shipments = db.query(models.Shipment).all()
-    total = len(shipments)
-    bystatus = {k: 0 for k in VALID_KPI_STATUSES}
-    bymode = defaultdict(int)
-    carrier_map = defaultdict(int)
-    client_map = defaultdict(int)
-    route_map = defaultdict(int)
-    overdue = []
-    transit_days = []
-    month_import = defaultdict(int)
-    month_export = defaultdict(int)
-    today = datetime.utcnow().date()
-
-    for s in shipments:
-        status = (getattr(s, 'status', None) or 'Confirmed').strip()
-        bystatus[status] = bystatus.get(status, 0) + 1
-        mode = (getattr(s, 'mode', None) or 'Unknown').strip()
-        bymode[mode] += 1
-        carrier = (getattr(s, 'carrier', None) or '').strip()
-        if carrier:
-            carrier_map[carrier] += 1
-        client = (getattr(s, 'client', None) or '').strip()
-        if client:
-            client_map[client] += 1
-        pol = (getattr(s, 'pol', None) or '').strip()
-        pod = (getattr(s, 'pod', None) or '').strip()
-        if pol and pod:
-            route_map[f'{pol} to {pod}'] += 1
-        eta = _safe_date(getattr(s, 'eta', None))
-        etd = _safe_date(getattr(s, 'etd', None))
-        if etd and eta and eta >= etd:
-            transit_days.append((eta - etd).days)
-        if eta and status not in ('Closed', 'Arrived', 'Canceled') and eta < today:
-            overdue.append({'id': getattr(s, 'id', None), 'ref': getattr(s, 'ref', None), 'client': getattr(s, 'client', None), 'eta': getattr(s, 'eta', None), 'dayslate': (today - eta).days})
-        parts = _ref_parts(getattr(s, 'ref', None))
-        if parts:
-            if parts['kind'] == 'import':
-                month_import[parts['key']] = max(month_import[parts['key']], parts['seq'])
-            else:
-                month_export[parts['key']] = max(month_export[parts['key']], parts['seq'])
-
-    monthly = []
-    for key in sorted(set(month_import) | set(month_export)):
-        monthly.append({'month': key, 'count': month_import.get(key, 0) + month_export.get(key, 0), 'import_count': month_import.get(key, 0), 'export_count': month_export.get(key, 0)})
-
-    delivered = bystatus.get('Closed', 0) + bystatus.get('Arrived', 0)
-    delayed = len(overdue)
-    active_non_canceled = max(total - bystatus.get('Canceled', 0), 1)
-    ontime_rate = round((max(active_non_canceled - delayed, 0) / active_non_canceled) * 100) if total else 0
-    delay_rate = round((delayed / active_non_canceled) * 100) if total else 0
-    avg_transit = round(sum(transit_days) / len(transit_days)) if transit_days else None
-    bycarrier = [{'name': k, 'count': v} for k, v in sorted(carrier_map.items(), key=lambda x: (-x[1], x[0]))[:10]]
-    byclient = [{'name': k, 'count': v} for k, v in sorted(client_map.items(), key=lambda x: (-x[1], x[0]))[:10]]
-    toproutes = [{'route': k, 'count': v} for k, v in sorted(route_map.items(), key=lambda x: (-x[1], x[0]))[:12]]
-    overdue.sort(key=lambda x: (-x['dayslate'], (x.get('ref') or '')))
-
-    return {
-        'total': total,
-        'delivered': delivered,
-        'delayed': delayed,
-        'ontimerate': ontime_rate,
-        'delayrate': delay_rate,
-        'avgtransit': avg_transit,
-        'bystatus': bystatus,
-        'bycarrier': bycarrier,
-        'byclient': byclient,
-        'bymode': dict(sorted(bymode.items())),
-        'monthly': monthly,
-        'overdue': overdue[:10],
-        'toproutes': toproutes,
-    }
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def get_db():
@@ -315,7 +198,7 @@ def export_xlsx(search: str = "", status: str = "", mode: str = "",
 # KPIs & Stats
 @app.get("/api/kpis")
 def get_kpis(db: Session = Depends(get_db), current=Depends(get_current_user)):
-    return _build_reference_kpis(db)
+    return crud.get_kpis(db)
 
 @app.get("/api/stats")
 def stats(db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -519,18 +402,181 @@ def seed_samples(db: Session = Depends(get_db)):
     db.commit()
     return {"added": added, "message": f"Seeded {added} sample shipments"}
 
+
+
+def _build_legacy_kpi_report(db):
+    from collections import defaultdict
+    from datetime import datetime
+    import re
+
+    import_re = re.compile(r'^RO(\d{2})(\d{2})(\d{3,4})$', re.I)
+    export_re = re.compile(r'^ROE(\d{2})(\d{2})(\d{2,4})$', re.I)
+
+    def ref_parts(ref):
+        ref = (ref or '').strip().upper()
+        m = export_re.match(ref)
+        if m:
+            yy, mm, seq = m.groups()
+            return {'dir': 'Export', 'month': f'20{yy}-{mm}', 'seq': int(seq)}
+        m = import_re.match(ref)
+        if m:
+            yy, mm, seq = m.groups()
+            return {'dir': 'Import', 'month': f'20{yy}-{mm}', 'seq': int(seq)}
+        return None
+
+    def norm_dir(sh):
+        d = (getattr(sh, 'direction', None) or '').strip().lower()
+        if d in ('export', 'exp', 'x'):
+            return 'Export'
+        if d in ('import', 'imp', 'm'):
+            return 'Import'
+        p = ref_parts(getattr(sh, 'ref', None))
+        return p['dir'] if p else 'Import'
+
+    def norm_mode(sh):
+        m = (getattr(sh, 'mode', None) or 'Ocean').strip().lower()
+        if m in ('road', 'ftl', 'road ftl', 'truck'):
+            return 'Road'
+        if m == 'air':
+            return 'Air'
+        return 'Ocean'
+
+    def num(v):
+        try:
+            return float(v or 0)
+        except Exception:
+            return 0.0
+
+    shipments = db.query(models.Shipment).all()
+    total = len(shipments)
+    total_teu = round(sum(num(getattr(s, 'teu', 0)) for s in shipments), 2)
+
+    by_status = defaultdict(int)
+    by_mode = defaultdict(int)
+    by_direction = defaultdict(int)
+    monthly_import = defaultdict(int)
+    monthly_export = defaultdict(int)
+
+    carrier_all = defaultdict(int)
+    carrier_import = defaultdict(int)
+    carrier_export = defaultdict(int)
+
+    client_all = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
+    client_import = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
+    client_export = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
+
+    pol_all = defaultdict(int)
+    pol_import = defaultdict(int)
+    pol_export = defaultdict(int)
+    pod_all = defaultdict(int)
+    pod_import = defaultdict(int)
+    pod_export = defaultdict(int)
+    route_all = defaultdict(int)
+    route_import = defaultdict(int)
+    route_export = defaultdict(int)
+
+    for s in shipments:
+        status = (getattr(s, 'status', None) or 'Pending').strip() or 'Pending'
+        direction = norm_dir(s)
+        mode = norm_mode(s)
+        teu = num(getattr(s, 'teu', 0))
+        ref = getattr(s, 'ref', None)
+        client = (getattr(s, 'client', None) or 'Unknown').strip() or 'Unknown'
+        carrier = (getattr(s, 'carrier', None) or 'Unknown').strip() or 'Unknown'
+        pol = (getattr(s, 'pol', None) or '').strip()
+        pod = (getattr(s, 'pod', None) or '').strip()
+
+        by_status[status] += 1
+        by_mode[mode] += 1
+        by_direction[direction] += 1
+
+        parts = ref_parts(ref)
+        if parts:
+            if parts['dir'] == 'Import':
+                monthly_import[parts['month']] = max(monthly_import[parts['month']], parts['seq'])
+            else:
+                monthly_export[parts['month']] = max(monthly_export[parts['month']], parts['seq'])
+
+        carrier_all[carrier] += 1
+        if direction == 'Import':
+            carrier_import[carrier] += 1
+        else:
+            carrier_export[carrier] += 1
+
+        client_all[client]['shipments'] += 1
+        client_all[client]['teu'] += teu
+        if direction == 'Import':
+            client_import[client]['shipments'] += 1
+            client_import[client]['teu'] += teu
+        else:
+            client_export[client]['shipments'] += 1
+            client_export[client]['teu'] += teu
+
+        if pol:
+            pol_all[pol] += 1
+            if direction == 'Import':
+                pol_import[pol] += 1
+            else:
+                pol_export[pol] += 1
+        if pod:
+            pod_all[pod] += 1
+            if direction == 'Import':
+                pod_import[pod] += 1
+            else:
+                pod_export[pod] += 1
+        if pol and pod:
+            route = f'{pol} to {pod}'
+            route_all[route] += 1
+            if direction == 'Import':
+                route_import[route] += 1
+            else:
+                route_export[route] += 1
+
+    def sort_counts(d, key_name='name', value_name='count', limit=8):
+        return [{key_name: k, value_name: v} for k, v in sorted(d.items(), key=lambda x: (-x[1], x[0]))[:limit]]
+
+    def sort_client(d, limit=8):
+        rows = [{'name': k, 'shipments': int(v['shipments']), 'teu': round(v['teu'], 2)} for k, v in d.items()]
+        rows.sort(key=lambda x: (-x['shipments'], -x['teu'], x['name']))
+        return rows[:limit]
+
+    monthly = []
+    for month in sorted(set(monthly_import) | set(monthly_export)):
+        monthly.append({
+            'month': month,
+            'count': monthly_import.get(month, 0) + monthly_export.get(month, 0),
+            'import_count': monthly_import.get(month, 0),
+            'export_count': monthly_export.get(month, 0),
+        })
+
+    return {
+        'total': total,
+        'total_teu': total_teu,
+        'by_status': dict(sorted(by_status.items())),
+        'by_mode': dict(sorted(by_mode.items())),
+        'by_direction': {'Export': by_direction.get('Export', 0), 'Import': by_direction.get('Import', 0)},
+        'monthly': monthly,
+        'by_client_all': sort_client(client_all),
+        'by_client_import': sort_client(client_import),
+        'by_client_export': sort_client(client_export),
+        'by_carrier': sort_counts(carrier_all),
+        'by_carrier_import': sort_counts(carrier_import),
+        'by_carrier_export': sort_counts(carrier_export),
+        'top_pol': sort_counts(pol_all),
+        'top_pol_import': sort_counts(pol_import),
+        'top_pol_export': sort_counts(pol_export),
+        'top_pod': sort_counts(pod_all),
+        'top_pod_import': sort_counts(pod_import),
+        'top_pod_export': sort_counts(pod_export),
+        'top_routing': sort_counts(route_all, 'route', 'count'),
+        'top_routing_import': sort_counts(route_import, 'route', 'count'),
+        'top_routing_export': sort_counts(route_export, 'route', 'count'),
+        'insights': [],
+    }
+
 @app.get("/api/kpi-report")
 def kpi_report(db: Session = Depends(get_db)):
-    k = _build_reference_kpis(db)
-    insights = []
-    total = k.get("total", 0)
-    if total:
-        insights.append(f"Network volume stands at {total} shipments.")
-        insights.append(f"Delivered: {k.get('delivered',0)}, delayed: {k.get('delayed',0)}.")
-    if k.get("bycarrier"):
-        top = k["bycarrier"][0]
-        insights.append(f"Top carrier: {top['name']} with {top['count']} shipments.")
-    return {"kpis": k, "insights": insights}
+    return _build_legacy_kpi_report(db)
 
 # PDF
 @app.get("/api/shipments/{sid}/pdf")
