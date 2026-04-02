@@ -694,3 +694,154 @@ def debug_version():
     import inspect, main
     lines = inspect.getsource(main.login)
     return {"login_source": lines}
+
+
+@app.get("/api/kpi-compare")
+def kpi_compare(
+    a_from: str = "", a_to: str = "",
+    b_from: str = "", b_to: str = "",
+    db: Session = Depends(get_db),
+    current=Depends(get_current_user)
+):
+    from collections import defaultdict
+    from datetime import datetime
+    import calendar, re as _re
+
+    def parse_month(s, end=False):
+        if not s: return None
+        try:
+            dt = datetime.strptime(s.strip()[:7], "%Y-%m")
+            if end:
+                last = calendar.monthrange(dt.year, dt.month)[1]
+                return dt.replace(day=last)
+            return dt
+        except: return None
+
+    import_re = _re.compile(r'^RO(\d{2})(\d{2})\d+$', _re.I)
+    export_re = _re.compile(r'^ROE(\d{2})(\d{2})\d+$', _re.I)
+
+    def ship_month_dt(s):
+        ref = (getattr(s, 'ref', None) or '').strip().upper()
+        m = export_re.match(ref) or import_re.match(ref)
+        if m:
+            yy, mm = m.group(1), m.group(2)
+            try: return datetime(2000 + int(yy), int(mm), 1)
+            except: pass
+        etd = getattr(s, 'etd', None)
+        if etd:
+            try: return datetime.strptime(str(etd)[:10], "%Y-%m-%d")
+            except: pass
+        return None
+
+    def filter_ships(ships, from_dt, to_dt):
+        out = []
+        for s in ships:
+            dt = ship_month_dt(s)
+            if dt is None: continue
+            if from_dt and dt < from_dt: continue
+            if to_dt and dt.date() > to_dt.date(): continue
+            out.append(s)
+        return out
+
+    def run_kpi(ships):
+        total = len(ships)
+        total_teu = round(sum(
+            (lambda v: float(v) if v else 0.0)(getattr(s, 'teu', None)) for s in ships
+        ), 2)
+
+        by_status   = defaultdict(int)
+        by_mode     = defaultdict(int)
+        by_dir      = defaultdict(int)
+        monthly_imp = defaultdict(int)
+        monthly_exp = defaultdict(int)
+        client_all  = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
+        carrier_all = defaultdict(int)
+        pol_all     = defaultdict(int)
+        pod_all     = defaultdict(int)
+        pod_exp     = defaultdict(int)
+        pod_imp     = defaultdict(int)
+        route_all   = defaultdict(int)
+        now         = datetime.utcnow()
+        overdue     = 0
+
+        for s in ships:
+            ref  = (getattr(s, 'ref', None) or '').strip().upper()
+            d    = (getattr(s, 'direction', None) or '').strip().lower()
+            me   = export_re.match(ref)
+            mi   = import_re.match(ref)
+            direction = ('Export' if me else 'Import') if (me or mi) else                         ('Export' if d in ('export','exp','x') else 'Import')
+            status  = (getattr(s, 'status', None) or 'Pending').strip()
+            teu_val = (lambda v: float(v) if v else 0.0)(getattr(s, 'teu', None))
+            client  = (getattr(s, 'client',  None) or '').strip() or None
+            carrier = (getattr(s, 'carrier', None) or '').strip() or None
+            pol     = (getattr(s, 'pol', None) or '').strip().upper()
+            pod     = (getattr(s, 'pod', None) or '').strip().upper()
+            mode    = (getattr(s, 'mode',    None) or 'Ocean').strip()
+
+            m2 = me or mi
+            if m2:
+                yy, mm = m2.group(1), m2.group(2)
+                month_key = f'20{yy}-{mm}'
+                if direction == 'Import': monthly_imp[month_key] += 1
+                else:                     monthly_exp[month_key] += 1
+
+            by_status[status] += 1
+            by_mode[mode]     += 1
+            by_dir[direction] += 1
+
+            if client:
+                client_all[client]['shipments'] += 1
+                client_all[client]['teu']       += teu_val
+            if carrier: carrier_all[carrier] += 1
+            if pol:     pol_all[pol] += 1
+            if pod:
+                pod_all[pod] += 1
+                if direction == 'Export': pod_exp[pod] += 1
+                else:                     pod_imp[pod] += 1
+            if pol and pod: route_all[f'{pol} → {pod}'] += 1
+
+            eta = getattr(s, 'eta', None)
+            if eta and status not in ('Arrived', 'Closed', 'Canceled'):
+                try:
+                    if now > datetime.strptime(str(eta)[:10], "%Y-%m-%d"):
+                        overdue += 1
+                except: pass
+
+        def top8(d, key='name', val='count'):
+            return [{key: k, val: v} for k, v in sorted(d.items(), key=lambda x: -x[1])[:8]]
+
+        def top_clients(d):
+            rows = [{'name': k, 'shipments': int(v['shipments']), 'teu': round(v['teu'], 2)}
+                    for k, v in d.items()]
+            return sorted(rows, key=lambda x: -x['shipments'])[:8]
+
+        months = sorted(set(list(monthly_imp) + list(monthly_exp)))
+        monthly = [{'month': m, 'import_count': monthly_imp[m],
+                    'export_count': monthly_exp[m],
+                    'count': monthly_imp[m] + monthly_exp[m]} for m in months]
+
+        return {
+            'total': total, 'total_teu': total_teu,
+            'by_status': dict(by_status), 'by_mode': dict(by_mode),
+            'by_direction': {'Export': by_dir['Export'], 'Import': by_dir['Import']},
+            'monthly': monthly,
+            'by_client_all':  top_clients(client_all),
+            'by_carrier':     top8(carrier_all),
+            'top_pol':        top8(pol_all),
+            'top_pod':        top8(pod_all),
+            'top_pod_export': top8(pod_exp),
+            'top_pod_import': top8(pod_imp),
+            'top_routing':    top8(route_all, key='route'),
+            'overdue': overdue,
+        }
+
+    all_ships = db.query(models.Shipment).all()
+    ships_a = filter_ships(all_ships, parse_month(a_from), parse_month(a_to, end=True))
+    ships_b = filter_ships(all_ships, parse_month(b_from), parse_month(b_to, end=True))
+
+    return {
+        'period_a': run_kpi(ships_a),
+        'period_b': run_kpi(ships_b),
+        'a_range': f'{a_from} → {a_to}',
+        'b_range': f'{b_from} → {b_to}',
+    }
