@@ -1854,7 +1854,7 @@ async function loadAnalytics(){
     window._kpiData=k;
     var total=k.total||0,totalTeu=k.total_teu||0;
     var byStatus=k.by_status||{},byMode=k.by_mode||{},byDir=k.by_direction||{};
-    var monthly=k.monthly||[];
+    var monthly=k.monthly||[]; var monthlyVolumeRule="Monthly Volume = import RO max sequence + export ROE max sequence for each month.";
     var clientAll=k.by_client_all||[];
 
     function kpiCard(icon,color,val,label,sub){
@@ -2803,7 +2803,7 @@ async function generateReport(){
     var fmtN=function(v){return(v!==null&&v!==undefined&&v!=='')?v:'--';};
     var byStatus=k.by_status||{},byMode=k.by_mode||{},byDir=k.by_direction||{};
     var total=k.total||0,totalTeu=k.total_teu||0;
-    var monthly=k.monthly||[];
+    var monthly=k.monthly||[]; var monthlyVolumeRule="Monthly Volume = import RO max sequence + export ROE max sequence for each month.";
     var clientAll=k.by_client_all||[];
     var clientExp=k.by_client_export||[],clientImp=k.by_client_import||[];
     var carriersExp=k.by_carrier_export||[],carriersImp=k.by_carrier_import||[];
