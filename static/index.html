@@ -795,18 +795,18 @@ textarea.form-control{resize:vertical;min-height:72px}
       <div id="kpi-cards-r2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px"></div>
 
       <!-- ── COMPARE PANEL ── -->
-      <div id="compare-panel" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:18px">
+      <div id="compare-panel" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:18px">
         <div style="font-size:13px;font-weight:800;color:var(--text1);margin-bottom:14px"><i class="ph ph-scales" style="color:var(--accent)"></i> Period Comparison</div>
         <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
           <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:5px"></span>Period A</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:5px"></span>Period A (current)</div>
             <div style="display:flex;gap:6px">
               <input type="month" id="cmp-a-from" class="form-control" style="font-size:12px;flex:1" title="From A">
               <input type="month" id="cmp-a-to"   class="form-control" style="font-size:12px;flex:1" title="To A">
             </div>
           </div>
           <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:5px"></span>Period B</div>
+            <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:5px"></span>Period B (baseline)</div>
             <div style="display:flex;gap:6px">
               <input type="month" id="cmp-b-from" class="form-control" style="font-size:12px;flex:1" title="From B">
               <input type="month" id="cmp-b-to"   class="form-control" style="font-size:12px;flex:1" title="To B">
@@ -814,55 +814,79 @@ textarea.form-control{resize:vertical;min-height:72px}
           </div>
           <div style="display:flex;gap:8px">
             <button class="btn btn-primary" onclick="runCompare()" style="font-size:12px;gap:5px"><i class="ph ph-magnifying-glass"></i> Compare</button>
-            <button class="btn btn-ghost"   onclick="exportCompareReport()" title="Export PDF" style="font-size:12px"><i class="ph ph-file-arrow-down"></i></button>
           </div>
         </div>
-        <div id="compare-results" style="margin-top:18px;display:none">
-          <div id="cmp-kpi-row" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px"></div>
-          <div style="background:var(--bg1);border-radius:10px;padding:16px;margin-bottom:14px">
-            <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:10px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume Comparison</div>
-            <div style="display:flex;gap:16px;font-size:11px;margin-bottom:8px">
-              <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:4px"></span>Period A</span>
-              <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:4px"></span>Period B</span>
-            </div>
-            <canvas id="cmp-chart-monthly" height="150"></canvas>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <div style="background:var(--bg1);border-radius:10px;padding:14px">
-              <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:6px"></span>Top Clients — A</div>
-              <div id="cmp-clients-a"></div>
-            </div>
-            <div style="background:var(--bg1);border-radius:10px;padding:14px">
-              <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>Top Clients — B</div>
-              <div id="cmp-clients-b"></div>
+      </div>
+
+      <!-- ── COMPARE MODAL ── -->
+      <div id="modal-compare-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;overflow-y:auto;padding:24px 16px" onclick="if(event.target===this)closeCompareModal()">
+        <div style="max-width:900px;margin:0 auto;background:var(--bg1);border-radius:20px;border:1px solid var(--border);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+          <!-- modal header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--border);background:var(--bg2)">
+            <div style="font-size:14px;font-weight:800;color:var(--text1)"><i class="ph ph-scales" style="color:var(--accent)"></i> Period Comparison Results</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick="exportCompareReport()" style="font-size:11px"><i class="ph ph-file-arrow-down"></i> Export PDF</button>
+              <button class="btn btn-ghost btn-sm" onclick="closeCompareModal()" style="font-size:12px"><i class="ph ph-x"></i></button>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <div style="background:var(--bg1);border-radius:10px;padding:14px">
-              <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:6px"></span>Top Routes — A</div>
-              <div id="cmp-routes-a"></div>
+          <!-- modal body -->
+          <div style="padding:20px 22px">
+            <!-- period labels -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+              <div style="background:var(--bg2);border-radius:10px;padding:12px 16px;border-left:3px solid #3b82f6">
+                <div style="font-size:10px;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.06em">Period A — Current</div>
+                <div id="cmp-label-a" style="font-size:15px;font-weight:800;color:var(--text1);margin-top:3px">--</div>
+              </div>
+              <div style="background:var(--bg2);border-radius:10px;padding:12px 16px;border-left:3px solid #94a3b8">
+                <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Period B — Baseline</div>
+                <div id="cmp-label-b" style="font-size:15px;font-weight:800;color:var(--text1);margin-top:3px">--</div>
+              </div>
             </div>
-            <div style="background:var(--bg1);border-radius:10px;padding:14px">
-              <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>Top Routes — B</div>
-              <div id="cmp-routes-b"></div>
+            <!-- KPI chips -->
+            <div id="cmp-kpi-row" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px"></div>
+            <!-- monthly chart -->
+            <div style="background:var(--bg2);border-radius:10px;padding:16px;margin-bottom:14px">
+              <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:8px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
+              <div style="display:flex;gap:16px;font-size:11px;color:var(--text2);margin-bottom:10px">
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:4px"></span>Period A</span>
+                <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:4px"></span>Period B</span>
+              </div>
+              <canvas id="cmp-chart-monthly" height="130"></canvas>
             </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div style="background:var(--bg1);border-radius:10px;padding:14px">
-              <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#ef4444"></i> Top POD (Export) — A</div>
-              <div id="cmp-pod-exp-a"></div>
-            </div>
-            <div style="background:var(--bg1);border-radius:10px;padding:14px">
-              <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#ef4444"></i> Top POD (Export) — B</div>
-              <div id="cmp-pod-exp-b"></div>
-            </div>
-            <div style="background:var(--bg1);border-radius:10px;padding:14px">
-              <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#22c55e"></i> Top POD (Import) — A</div>
-              <div id="cmp-pod-imp-a"></div>
-            </div>
-            <div style="background:var(--bg1);border-radius:10px;padding:14px">
-              <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#22c55e"></i> Top POD (Import) — B</div>
-              <div id="cmp-pod-imp-b"></div>
+            <!-- side by side grids -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div style="background:var(--bg2);border-radius:10px;padding:14px">
+                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-right:6px"></span>Top Clients — A</div>
+                <div id="cmp-clients-a"></div>
+              </div>
+              <div style="background:var(--bg2);border-radius:10px;padding:14px">
+                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#94a3b8;margin-right:6px"></span>Top Clients — B</div>
+                <div id="cmp-clients-b"></div>
+              </div>
+              <div style="background:var(--bg2);border-radius:10px;padding:14px">
+                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-right:6px"></span>Top Routes — A</div>
+                <div id="cmp-routes-a"></div>
+              </div>
+              <div style="background:var(--bg2);border-radius:10px;padding:14px">
+                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#94a3b8;margin-right:6px"></span>Top Routes — B</div>
+                <div id="cmp-routes-b"></div>
+              </div>
+              <div style="background:var(--bg2);border-radius:10px;padding:14px">
+                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#ef4444"></i> POD Export — A</div>
+                <div id="cmp-pod-exp-a"></div>
+              </div>
+              <div style="background:var(--bg2);border-radius:10px;padding:14px">
+                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#ef4444"></i> POD Export — B</div>
+                <div id="cmp-pod-exp-b"></div>
+              </div>
+              <div style="background:var(--bg2);border-radius:10px;padding:14px">
+                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#22c55e"></i> POD Import — A</div>
+                <div id="cmp-pod-imp-a"></div>
+              </div>
+              <div style="background:var(--bg2);border-radius:10px;padding:14px">
+                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#22c55e"></i> POD Import — B</div>
+                <div id="cmp-pod-imp-b"></div>
+              </div>
             </div>
           </div>
         </div>
@@ -3904,6 +3928,16 @@ function renderActivityFeed(){
         }
       }
 
+      function closeCompareModal(){
+        var bd=document.getElementById('modal-compare-backdrop');
+        if(bd)bd.style.display='none';
+        document.body.style.overflow='';
+      }
+      function openCompareModal(){
+        var bd=document.getElementById('modal-compare-backdrop');
+        if(bd){bd.style.display='block';document.body.style.overflow='hidden';}
+      }
+
       async function runCompare(){
         var g=function(id){var e=document.getElementById(id);return e?e.value:'';};
         var aFrom=g('cmp-a-from'),aTo=g('cmp-a-to'),bFrom=g('cmp-b-from'),bTo=g('cmp-b-to');
@@ -3915,97 +3949,102 @@ function renderActivityFeed(){
           var res=await apiFetch(url);
           window.compareData=res;
           window.compareLabels={aFrom:aFrom,aTo:aTo,bFrom:bFrom,bTo:bTo};
-          renderCompare(res);
-          document.getElementById('compare-results').style.display='block';
+          renderCompare(res,aFrom,aTo,bFrom,bTo);
+          openCompareModal();
         }catch(e){toast('Compare error: '+e.message,'error');}
         finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-magnifying-glass"></i> Compare';}}
       }
 
-      function renderCompare(res){
+      function renderCompare(res,aFrom,aTo,bFrom,bTo){
         var a=res.period_a, b=res.period_b;
-        var tc=chartTextColor(), gc=chartGridColor();
 
-        /* ── KPI delta chips ── */
-        function pctDelta(av,bv){
-          if(!bv)return av?{txt:'+100%',up:true}:{txt:'--',up:true};
+        /* period labels */
+        var la=document.getElementById('cmp-label-a');
+        var lb=document.getElementById('cmp-label-b');
+        if(la) la.innerHTML=(aFrom||'?')+' &rarr; '+(aTo||'?')+'<span style="font-size:12px;font-weight:400;color:var(--text2);margin-left:8px">'+a.total+' shp &middot; '+(a.total_teu||0)+' TEU</span>';
+        if(lb) lb.innerHTML=(bFrom||'?')+' &rarr; '+(bTo||'?')+'<span style="font-size:12px;font-weight:400;color:var(--text2);margin-left:8px">'+b.total+' shp &middot; '+(b.total_teu||0)+' TEU</span>';
+
+        /* ── KPI delta chips ──
+           LOGIC: A = current period, B = baseline
+           delta = (A - B) / B * 100
+           positive delta (A > B) = growth = GREEN ↑
+           negative delta (A < B) = decline = RED ↓
+        */
+        function delta(av,bv){
+          if(bv===0) return av>0?{pct:'+100%',up:true}:{pct:'--',up:true};
           var d=Math.round((av-bv)/bv*100);
-          return {txt:(d>0?'+':'')+d+'%', up:d>=0};
+          return {pct:(d>0?'+':'')+d+'%', up:d>=0};
         }
         function chip(label,av,bv,unit){
-          var d=pctDelta(av,bv);
+          var d=delta(av,bv);
           var col=d.up?'#22c55e':'#ef4444', arr=d.up?'↑':'↓';
-          return '<div style="background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:center">'
+          return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:center">'
             +'<div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">'+label+'</div>'
-            +'<div style="font-size:20px;font-weight:800;color:var(--text1)">'+av+(unit?' '+unit:'')+'</div>'
-            +'<div style="font-size:11px;color:var(--text2);margin:2px 0">vs '+bv+(unit?' '+unit:'')+'</div>'
-            +'<div style="font-size:13px;font-weight:800;color:'+col+'">'+arr+' '+d.txt+'</div></div>';
+            +'<div style="display:flex;justify-content:center;align-items:baseline;gap:8px">'
+            +'<span style="font-size:20px;font-weight:800;color:var(--text1)">'+av+(unit?' '+unit:'')+'</span>'
+            +'<span style="font-size:11px;color:var(--text2)">vs '+bv+'</span></div>'
+            +'<div style="font-size:13px;font-weight:800;color:'+col+';margin-top:4px">'+arr+' '+d.pct+'</div></div>';
         }
-        document.getElementById('cmp-kpi-row').innerHTML=
-          chip('Shipments',a.total,b.total)+
-          chip('↑ Export',(a.by_direction||{}).Export||0,(b.by_direction||{}).Export||0)+
-          chip('↓ Import',(a.by_direction||{}).Import||0,(b.by_direction||{}).Import||0)+
-          chip('TEU',a.total_teu||0,b.total_teu||0)+
-          chip('Overdue',a.overdue||0,b.overdue||0);
+        var kpiRow=document.getElementById('cmp-kpi-row');
+        if(kpiRow) kpiRow.innerHTML=
+          chip('Shipments',  a.total,                          b.total)+
+          chip('↑ Export',  (a.by_direction||{}).Export||0,   (b.by_direction||{}).Export||0)+
+          chip('↓ Import',  (a.by_direction||{}).Import||0,   (b.by_direction||{}).Import||0)+
+          chip('TEU',        a.total_teu||0,                   b.total_teu||0)+
+          chip('Overdue',    a.overdue||0,                     b.overdue||0);
 
-        /* ── Grouped monthly bar chart ── */
-        var aMonthly=a.monthly||[], bMonthly=b.monthly||[];
+        /* ── Monthly grouped bar chart ── */
+        var aM=a.monthly||[], bM=b.monthly||[];
         var allMonths=Array.from(new Set(
-          aMonthly.map(function(m){return m.month;}).concat(bMonthly.map(function(m){return m.month;}))
+          aM.map(function(m){return m.month;}).concat(bM.map(function(m){return m.month;}))
         )).sort();
         var aMap={},bMap={};
-        aMonthly.forEach(function(m){aMap[m.month]=(m.import_count||0)+(m.export_count||0);});
-        bMonthly.forEach(function(m){bMap[m.month]=(m.import_count||0)+(m.export_count||0);});
+        aM.forEach(function(m){aMap[m.month]=(m.import_count||0)+(m.export_count||0);});
+        bM.forEach(function(m){bMap[m.month]=(m.import_count||0)+(m.export_count||0);});
         var aVals=allMonths.map(function(m){return aMap[m]||0;});
         var bVals=allMonths.map(function(m){return bMap[m]||0;});
 
         destroyChart('cmp-chart-monthly');
         var ctx=document.getElementById('cmp-chart-monthly');
-        if(ctx && allMonths.length){
+        if(ctx&&allMonths.length){
           chartRegistry['cmp-chart-monthly']=new Chart(ctx,{
             type:'bar',
-            data:{
-              labels:allMonths,
-              datasets:[
-                {label:'Period A',data:aVals,backgroundColor:'rgba(59,130,246,.75)',borderRadius:5,borderSkipped:false},
-                {label:'Period B',data:bVals,backgroundColor:'rgba(148,163,184,.5)',borderRadius:5,borderSkipped:false}
-              ]
-            },
-            options:{
-              responsive:true,maintainAspectRatio:false,
-              plugins:{legend:{labels:{color:tc,font:{size:11}}}},
-              scales:{
-                x:{grid:{color:gc},ticks:{color:tc,font:{size:10}}},
-                y:{grid:{color:gc},ticks:{color:tc,font:{size:10}},beginAtZero:true}
-              }
+            data:{labels:allMonths,datasets:[
+              {label:'Period A (current)',  data:aVals, backgroundColor:'rgba(59,130,246,.75)', borderRadius:5,borderSkipped:false},
+              {label:'Period B (baseline)', data:bVals, backgroundColor:'rgba(148,163,184,.5)',  borderRadius:5,borderSkipped:false}
+            ]},
+            options:{responsive:true,maintainAspectRatio:false,
+              plugins:{legend:{labels:{color:chartTextColor(),font:{size:11}}}},
+              scales:{x:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10}}},
+                      y:{grid:{color:chartGridColor()},ticks:{color:chartTextColor(),font:{size:10}},beginAtZero:true}}
             }
           });
         }
 
-        /* ── Mini bar list helper ── */
+        /* ── Mini bar lists ── */
         function miniBar(id,items,nKey,vKey,color){
           var el=document.getElementById(id); if(!el)return;
-          if(!items||!items.length){el.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px 0">No data</div>';return;}
+          if(!items||!items.length){el.innerHTML='<div style="color:var(--text2);font-size:12px;padding:6px 0">No data</div>';return;}
           var maxV=Math.max.apply(null,items.map(function(i){return i[vKey]||0;}).concat([1]));
           var totV=items.reduce(function(s,i){return s+(i[vKey]||0);},0)||1;
-          el.innerHTML=items.slice(0,7).map(function(item){
+          el.innerHTML=items.slice(0,6).map(function(item){
             var v=item[vKey]||0,pct=Math.round(v/totV*100),w=Math.round(v/maxV*100);
-            return '<div style="margin-bottom:8px">'
+            return '<div style="margin-bottom:7px">'
               +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">'
               +'<span style="font-weight:600;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%">'+item[nKey]+'</span>'
               +'<span style="color:var(--text2)">'+v+' <b style="color:'+color+'">'+pct+'%</b></span></div>'
-              +'<div style="height:5px;background:var(--bg3);border-radius:99px">'
-              +'<div style="height:5px;background:'+color+';width:'+w+'%;border-radius:99px"></div></div></div>';
+              +'<div style="height:4px;background:var(--bg3);border-radius:99px">'
+              +'<div style="height:4px;background:'+color+';width:'+w+'%;border-radius:99px"></div></div></div>';
           }).join('');
         }
-
-        miniBar('cmp-clients-a', a.by_client_all||[], 'name','shipments','#3b82f6');
-        miniBar('cmp-clients-b', b.by_client_all||[], 'name','shipments','#94a3b8');
-        miniBar('cmp-routes-a',  a.top_routing||[],   'route','count','#3b82f6');
-        miniBar('cmp-routes-b',  b.top_routing||[],   'route','count','#94a3b8');
-        miniBar('cmp-pod-exp-a', a.top_pod_export||[],'name','count','#ef4444');
-        miniBar('cmp-pod-exp-b', b.top_pod_export||[],'name','count','#94a3b8');
-        miniBar('cmp-pod-imp-a', a.top_pod_import||[],'name','count','#22c55e');
-        miniBar('cmp-pod-imp-b', b.top_pod_import||[],'name','count','#94a3b8');
+        miniBar('cmp-clients-a', a.by_client_all||[],  'name','shipments','#3b82f6');
+        miniBar('cmp-clients-b', b.by_client_all||[],  'name','shipments','#94a3b8');
+        miniBar('cmp-routes-a',  a.top_routing||[],    'route','count','#3b82f6');
+        miniBar('cmp-routes-b',  b.top_routing||[],    'route','count','#94a3b8');
+        miniBar('cmp-pod-exp-a', a.top_pod_export||[], 'name','count','#ef4444');
+        miniBar('cmp-pod-exp-b', b.top_pod_export||[], 'name','count','#94a3b8');
+        miniBar('cmp-pod-imp-a', a.top_pod_import||[], 'name','count','#22c55e');
+        miniBar('cmp-pod-imp-b', b.top_pod_import||[], 'name','count','#94a3b8');
       }
 
       /* ── Export Compare PDF ── */
@@ -4013,17 +4052,17 @@ function renderActivityFeed(){
         if(!window.compareData){toast('Run a comparison first','error');return;}
         var res=window.compareData, lbl=window.compareLabels||{};
         var a=res.period_a, b=res.period_b;
-        function pctDelta(av,bv){
-          if(!bv)return av?{txt:'+100%',up:true}:{txt:'--',up:true};
+
+        function delta(av,bv){
+          if(bv===0) return av>0?{pct:'+100%',up:true}:{pct:'--',up:true};
           var d=Math.round((av-bv)/bv*100);
-          return {txt:(d>0?'+':'')+d+'%', up:d>=0};
+          return {pct:(d>0?'+':'')+d+'%', up:d>=0};
         }
-        function barRowsHTML(items,nKey,vKey,color,limit){
+        function barRowsHTML(items,nKey,vKey,color){
           if(!items||!items.length)return '<div style="color:#94a3b8;font-size:12px">No data</div>';
-          var top=items.slice(0,limit||7);
-          var maxV=Math.max.apply(null,top.map(function(i){return i[vKey]||0;}).concat([1]));
-          var totV=top.reduce(function(s,i){return s+(i[vKey]||0);},0)||1;
-          return top.map(function(item){
+          var maxV=Math.max.apply(null,items.slice(0,7).map(function(i){return i[vKey]||0;}).concat([1]));
+          var totV=items.slice(0,7).reduce(function(s,i){return s+(i[vKey]||0);},0)||1;
+          return items.slice(0,7).map(function(item){
             var v=item[vKey]||0,pct=Math.round(v/totV*100),w=Math.round(v/maxV*100);
             return '<div style="margin-bottom:9px">'
               +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">'
@@ -4033,9 +4072,16 @@ function renderActivityFeed(){
               +'<div style="height:6px;background:'+color+';width:'+w+'%;border-radius:99px"></div></div></div>';
           }).join('');
         }
-
-        /* monthly bars inline SVG-style via HTML divs */
-        var aM=a.monthly||[], bM=b.monthly||[];
+        function hChip(label,av,bv){
+          var d=delta(av,bv),col=d.up?'#16a34a':'#dc2626',arr=d.up?'↑':'↓';
+          return '<div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px 16px;text-align:center;min-width:90px">'
+            +'<div style="font-size:10px;opacity:.55;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">'+label+'</div>'
+            +'<div style="display:flex;justify-content:center;align-items:baseline;gap:6px">'
+            +'<span style="font-size:20px;font-weight:800">'+av+'</span>'
+            +'<span style="font-size:10px;opacity:.45">vs '+bv+'</span></div>'
+            +'<div style="font-size:12px;font-weight:800;color:'+col+';margin-top:2px">'+arr+' '+d.pct+'</div></div>';
+        }
+        var aM=a.monthly||[],bM=b.monthly||[];
         var allMo=Array.from(new Set(aM.map(function(m){return m.month;}).concat(bM.map(function(m){return m.month;})))).sort();
         var aMp={},bMp={};
         aM.forEach(function(m){aMp[m.month]=(m.import_count||0)+(m.export_count||0);});
@@ -4043,40 +4089,20 @@ function renderActivityFeed(){
         var maxMo=Math.max.apply(null,allMo.map(function(m){return Math.max(aMp[m]||0,bMp[m]||0);}).concat([1]));
         var monthBarsH=allMo.map(function(m){
           var av=aMp[m]||0,bv=bMp[m]||0;
-          var ha=Math.round(av/maxMo*80),hb=Math.round(bv/maxMo*80);
+          var ha=Math.max(Math.round(av/maxMo*80),av?4:0),hb=Math.max(Math.round(bv/maxMo*80),bv?4:0);
           return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">'
             +'<div style="display:flex;align-items:flex-end;gap:2px;height:86px">'
-            +'<div title="A:'+av+'" style="width:14px;background:#3b82f6;border-radius:4px 4px 0 0;height:'+Math.max(ha,av?4:0)+'px"></div>'
-            +'<div title="B:'+bv+'" style="width:14px;background:#94a3b8;border-radius:4px 4px 0 0;height:'+Math.max(hb,bv?4:0)+'px"></div>'
+            +'<div title="A:'+av+'" style="width:14px;background:#3b82f6;border-radius:4px 4px 0 0;height:'+ha+'px"></div>'
+            +'<div title="B:'+bv+'" style="width:14px;background:#94a3b8;border-radius:4px 4px 0 0;height:'+hb+'px"></div>'
             +'</div><div style="font-size:9px;color:#94a3b8;text-align:center;white-space:nowrap">'+m+'</div></div>';
         }).join('');
 
-        function hChip(label,av,bv,unit){
-          var d=pctDelta(av,bv),col=d.up?'#16a34a':'#dc2626',arr=d.up?'↑':'↓';
-          return '<div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px 16px;text-align:center;min-width:90px">'
-            +'<div style="font-size:10px;opacity:.55;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">'+label+'</div>'
-            +'<div style="font-size:20px;font-weight:800">'+av+(unit?' '+unit:'')+'</div>'
-            +'<div style="font-size:10px;opacity:.45;margin:2px 0">vs '+bv+(unit?' '+unit:'')+'</div>'
-            +'<div style="font-size:12px;font-weight:800;color:'+col+'">'+arr+' '+d.txt+'</div></div>';
-        }
-
-        var css='*{margin:0;padding:0;box-sizing:border-box;}'
-          +'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f0f4f8;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'
-          +'.page{max-width:1100px;margin:0 auto;padding:28px 24px;}'
-          +'.hero{background:linear-gradient(135deg,#0f172a,#1e3a8a 55%,#1d4ed8);color:#fff;border-radius:20px;padding:28px 32px 24px;margin-bottom:20px;}'
-          +'.card{background:#fff;border-radius:14px;padding:18px 20px;margin-bottom:0;box-shadow:0 1px 3px rgba(0,0,0,.05);border:1px solid #f1f5f9;}'
-          +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}'
-          +'.kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}'
-          +'.month-row{display:flex;align-items:flex-end;gap:3px;padding:8px 0 0;}'
-          +'@media print{body{background:#fff;}.card{box-shadow:none;}@page{margin:14mm 12mm;}}';
-
-        var doc='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FreightTrack — Comparison</title>'
-          +'<style>'+css+'</style></head><body><div class="page">'
-          /* hero */
+        var css='*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f0f4f8;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page{max-width:1100px;margin:0 auto;padding:28px 24px;}.hero{background:linear-gradient(135deg,#0f172a,#1e3a8a 55%,#1d4ed8);color:#fff;border-radius:20px;padding:26px 30px 22px;margin-bottom:18px;}.card{background:#fff;border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.05);border:1px solid #f1f5f9;}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}.kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;}.month-row{display:flex;align-items:flex-end;gap:3px;}@media print{body{background:#fff;}.card{box-shadow:none;}@page{margin:12mm;}}';
+        var doc='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FreightTrack — Comparison</title><style>'+css+'</style></head><body><div class="page">'
           +'<div class="hero">'
           +'<div style="font-size:11px;font-weight:700;opacity:.5;text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px">FreightTrack Pro</div>'
           +'<div style="font-size:22px;font-weight:800">Period Comparison Report</div>'
-          +'<div style="font-size:12px;opacity:.5;margin-top:4px">Generated '+new Date().toLocaleString()+'</div>'
+          +'<div style="font-size:12px;opacity:.5;margin-top:3px">Generated '+new Date().toLocaleString()+'</div>'
           +'<div class="kpi-row">'
           +hChip('Shipments',a.total,b.total)
           +hChip('↑ Export',(a.by_direction||{}).Export||0,(b.by_direction||{}).Export||0)
@@ -4084,40 +4110,34 @@ function renderActivityFeed(){
           +hChip('TEU',a.total_teu||0,b.total_teu||0)
           +hChip('Overdue',a.overdue||0,b.overdue||0)
           +'</div></div>'
-          /* period labels */
-          +'<div class="grid2" style="margin-bottom:16px">'
-          +'<div style="background:#eff6ff;border-radius:12px;padding:14px 18px;border-left:4px solid #3b82f6">'
-          +'<div style="font-size:11px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.05em">Period A</div>'
-          +'<div style="font-size:18px;font-weight:800;color:#1e293b;margin-top:4px">'+(lbl.aFrom||'?')+' → '+(lbl.aTo||'?')+'</div>'
+          +'<div class="grid2" style="margin-bottom:14px">'
+          +'<div style="background:#eff6ff;border-radius:12px;padding:12px 16px;border-left:4px solid #3b82f6">'
+          +'<div style="font-size:11px;font-weight:700;color:#1d4ed8;text-transform:uppercase">Period A — Current</div>'
+          +'<div style="font-size:17px;font-weight:800;color:#1e293b;margin-top:3px">'+(lbl.aFrom||'?')+' → '+(lbl.aTo||'?')+'</div>'
           +'<div style="font-size:12px;color:#64748b;margin-top:2px">'+a.total+' shipments · '+(a.total_teu||0)+' TEU</div></div>'
-          +'<div style="background:#f8fafc;border-radius:12px;padding:14px 18px;border-left:4px solid #94a3b8">'
-          +'<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em">Period B</div>'
-          +'<div style="font-size:18px;font-weight:800;color:#1e293b;margin-top:4px">'+(lbl.bFrom||'?')+' → '+(lbl.bTo||'?')+'</div>'
+          +'<div style="background:#f8fafc;border-radius:12px;padding:12px 16px;border-left:4px solid #94a3b8">'
+          +'<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase">Period B — Baseline</div>'
+          +'<div style="font-size:17px;font-weight:800;color:#1e293b;margin-top:3px">'+(lbl.bFrom||'?')+' → '+(lbl.bTo||'?')+'</div>'
           +'<div style="font-size:12px;color:#64748b;margin-top:2px">'+b.total+' shipments · '+(b.total_teu||0)+' TEU</div></div></div>'
-          /* monthly chart */
-          +'<div class="card" style="margin-bottom:14px">'
-          +'<div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:10px">&#128200; Monthly Volume</div>'
-          +'<div style="display:flex;gap:16px;font-size:11px;margin-bottom:8px">'
+          +'<div class="card" style="margin-bottom:12px">'
+          +'<div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:8px">&#128200; Monthly Volume</div>'
+          +'<div style="display:flex;gap:14px;font-size:11px;margin-bottom:8px">'
           +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:4px"></span>Period A</span>'
           +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:4px"></span>Period B</span></div>'
           +'<div class="month-row">'+monthBarsH+'</div></div>'
-          /* clients */
           +'<div class="grid2">'
-          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:#3b82f6;display:inline-block"></span>Top Clients — A</div>'+barRowsHTML(a.by_client_all,'name','shipments','#3b82f6')+'</div>'
-          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:#94a3b8;display:inline-block"></span>Top Clients — B</div>'+barRowsHTML(b.by_client_all,'name','shipments','#94a3b8')+'</div>'
-          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:#3b82f6;display:inline-block"></span>Top Routes — A</div>'+barRowsHTML(a.top_routing,'route','count','#3b82f6')+'</div>'
-          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:#94a3b8;display:inline-block"></span>Top Routes — B</div>'+barRowsHTML(b.top_routing,'route','count','#94a3b8')+'</div>'
-          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:#ef4444;display:inline-block"></span>POD Export — A</div>'+barRowsHTML(a.top_pod_export,'name','count','#ef4444')+'</div>'
-          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:#94a3b8;display:inline-block"></span>POD Export — B</div>'+barRowsHTML(b.top_pod_export,'name','count','#94a3b8')+'</div>'
-          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:#22c55e;display:inline-block"></span>POD Import — A</div>'+barRowsHTML(a.top_pod_import,'name','count','#22c55e')+'</div>'
-          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:#94a3b8;display:inline-block"></span>POD Import — B</div>'+barRowsHTML(b.top_pod_import,'name','count','#94a3b8')+'</div>'
+          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:6px"></span>Top Clients — A</div>'+barRowsHTML(a.by_client_all,'name','shipments','#3b82f6')+'</div>'
+          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>Top Clients — B</div>'+barRowsHTML(b.by_client_all,'name','shipments','#94a3b8')+'</div>'
+          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:6px"></span>Top Routes — A</div>'+barRowsHTML(a.top_routing,'route','count','#3b82f6')+'</div>'
+          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>Top Routes — B</div>'+barRowsHTML(b.top_routing,'route','count','#94a3b8')+'</div>'
+          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#ef4444;margin-right:6px"></span>POD Export — A</div>'+barRowsHTML(a.top_pod_export,'name','count','#ef4444')+'</div>'
+          +'<div class="card"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>POD Export — B</div>'+barRowsHTML(b.top_pod_export,'name','count','#94a3b8')+'</div>'
           +'</div>'
-          +'<div style="text-align:center;padding:16px 0 6px;font-size:11px;color:#94a3b8;border-top:1px solid #f1f5f9">FreightTrack Pro · Comparison Report · '+new Date().toLocaleString()+'</div>'
+          +'<div style="text-align:center;padding:14px 0 4px;font-size:11px;color:#94a3b8;border-top:1px solid #f1f5f9">FreightTrack Pro · '+new Date().toLocaleString()+'</div>'
           +'</div></body></html>';
-
         var win=window.open('','_blank');
         if(win){win.document.write(doc);win.document.close();}
-        else toast('Pop-up blocked — allow pop-ups','error');
+        else toast('Pop-up blocked','error');
       }
 
       </script>
