@@ -763,6 +763,49 @@ tbody td{
 /* card2 fallback (was used in skeleton loaders) */
 :root{ --card2: var(--bg3); }
 body.dark{ --card2: var(--bg3); }
+
+/* ── Dashboard two-column layout ── */
+.dash-two-col{
+  display:grid;
+  grid-template-columns:1fr 300px;
+  gap:16px;
+  align-items:start;
+}
+@media(max-width:960px){
+  .dash-two-col{grid-template-columns:1fr;}
+}
+
+/* ── Arriving row ── */
+#dash-arriving .arr-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  font-size:12px;
+}
+#dash-arriving .arr-ref{font-family:var(--font-mono);font-size:11px;color:var(--text2);}
+#dash-arriving .arr-client{font-weight:600;color:var(--text1);}
+#dash-arriving .arr-eta{font-size:11px;color:var(--text2);}
+
+/* ── Top clients bar ── */
+.client-bar-row{display:flex;flex-direction:column;gap:4px;}
+.client-bar-label{display:flex;justify-content:space-between;font-size:12px;font-weight:500;color:var(--text1);}
+.client-bar-label span{color:var(--text2);font-size:11px;}
+.client-bar-track{height:4px;background:var(--bg3);border-radius:99px;}
+.client-bar-fill{height:4px;border-radius:99px;background:var(--text1);transition:width .3s;}
+body.dark .client-bar-fill{background:var(--blue);}
+
+/* ── Dash alert row ── */
+.dash-alert-row{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid var(--border);
+}
+.dash-alert-row:last-child{border-bottom:none;}
+.dash-alert-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.dash-alert-title{font-size:12px;font-weight:600;color:var(--text1);}
+.dash-alert-meta{font-size:10.5px;color:var(--text2);margin-top:2px;}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -928,56 +971,128 @@ body.dark{ --card2: var(--bg3); }
 
     <!-- ─── DASHBOARD ─── -->
     <div class="page active" id="page-dashboard">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:22px">
         <div>
           <div id="dash-greeting" style="font-size:22px;font-weight:800;color:var(--text1);letter-spacing:-.4px"></div>
           <div id="dash-date" style="font-size:12.5px;color:var(--text2);margin-top:3px"></div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="openDigest()" style="font-size:11px;padding:5px 10px"><i class="ph ph-newspaper" style="margin-right:4px"></i>Briefing</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-ghost btn-sm" onclick="openDigest()"><i class="ph ph-newspaper"></i> Briefing</button>
           <button class="btn btn-ghost btn-sm" onclick="showPage('alerts',null);setBottomNav('alerts')">
             <i class="ph ph-bell"></i> <span id="dash-alert-hint">Alerts</span>
           </button>
-          <button class="btn btn-primary btn-sm" onclick="openModal('modal-new-shipment')">
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()">
             <i class="ph ph-plus"></i> New Shipment
           </button>
-          <button class="btn btn-ghost btn-sm" onclick="openModal('modal-bulk-import');_bulkStep(1)">
-            <i class="ph ph-upload-simple"></i> Bulk Import
-          </button>
         </div>
       </div>
-      <div id="dash-status-bar" style="margin-bottom:20px"></div>
+
+      <!-- Status bar -->
+      <div id="dash-status-bar" style="margin-bottom:16px"></div>
+
+      <!-- KPI cards -->
       <div class="stats-grid" id="stats-grid">
-        <div class="stat-card"><div class="stat-icon blue"><i class="ph ph-boat"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:32px"></div><div class="stat-label">Total</div></div>
-        <div class="stat-card"><div class="stat-icon orange"><i class="ph ph-anchor"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Transit</div></div>
-        <div class="stat-card"><div class="stat-icon green"><i class="ph ph-check"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Done</div></div>
-        <div class="stat-card"><div class="stat-icon red"><i class="ph ph-siren"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Overdue</div></div>
-        <div class="stat-card"><div class="stat-icon cyan"><i class="ph ph-clock"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Pending</div></div>
-        <div class="stat-card"><div class="stat-icon purple"><i class="ph ph-calendar-check"></i></div><div class="stat-value" style="height:22px;background:var(--card2);border-radius:4px;width:24px"></div><div class="stat-label">Due This Week</div></div>
+        <div class="stat-card"><div class="stat-icon blue"><i class="ph ph-boat"></i></div><div class="stat-value" style="height:22px;background:var(--bg3);border-radius:4px;width:32px"></div><div class="stat-label">Total</div></div>
+        <div class="stat-card"><div class="stat-icon orange"><i class="ph ph-anchor"></i></div><div class="stat-value" style="height:22px;background:var(--bg3);border-radius:4px;width:24px"></div><div class="stat-label">Transit</div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="ph ph-check-circle"></i></div><div class="stat-value" style="height:22px;background:var(--bg3);border-radius:4px;width:24px"></div><div class="stat-label">Done</div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="ph ph-siren"></i></div><div class="stat-value" style="height:22px;background:var(--bg3);border-radius:4px;width:24px"></div><div class="stat-label">Overdue</div></div>
+        <div class="stat-card"><div class="stat-icon cyan"><i class="ph ph-clock"></i></div><div class="stat-value" style="height:22px;background:var(--bg3);border-radius:4px;width:24px"></div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><div class="stat-icon purple"><i class="ph ph-calendar-check"></i></div><div class="stat-value" style="height:22px;background:var(--bg3);border-radius:4px;width:24px"></div><div class="stat-label">Due This Week</div></div>
       </div>
-      <div style="margin-bottom:20px">
-        <div class="section-header" style="margin-bottom:10px">
-          <div class="section-title"><i class="ph ph-calendar" style="color:var(--accent)"></i> Arriving This Week</div>
+
+      <!-- Two-column body -->
+      <div class="dash-two-col">
+
+        <!-- LEFT -->
+        <div style="min-width:0">
+
+          <!-- Arriving This Week -->
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);margin-bottom:14px;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
+              <div style="font-size:12.5px;font-weight:700;color:var(--text1);display:flex;align-items:center;gap:7px">
+                <i class="ph ph-calendar" style="color:var(--blue)"></i> Arriving This Week
+              </div>
+            </div>
+            <div id="dash-arriving" style="padding:10px 14px;display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+
+          <!-- Recent Shipments -->
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);margin-bottom:14px;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
+              <div style="font-size:12.5px;font-weight:700;color:var(--text1)">Recent Shipments</div>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 10px" onclick="showPage('shipments',null);setBottomNav('shipments')">
+                View all <i class="ph ph-arrow-right"></i>
+              </button>
+            </div>
+            <div class="mobile-cards" id="recent-cards"></div>
+            <div class="desktop-table table-wrap" id="recent-table-wrap">
+              <div id="recent-table"></div>
+            </div>
+          </div>
+
+          <!-- Activity Feed -->
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
+              <div style="font-size:12.5px;font-weight:700;color:var(--text1)">Recent Activity</div>
+              <div style="font-size:11px;color:var(--text2)">Last 10 shipments</div>
+            </div>
+            <div id="activity-feed" style="max-height:320px;overflow-y:auto"></div>
+          </div>
+
         </div>
-        <div id="dash-arriving" style="display:flex;flex-direction:column;gap:8px"></div>
-      </div>
-      <div class="section-header">
-        <div class="section-title">Recent Shipments</div>
-        <button class="btn btn-ghost btn-sm" onclick="showPage('shipments',null);setBottomNav('shipments')">
-          View All <i class="ph ph-arrow-right"></i>
-        </button>
-      </div>
-      <div class="mobile-cards" id="recent-cards"></div>
-      <div class="desktop-table table-wrap" id="recent-table-wrap" style="margin-top:0">
-        <div id="recent-table"></div>
-      </div>
-      <div class="card" style="padding:0;margin-top:16px">
-        <div style="padding:14px 16px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-          <div style="font-weight:700;font-size:13px">Recent Activity</div>
-          <div style="font-size:11px;color:var(--text2)">Last 10 shipments</div>
+
+        <!-- RIGHT panel -->
+        <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+
+          <!-- This Month -->
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
+              <div style="font-size:12.5px;font-weight:700;color:var(--text1)">This Month</div>
+              <span id="dash-month-label" class="badge badge-slate" style="font-size:10px"></span>
+            </div>
+            <div style="padding:12px 14px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+                <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px">
+                  <div style="font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Import</div>
+                  <div id="dash-mini-import" style="font-size:18px;font-weight:800;color:var(--text1);margin-top:3px">—</div>
+                </div>
+                <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px">
+                  <div style="font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Export</div>
+                  <div id="dash-mini-export" style="font-size:18px;font-weight:800;color:var(--text1);margin-top:3px">—</div>
+                </div>
+                <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px">
+                  <div style="font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Ocean</div>
+                  <div id="dash-mini-ocean" style="font-size:18px;font-weight:800;color:var(--text1);margin-top:3px">—</div>
+                </div>
+                <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px">
+                  <div style="font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Air</div>
+                  <div id="dash-mini-air" style="font-size:18px;font-weight:800;color:var(--text1);margin-top:3px">—</div>
+                </div>
+              </div>
+              <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Top Clients</div>
+              <div id="dash-top-clients" style="display:flex;flex-direction:column;gap:8px"></div>
+            </div>
+          </div>
+
+          <!-- Alerts -->
+          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
+              <div style="font-size:12.5px;font-weight:700;color:var(--text1)">Alerts</div>
+              <span id="dash-alerts-badge" class="badge badge-red" style="font-size:9.5px;display:none">0</span>
+            </div>
+            <div id="dash-alerts-list" style="padding:0 14px;max-height:260px;overflow-y:auto"></div>
+            <div style="padding:10px 14px;border-top:1px solid var(--border)">
+              <button class="btn btn-ghost btn-sm w-full" style="justify-content:center;font-size:11px" onclick="showPage('alerts',null);setBottomNav('alerts')">
+                View all alerts <i class="ph ph-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
         </div>
-        <div id="activity-feed" style="max-height:320px;overflow-y:auto"></div>
       </div>
+
     </div>
 
         <!-- ─── SHIPMENTS ─── -->
@@ -2024,6 +2139,80 @@ async function loadDashboard(){
     }
   }catch(e){console.error('ships',e);}
   try{if(typeof updateAlertsBadge==='function')updateAlertsBadge();}catch(e){}
+
+
+  /* ── Right panel: mini stats, top clients, alerts ── */
+  try {
+    // Month label
+    const _now = new Date();
+    const _ml = document.getElementById('dash-month-label');
+    if(_ml) _ml.textContent = _now.toLocaleString('en-GB',{month:'short',year:'numeric'});
+
+    // Use ships array (already computed above)
+    const _cm = _now.getMonth(); const _cy = _now.getFullYear();
+    const _monthly = ships.filter(s=>{
+      const d = s.etd||s.eta||s.created_at||'';
+      if(!d) return false;
+      const dt = new Date(d);
+      return dt.getMonth()===_cm && dt.getFullYear()===_cy;
+    });
+
+    // Mini stats
+    const _imp = _monthly.filter(s=>(s.direction||'').toLowerCase()==='import').length;
+    const _exp = _monthly.filter(s=>(s.direction||'').toLowerCase()==='export').length;
+    const _ocean = _monthly.filter(s=>['sea','ocean','fcl','lcl'].includes((s.transport_mode||s.mode||'').toLowerCase())).length;
+    const _air = _monthly.filter(s=>['air','airfreight'].includes((s.transport_mode||s.mode||'').toLowerCase())).length;
+    const _setEl = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+    _setEl('dash-mini-import', _imp||0);
+    _setEl('dash-mini-export', _exp||0);
+    _setEl('dash-mini-ocean', _ocean||0);
+    _setEl('dash-mini-air', _air||0);
+
+    // Top clients
+    const _clientMap = {};
+    ships.forEach(s=>{ const c=s.client||s.consignee||s.shipper||'Unknown'; _clientMap[c]=(_clientMap[c]||0)+1; });
+    const _topClients = Object.entries(_clientMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const _maxC = _topClients[0]?_topClients[0][1]:1;
+    const _tcEl = document.getElementById('dash-top-clients');
+    if(_tcEl) {
+      _tcEl.innerHTML = _topClients.map(([name,count])=>{
+        const pct = Math.round((count/_maxC)*100);
+        const shortName = name.length>22 ? name.slice(0,20)+'…' : name;
+        return '<div class="client-bar-row">'
+          +'<div class="client-bar-label"><span style="font-weight:600;color:var(--text1)">'+shortName+'</span><span>'+count+' shp</span></div>'
+          +'<div class="client-bar-track"><div class="client-bar-fill" style="width:'+pct+'%"></div></div>'
+          +'</div>';
+      }).join('');
+    }
+
+    // Alerts panel
+    const _overdueShips = ships.filter(s=>{
+      const st=(s.status||'').toLowerCase();
+      return st==='overdue'||st==='late'||(s.is_overdue===true)||(s.is_overdue===1);
+    }).slice(0,5);
+    const _alEl = document.getElementById('dash-alerts-list');
+    const _abEl = document.getElementById('dash-alerts-badge');
+    if(_abEl && _overdueShips.length>0){
+      _abEl.style.display='inline-flex';
+      _abEl.textContent=_overdueShips.length+' overdue';
+    }
+    if(_alEl){
+      if(_overdueShips.length===0){
+        _alEl.innerHTML='<div style="padding:16px 0;text-align:center;font-size:12px;color:var(--text2)"><i class="ph ph-check-circle" style="color:var(--green);font-size:20px;display:block;margin-bottom:6px"></i>No overdue shipments</div>';
+      } else {
+        _alEl.innerHTML = _overdueShips.map(s=>{
+          const ref=s.ref||s.reference||s.voyage_no||'—';
+          const client=s.client||s.consignee||'';
+          const eta=s.eta||s.etd||'';
+          return '<div class="dash-alert-row">'
+            +'<div class="dash-alert-dot" style="background:var(--red)"></div>'
+            +'<div><div class="dash-alert-title">'+ref+' — Overdue</div>'
+            +'<div class="dash-alert-meta">'+client+(eta?' · ETA '+eta:'')+'</div></div>'
+            +'</div>';
+        }).join('');
+      }
+    }
+  } catch(_rpErr){ console.warn('Right panel error:',_rpErr); }
 }
 
 /* ── Shipments page ── */
