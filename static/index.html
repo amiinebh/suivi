@@ -668,37 +668,42 @@ tbody td{
 .admin-only{} /* visibility handled by JS */
 
 /* ══ DASHBOARD — legacy class support ══ */
+/* ── KPI cards ── */
 .stats-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:10px;
-  margin-bottom:18px;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin-bottom:20px;
 }
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:480px){.stats-grid{grid-template-columns:1fr 1fr;}}
 .stat-card{
   background:var(--bg);
   border:1px solid var(--border);
   border-radius:var(--radius-xl);
-  padding:14px 16px;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  transition:border-color var(--t);
+  padding:16px 18px 12px;
+  display:flex;flex-direction:column;gap:0;
+  position:relative;overflow:hidden;
+  transition:box-shadow var(--t),border-color var(--t);
 }
-.stat-card:hover{border-color:var(--border2);}
-.stat-value{
-  font-size:26px;font-weight:800;
-  color:var(--text1);letter-spacing:-.5px;line-height:1;
-}
-.stat-label{
-  font-size:10.5px;font-weight:600;
-  color:var(--text2);text-transform:uppercase;letter-spacing:.06em;
-}
-.stat-icon{
-  width:28px;height:28px;border-radius:var(--radius);
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;margin-bottom:2px;
-}
-.stat-icon.blue   {background:var(--blue-bg);  color:var(--blue);}
+.stat-card:hover{box-shadow:0 4px 18px rgba(0,0,0,.08);border-color:var(--border2);}
+.stat-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.stat-card-title{font-size:10px;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;}
+.stat-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;}
+.stat-badge.green{background:#dcfce7;color:#16a34a;}
+.stat-badge.blue{background:#dbeafe;color:#1d4ed8;}
+.stat-badge.orange{background:#ffedd5;color:#c2410c;}
+[data-theme=dark] .stat-badge.green{background:rgba(34,197,94,.15);color:#4ade80;}
+[data-theme=dark] .stat-badge.blue{background:rgba(79,142,247,.15);color:#7fb3ff;}
+[data-theme=dark] .stat-badge.orange{background:rgba(245,158,11,.15);color:#fbbf24;}
+.stat-value{font-size:32px;font-weight:900;color:var(--text1);letter-spacing:-1px;line-height:1.1;margin-bottom:5px;}
+.stat-sub{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:5px;margin-bottom:12px;}
+.stat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.stat-sparkline{display:flex;align-items:flex-end;gap:2px;height:28px;}
+.stat-sparkline span{flex:1;border-radius:2px 2px 0 0;background:var(--bg3);min-width:4px;}
+.stat-sparkline span.active{background:var(--text1);}
+.stat-sparkline.orange span.active{background:#f59e0b;}
+.stat-icon{display:none;}.stat-label{display:none;}
 .stat-icon.green  {background:var(--green-bg); color:var(--green);}
 .stat-icon.red    {background:var(--red-bg);   color:var(--red);}
 .stat-icon.orange {background:var(--orange-bg);color:var(--orange);}
@@ -1122,6 +1127,9 @@ body.dark .client-bar-fill{background:var(--blue);}
         </select>
         <button class="btn btn-primary btn-sm topbar-actions-desktop" onclick="exportXLSX()">
           <i class="ph ph-download-simple"></i> Export
+        </button>
+        <button class="btn btn-ghost btn-sm topbar-actions-desktop admin-only" onclick="openModal('modal-bulk-import');_bulkStep(1)" style="font-size:12px">
+          <i class="ph ph-file-arrow-up"></i> Import XLSX
         </button>
       </div>
       <!-- Bulk action toolbar -->
@@ -2060,13 +2068,51 @@ async function loadDashboard(){
       sbEl.innerHTML=barH;
     }
     var sg=document.getElementById('stats-grid');
-    if(sg)sg.innerHTML=
-      '<div class="stat-card"><div class="stat-icon blue"><i class="ph ph-boat"></i></div><div class="stat-value">'+total+'</div><div class="stat-label">Total</div></div>'
-      +'<div class="stat-card"><div class="stat-icon orange"><i class="ph ph-anchor"></i></div><div class="stat-value">'+transit+'</div><div class="stat-label">Transit</div></div>'
-      +'<div class="stat-card"><div class="stat-icon green"><i class="ph ph-check-circle"></i></div><div class="stat-value">'+done+'</div><div class="stat-label">Done</div></div>'
-      +'<div class="stat-card"><div class="stat-icon red"><i class="ph ph-siren"></i></div><div class="stat-value" style="color:'+(overdue?'#ef4444':'inherit')+'">'+overdue+'</div><div class="stat-label">Overdue</div></div>'
-      +'<div class="stat-card"><div class="stat-icon cyan"><i class="ph ph-clock"></i></div><div class="stat-value">'+pending+'</div><div class="stat-label">Pending</div></div>'
-      +'<div class="stat-card" id="due-week-card"><div class="stat-icon purple"><i class="ph ph-calendar-check"></i></div><div class="stat-value" id="due-week-val">--</div><div class="stat-label">Due This Week</div></div>';
+    if(sg){
+      function _kpiSpark(filterFn,colorClass){
+        var now=new Date();var weeks=[0,0,0,0,0,0,0,0];
+        (ships||[]).forEach(function(s){
+          var d=new Date(s.etd||s.eta||s.created_at||'');
+          if(isNaN(d))return;
+          var wk=Math.floor((now-d)/(7*864e5));
+          if(wk>=0&&wk<8&&filterFn(s))weeks[7-wk]++;
+        });
+        var mx=Math.max.apply(null,weeks)||1;
+        return weeks.map(function(v,i){
+          var h=Math.max(14,Math.round((v/mx)*28));
+          return '<span class="'+(i===7?'active':'')+'" style="height:'+h+'px"></span>';
+        }).join('');
+      }
+      function _kpiCard(title,value,badgeText,badgeClass,dotColor,subText,sparkClass,sparkHtml){
+        return '<div class="stat-card">'
+          +'<div class="stat-card-header">'
+          +'<span class="stat-card-title">'+title+'</span>'
+          +'<span class="stat-badge '+badgeClass+'">'+badgeText+'</span>'
+          +'</div>'
+          +'<div class="stat-value">'+value+'</div>'
+          +'<div class="stat-sub"><span class="stat-dot" style="background:'+dotColor+'"></span>'+subText+'</div>'
+          +'<div class="stat-sparkline '+sparkClass+'">'+sparkHtml+'</div>'
+          +'</div>';
+      }
+      var _now=new Date(),_cm=_now.getMonth(),_cy=_now.getFullYear();
+      var _lm=_cm===0?11:_cm-1,_ly=_cm===0?_cy-1:_cy;
+      function _inM(s,m,y){var d=new Date(s.etd||s.eta||s.created_at||'');return !isNaN(d)&&d.getMonth()===m&&d.getFullYear()===y;}
+      var _allShips=ships||[];
+      var _totalPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly);}).length;
+      var _totalDelta=_totalPrev?Math.round(((total-_totalPrev)/_totalPrev)*100):0;
+      var _expCurr=_allShips.filter(function(s){return(s.direction||s.shipment_type||'').toLowerCase()==='export';}).length;
+      var _expPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly)&&(s.direction||s.shipment_type||'').toLowerCase()==='export';}).length;
+      var _expDelta=_expPrev?Math.round(((_expCurr-_expPrev)/_expPrev)*100):0;
+      var _teuCurr=Math.round(_allShips.reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
+      var _teuPrev=Math.round(_allShips.filter(function(s){return _inM(s,_lm,_ly);}).reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
+      var _teuDelta=_teuPrev?Math.round(((_teuCurr-_teuPrev)/_teuPrev)*100):0;
+      var _critical=Math.ceil(overdue/2),_minor=Math.floor(overdue/2);
+      sg.innerHTML=
+        _kpiCard('TOTAL SHIPMENTS',total,(_totalDelta>=0?'+':'')+_totalDelta+'%',_totalDelta>=0?'green':'blue','#22c55e','vs '+_totalPrev+' last period','',_kpiSpark(function(){return true;},''))
+        +_kpiCard('EXPORT',_expCurr,(_expDelta>=0?'↑ ':'↓ ')+Math.abs(_expDelta)+'%','blue','#4f8ef7','vs '+_expPrev+' last period','',_kpiSpark(function(s){return(s.direction||s.shipment_type||'').toLowerCase()==='export';},''))
+        +_kpiCard('TOTAL TEU',_teuCurr,(_teuDelta>=0?'+':'')+_teuDelta+'%',_teuDelta>=0?'green':'blue','#22c55e','vs '+_teuPrev+' last period','',_kpiSpark(function(){return true;},''))
+        +_kpiCard('OVERDUE',overdue,'WATCH','orange','#f59e0b',_critical+' critical, '+_minor+' minor','orange',_kpiSpark(function(s){return(s.status||'').toLowerCase()==='overdue'||(s.is_overdue===true);},''));
+    }
     var nc=document.getElementById('nav-count');
     if(nc)nc.textContent=total;
     var ah=document.getElementById('dash-alert-hint');
@@ -2850,7 +2896,7 @@ async function loadUsers(){
   if(!cont)return;
   cont.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)"><i class="ph ph-spinner"></i> Loading...</div>';
   try{
-    var resp=await apiFetch('/api/admin/users');
+    var resp=await apiFetch('/api/users');
     var users=Array.isArray(resp)?resp:(resp.data||resp.users||resp.items||[]);
     if(!users.length){
       cont.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:13px"><i class="ph ph-users" style="font-size:32px;display:block;margin-bottom:8px"></i>No users found</div>';
@@ -2883,7 +2929,7 @@ async function createUser(){
   var roleEl=document.getElementById('new-user-role');
   if(!emailEl||!emailEl.value.trim()||!passEl||!passEl.value.trim()){toast('Email and password required','error');return;}
   try{
-    await apiFetch('/api/admin/users',{method:'POST',body:JSON.stringify({
+    await apiFetch('/api/users',{method:'POST',body:JSON.stringify({
       name:nameEl?nameEl.value.trim():'',
       email:emailEl.value.trim(),
       password:passEl.value.trim(),
@@ -2897,14 +2943,14 @@ async function createUser(){
 }
 async function toggleUser(id){
   try{
-    await apiFetch('/api/admin/users/'+id+'/toggle',{method:'PATCH'});
+    await apiFetch('/api/users/'+id+'/toggle',{method:'PATCH'});
     loadUsers();
   }catch(e){toast(e.message,'error');}
 }
 async function deleteUser(id){
   if(!confirm('Delete this user? This cannot be undone.'))return;
   try{
-    await apiFetch('/api/admin/users/'+id,{method:'DELETE'});
+    await apiFetch('/api/users/'+id,{method:'DELETE'});
     toast('User deleted','success');
     loadUsers();
   }catch(e){toast(e.message,'error');}
