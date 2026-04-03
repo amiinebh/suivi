@@ -811,6 +811,38 @@ body.dark .client-bar-fill{background:var(--blue);}
 .dash-alert-title{font-size:12px;font-weight:600;color:var(--text1);}
 .dash-alert-meta{font-size:10.5px;color:var(--text2);margin-top:2px;}
 
+
+/* ── Overlays / Modals ── */
+.overlay{
+  display:none!important;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.5);
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+.overlay.open{
+  display:flex!important;
+}
+.modal{
+  background:var(--bg);
+  border-radius:var(--radius-xl);
+  width:100%;
+  max-width:560px;
+  max-height:90vh;
+  overflow-y:auto;
+  box-shadow:0 24px 80px rgba(0,0,0,.3);
+  position:relative;
+  animation:modalIn .18s cubic-bezier(.4,0,.2,1);
+}
+@keyframes modalIn{
+  from{opacity:0;transform:translateY(16px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
