@@ -2434,14 +2434,20 @@ function getChartColors(n){
   return Array.from({length:n},(_,i)=>palette[i%palette.length]);
 }
 
-function isDark(){ return document.documentElement.getAttribute('data-theme')==='dark'; }
+function isDark(){ return document.body.classList.contains('dark'); }
 function toggleTheme(){
-  var root=document.documentElement;
-  var cur=root.getAttribute('data-theme')||'light';
-  var next=cur==='dark'?'light':'dark';
-  root.setAttribute('data-theme',next);
+  var isDarkNow=document.body.classList.contains('dark');
+  if(isDarkNow){
+    document.body.classList.remove('dark');
+    document.documentElement.setAttribute('data-theme','light');
+    localStorage.setItem('ft_theme','light');
+  } else {
+    document.body.classList.add('dark');
+    document.documentElement.setAttribute('data-theme','dark');
+    localStorage.setItem('ft_theme','dark');
+  }
   var btn=document.getElementById('theme-toggle-btn');
-  if(btn) btn.innerHTML=next==='dark'
+  if(btn) btn.innerHTML=!isDarkNow
     ?'<i class="ph ph-sun" style="font-size:16px"></i>'
     :'<i class="ph ph-moon" style="font-size:16px"></i>';
 }
@@ -2699,6 +2705,14 @@ function doLogout(){
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  // Restore theme
+  var savedTheme=localStorage.getItem('ft_theme')||'light';
+  if(savedTheme==='dark'){
+    document.body.classList.add('dark');
+    document.documentElement.setAttribute('data-theme','dark');
+    var btn=document.getElementById('theme-toggle-btn');
+    if(btn) btn.innerHTML='<i class="ph ph-sun" style="font-size:16px"></i>';
+  }
   if(getToken()){ showApp(); }
   else {
     const ls = document.getElementById("login-screen");
