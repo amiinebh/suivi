@@ -666,6 +666,103 @@ tbody td{
 .w-full{width:100%;}
 .hidden{display:none !important;}
 .admin-only{} /* visibility handled by JS */
+
+/* ══ DASHBOARD — legacy class support ══ */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  gap:10px;
+  margin-bottom:18px;
+}
+.stat-card{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xl);
+  padding:14px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  transition:border-color var(--t);
+}
+.stat-card:hover{border-color:var(--border2);}
+.stat-value{
+  font-size:26px;font-weight:800;
+  color:var(--text1);letter-spacing:-.5px;line-height:1;
+}
+.stat-label{
+  font-size:10.5px;font-weight:600;
+  color:var(--text2);text-transform:uppercase;letter-spacing:.06em;
+}
+.stat-icon{
+  width:28px;height:28px;border-radius:var(--radius);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;margin-bottom:2px;
+}
+.stat-icon.blue   {background:var(--blue-bg);  color:var(--blue);}
+.stat-icon.green  {background:var(--green-bg); color:var(--green);}
+.stat-icon.red    {background:var(--red-bg);   color:var(--red);}
+.stat-icon.orange {background:var(--orange-bg);color:var(--orange);}
+.stat-icon.cyan   {background:var(--cyan-bg);  color:var(--cyan);}
+.stat-icon.purple {background:var(--purple-bg);color:var(--purple);}
+.stat-icon.yellow {background:var(--yellow-bg);color:var(--yellow);}
+
+/* Section header */
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;
+}
+.section-title{
+  font-size:13px;font-weight:700;color:var(--text1);
+  display:flex;align-items:center;gap:7px;
+}
+
+/* Mobile cards (shipment list on mobile) */
+.mobile-cards{display:none;}
+@media(max-width:640px){
+  .mobile-cards{display:flex;flex-direction:column;gap:10px;}
+  .desktop-table{display:none;}
+}
+
+/* Shipment card (mobile) */
+.shp-card{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius-xl);padding:14px 16px;
+}
+
+/* Status bar */
+#dash-status-bar{
+  display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;
+}
+
+/* Activity feed */
+#activity-feed .activity-row{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 16px;border-bottom:1px solid var(--border);
+}
+#activity-feed .activity-row:last-child{border-bottom:none;}
+#activity-feed .act-dot{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;
+}
+#activity-feed .act-text{font-size:12px;color:var(--text1);}
+#activity-feed .act-meta{font-size:10.5px;color:var(--text2);margin-top:2px;}
+
+/* Digest / briefing modal */
+.digest-section{margin-bottom:18px;}
+.digest-section h4{font-size:12px;font-weight:700;color:var(--text1);margin-bottom:8px;}
+
+/* Arriving this week */
+#dash-arriving .arriving-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 14px;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:var(--radius-lg);margin-bottom:6px;
+  font-size:12.5px;
+}
+#dash-arriving .arriving-row:last-child{margin-bottom:0;}
+
+/* card2 fallback (was used in skeleton loaders) */
+:root{ --card2: var(--bg3); }
+body.dark{ --card2: var(--bg3); }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
