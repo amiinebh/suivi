@@ -1142,7 +1142,7 @@ body.dark .client-bar-fill{background:var(--blue);}
                   <div id="dash-mini-ocean" style="font-size:18px;font-weight:800;color:var(--text1);margin-top:3px">—</div>
                 </div>
                 <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px">
-                  <div style="font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Air</div>
+                  <div style="font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Road</div>
                   <div id="dash-mini-air" style="font-size:18px;font-weight:800;color:var(--text1);margin-top:3px">—</div>
                 </div>
               </div>
@@ -2273,16 +2273,16 @@ async function loadDashboard(){
       return dt.getMonth()===_cm && dt.getFullYear()===_cy;
     });
 
-    // Mini stats
-    const _imp = _monthly.filter(s=>(s.direction||'').toLowerCase()==='import').length;
-    const _exp = _monthly.filter(s=>(s.direction||'').toLowerCase()==='export').length;
-    const _ocean = _monthly.filter(s=>['sea','ocean','fcl','lcl'].includes((s.transport_mode||s.mode||'').toLowerCase())).length;
-    const _air = _monthly.filter(s=>['air','airfreight'].includes((s.transport_mode||s.mode||'').toLowerCase())).length;
+    // Mini stats — prefer kpi-report server data when available
+    const _imp  = _kpiDir['Import']||_kpiDir['import']||_monthly.filter(s=>(s.direction||'').toLowerCase()==='import').length;
+    const _exp  = _kpiDir['Export']||_kpiDir['export']||_monthly.filter(s=>(s.direction||'').toLowerCase()==='export').length;
+    const _ocean= (_kpiMode['Ocean']||_kpiMode['ocean']||0)||_monthly.filter(s=>['sea','ocean','fcl','lcl'].includes((s.transport_mode||s.mode||'').toLowerCase())).length;
+    const _road = _monthly.filter(s=>['road','truck','ftl','road ftl'].includes((s.transport_mode||s.mode||'').toLowerCase())).length;
     const _setEl = (id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
     _setEl('dash-mini-import', _imp||0);
     _setEl('dash-mini-export', _exp||0);
     _setEl('dash-mini-ocean', _ocean||0);
-    _setEl('dash-mini-air', _air||0);
+    _setEl('dash-mini-air', _road||0);
 
     // Top clients
     const _clientMap = {};
