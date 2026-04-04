@@ -523,7 +523,17 @@ body.dark .client-bar-fill{background:var(--v-develop);}
 .dash-alert-row:last-child{box-shadow:none;}
 
 /* ══ KPI PAGE PERIOD TABS ══ */
-.kpi-ptab{padding:5px 12px;border:none;border-radius:var(--radius-sm);font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all var(--t);}
+.kpi-ptab{
+  padding:5px 12px;border:none;border-radius:6px;
+  font-size:11px;font-weight:500;font-family:var(--font-mono);
+  text-transform:uppercase;letter-spacing:.06em;
+  cursor:pointer;transition:background var(--t),color var(--t);
+  color:var(--text2);background:transparent;
+}
+.kpi-ptab.active,.kpi-ptab[style*="var(--text1)"]{
+  background:var(--text1);color:var(--bg);
+}
+.kpi-ptab:hover:not(.active){ background:var(--bg3); color:var(--text1); }
 
 /* ══ INTEL CARDS ══ */
 .intel-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
@@ -923,6 +933,40 @@ button[onclick*="closeEmailModal"]:hover{
 .btn-ghost.btn-sm i.ph-x{
   font-size:13px;
 }
+
+/* ── KPI intel card mini-filter tabs (All / ↑Exp / ↓Imp) ── */
+.kmtab{
+  display:inline-flex;
+  align-items:center;
+  padding:3px 9px;
+  border:none;
+  border-radius:5px;
+  font-size:10px;
+  font-weight:500;
+  font-family:var(--font-mono);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  cursor:pointer;
+  color:var(--text3);
+  background:transparent;
+  transition:background var(--t), color var(--t);
+  line-height:1.4;
+}
+.kmtab:hover{ background:var(--bg3); color:var(--text2); }
+.kmtab.active{
+  background:var(--text1);
+  color:var(--bg);
+}
+
+/* ── KPI intel card container (All/Exp/Imp tab group) ── */
+.kmi-tabs{
+  display:flex;
+  gap:2px;
+  background:rgba(0,0,0,0.04);
+  border-radius:7px;
+  padding:2px;
+  box-shadow:rgba(0,0,0,0.06) 0 0 0 1px inset;
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
@@ -1313,22 +1357,22 @@ button[onclick*="closeEmailModal"]:hover{
       <!-- ── Stitch Page Header ── -->
       <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px">
         <div>
-          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--stitch-text2);margin-bottom:6px">FREIGHT COMMAND › KPI ANALYSIS</div>
-          <div style="font-size:28px;font-weight:600;letter-spacing:-1.12px;letter-spacing:-.03em;text-transform:uppercase;color:var(--stitch-text1);line-height:1">INTELLIGENCE HUB</div>
-          <div style="font-size:11px;color:var(--stitch-text2);margin-top:4px;font-weight:500">Live operational metrics &amp; period comparison</div>
+          <div style="font-size:10px;font-weight:500;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:8px">FREIGHT COMMAND › KPI ANALYSIS</div>
+          <div style="font-size:32px;font-weight:600;letter-spacing:-1.28px;color:var(--text1);line-height:1.1">INTELLIGENCE HUB</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:6px;font-weight:400">Live operational metrics &amp; period comparison</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <!-- Period tabs - Stitch style -->
-          <div style="display:flex;background:var(--stitch-surf-mid);border-radius:8px;padding:3px;gap:2px">
-            <button class="kpi-ptab" onclick="setKpiPeriod('all',this)" style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:var(--stitch-primary);color:#fff;text-transform:uppercase;letter-spacing:.06em">All</button>
+          <div style="display:flex;background:var(--bg3);box-shadow:rgba(0,0,0,0.06) 0 0 0 1px;border-radius:8px;padding:3px;gap:2px">
+            <button class="kpi-ptab" onclick="setKpiPeriod('all',this)" style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:var(--text1);color:var(--bg);text-transform:uppercase;letter-spacing:.06em">All</button>
             <button class="kpi-ptab" onclick="setKpiPeriod('3m',this)"  style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.06em">3M</button>
             <button class="kpi-ptab" onclick="setKpiPeriod('6m',this)"  style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.06em">6M</button>
             <button class="kpi-ptab" onclick="setKpiPeriod('1y',this)"  style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.06em">1Y</button>
           </div>
-          <button id="btn-compare-toggle" onclick="toggleComparePanel()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--stitch-border);border-radius:6px;background:transparent;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--stitch-text2);cursor:pointer">
+          <button id="btn-compare-toggle" onclick="toggleComparePanel()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;box-shadow:rgba(0,0,0,0.08) 0 0 0 1px;border-radius:6px;background:var(--bg);border:none;font-size:11px;font-weight:500;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--text2);cursor:pointer;transition:box-shadow var(--t),color var(--t)">
             <span class="material-symbols-outlined" style="font-size:15px">compare_arrows</span> Compare
           </button>
-          <button onclick="generateReport()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border:none;border-radius:6px;background:var(--stitch-primary);color:#fff;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;box-shadow:0 2px 8px rgba(35,95,164,.3);transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform=''">
+          <button onclick="generateReport()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border:none;border-radius:6px;background:var(--text1);color:var(--bg);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;box-shadow:0 2px 8px rgba(35,95,164,.3);transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform=''">
             <span class="material-symbols-outlined" style="font-size:15px">download</span> Export
           </button>
         </div>
