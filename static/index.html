@@ -2332,13 +2332,14 @@ async function loadDashboard(){
           +'</div>';
       }
       var _now=new Date(),_cm=_now.getMonth(),_cy=_now.getFullYear();
+      function _dirFromRef(s){var r=(s.direction||s.shipment_type||'').toLowerCase();if(r==='export'||r==='exp')return 'export';if(r==='import'||r==='imp')return 'import';var ref=(s.ref||'').toUpperCase();if(/^ROE\d/.test(ref))return 'export';if(/^ROI\d/.test(ref))return 'import';return '';}
       var _lm=_cm===0?11:_cm-1,_ly=_cm===0?_cy-1:_cy;
       function _inM(s,m,y){var raw=s.etd||s.eta||s.created_at||'';if(!raw)return false;var p=raw.split(/[-T]/);if(p.length<3)return false;return(parseInt(p[1],10)-1)===m&&parseInt(p[0],10)===y;}
       var _allShips=ships||[];
       var _totalPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly);}).length;
       var _totalDelta=_totalPrev?Math.round(((total-_totalPrev)/_totalPrev)*100):0;
-      var _expCurr=_allShips.filter(function(s){return _inM(s,_cm,_cy)&&(s.direction||s.shipment_type||'').toLowerCase()==='export';}).length;
-      var _expPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly)&&(s.direction||s.shipment_type||'').toLowerCase()==='export';}).length;
+      var _expCurr=_allShips.filter(function(s){return _inM(s,_cm,_cy)&&_dirFromRef(s)==='export';}).length;
+      var _expPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly)&&_dirFromRef(s)==='export';}).length;
       var _expDelta=_expPrev?Math.round(((_expCurr-_expPrev)/_expPrev)*100):0;
       var _teuCurr=Math.round(_allShips.filter(function(s){return _inM(s,_cm,_cy);}).reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
       var _teuPrev=Math.round(_allShips.filter(function(s){return _inM(s,_lm,_ly);}).reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
@@ -2346,7 +2347,7 @@ async function loadDashboard(){
       var _critical=Math.ceil(overdue/2),_minor=Math.floor(overdue/2);
       sg.innerHTML=
         _kpiCard('TOTAL SHIPMENTS',total,(_totalDelta>=0?'+':'')+_totalDelta+'%',_totalDelta>=0?'green':'blue','#22c55e','vs '+_totalPrev+' last period','',_kpiSpark(function(){return true;},''))
-        +_kpiCard('EXPORT',_expCurr,(_expDelta>=0?'↑ ':'↓ ')+Math.abs(_expDelta)+'%','blue','#4f8ef7','vs '+_expPrev+' last period','',_kpiSpark(function(s){return(s.direction||s.shipment_type||'').toLowerCase()==='export';},''))
+        +_kpiCard('EXPORT',_expCurr,(_expDelta>=0?'↑ ':'↓ ')+Math.abs(_expDelta)+'%','blue','#4f8ef7','vs '+_expPrev+' last period','',_kpiSpark(function(s){return _dirFromRef(s)==='export';},''))
         +_kpiCard('TOTAL TEU',_teuCurr,(_teuDelta>=0?'+':'')+_teuDelta+'%',_teuDelta>=0?'green':'blue','#22c55e','vs '+_teuPrev+' last period','',_kpiSpark(function(){return true;},''))
         +_kpiCard('OVERDUE',overdue,'WATCH','orange','#f59e0b',_critical+' critical, '+_minor+' minor','orange',_kpiSpark(function(s){return(s.status||'').toLowerCase()==='overdue'||(s.is_overdue===true);},''));
     }
@@ -2390,6 +2391,17 @@ async function loadDashboard(){
     var recent=list.slice(0,6);
     if(typeof renderCards==='function')renderCards(recent,'recent-cards');
     renderActivityFeed();
+  try{
+    var _mn=new Date(),_mc=_mn.getMonth(),_yc=_mn.getFullYear();
+    var _mns=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var _setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+    var _ml=allShipments.filter(function(s){return _inM(s,_mc,_yc);});
+    _setEl('dash-month-label',_mns[_mc]+' '+_yc);
+    _setEl('dash-mini-import',_ml.filter(function(s){return _dirFromRef(s)==='import';}).length);
+    _setEl('dash-mini-export',_ml.filter(function(s){return _dirFromRef(s)==='export';}).length);
+    _setEl('dash-mini-ocean',_ml.filter(function(s){return(s.mode||'').toLowerCase()==='ocean';}).length);
+    _setEl('dash-mini-road',_ml.filter(function(s){return(s.mode||'').toLowerCase()==='road';}).length);
+  }catch(e){console.error('dash-mini',e);}
   try{
     var _mn=new Date(),_mc=_mn.getMonth(),_yc=_mn.getFullYear();
     var _mns=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
