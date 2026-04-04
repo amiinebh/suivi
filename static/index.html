@@ -317,7 +317,6 @@ body.dark .btn-primary:hover{opacity:.88;}
 .btn-sm{padding:5px 10px;font-size:12px;}
 .btn-icon{padding:6px;width:30px;height:30px;}
 .btn-fab{position:fixed;bottom:20px;right:16px;z-index:500;width:48px;height:48px;border-radius:50%;background:var(--text1);color:var(--bg);border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:var(--shadow-full);font-family:var(--font);}
-/* btn-fab hidden on mobile via bottom-nav rule */
 
 /* Focus ring — Vercel blue */
 .btn:focus-visible,.form-control:focus-visible,.filter:focus-visible{outline:2px solid var(--v-focus);outline-offset:2px;}
@@ -658,17 +657,85 @@ body.dark .client-bar-fill{background:var(--v-develop);}
   .section-head{ padding:11px 14px; }
 }
 
-/* ── Recent Shipments: force mobile card view ── */
+/* ── Recent Shipments table: compact rows ── */
+#recent-table table tbody td{ padding:5px 10px; font-size:12px; }
+#recent-table table thead th{ padding:6px 10px; }
+
+/* ── Table action icon buttons ── */
+.tbl-action-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:28px; height:28px; border-radius:6px;
+  background:transparent; border:none; cursor:pointer;
+  color:var(--text3); font-size:15px;
+  transition:background var(--t), color var(--t);
+  font-family:var(--font);
+}
+.tbl-action-btn:hover{ background:var(--bg3); color:var(--text1); }
+.tbl-action-btn.tbl-action-danger:hover{ background:var(--red-bg); color:var(--red); }
+
+/* ── Mobile: force card view, hide desktop table ── */
 @media(max-width:768px){
+  .mobile-cards{ display:flex !important; flex-direction:column; gap:8px; padding:10px 12px; }
+  .desktop-table{ display:none !important; }
   #recent-table-wrap{ display:none !important; }
   #recent-cards{ display:flex !important; flex-direction:column; gap:8px; padding:10px 12px; }
-  .row-menu-wrap{ display:none; }
+  .sidebar{ display:none !important; }
+  .main{ margin-left:0; }
+  .content{ padding:16px 14px 88px; }
+  .topbar{ padding:0 14px; }
+  .search-box{ display:none; }
+  .stats-grid{ grid-template-columns:1fr 1fr !important; gap:10px; }
+  .kpi-grid{ grid-template-columns:1fr 1fr !important; gap:10px; }
+  .dash-two-col{ grid-template-columns:1fr !important; }
+  .intel-cards{ grid-template-columns:1fr !important; }
+  .modal{ max-width:100%; border-radius:8px 8px 0 0; position:fixed; bottom:0; left:0; right:0; max-height:92vh; }
+  .modal-backdrop.open{ align-items:flex-end; padding:0; }
+  .detail-panel{ width:100vw; }
+  .btn-fab{ display:none !important; }
 }
 @media(min-width:769px){
+  .mobile-cards{ display:none !important; }
   #recent-cards{ display:none !important; }
+  .bottom-nav{ display:none !important; }
+}
+
+/* ── Bottom Nav ── */
+.bottom-nav{ display:none; }
+@media(max-width:768px){
+  .bottom-nav{
+    display:block; position:fixed; bottom:0; left:0; right:0; z-index:500;
+    background:var(--bg); box-shadow:rgba(0,0,0,0.08) 0 -1px 0 0;
+    padding-bottom:env(safe-area-inset-bottom, 0px);
+  }
+}
+.bottom-nav-items{
+  display:flex; align-items:center; justify-content:space-around;
+  height:56px; overflow-x:auto; scrollbar-width:none;
+}
+.bottom-nav-items::-webkit-scrollbar{ display:none; }
+.bnav-item{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; flex:1; min-width:52px; height:100%; padding:6px 4px;
+  background:transparent; border:none; cursor:pointer;
+  font-family:var(--font); color:var(--text3);
+  transition:color var(--t); -webkit-tap-highlight-color:transparent;
+  position:relative;
+}
+.bnav-item i{ font-size:20px; line-height:1; }
+.bnav-item span{ font-size:9px; font-weight:500; font-family:var(--font-mono); white-space:nowrap; }
+.bnav-item.active{ color:var(--text1); }
+.bnav-item.active::before{
+  content:''; position:absolute; top:0; width:24px; height:2px;
+  background:var(--text1); border-radius:0 0 2px 2px;
+}
+
+@media(max-width:480px){
+  .kpi-value, .stat-value{ font-size:24px !important; letter-spacing:-0.96px !important; }
+  .card{ padding:14px 16px; }
 }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
