@@ -533,6 +533,124 @@ body.dark .client-bar-fill{background:var(--v-develop);}
 /* ══ OVERLAYS ══ */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(2px);z-index:400;}
 .overlay.open{display:block;}
+
+/* ══════════════════════════════════════════════════
+   MOBILE LAYOUT — Vercel-style bottom nav
+   Replaces sidebar + FAB on screens ≤ 768px
+══════════════════════════════════════════════════ */
+
+/* Hide sidebar entirely on mobile */
+@media(max-width:768px){
+  .sidebar{ display:none !important; }
+  .main{ margin-left:0; }
+  .content{ padding:16px 14px 88px; }          /* bottom nav clearance */
+  .topbar{ padding:0 14px; }
+  .topbar-title{ font-size:15px; }
+
+  /* Stack KPI grid 2-col on mobile */
+  .stats-grid{ grid-template-columns:1fr 1fr !important; gap:10px; }
+  .kpi-grid{ grid-template-columns:1fr 1fr !important; gap:10px; }
+  .dash-two-col{ grid-template-columns:1fr !important; }
+  .intel-cards{ grid-template-columns:1fr !important; }
+
+  /* Modals */
+  .modal{ max-width:100%; border-radius:var(--radius-lg) var(--radius-lg) 0 0; position:fixed; bottom:0; left:0; right:0; max-height:92vh; }
+  .modal-backdrop.open{ align-items:flex-end; padding:0; }
+  .detail-panel{ width:100vw; }
+
+  /* FAB: hide, bottom-nav handles navigation */
+  .btn-fab{ display:none !important; }
+}
+
+/* ══ BOTTOM NAV ══ */
+.bottom-nav{
+  display:none;
+}
+@media(max-width:768px){
+  .bottom-nav{
+    display:block;
+    position:fixed; bottom:0; left:0; right:0;
+    z-index:500;
+    background:var(--bg);
+    box-shadow:rgba(0,0,0,0.08) 0 -1px 0 0;
+    /* iOS safe area */
+    padding-bottom:env(safe-area-inset-bottom, 0px);
+  }
+}
+
+.bottom-nav-items{
+  display:flex;
+  align-items:center;
+  justify-content:space-around;
+  height:56px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+  gap:0;
+}
+.bottom-nav-items::-webkit-scrollbar{ display:none; }
+
+.bnav-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  flex:1;
+  min-width:52px;
+  height:100%;
+  padding:6px 4px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  font-family:var(--font);
+  color:var(--text3);
+  transition:color var(--t);
+  -webkit-tap-highlight-color:transparent;
+}
+.bnav-item i{
+  font-size:20px;
+  line-height:1;
+}
+.bnav-item span{
+  font-size:9px;
+  font-weight:500;
+  letter-spacing:.02em;
+  font-family:var(--font-mono);
+  white-space:nowrap;
+}
+.bnav-item.active{
+  color:var(--text1);
+}
+.bnav-item:hover{
+  color:var(--text2);
+}
+/* Active dot indicator */
+.bnav-item.active::before{
+  content:'';
+  position:absolute;
+  top:0;
+  width:24px;
+  height:2px;
+  background:var(--text1);
+  border-radius:0 0 2px 2px;
+}
+.bnav-item{ position:relative; }
+
+/* ══ MOBILE TOPBAR ══ */
+@media(max-width:768px){
+  /* Hide search and desktop actions; keep title + profile */
+  .search-box{ display:none; }
+  .topbar-actions-desktop .btn-ghost:not(.profile-btn){ display:none; }
+}
+
+/* ══ MOBILE CARD TWEAKS ══ */
+@media(max-width:480px){
+  .stats-grid{ grid-template-columns:1fr 1fr !important; }
+  .kpi-value, .stat-value{ font-size:24px !important; letter-spacing:-0.96px !important; }
+  .card{ padding:14px 16px; }
+  .section-head{ padding:11px 14px; }
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
