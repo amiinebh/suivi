@@ -541,19 +541,19 @@ body.dark .client-bar-fill{background:var(--v-develop);}
 <body>
 <div id="toast-container"></div>
 <script>var formContainers = [];</script>
-  <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg2);align-items:center;justify-content:center">
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);padding:36px 32px;width:360px;max-width:94vw;box-shadow:0 8px 32px rgba(0,0,0,.08)">
+  <div id="login-screen" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);align-items:center;justify-content:center">
+    <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius-xl);padding:36px 32px;width:360px;max-width:94vw;box-shadow:0 8px 32px rgba(0,0,0,.08)">
       <div style="margin-bottom:28px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
           <div style="width:32px;height:32px;background:var(--text1);border-radius:var(--radius);display:flex;align-items:center;justify-content:center">
             <i class="ph ph-boat" style="color:#fff;font-size:16px"></i>
           </div>
           <div>
-            <div style="font-size:14px;font-weight:800;color:var(--text1);letter-spacing:-.2px">FreightTrack Pro</div>
+            <div style="font-size:14px;font-weight:600;color:var(--text1);letter-spacing:-.2px">FreightTrack Pro</div>
             <div style="font-size:10px;color:var(--text2);font-weight:500">Operations Dashboard</div>
           </div>
         </div>
-        <div style="font-size:18px;font-weight:800;color:var(--text1);letter-spacing:-.3px">Sign in</div>
+        <div style="font-size:18px;font-weight:600;color:var(--text1);letter-spacing:-.3px">Sign in</div>
         <div style="font-size:12px;color:var(--text2);margin-top:3px">Enter your credentials to continue</div>
       </div>
       <form onsubmit="event.preventDefault();doLogin();" autocomplete="on">
@@ -703,7 +703,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
       <!-- Header -->
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:22px">
         <div>
-          <div id="dash-greeting" style="font-size:22px;font-weight:800;color:var(--text1);letter-spacing:-.4px"></div>
+          <div id="dash-greeting" style="font-size:22px;font-weight:600;color:var(--text1);letter-spacing:-.4px"></div>
           <div id="dash-date" style="font-size:12.5px;color:var(--text2);margin-top:3px"></div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -737,9 +737,9 @@ body.dark .client-bar-fill{background:var(--v-develop);}
         <div style="min-width:0">
 
           <!-- Arriving This Week -->
-          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);margin-bottom:14px;overflow:hidden">
+          <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius-xl);margin-bottom:14px;overflow:hidden">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
-              <div style="font-size:12.5px;font-weight:700;color:var(--text1);display:flex;align-items:center;gap:7px">
+              <div style="font-size:12.5px;font-weight:600;color:var(--text1);display:flex;align-items:center;gap:7px">
                 <i class="ph ph-calendar" style="color:var(--blue)"></i> Arriving This Week
               </div>
             </div>
@@ -747,9 +747,9 @@ body.dark .client-bar-fill{background:var(--v-develop);}
           </div>
 
           <!-- Recent Shipments -->
-          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);margin-bottom:14px;overflow:hidden">
+          <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius-xl);margin-bottom:14px;overflow:hidden">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
-              <div style="font-size:12.5px;font-weight:700;color:var(--text1)">Recent Shipments</div>
+              <div style="font-size:12.5px;font-weight:600;color:var(--text1)">Recent Shipments</div>
               <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 10px" onclick="showPage('shipments',null);setBottomNav('shipments')">
                 View all <i class="ph ph-arrow-right"></i>
               </button>
@@ -761,9 +761,9 @@ body.dark .client-bar-fill{background:var(--v-develop);}
           </div>
 
           <!-- Activity Feed -->
-          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden">
+          <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius-xl);overflow:hidden">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
-              <div style="font-size:12.5px;font-weight:700;color:var(--text1)">Recent Activity</div>
+              <div style="font-size:12.5px;font-weight:600;color:var(--text1)">Recent Activity</div>
               <div style="font-size:11px;color:var(--text2)">Last 10 shipments</div>
             </div>
             <div id="activity-feed" style="max-height:320px;overflow-y:auto"></div>
@@ -775,39 +775,39 @@ body.dark .client-bar-fill{background:var(--v-develop);}
         <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
 
           <!-- This Month -->
-          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden">
+          <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius-xl);overflow:hidden">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
-              <div style="font-size:12.5px;font-weight:700;color:var(--text1)">This Month</div>
+              <div style="font-size:12.5px;font-weight:600;color:var(--text1)">This Month</div>
               <span id="dash-month-label" class="badge badge-slate" style="font-size:10px"></span>
             </div>
             <div style="padding:12px 14px">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-                <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px">
-                  <div style="font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Import</div>
-                  <div id="dash-mini-import" style="font-size:18px;font-weight:800;color:var(--text1);margin-top:3px">—</div>
+                <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius);padding:10px 12px">
+                  <div style="font-size:9.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Import</div>
+                  <div id="dash-mini-import" style="font-size:18px;font-weight:600;color:var(--text1);margin-top:3px">—</div>
                 </div>
-                <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px">
-                  <div style="font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Export</div>
-                  <div id="dash-mini-export" style="font-size:18px;font-weight:800;color:var(--text1);margin-top:3px">—</div>
+                <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius);padding:10px 12px">
+                  <div style="font-size:9.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Export</div>
+                  <div id="dash-mini-export" style="font-size:18px;font-weight:600;color:var(--text1);margin-top:3px">—</div>
                 </div>
-                <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px">
-                  <div style="font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Ocean</div>
-                  <div id="dash-mini-ocean" style="font-size:18px;font-weight:800;color:var(--text1);margin-top:3px">—</div>
+                <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius);padding:10px 12px">
+                  <div style="font-size:9.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Ocean</div>
+                  <div id="dash-mini-ocean" style="font-size:18px;font-weight:600;color:var(--text1);margin-top:3px">—</div>
                 </div>
-                <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px">
-                  <div style="font-size:9.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Road</div>
-                  <div id="dash-mini-air" style="font-size:18px;font-weight:800;color:var(--text1);margin-top:3px">—</div>
+                <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius);padding:10px 12px">
+                  <div style="font-size:9.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Road</div>
+                  <div id="dash-mini-air" style="font-size:18px;font-weight:600;color:var(--text1);margin-top:3px">—</div>
                 </div>
               </div>
-              <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Top Clients</div>
+              <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Top Clients</div>
               <div id="dash-top-clients" style="display:flex;flex-direction:column;gap:8px"></div>
             </div>
           </div>
 
           <!-- Alerts -->
-          <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden">
+          <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius-xl);overflow:hidden">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)">
-              <div style="font-size:12.5px;font-weight:700;color:var(--text1)">Alerts</div>
+              <div style="font-size:12.5px;font-weight:600;color:var(--text1)">Alerts</div>
               <span id="dash-alerts-badge" class="badge badge-red" style="font-size:9.5px;display:none">0</span>
             </div>
             <div id="dash-alerts-list" style="padding:0 14px;max-height:260px;overflow-y:auto"></div>
@@ -856,8 +856,8 @@ body.dark .client-bar-fill{background:var(--v-develop);}
         </button>
       </div>
       <!-- Bulk action toolbar -->
-      <div id="bulk-toolbar" style="display:none;align-items:center;gap:8px;padding:8px 12px;background:var(--accent)11;border:1px solid var(--accent)33;border-radius:10px;margin-bottom:10px;flex-wrap:wrap">
-        <span id="bulk-count" style="font-size:13px;font-weight:700;color:var(--accent)">0 selected</span>
+      <div id="bulk-toolbar" style="display:none;align-items:center;gap:8px;padding:8px 12px;background:var(--accent)11;border:1px solid var(--accent)33;border-radius:8px;margin-bottom:10px;flex-wrap:wrap">
+        <span id="bulk-count" style="font-size:13px;font-weight:600;color:var(--accent)">0 selected</span>
         <div style="flex:1"></div>
         <button class="btn btn-ghost btn-sm" onclick="selectAllShipments()" style="font-size:12px"><i class="ph ph-checks"></i> Select All</button>
         <button class="btn btn-ghost btn-sm" onclick="clearSelectionShipments()" style="font-size:12px"><i class="ph ph-x"></i> Clear</button>
@@ -888,28 +888,28 @@ body.dark .client-bar-fill{background:var(--v-develop);}
       </div>
       <!-- ── Stitch Intelligence Cards ── -->
       <div id="intel-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px;padding-bottom:16px">
-        <div style="background:var(--stitch-surf-low);padding:20px 24px;border-radius:10px;border-left:4px solid var(--stitch-tint)">
+        <div style="background:var(--stitch-surf-low);padding:20px 24px;border-radius:8px;border-left:4px solid var(--stitch-tint)">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-            <span style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--stitch-text2)">Route Optimization</span>
+            <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--stitch-text2)">Route Optimization</span>
             <span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-tint)">trending_up</span>
           </div>
-          <div id="intel-ontime" style="font-size:26px;font-weight:900;color:var(--stitch-primary);letter-spacing:-.03em;margin-bottom:4px">--</div>
+          <div id="intel-ontime" style="font-size:26px;font-weight:600;color:var(--stitch-primary);letter-spacing:-.03em;margin-bottom:4px">--</div>
           <div style="font-size:11px;color:var(--stitch-text2)">Shipments arrived on time this month</div>
         </div>
-        <div style="background:var(--stitch-surf-low);padding:20px 24px;border-radius:10px;border-left:4px solid #0c9488">
+        <div style="background:var(--stitch-surf-low);padding:20px 24px;border-radius:8px;border-left:4px solid #0c9488">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-            <span style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--stitch-text2)">Active in Transit</span>
+            <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--stitch-text2)">Active in Transit</span>
             <span class="material-symbols-outlined" style="font-size:18px;color:#0c9488">anchor</span>
           </div>
-          <div id="intel-transit" style="font-size:26px;font-weight:900;color:var(--stitch-primary);letter-spacing:-.03em;margin-bottom:4px">--</div>
+          <div id="intel-transit" style="font-size:26px;font-weight:600;color:var(--stitch-primary);letter-spacing:-.03em;margin-bottom:4px">--</div>
           <div style="font-size:11px;color:var(--stitch-text2)">Sailing + Stuffed shipments</div>
         </div>
-        <div style="background:var(--stitch-surf-low);padding:20px 24px;border-radius:10px;border-left:4px solid #ef4444">
+        <div style="background:var(--stitch-surf-low);padding:20px 24px;border-radius:8px;border-left:4px solid #ef4444">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-            <span style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:var(--stitch-text2)">Risk Alerts</span>
+            <span style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--stitch-text2)">Risk Alerts</span>
             <span class="material-symbols-outlined" style="font-size:18px;color:#ef4444">warning</span>
           </div>
-          <div id="intel-overdue" style="font-size:26px;font-weight:900;color:var(--stitch-primary);letter-spacing:-.03em;margin-bottom:4px">--</div>
+          <div id="intel-overdue" style="font-size:26px;font-weight:600;color:var(--stitch-primary);letter-spacing:-.03em;margin-bottom:4px">--</div>
           <div style="font-size:11px;color:var(--stitch-text2)">Overdue or delayed shipments</div>
         </div>
       </div>
@@ -922,22 +922,22 @@ body.dark .client-bar-fill{background:var(--v-develop);}
       <!-- ── Stitch Page Header ── -->
       <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px">
         <div>
-          <div style="font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:var(--stitch-text2);margin-bottom:6px">FREIGHT COMMAND › KPI ANALYSIS</div>
-          <div style="font-size:28px;font-weight:900;letter-spacing:-.03em;text-transform:uppercase;color:var(--stitch-text1);line-height:1">INTELLIGENCE HUB</div>
+          <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--stitch-text2);margin-bottom:6px">FREIGHT COMMAND › KPI ANALYSIS</div>
+          <div style="font-size:28px;font-weight:600;letter-spacing:-1.12px;letter-spacing:-.03em;text-transform:uppercase;color:var(--stitch-text1);line-height:1">INTELLIGENCE HUB</div>
           <div style="font-size:11px;color:var(--stitch-text2);margin-top:4px;font-weight:500">Live operational metrics &amp; period comparison</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <!-- Period tabs - Stitch style -->
           <div style="display:flex;background:var(--stitch-surf-mid);border-radius:8px;padding:3px;gap:2px">
-            <button class="kpi-ptab" onclick="setKpiPeriod('all',this)" style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:800;cursor:pointer;background:var(--stitch-primary);color:#fff;text-transform:uppercase;letter-spacing:.06em">All</button>
-            <button class="kpi-ptab" onclick="setKpiPeriod('3m',this)"  style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:800;cursor:pointer;background:transparent;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.06em">3M</button>
-            <button class="kpi-ptab" onclick="setKpiPeriod('6m',this)"  style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:800;cursor:pointer;background:transparent;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.06em">6M</button>
-            <button class="kpi-ptab" onclick="setKpiPeriod('1y',this)"  style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:800;cursor:pointer;background:transparent;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.06em">1Y</button>
+            <button class="kpi-ptab" onclick="setKpiPeriod('all',this)" style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:var(--stitch-primary);color:#fff;text-transform:uppercase;letter-spacing:.06em">All</button>
+            <button class="kpi-ptab" onclick="setKpiPeriod('3m',this)"  style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.06em">3M</button>
+            <button class="kpi-ptab" onclick="setKpiPeriod('6m',this)"  style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.06em">6M</button>
+            <button class="kpi-ptab" onclick="setKpiPeriod('1y',this)"  style="padding:6px 14px;border:none;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.06em">1Y</button>
           </div>
-          <button id="btn-compare-toggle" onclick="toggleComparePanel()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--stitch-border);border-radius:6px;background:transparent;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--stitch-text2);cursor:pointer">
+          <button id="btn-compare-toggle" onclick="toggleComparePanel()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1px solid var(--stitch-border);border-radius:6px;background:transparent;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--stitch-text2);cursor:pointer">
             <span class="material-symbols-outlined" style="font-size:15px">compare_arrows</span> Compare
           </button>
-          <button onclick="generateReport()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border:none;border-radius:6px;background:var(--stitch-primary);color:#fff;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;box-shadow:0 2px 8px rgba(35,95,164,.3);transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform=''">
+          <button onclick="generateReport()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border:none;border-radius:6px;background:var(--stitch-primary);color:#fff;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;box-shadow:0 2px 8px rgba(35,95,164,.3);transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform=''">
             <span class="material-symbols-outlined" style="font-size:15px">download</span> Export
           </button>
         </div>
@@ -949,17 +949,17 @@ body.dark .client-bar-fill{background:var(--v-develop);}
 
       <!-- ── COMPARE PANEL ── -->
       <div id="compare-panel" style="display:none;background:var(--stitch-surf-low);border:1px solid var(--stitch-border);border-radius:8px;border-left:4px solid var(--stitch-tint);padding:20px 24px;margin-bottom:24px">
-        <div style="font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--stitch-text1);margin-bottom:14px"><i class="ph ph-scales" style="color:var(--accent)"></i> Period Comparison</div>
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--stitch-text1);margin-bottom:14px"><i class="ph ph-scales" style="color:var(--accent)"></i> Period Comparison</div>
         <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
           <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:5px"></span>Period A — Baseline (older)</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:5px"></span>Period A — Baseline (older)</div>
             <div style="display:flex;gap:6px">
               <input type="month" id="cmp-a-from" class="form-control" style="font-size:12px;flex:1">
               <input type="month" id="cmp-a-to"   class="form-control" style="font-size:12px;flex:1">
             </div>
           </div>
           <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:5px"></span>Period B — Current (newer)</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:5px"></span>Period B — Current (newer)</div>
             <div style="display:flex;gap:6px">
               <input type="month" id="cmp-b-from" class="form-control" style="font-size:12px;flex:1">
               <input type="month" id="cmp-b-to"   class="form-control" style="font-size:12px;flex:1">
@@ -975,10 +975,10 @@ body.dark .client-bar-fill{background:var(--v-develop);}
       <div id="modal-compare-backdrop" onclick="if(event.target===this)closeCompareModal()"
            style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;overflow:hidden">
         <div style="position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto">
-        <div style="width:100%;max-width:960px;background:var(--bg1);border-radius:20px;border:1px solid var(--border);overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.35);flex-shrink:0">
+        <div style="width:100%;max-width:960px;background:var(--bg);box-shadow:var(--shadow-full);border-radius:8px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.35);flex-shrink:0">
           <!-- sticky header -->
-          <div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border);background:var(--bg2)">
-            <div style="font-size:14px;font-weight:800;color:var(--text1)"><i class="ph ph-scales" style="color:var(--accent)"></i> Comparison Results</div>
+          <div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 22px;box-shadow:rgba(0,0,0,0.06) 0 -1px 0 0 inset;background:var(--bg)">
+            <div style="font-size:14px;font-weight:600;color:var(--text1)"><i class="ph ph-scales" style="color:var(--accent)"></i> Comparison Results</div>
             <div style="display:flex;gap:8px">
               <button class="btn btn-ghost btn-sm" onclick="exportCompareReport()" style="font-size:11px"><i class="ph ph-file-arrow-down"></i> Export PDF</button>
               <button class="btn btn-ghost btn-sm" onclick="closeCompareModal()"><i class="ph ph-x"></i></button>
@@ -988,20 +988,20 @@ body.dark .client-bar-fill{background:var(--v-develop);}
           <div style="padding:20px 22px;overflow-y:auto;max-height:calc(90vh - 60px)">
             <!-- period labels -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-              <div style="background:var(--bg2);border-radius:10px;padding:12px 16px;border-left:3px solid #94a3b8">
-                <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Period A — Baseline</div>
-                <div id="cmp-label-a" style="font-size:15px;font-weight:800;color:var(--text1);margin-top:3px">--</div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:12px 16px;border-left:3px solid #94a3b8">
+                <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Period A — Baseline</div>
+                <div id="cmp-label-a" style="font-size:15px;font-weight:600;color:var(--text1);margin-top:3px">--</div>
               </div>
-              <div style="background:var(--bg2);border-radius:10px;padding:12px 16px;border-left:3px solid #3b82f6">
-                <div style="font-size:10px;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.06em">Period B — Current</div>
-                <div id="cmp-label-b" style="font-size:15px;font-weight:800;color:var(--text1);margin-top:3px">--</div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:12px 16px;border-left:3px solid #3b82f6">
+                <div style="font-size:10px;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:.06em">Period B — Current</div>
+                <div id="cmp-label-b" style="font-size:15px;font-weight:600;color:var(--text1);margin-top:3px">--</div>
               </div>
             </div>
             <!-- KPI chips -->
             <div id="cmp-kpi-row" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px"></div>
             <!-- monthly chart -->
-            <div style="background:var(--bg2);border-radius:10px;padding:16px;margin-bottom:14px">
-              <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:8px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
+            <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:8px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
               <div style="display:flex;gap:16px;font-size:11px;color:var(--text2);margin-bottom:10px">
                 <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:4px"></span>Period A (baseline)</span>
                 <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:4px"></span>Period B (current)</span>
@@ -1009,34 +1009,34 @@ body.dark .client-bar-fill{background:var(--v-develop);}
               <canvas id="cmp-chart-monthly" height="130"></canvas>
             </div>
             <!-- client comparison table -->
-            <div style="background:var(--bg2);border-radius:10px;padding:16px;margin-bottom:14px">
-              <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-users" style="color:var(--accent)"></i> Client Comparison — A vs B</div>
+            <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-users" style="color:var(--accent)"></i> Client Comparison — A vs B</div>
               <div id="cmp-client-table"></div>
             </div>
             <!-- side by side grids -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-              <div style="background:var(--bg2);border-radius:10px;padding:14px">
-                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#94a3b8;margin-right:6px"></span>Top Routes — A</div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
+                <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#94a3b8;margin-right:6px"></span>Top Routes — A</div>
                 <div id="cmp-routes-a"></div>
               </div>
-              <div style="background:var(--bg2);border-radius:10px;padding:14px">
-                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-right:6px"></span>Top Routes — B</div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
+                <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-right:6px"></span>Top Routes — B</div>
                 <div id="cmp-routes-b"></div>
               </div>
-              <div style="background:var(--bg2);border-radius:10px;padding:14px">
-                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#ef4444"></i> POD Export — A</div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
+                <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#ef4444"></i> POD Export — A</div>
                 <div id="cmp-pod-exp-a"></div>
               </div>
-              <div style="background:var(--bg2);border-radius:10px;padding:14px">
-                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#ef4444"></i> POD Export — B</div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
+                <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#ef4444"></i> POD Export — B</div>
                 <div id="cmp-pod-exp-b"></div>
               </div>
-              <div style="background:var(--bg2);border-radius:10px;padding:14px">
-                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#22c55e"></i> POD Import — A</div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
+                <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#22c55e"></i> POD Import — A</div>
                 <div id="cmp-pod-imp-a"></div>
               </div>
-              <div style="background:var(--bg2);border-radius:10px;padding:14px">
-                <div style="font-size:11px;font-weight:800;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#22c55e"></i> POD Import — B</div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
+                <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#22c55e"></i> POD Import — B</div>
                 <div id="cmp-pod-imp-b"></div>
               </div>
             </div>
@@ -1047,34 +1047,34 @@ body.dark .client-bar-fill{background:var(--v-develop);}
 
       <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
           <div style="height:190px;position:relative"><canvas id="kpi-chart-monthly"></canvas></div>
         </div></div>
         <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-chart-donut" style="color:var(--accent)"></i> Status Mix</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-chart-donut" style="color:var(--accent)"></i> Status Mix</div>
           <div style="height:190px;position:relative"><canvas id="kpi-chart-status"></canvas></div>
         </div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-boat" style="color:var(--accent)"></i> Transport Mode</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-boat" style="color:var(--accent)"></i> Transport Mode</div>
           <div style="height:180px;position:relative"><canvas id="kpi-chart-mode"></canvas></div>
         </div></div>
         <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-arrows-left-right" style="color:var(--accent)"></i> Export vs Import</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-arrows-left-right" style="color:var(--accent)"></i> Export vs Import</div>
           <div style="height:180px;position:relative"><canvas id="kpi-chart-dir"></canvas></div>
         </div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-users" style="color:var(--accent)"></i> Top Clients — Shipments</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-users" style="color:var(--accent)"></i> Top Clients — Shipments</div>
             <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-clients','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-clients','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-clients','imp')">&#8595; Imp</button></div>
           </div><div id="kpi-bar-clients"></div>
         </div></div>
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-shipping-container" style="color:#6c63ff"></i> Top Clients — TEU</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-shipping-container" style="color:#6c63ff"></i> Top Clients — TEU</div>
             <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-teu','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-teu','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-teu','imp')">&#8595; Imp</button></div>
           </div><div id="kpi-bar-teu"></div>
         </div></div>
@@ -1082,13 +1082,13 @@ body.dark .client-bar-fill{background:var(--v-develop);}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-shipping-container" style="color:var(--accent)"></i> Top Carriers</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-shipping-container" style="color:var(--accent)"></i> Top Carriers</div>
             <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-carriers','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers','imp')">&#8595; Imp</button></div>
           </div><div id="kpi-bar-carriers"></div>
         </div></div>
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-map-pin" style="color:#ef4444"></i> Top Destinations (POD)</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-map-pin" style="color:#ef4444"></i> Top Destinations (POD)</div>
             <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-pod','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pod','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pod','imp')">&#8595; Imp</button></div>
           </div><div id="kpi-bar-pod"></div>
         </div></div>
@@ -1096,19 +1096,19 @@ body.dark .client-bar-fill{background:var(--v-develop);}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-map-pin-line" style="color:#22c55e"></i> Top Origins (POL)</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-map-pin-line" style="color:#22c55e"></i> Top Origins (POL)</div>
             <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-pol','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pol','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pol','imp')">&#8595; Imp</button></div>
           </div><div id="kpi-bar-pol"></div>
         </div></div>
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-size:12px;font-weight:700;color:var(--text1)"><i class="ph ph-path" style="color:#f59e0b"></i> Top Routings (POL &#8594; POD)</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-path" style="color:#f59e0b"></i> Top Routings (POL &#8594; POD)</div>
             <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-routes','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-routes','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-routes','imp')">&#8595; Imp</button></div>
           </div><div id="kpi-bar-routes"></div>
         </div></div>
       </div>
       <div class="card" style="margin-bottom:20px"><div class="card__body">
-        <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:12px"><i class="ph ph-warning" style="color:#ef4444"></i> Overdue Shipments</div>
+        <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-warning" style="color:#ef4444"></i> Overdue Shipments</div>
         <div id="kpi-overdue"></div>
       </div></div>
     </div>
@@ -1118,7 +1118,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
     <div class="page" id="page-users">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
         <div>
-          <div style="font-size:16px;font-weight:700;color:var(--text1)"><i class="ph ph-users"></i><span class="nav-label">Team Members</span></div>
+          <div style="font-size:16px;font-weight:600;color:var(--text1)"><i class="ph ph-users"></i><span class="nav-label">Team Members</span></div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Manage your CS team access</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-user')" style="gap:6px">
@@ -1137,7 +1137,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
     <div class="page" id="page-alerts">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div>
-          <div style="font-size:16px;font-weight:700;color:var(--text)"><i class="ph ph-bell"></i><span class="nav-label">Alerts</span></div>
+          <div style="font-size:16px;font-weight:600;color:var(--text)"><i class="ph ph-bell"></i><span class="nav-label">Alerts</span></div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">Shipments requiring your attention</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="loadAlerts()">
@@ -1159,11 +1159,11 @@ body.dark .client-bar-fill{background:var(--v-develop);}
           <i class="ph ph-arrow-left"></i>
         </button>
         <div style="flex:1;min-width:0">
-          <div id="detail-ref" style="font-size:15px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
+          <div id="detail-ref" style="font-size:15px;font-weight:600;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">—</div>
           <div id="detail-sub" style="font-size:11px;color:var(--text2);margin-top:1px">—</div>
         </div>
         <select id="detail-status-select" onchange="updateShipmentStatus(this.value)"
-          style="padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text1);font-size:12px;font-weight:700;cursor:pointer">
+          style="padding:5px 8px;border-radius:8px;box-shadow:var(--shadow-card);background:var(--bg);color:var(--text1);font-size:12px;font-weight:600;cursor:pointer">
           <option value="Confirmed">Confirmed</option>
           <option value="Booked">Booked</option>
           <option value="Stuffed">Stuffed</option>
@@ -1185,7 +1185,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
       <div class="shipment-card" style="margin-bottom:14px;padding:12px 14px">
         <div style="display:flex;align-items:center;gap:6px">
           <div style="flex:1;text-align:center">
-            <div id="detail-pol" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
+            <div id="detail-pol" style="font-size:13px;font-weight:600;color:var(--text1)">—</div>
             <div style="font-size:10px;color:var(--text2);margin-top:2px">Origin</div>
           </div>
           <div style="flex:2;display:flex;align-items:center;gap:3px">
@@ -1194,7 +1194,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
             <div style="flex:1;height:2px;background:var(--border);border-radius:2px"></div>
           </div>
           <div style="flex:1;text-align:center">
-            <div id="detail-pod" style="font-size:13px;font-weight:700;color:var(--text1)">—</div>
+            <div id="detail-pod" style="font-size:13px;font-weight:600;color:var(--text1)">—</div>
             <div style="font-size:10px;color:var(--text2);margin-top:2px">Destination</div>
           </div>
         </div>
@@ -1204,7 +1204,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
           <span>ETA <strong id="detail-eta" style="color:var(--accent)">—</strong></span>
         </div>
       </div>
-      <div style="display:flex;gap:4px;margin-bottom:12px;background:var(--bg3);border-radius:10px;padding:4px">
+      <div style="display:flex;gap:4px;margin-bottom:12px;background:var(--bg3);border-radius:8px;padding:4px">
         <button class="detail-tab active" id="dtab-btn-timeline" onclick="switchDTab('timeline')" style="flex:1">&#128203; Timeline</button>
         <button class="detail-tab" id="dtab-btn-notes" onclick="switchDTab('notes')" style="flex:1">&#128172; Notes</button>
         <button class="detail-tab" id="dtab-btn-info" onclick="switchDTab('info')" style="flex:1">&#128196; Details</button>
@@ -1229,7 +1229,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
       <div id="dtab-info" style="display:none">
         <div id="detail-info-chips" class="info-grid"></div>
         <div id="detail-containers-section" style="display:none;margin-top:12px">
-          <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Containers</div>
+          <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Containers</div>
           <div id="detail-containers-list"></div>
         </div>
       </div>
@@ -1253,7 +1253,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
     <div class="page" id="page-clients" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <div>
-          <div style="font-size:16px;font-weight:800;color:var(--text1)">Clients</div>
+          <div style="font-size:16px;font-weight:600;color:var(--text1)">Clients</div>
           <div style="font-size:11px;color:var(--text2)" id="clients-count">Loading…</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="openClientModal()">
@@ -1370,7 +1370,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-head" style="border-left:3px solid var(--stitch-tint);padding-left:20px">
-      <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--stitch-text2);margin-bottom:4px">MANIFEST CREATION</div>
+      <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--stitch-text2);margin-bottom:4px">MANIFEST CREATION</div>
       <div class="modal-title" id="modal-add-title">New Shipment</div>
       <button class="modal-close" onclick="closeModal('modal-add')"><i class="ph ph-x"></i></button>
     </div>
@@ -1469,7 +1469,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
         <div class="form-group full" id="containers-section">
           <label style="display:flex;align-items:center;justify-content:space-between">
             <span>🗃 Containers</span>
-            <span id="teu-total-badge" style="font-size:11px;color:var(--accent);font-weight:700;display:none"></span>
+            <span id="teu-total-badge" style="font-size:11px;color:var(--accent);font-weight:600;display:none"></span>
           </label>
           <!-- Add container line -->
           <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -1739,7 +1739,7 @@ function renderCards(ships,containerId){
       +'<div class="ship-field"><div class="ship-field-label">POD</div><div class="ship-field-value">'+(sh.pod||'--')+'</div></div>'
       +'<div class="ship-field"><div class="ship-field-label">ETD</div><div class="ship-field-value">'+fmtd(sh.etd)+'</div></div>'
       +'<div class="ship-field"><div class="ship-field-label">ETA</div>'
-      +'<div class="ship-field-value" style="color:'+ec+'">'+fmtd(sh.eta)+(el?'&nbsp;<span style="font-size:10px;font-weight:700;background:'+ec+'22;padding:1px 6px;border-radius:8px">'+el+'</span>':'')+'</div></div>'
+      +'<div class="ship-field-value" style="color:'+ec+'">'+fmtd(sh.eta)+(el?'&nbsp;<span style="font-size:10px;font-weight:600;background:'+ec+'22;padding:1px 6px;border-radius:8px">'+el+'</span>':'')+'</div></div>'
       +'<div class="ship-field" style="grid-column:span 2"><div class="ship-field-label">Quantity</div>'
       +'<div class="ship-field-value" style="color:var(--accent);font-weight:600">'+(sh.teu?sh.teu+' TEU':'--')+'</div></div>'
       +'</div>'
@@ -1769,7 +1769,7 @@ function renderTable(ships){
     'Air':   '<span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-text2)">flight</span>'
   };
   var thead = '<table style="width:100%;border-collapse:collapse">'
-    + '<thead><tr style="background:var(--stitch-surf-high);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--stitch-text2)">'
+    + '<thead><tr style="background:var(--stitch-surf-high);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--stitch-text2)">'
     + '<th style="padding:12px 16px;width:36px;text-align:center"><input type="checkbox" id="check-all" onchange="toggleAllShipments(this.checked)" style="cursor:pointer;width:15px;height:15px"></th>'
     + '<th style="padding:12px 8px;text-align:left">Ref / Booking</th>'
     + '<th style="padding:12px 8px;text-align:center;width:50px">Mode</th>'
@@ -1790,9 +1790,9 @@ function renderTable(ships){
     var etaColor = diff === null ? 'var(--stitch-text2)' : diff < 0 ? '#ef4444' : diff <= 2 ? '#f97316' : 'var(--stitch-text2)';
     var etaTag = '';
     if (diff !== null) {
-      if (diff < 0) etaTag = '<br><span style="font-size:9px;font-weight:800;color:#ef4444;text-transform:uppercase">' + Math.abs(diff) + 'd LATE</span>';
-      else if (diff === 0) etaTag = '<br><span style="font-size:9px;font-weight:800;color:#ef4444;text-transform:uppercase">TODAY</span>';
-      else if (diff <= 2) etaTag = '<br><span style="font-size:9px;font-weight:800;color:#f97316;text-transform:uppercase">In ' + diff + 'd</span>';
+      if (diff < 0) etaTag = '<br><span style="font-size:9px;font-weight:600;color:#ef4444;text-transform:uppercase">' + Math.abs(diff) + 'd LATE</span>';
+      else if (diff === 0) etaTag = '<br><span style="font-size:9px;font-weight:600;color:#ef4444;text-transform:uppercase">TODAY</span>';
+      else if (diff <= 2) etaTag = '<br><span style="font-size:9px;font-weight:600;color:#f97316;text-transform:uppercase">In ' + diff + 'd</span>';
     }
     var icon = modeIcon[sh.mode] || modeIcon['Ocean'];
     var st = shipStatus(sh);
@@ -1804,7 +1804,7 @@ function renderTable(ships){
         + '<input type="checkbox" ' + chk + ' onchange="toggleShipmentSelect(' + sh.id + ',this.checked)" style="cursor:pointer;width:15px;height:15px">'
       + '</td>'
       + '<td style="padding:14px 8px">'
-        + '<div style="font-size:13px;font-weight:700;color:var(--stitch-primary)">' + sh.ref + '</div>'
+        + '<div style="font-size:13px;font-weight:600;color:var(--stitch-primary)">' + sh.ref + '</div>'
         + '<div style="font-size:10px;color:var(--stitch-text2);margin-top:2px;text-transform:uppercase;letter-spacing:.03em">' + (sh.booking_no || '--') + '</div>'
       + '</td>'
       + '<td style="padding:14px 8px;text-align:center">'
@@ -1818,7 +1818,7 @@ function renderTable(ships){
         + '<div style="font-size:10px;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.03em">' + (sh.vessel || '') + '</div>'
       + '</td>'
       + '<td style="padding:14px 8px;text-align:center">'
-        + '<div style="font-size:12px;font-weight:700;color:var(--stitch-text1)">' + fmtd(sh.etd) + '</div>'
+        + '<div style="font-size:12px;font-weight:600;color:var(--stitch-text1)">' + fmtd(sh.etd) + '</div>'
         + '<div style="font-size:11px;color:' + etaColor + '">' + fmtd(sh.eta) + etaTag + '</div>'
       + '</td>'
       + '<td style="padding:14px 8px;text-align:center">' + statusBadge(st) + '</td>'
@@ -1946,17 +1946,17 @@ async function loadDashboard(){
     var arrEl=document.getElementById('dash-arriving');
     if(arrEl){
       if(!arriving.length){
-        arrEl.innerHTML='<div style="padding:14px;text-align:center;color:var(--text2);font-size:13px;background:var(--bg3);border-radius:10px">No arrivals expected in the next 7 days</div>';
+        arrEl.innerHTML='<div style="padding:14px;text-align:center;color:var(--text2);font-size:13px;background:var(--bg3);border-radius:8px">No arrivals expected in the next 7 days</div>';
       }else{
         arrEl.innerHTML=arriving.map(function(sh){
           var eta=new Date(sh.eta);eta.setHours(0,0,0,0);
           var diff=Math.round((eta-today)/86400000);
           var uc=diff===0?'#ef4444':(diff<=2?'#f97316':'#22c55e');
           var ul=diff===0?'TODAY':(diff===1?'Tomorrow':('In '+diff+'d'));
-          return '<div onclick="openDetail('+sh.id+')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg3);border-radius:10px;border-left:3px solid '+uc+'">'
-            +'<div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+sh.ref+'</div>'
+          return '<div onclick="openDetail('+sh.id+')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg3);border-radius:8px;border-left:3px solid '+uc+'">'
+            +'<div><div style="font-weight:600;font-size:13px;color:var(--text1)">'+sh.ref+'</div>'
             +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+(sh.client||'--')+'&nbsp;&middot;&nbsp;'+(sh.pol||'--')+'&nbsp;&rarr;&nbsp;'+(sh.pod||'--')+'</div></div>'
-            +'<span style="background:'+uc+'22;color:'+uc+';font-weight:800;font-size:12px;padding:4px 10px;border-radius:20px;white-space:nowrap">'+ul+'</span>'
+            +'<span style="background:'+uc+'22;color:'+uc+';font-weight:600;font-size:12px;padding:4px 10px;border-radius:8px;white-space:nowrap">'+ul+'</span>'
             +'</div>';
         }).join('');
       }
@@ -2281,10 +2281,10 @@ async function loadAnalytics(){
       var d=document.createElement('div');d.className='card';
       d.innerHTML='<div class="card__body" style="padding:14px 16px">'
         +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
-        +'<div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">'+label+'</div>'
+        +'<div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em">'+label+'</div>'
         +'<div style="width:32px;height:32px;border-radius:9px;background:'+color+'22;display:flex;align-items:center;justify-content:center">'
         +'<i class="ph '+icon+'" style="font-size:16px;color:'+color+'"></i></div></div>'
-        +'<div style="font-size:26px;font-weight:800;color:var(--text1);line-height:1;word-break:break-word">'+val+'</div>'
+        +'<div style="font-size:26px;font-weight:600;color:var(--text1);line-height:1;word-break:break-word">'+val+'</div>'
         +'<div style="font-size:11px;margin-top:5px;color:var(--text2)">'+sub+'</div></div>';
       return d;
     }
@@ -2378,9 +2378,9 @@ async function loadAnalytics(){
       var od=ships.filter(function(s){if(!s.eta)return false;var eD=new Date(s.eta.split('T')[0]);var st=shipStatus(s);return !isNaN(eD)&&now>eD&&st!=='Arrived'&&st!=='Closed'&&st!=='Canceled';}).sort(function(a,b){return new Date(a.eta)-new Date(b.eta);});
       if(od.length){odEl.innerHTML=od.slice(0,10).map(function(s){var eD=new Date(s.eta.split('T')[0]),dl=Math.floor((now-eD)/86400000),ug=dl>7?'#ef4444':dl>3?'#f97316':'#f59e0b';
         return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:8px;margin-bottom:7px;background:var(--bg3);border-left:3px solid '+ug+'">'
-          +'<div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+s.ref+'</div><div style="font-size:11px;color:var(--text2);margin-top:1px">'+(s.client||'--')+' · ETA '+s.eta.split('T')[0]+'</div></div>'
-          +'<div style="display:flex;align-items:center;gap:8px"><span style="background:'+ug+'22;color:'+ug+';font-weight:800;font-size:12px;padding:3px 10px;border-radius:20px">'+dl+'d late</span>'
-          +'<button onclick="openDetail('+s.id+')" style="padding:5px 10px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button></div></div>';
+          +'<div><div style="font-weight:600;font-size:13px;color:var(--text1)">'+s.ref+'</div><div style="font-size:11px;color:var(--text2);margin-top:1px">'+(s.client||'--')+' · ETA '+s.eta.split('T')[0]+'</div></div>'
+          +'<div style="display:flex;align-items:center;gap:8px"><span style="background:'+ug+'22;color:'+ug+';font-weight:600;font-size:12px;padding:3px 10px;border-radius:9999px">'+dl+'d late</span>'
+          +'<button onclick="openDetail('+s.id+')" style="padding:5px 10px;font-size:11px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button></div></div>';
       }).join('');}
       else odEl.innerHTML='<div style="text-align:center;padding:28px;color:var(--green);font-size:14px;font-weight:600">✓ No overdue shipments</div>';}
 
@@ -2617,12 +2617,12 @@ window.addEventListener("DOMContentLoaded", () => {
       <button class="modal-close" onclick="closeBulkImport()"><i class="ph ph-x"></i></button></div>
     <div class="modal-body" id="bulk-modal-body">
       <div style="display:flex;margin-bottom:18px">
-        <div id="bstep-1" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:700;border-radius:8px 0 0 8px;background:var(--accent);color:#fff">&#9312; Upload</div>
+        <div id="bstep-1" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;border-radius:8px 0 0 8px;background:var(--accent);color:#fff">&#9312; Upload</div>
         <div id="bstep-2" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;background:var(--bg3);color:var(--text2)">&#9313; Preview</div>
         <div id="bstep-3" style="flex:1;text-align:center;padding:8px 4px;font-size:12px;font-weight:600;border-radius:0 8px 8px 0;background:var(--bg3);color:var(--text2)">&#9314; Done</div>
       </div>
       <div id="bulk-step-upload">
-        <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--text2)">
+        <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--text2)">
           <strong style="color:var(--text1)">Required columns (row 1 = headers):</strong>
           <code style="display:block;margin-top:4px;font-size:11px">ref &middot; ref2 &middot; mode &middot; direction &middot; carrier &middot; client &middot; pol &middot; pod &middot; etd &middot; eta &middot; incoterm &middot; teu &middot; container &middot; booking_no</code>
           <div style="margin-top:6px">Only <strong>ref</strong> required. Dates: <strong>YYYY-MM-DD</strong>.</div>
@@ -2632,9 +2632,9 @@ window.addEventListener("DOMContentLoaded", () => {
           ondragover="event.preventDefault();this.style.borderColor='var(--accent)';this.style.background='var(--bg3)'"
           ondragleave="this.style.borderColor='var(--border)';this.style.background=''"
           ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='';bulkFileSelected(event.dataTransfer.files[0])"
-          style="border:2px dashed var(--border);border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s">
+          style="border:2px dashed var(--border);border-radius:8px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s">
           <i class="ph ph-file-xls" style="font-size:38px;color:#22c55e;display:block;margin-bottom:10px"></i>
-          <div style="font-size:14px;font-weight:700;color:var(--text1)">Drop .xlsx file here</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text1)">Drop .xlsx file here</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>
         </div>
         <input id="bulk-file" type="file" accept=".xlsx,.xls" style="display:none" onchange="bulkFileSelected(this.files[0])"/>
@@ -2642,7 +2642,7 @@ window.addEventListener("DOMContentLoaded", () => {
       </div>
       <div id="bulk-step-preview" style="display:none">
         <div id="bulk-preview-info" style="font-size:13px;color:var(--text2);margin-bottom:10px"></div>
-        <div id="bulk-preview-table" style="overflow-x:auto;max-height:320px;overflow-y:auto;border-radius:10px;border:1px solid var(--border)"></div>
+        <div id="bulk-preview-table" style="overflow-x:auto;max-height:320px;overflow-y:auto;border-radius:8px;box-shadow:var(--shadow-card)"></div>
       </div>
       <div id="bulk-step-result" style="display:none">
         <div id="bulk-result-content" style="text-align:center;padding:20px 10px"></div>
@@ -2730,14 +2730,14 @@ async function loadUsers(){
     var html='';
     users.forEach(function(u){
       html+='<div class="card" style="margin-bottom:10px"><div class="card__body" style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between">';
-      html+='<div><div style="font-weight:700;color:var(--text1)">'+u.email+'</div>';
+      html+='<div><div style="font-weight:600;color:var(--text1)">'+u.email+'</div>';
       html+='<div style="font-size:12px;color:var(--text2);margin-top:4px">'+(u.name||'')+'</div>';
       html+='<div style="margin-top:6px">';
-      html+='<span style="display:inline-block;background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase">'+u.role+'</span>';
+      html+='<span style="display:inline-block;background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;text-transform:uppercase">'+u.role+'</span>';
       if(!u.is_active)html+=' <span style="display:inline-block;background:#ef444420;color:#ef4444;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">Disabled</span>';
       html+='</div></div>';
       html+='<div style="display:flex;gap:6px">';
-      html+='<button onclick="toggleUser('+u.id+')" style="padding:6px 10px;border:1px solid var(--border);background:var(--bg2);border-radius:6px;cursor:pointer;font-size:12px">'+(u.is_active?'Disable':'Enable')+'</button>';
+      html+='<button onclick="toggleUser('+u.id+')" style="padding:6px 10px;box-shadow:var(--shadow-card);background:var(--bg);border-radius:6px;cursor:pointer;font-size:12px">'+(u.is_active?'Disable':'Enable')+'</button>';
       if(u.role!=='admin')html+='<button onclick="deleteUser('+u.id+')" style="padding:6px 10px;border:1px solid var(--red);background:rgba(239,68,68,.1);color:var(--red);border-radius:6px;cursor:pointer;font-size:12px">Delete</button>';
       html+='</div></div></div>';
     });
@@ -2905,17 +2905,17 @@ async function syncDetail(){
 
 <!-- FILES BOTTOM SHEET -->
 <div class="overlay" id="sheet-files" onclick="if(event.target===this)closeModal('sheet-files')" style="align-items:flex-end">
-  <div style="background:var(--bg2);width:100%;max-width:480px;border-radius:18px 18px 0 0;
+  <div style="background:var(--bg);width:100%;max-width:480px;border-radius:18px 18px 0 0;
     padding:0 0 calc(env(safe-area-inset-bottom)+16px);box-shadow:var(--shadow)">
     <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 4px"></div>
     <div style="padding:10px 20px 16px">
-      <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">Files</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">Files</div>
       <!-- Export -->
       <button onclick="exportXLSX();closeModal('sheet-files')"
         style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;
-          background:var(--bg3);border:none;border-radius:12px;cursor:pointer;margin-bottom:10px;
+          background:var(--bg3);border:none;border-radius:8px;cursor:pointer;margin-bottom:10px;
           font-family:inherit;text-align:left">
-        <div style="width:42px;height:42px;border-radius:10px;background:rgba(34,197,94,.15);
+        <div style="width:42px;height:42px;border-radius:8px;background:rgba(34,197,94,.15);
           display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <i class="ph ph-download-simple" style="color:#22c55e;font-size:18px"></i>
         </div>
@@ -2928,9 +2928,9 @@ async function syncDetail(){
       <!-- Import (admin only) -->
       <button id="sheet-import-btn" onclick="openModal('modal-bulk-import');closeModal('sheet-files')"
         style="width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;
-          background:var(--bg3);border:none;border-radius:12px;cursor:pointer;
+          background:var(--bg3);border:none;border-radius:8px;cursor:pointer;
           font-family:inherit;text-align:left;display:none">
-        <div style="width:42px;height:42px;border-radius:10px;background:rgba(79,142,247,.15);
+        <div style="width:42px;height:42px;border-radius:8px;background:rgba(79,142,247,.15);
           display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <i class="ph ph-upload-simple" style="color:#4f8ef7;font-size:18px"></i>
         </div>
@@ -2957,9 +2957,9 @@ function openFilesSheet(){
 
 <!-- ═══ EMAIL PREVIEW MODAL ═══ -->
 <div class="overlay" id="modal-email-preview" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center">
-  <div class="modal" style="max-width:520px;width:94%;background:var(--card);border-radius:20px;padding:0;overflow:hidden">
+  <div class="modal" style="max-width:520px;width:94%;background:var(--card);border-radius:8px;padding:0;overflow:hidden">
     <div style="background:var(--card);padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:15px;font-weight:700;color:var(--text)"><i class="ph ph-envelope" style="color:var(--accent);margin-right:8px"></i>Send Email to Client</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text)"><i class="ph ph-envelope" style="color:var(--accent);margin-right:8px"></i>Send Email to Client</div>
       <button onclick="closeEmailModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer"><i class="ph ph-x"></i></button>
     </div>
     <div style="padding:16px 20px">
@@ -2969,17 +2969,17 @@ function openFilesSheet(){
       </div>
       <div style="margin-bottom:12px">
         <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Subject</label>
-        <input id="ep-subject" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box" placeholder="Email subject"/>
+        <input id="ep-subject" style="width:100%;padding:10px 12px;border-radius:8px;box-shadow:var(--shadow-card);background:var(--bg);color:var(--text);font-size:13px;box-sizing:border-box" placeholder="Email subject"/>
       </div>
       <div style="margin-bottom:12px">
         <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px">Message</label>
-        <textarea id="ep-body" rows="9" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;line-height:1.7;resize:vertical;box-sizing:border-box" placeholder="Email body..."></textarea>
+        <textarea id="ep-body" rows="9" style="width:100%;padding:10px 12px;border-radius:8px;box-shadow:var(--shadow-card);background:var(--bg);color:var(--text);font-size:13px;line-height:1.7;resize:vertical;box-sizing:border-box" placeholder="Email body..."></textarea>
       </div>
       <div style="font-size:11px;color:var(--text3)"><i class="ph ph-info"></i> Shipment details and tracking link are automatically included.</div>
     </div>
     <div style="padding:12px 20px 20px;display:flex;gap:10px">
-      <button onclick="closeEmailModal()" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
-      <button id="btn-confirm-send" onclick="confirmSendEmail()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer"><i class="ph ph-paper-plane-tilt"></i> Confirm & Send</button>
+      <button onclick="closeEmailModal()" style="flex:1;padding:12px;border-radius:8px;box-shadow:var(--shadow-card);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+      <button id="btn-confirm-send" onclick="confirmSendEmail()" style="flex:2;padding:12px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:600;cursor:pointer"><i class="ph ph-paper-plane-tilt"></i> Confirm & Send</button>
     </div>
   </div>
 </div>
@@ -3068,22 +3068,22 @@ async function loadAlerts(){
     var alerts=buildAlerts(list);
     if(badge){badge.textContent=alerts.length;badge.style.display=alerts.length?'flex':'none';}
     if(!alerts.length){
-      container.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">&#10003;</div><div style="font-size:15px;font-weight:700;color:var(--green);margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention.</div></div>';
+      container.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--text2)"><div style="font-size:40px;margin-bottom:12px">&#10003;</div><div style="font-size:15px;font-weight:600;color:var(--green);margin-bottom:6px">All clear!</div><div style="font-size:13px">No shipments need attention.</div></div>';
       return;
     }
     container.innerHTML=alerts.map(function(a){
       var color=a.type==='danger'?'#ef4444':a.type==='warning'?'#f59e0b':'#a78bfa';
       var icon=a.type==='danger'?'ph-siren':a.type==='warning'?'ph-clock':'ph-warning';
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;margin-bottom:10px;background:var(--bg3);border-left:3px solid '+color+'">'
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:8px;margin-bottom:10px;background:var(--bg3);border-left:3px solid '+color+'">'
         +'<div style="display:flex;align-items:center;gap:10px">'
         +'<div style="width:32px;height:32px;border-radius:8px;background:'+color+'22;display:flex;align-items:center;justify-content:center"><i class="ph '+icon+'" style="color:'+color+';font-size:16px"></i></div>'
-        +'<div><div style="font-weight:700;font-size:13px;color:var(--text1)">'+a.ref+'</div>'
+        +'<div><div style="font-weight:600;font-size:13px;color:var(--text1)">'+a.ref+'</div>'
         +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+a.message+'</div>'
-        +'<span style="display:inline-block;margin-top:4px;font-size:10px;background:'+color+'22;color:'+color+';padding:2px 8px;border-radius:10px;font-weight:700">'+a.label+'</span>'
+        +'<span style="display:inline-block;margin-top:4px;font-size:10px;background:'+color+'22;color:'+color+';padding:2px 8px;border-radius:8px;font-weight:700">'+a.label+'</span>'
         +'</div></div>'
         +'<div style="display:flex;gap:6px;flex-shrink:0">'
-        +'<button onclick="snoozeAlert(\''+a.sk+'\',\''+a.ref+'\')" style="padding:5px 10px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--bg2);color:var(--text2);border-radius:6px;cursor:pointer">&#128276; Snooze</button>'
-        +'<button onclick="openDetail('+a.id+')" style="padding:5px 10px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button>'
+        +'<button onclick="snoozeAlert(\''+a.sk+'\',\''+a.ref+'\')" style="padding:5px 10px;font-size:11px;font-weight:600;box-shadow:var(--shadow-card);background:var(--bg);color:var(--text2);border-radius:6px;cursor:pointer">&#128276; Snooze</button>'
+        +'<button onclick="openDetail('+a.id+')" style="padding:5px 10px;font-size:11px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">View</button>'
         +'</div></div>';
     }).join('');
   }catch(e){
@@ -3129,8 +3129,8 @@ async function loadEmailLog(sid) {
     }
     if (countEl) countEl.textContent = '(' + logs.length + ' sent)';
     container.innerHTML = logs.map(function(l) {
-      return '<div style="padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;border-left:3px solid var(--accent)">'
-        + '<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">' + (l.subject||'—') + '</div>'
+      return '<div style="padding:10px 12px;background:var(--bg);border-radius:8px;margin-bottom:8px;border-left:3px solid var(--accent)">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px">' + (l.subject||'—') + '</div>'
         + '<div style="font-size:11px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap">'
         + '<span><i class="ph ph-paper-plane-tilt" style="color:var(--accent)"></i> ' + (l.sent_to||'—') + '</span>'
         + '<span><i class="ph ph-user" style="color:var(--text3)"></i> ' + (l.sent_by||'System') + '</span>'
@@ -3269,7 +3269,7 @@ async function generateReport(){
       return top.map(function(c,i){
         var w=Math.round((c.shipments||0)/maxV*100);
         return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
-          +'<div style="width:20px;height:20px;border-radius:6px;background:'+color+'22;color:'+color+';font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center">'+(i+1)+'</div>'
+          +'<div style="width:20px;height:20px;border-radius:6px;background:'+color+'22;color:'+color+';font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center">'+(i+1)+'</div>'
           +'<div style="flex:1;min-width:0">'
           +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
           +'<span style="font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.name+'</span>'
@@ -3294,13 +3294,13 @@ async function generateReport(){
           var st=(typeof shipStatus==='function')?shipStatus(s):s.status;
           var sc=stC[st]||'#6b7280';
           return '<tr style="border-bottom:1px solid #f8fafc;background:'+(i%2===0?'#fff':'#f8fafc')+'">'
-            +'<td style="padding:6px 8px;font-weight:700;color:#1e293b">'+s.ref+'</td>'
+            +'<td style="padding:6px 8px;font-weight:600;color:#1e293b">'+s.ref+'</td>'
             +'<td style="padding:6px 8px;color:#374151;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(s.client||'--')+'</td>'
             +'<td style="padding:6px 8px;color:#64748b">'+(s.pol||'--')+' → '+(s.pod||'--')+'</td>'
             +'<td style="padding:6px 8px;color:#64748b">'+(s.etd?s.etd.slice(0,10):'--')+'</td>'
             +'<td style="padding:6px 8px;color:#64748b">'+(s.eta?s.eta.slice(0,10):'--')+'</td>'
             +'<td style="padding:6px 8px;color:#6c63ff;font-weight:600">'+(s.teu?s.teu+' TEU':'--')+'</td>'
-            +'<td style="padding:6px 8px"><span style="background:'+sc+'22;color:'+sc+';font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">'+st+'</span></td>'
+            +'<td style="padding:6px 8px"><span style="background:'+sc+'22;color:'+sc+';font-size:10px;font-weight:600;padding:2px 8px;border-radius:9999px">'+st+'</span></td>'
             +'</tr>';
         }).join('')
         +'</tbody></table>';
@@ -3308,7 +3308,7 @@ async function generateReport(){
     function sectionTitle(icon,label,color){
       return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">'
         +'<div style="width:4px;height:24px;border-radius:2px;background:'+color+'"></div>'
-        +'<span style="font-size:13px;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:.05em">'+icon+' '+label+'</span></div>';
+        +'<span style="font-size:13px;font-weight:600;color:#1e293b;text-transform:uppercase;letter-spacing:.05em">'+icon+' '+label+'</span></div>';
     }
 
     /* MONTHLY DUAL BARS */
@@ -3329,10 +3329,10 @@ async function generateReport(){
     var statusRowsHTML=Object.entries(byStatus).sort(function(a,b){return b[1]-a[1];}).map(function(e){
       var pct=total?Math.round(e[1]/total*100):0, c=sColors[e[0]]||'#6b7280';
       return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
-        +'<span style="min-width:70px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:'+c+'22;color:'+c+';text-align:center">'+e[0]+'</span>'
+        +'<span style="min-width:70px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;background:'+c+'22;color:'+c+';text-align:center">'+e[0]+'</span>'
         +'<div style="flex:1;height:7px;background:#f1f5f9;border-radius:99px;overflow:hidden">'
         +'<div style="height:7px;background:'+c+';width:'+pct+'%;border-radius:99px"></div></div>'
-        +'<span style="font-size:12px;font-weight:700;color:#1e293b;min-width:28px;text-align:right">'+e[1]+'</span>'
+        +'<span style="font-size:12px;font-weight:600;color:#1e293b;min-width:28px;text-align:right">'+e[1]+'</span>'
         +'<span style="font-size:10px;color:#94a3b8;min-width:28px">'+pct+'%</span></div>';
     }).join('');
 
@@ -3341,10 +3341,10 @@ async function generateReport(){
       var mc={Ocean:'#3b82f6',Road:'#f59e0b',Air:'#8b5cf6'}[e[0]]||'#6b7280';
       var pct=total?Math.round(e[1]/total*100):0;
       return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
-        +'<span style="min-width:50px;font-size:11px;font-weight:700;color:'+mc+'">'+e[0]+'</span>'
+        +'<span style="min-width:50px;font-size:11px;font-weight:600;color:'+mc+'">'+e[0]+'</span>'
         +'<div style="flex:1;height:7px;background:#f1f5f9;border-radius:99px;overflow:hidden">'
         +'<div style="height:7px;background:'+mc+';width:'+pct+'%;border-radius:99px"></div></div>'
-        +'<span style="font-size:12px;font-weight:700;color:#1e293b;min-width:24px;text-align:right">'+e[1]+'</span>'
+        +'<span style="font-size:12px;font-weight:600;color:#1e293b;min-width:24px;text-align:right">'+e[1]+'</span>'
         +'<span style="font-size:10px;color:#94a3b8;min-width:28px">'+pct+'%</span></div>';
     }).join('');
 
@@ -3353,10 +3353,10 @@ async function generateReport(){
       var eD=new Date(s.eta.split('T')[0]);
       var dl=Math.floor((nowMs-eD)/86400000);
       var ug=dl>=7?'#ef4444':dl>=3?'#f97316':'#f59e0b';
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:10px;margin-bottom:8px;background:#fff;border-left:4px solid '+ug+';box-shadow:0 1px 4px rgba(0,0,0,.06)">'
-        +'<div><div style="font-weight:700;font-size:13px;color:#1e293b">'+s.ref+'</div>'
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:8px;margin-bottom:8px;background:#fff;border-left:4px solid '+ug+';box-shadow:0 1px 4px rgba(0,0,0,.06)">'
+        +'<div><div style="font-weight:600;font-size:13px;color:#1e293b">'+s.ref+'</div>'
         +'<div style="font-size:11px;color:#64748b;margin-top:2px">'+(s.client||'--')+' · ETA '+s.eta.slice(0,10)+'</div></div>'
-        +'<span style="background:'+ug+'22;color:'+ug+';font-weight:800;font-size:12px;padding:4px 12px;border-radius:20px">'+dl+'d late</span></div>';
+        +'<span style="background:'+ug+'22;color:'+ug+';font-weight:600;font-size:12px;padding:4px 12px;border-radius:9999px">'+dl+'d late</span></div>';
     }).join(''):'<div style="text-align:center;padding:24px;color:#22c55e;font-weight:600;font-size:14px">✓ No overdue shipments</div>';
 
     /* EXPORT / IMPORT SHIP LISTS */
@@ -3370,32 +3370,32 @@ async function generateReport(){
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
       .page{max-width:1100px;margin:0 auto;padding:28px 24px;}
       /* HERO HEADER */
-      .hero{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,#1d4ed8 100%);color:#fff;border-radius:20px;padding:28px 32px 24px;margin-bottom:20px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .hero{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,#1d4ed8 100%);color:#fff;border-radius:8px;padding:28px 32px 24px;margin-bottom:20px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
       .hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
-      .hero-brand{font-size:11px;font-weight:700;opacity:.5;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;}
-      .hero-title{font-size:24px;font-weight:800;letter-spacing:-.4px;}
+      .hero-brand{font-size:11px;font-weight:600;opacity:.5;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;}
+      .hero-title{font-size:24px;font-weight:600;letter-spacing:-.4px;}
       .hero-sub{font-size:12px;opacity:.55;margin-top:4px;}
       .hero-date{font-size:11px;opacity:.45;text-align:right;}
       .kpi-row{display:flex;gap:10px;flex-wrap:wrap;}
-      .kpi-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:10px 18px;text-align:center;backdrop-filter:blur(4px);min-width:100px;}
-      .kpi-chip-num{font-size:22px;font-weight:800;line-height:1;}
+      .kpi-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:10px 18px;text-align:center;backdrop-filter:blur(4px);min-width:100px;}
+      .kpi-chip-num{font-size:22px;font-weight:600;line-height:1;}
       .kpi-chip-lbl{font-size:10px;opacity:.55;text-transform:uppercase;letter-spacing:.08em;margin-top:3px;}
       .kpi-exp{border-color:rgba(59,130,246,.5);background:rgba(59,130,246,.15);}
       .kpi-imp{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.15);}
       .kpi-over{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.15);}
       /* CARDS */
-      .card{background:#fff;border-radius:16px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);border:1px solid #f1f5f9;}
+      .card{background:#fff;border-radius:8px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);border:1px solid #f1f5f9;}
       /* GRIDS */
       .grid-3{display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:14px;margin-bottom:16px;}
       .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
       .grid-half{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
       /* SPLIT */
-      .split-card{background:#fff;border-radius:16px;padding:0;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);border:1px solid #f1f5f9;}
+      .split-card{background:#fff;border-radius:8px;padding:0;overflow:hidden;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.04);border:1px solid #f1f5f9;}
       .split-header{padding:14px 20px 12px;border-bottom:1px solid #f1f5f9;}
       .split-body{display:grid;grid-template-columns:1fr 1px 1fr;}
       .split-col{padding:16px 20px;}
       .split-divider{background:#f1f5f9;}
-      .dir-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:12px;}
+      .dir-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px;margin-bottom:12px;}
       .exp-badge{background:#eff6ff;color:#1d4ed8;}
       .imp-badge{background:#f0fdf4;color:#15803d;}
       /* MONTHLY */
@@ -3408,7 +3408,7 @@ async function generateReport(){
         .page{padding:16px;}
         .no-print{display:none!important;}
         .card,.split-card{box-shadow:none;border:1px solid #e2e8f0;}
-        .hero{border-radius:12px;}
+        .hero{border-radius:8px;}
         .grid-3,.grid-2,.grid-half{gap:10px;}
         @page{margin:14mm 12mm;}
       }
@@ -3418,9 +3418,9 @@ async function generateReport(){
       return '<div class="split-card">'
         +'<div class="split-header">'+sectionTitle(icon,title,color)+'</div>'
         +'<div class="split-body">'
-        +'<div class="split-col"><div class="dir-badge exp-badge">&#8593; Export <span style="margin-left:4px;font-size:13px;font-weight:800;color:#1d4ed8">'+expC+'</span></div>'+expContent+'</div>'
+        +'<div class="split-col"><div class="dir-badge exp-badge">&#8593; Export <span style="margin-left:4px;font-size:13px;font-weight:600;color:#1d4ed8">'+expC+'</span></div>'+expContent+'</div>'
         +'<div class="split-divider"></div>'
-        +'<div class="split-col"><div class="dir-badge imp-badge">&#8595; Import <span style="margin-left:4px;font-size:13px;font-weight:800;color:#15803d">'+impC+'</span></div>'+impContent+'</div>'
+        +'<div class="split-col"><div class="dir-badge imp-badge">&#8595; Import <span style="margin-left:4px;font-size:13px;font-weight:600;color:#15803d">'+impC+'</span></div>'+impContent+'</div>'
         +'</div></div>';
     }
 
@@ -3436,7 +3436,7 @@ async function generateReport(){
       +'<div><div class="hero-brand">FreightTrack Pro</div>'
       +'<div class="hero-title">Operations Report</div>'
       +'<div class="hero-sub">Generated '+today.toLocaleString()+'</div></div>'
-      +'<div class="hero-date no-print"><button onclick="window.print()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:9px 20px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">&#128424; Print PDF</button></div>'
+      +'<div class="hero-date no-print"><button onclick="window.print()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:9px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">&#128424; Print PDF</button></div>'
       +'</div>'
       +'<div class="kpi-row">'
       +'<div class="kpi-chip"><div class="kpi-chip-num">'+total+'</div><div class="kpi-chip-lbl">Shipments</div></div>'
@@ -3469,15 +3469,15 @@ async function generateReport(){
       +modeRowsHTML
       +'<div style="margin-top:16px;border-top:1px solid #f1f5f9;padding-top:14px">'
       +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
-      +'<span style="min-width:58px;font-size:11px;font-weight:700;color:#3b82f6">&#8593; Export</span>'
+      +'<span style="min-width:58px;font-size:11px;font-weight:600;color:#3b82f6">&#8593; Export</span>'
       +'<div style="flex:1;height:9px;background:#eff6ff;border-radius:99px;overflow:hidden">'
       +'<div style="height:9px;background:#3b82f6;width:'+(total?Math.round(expC/total*100):0)+'%;border-radius:99px"></div></div>'
-      +'<span style="font-size:12px;font-weight:800;color:#1d4ed8;min-width:26px;text-align:right">'+expC+'</span></div>'
+      +'<span style="font-size:12px;font-weight:600;color:#1d4ed8;min-width:26px;text-align:right">'+expC+'</span></div>'
       +'<div style="display:flex;align-items:center;gap:8px">'
-      +'<span style="min-width:58px;font-size:11px;font-weight:700;color:#22c55e">&#8595; Import</span>'
+      +'<span style="min-width:58px;font-size:11px;font-weight:600;color:#22c55e">&#8595; Import</span>'
       +'<div style="flex:1;height:9px;background:#f0fdf4;border-radius:99px;overflow:hidden">'
       +'<div style="height:9px;background:#22c55e;width:'+(total?Math.round(impC/total*100):0)+'%;border-radius:99px"></div></div>'
-      +'<span style="font-size:12px;font-weight:800;color:#15803d;min-width:26px;text-align:right">'+impC+'</span></div></div>'
+      +'<span style="font-size:12px;font-weight:600;color:#15803d;min-width:26px;text-align:right">'+impC+'</span></div></div>'
       +'</div>'
 
       +'</div>'
@@ -3576,21 +3576,21 @@ function _renderContainerList(){
     return;
   }
   list.innerHTML = formContainers.map((c,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+    <div style="display:flex;align-items:center;gap:10px;background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:10px 14px">
       <div style="font-size:20px">📦</div>
       
-      <div class="detail-section" style="margin-top:12px;background:var(--bg2);padding:12px;border-radius:10px">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase">Shipment Details</div>
+      <div class="detail-section" style="margin-top:12px;background:var(--bg);padding:12px;border-radius:8px">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase">Shipment Details</div>
         <div class="info-chips" id="detail-info-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
       </div>
 
-      <div class="detail-section" id="detail-containers-section" style="margin-top:12px;display:none;background:var(--bg2);padding:12px;border-radius:10px">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Containers</div>
+      <div class="detail-section" id="detail-containers-section" style="margin-top:12px;display:none;background:var(--bg);padding:12px;border-radius:8px">
+        <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;margin-bottom:4px">Containers</div>
         <div id="detail-containers-list"></div>
       </div>
 <div style="flex:1">
-        <span style="font-size:13px;font-weight:700;color:var(--text1)">${c.qty} × ${c.size_type}</span>
-        <span style="font-size:11px;color:var(--accent);font-weight:700;margin-left:8px">${c.teu_total} TEU</span>
+        <span style="font-size:13px;font-weight:600;color:var(--text1)">${c.qty} × ${c.size_type}</span>
+        <span style="font-size:11px;color:var(--accent);font-weight:600;margin-left:8px">${c.teu_total} TEU</span>
       </div>
       <button type="button" onclick="${c.fromDB&&c.dbIds?.length?`deleteContainerGroup(${i})`:"removeContainerRow("+i+")"}" class="btn btn-danger btn-sm btn-icon" style="padding:4px 8px">
         <i class="ph ph-trash"></i>
@@ -3699,7 +3699,7 @@ function _bulkStep(n){
   });
   if(n===1){
     var dz=document.getElementById("bulk-drop-zone");
-    if(dz)dz.innerHTML='<i class="ph ph-file-xls" style="font-size:38px;color:#22c55e;display:block;margin-bottom:10px"></i><div style="font-size:14px;font-weight:700;color:var(--text1)">Drop .xlsx file here</div><div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>';
+    if(dz)dz.innerHTML='<i class="ph ph-file-xls" style="font-size:38px;color:#22c55e;display:block;margin-bottom:10px"></i><div style="font-size:14px;font-weight:600;color:var(--text1)">Drop .xlsx file here</div><div style="font-size:12px;color:var(--text2);margin-top:4px">or click to browse</div>';
     var ps=document.getElementById("bulk-parse-status");if(ps){ps.style.display="none";ps.innerHTML="";}
     var fi=document.getElementById("bulk-file");if(fi)fi.value="";
     _bulkFile=null;_bulkRows=[];
@@ -3803,10 +3803,10 @@ async function doBulkUpload(){
     _bulkStep(3);
     var rc=document.getElementById("bulk-result-content");
     if(rc)rc.innerHTML='<div style="font-size:40px;margin-bottom:10px">&#9989;</div>'
-      +'<div style="font-size:16px;font-weight:700;color:var(--text1)">Import Complete!</div>'
+      +'<div style="font-size:16px;font-weight:600;color:var(--text1)">Import Complete!</div>'
       +'<div style="display:flex;gap:16px;justify-content:center;margin-top:16px">'
-      +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#22c55e">'+d.created+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Created</div></div>'
-      +'<div style="background:var(--bg3);border-radius:10px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:800;color:#f59e0b">'+d.skipped+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Skipped</div></div></div>'
+      +'<div style="background:var(--bg3);border-radius:8px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:600;color:#22c55e">'+d.created+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Created</div></div>'
+      +'<div style="background:var(--bg3);border-radius:8px;padding:14px 20px;text-align:center"><div style="font-size:24px;font-weight:600;color:#f59e0b">'+d.skipped+'</div><div style="font-size:11px;color:var(--text2);margin-top:4px">Skipped</div></div></div>'
       +(d.errors&&d.errors.length?'<div style="margin-top:10px;font-size:12px;color:var(--red)">&#9888; '+d.errors.length+' warning(s)</div>':"")
       +'<button class="btn btn-primary" style="margin-top:16px" onclick="closeBulkImport()"><i class="ph ph-check"></i> Done</button>';
     _bulkFile=null;_bulkRows=[];
@@ -4006,12 +4006,12 @@ function renderClients(list){
   el.innerHTML = list.map(function(c,i){
     var av = (c.name||'?').charAt(0).toUpperCase();
     var col = AVATAR_COLORS[i % AVATAR_COLORS.length];
-    var autoTag = c.auto ? '<span style="font-size:9px;background:var(--bg3);color:var(--text2);padding:2px 6px;border-radius:10px;margin-left:6px">auto</span>' : '';
+    var autoTag = c.auto ? '<span style="font-size:9px;background:var(--bg3);color:var(--text2);padding:2px 6px;border-radius:8px;margin-left:6px">auto</span>' : '';
     return '<div class="client-card">'
       + '<div style="display:flex;align-items:center;gap:12px">'
       + '<div class="client-avatar" style="background:'+col+'">'+av+'</div>'
       + '<div style="flex:1;min-width:0">'
-      + '<div style="font-weight:700;font-size:14px;color:var(--text1)">'+c.name+autoTag+'</div>'
+      + '<div style="font-weight:600;font-size:14px;color:var(--text1)">'+c.name+autoTag+'</div>'
       + '<div style="font-size:11px;color:var(--text2);margin-top:2px">'+(c.contact||'')+(c.contact&&c.phone?' · ':'')+''+(c.phone||'')+'</div>'
       + '<div style="font-size:11px;color:var(--accent);margin-top:1px">'+(c.email||'')+'</div>'
       + '</div>'
@@ -4151,46 +4151,46 @@ function openDigest(){
     {v:overdue.length, l:'Overdue', c:'#ef4444'}
   ];
   kpis.forEach(function(k){
-    html += '<div style="flex:1;min-width:70px;background:var(--bg3);border-radius:10px;padding:10px;text-align:center">'
-      + '<div style="font-size:22px;font-weight:800;color:'+k.c+'">'+k.v+'</div>'
+    html += '<div style="flex:1;min-width:70px;background:var(--bg3);border-radius:8px;padding:10px;text-align:center">'
+      + '<div style="font-size:22px;font-weight:600;color:'+k.c+'">'+k.v+'</div>'
       + '<div style="font-size:10px;color:var(--text2);margin-top:3px">'+k.l+'</div></div>';
   });
   html += '</div>';
 
   // Overdue section
   if(overdue.length){
-    html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px">⚠️ Overdue ('+overdue.length+')</div>';
+    html += '<div class="digest-section"><div style="font-size:12px;font-weight:600;color:#ef4444;margin-bottom:8px">⚠️ Overdue ('+overdue.length+')</div>';
     overdue.slice(0,5).forEach(function(s){
       var days = Math.floor((today-new Date(s.eta))/(1000*60*60*24));
-      html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+s.ref+'</div>'
+      html += '<div class="digest-row"><div><div style="font-weight:600;font-size:12px">'+s.ref+'</div>'
         + '<div style="font-size:11px;color:var(--text2)">'+(s.client||'—')+'</div></div>'
-        + '<span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+days+'d late</span></div>';
+        + '<span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700">'+days+'d late</span></div>';
     });
     html += '</div>';
   }
 
   // Arriving soon
   if(arriving.length){
-    html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#22c55e;margin-bottom:8px">🚢 Arriving This Week ('+arriving.length+')</div>';
+    html += '<div class="digest-section"><div style="font-size:12px;font-weight:600;color:#22c55e;margin-bottom:8px">🚢 Arriving This Week ('+arriving.length+')</div>';
     arriving.slice(0,5).forEach(function(sh){
       var diff = Math.round((new Date(sh.eta)-today)/(1000*60*60*24));
       var lbl = diff===0?'Today':diff===1?'Tomorrow':'In '+diff+'d';
-      html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+sh.ref+'</div>'
+      html += '<div class="digest-row"><div><div style="font-weight:600;font-size:12px">'+sh.ref+'</div>'
         + '<div style="font-size:11px;color:var(--text2)">'+(sh.client||'—')+' → '+(sh.pod||'—')+'</div></div>'
-        + '<span style="background:#22c55e22;color:#22c55e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+lbl+'</span></div>';
+        + '<span style="background:#22c55e22;color:#22c55e;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700">'+lbl+'</span></div>';
     });
     html += '</div>';
   }
 
   // Departing soon
   if(departing.length){
-    html += '<div class="digest-section"><div style="font-size:12px;font-weight:700;color:#f97316;margin-bottom:8px">📦 Departing This Week ('+departing.length+')</div>';
+    html += '<div class="digest-section"><div style="font-size:12px;font-weight:600;color:#f97316;margin-bottom:8px">📦 Departing This Week ('+departing.length+')</div>';
     departing.slice(0,5).forEach(function(sh){
       var diff = Math.round((new Date(sh.etd)-today)/(1000*60*60*24));
       var lbl = diff===0?'Today':diff===1?'Tomorrow':'In '+diff+'d';
-      html += '<div class="digest-row"><div><div style="font-weight:700;font-size:12px">'+sh.ref+'</div>'
+      html += '<div class="digest-row"><div><div style="font-weight:600;font-size:12px">'+sh.ref+'</div>'
         + '<div style="font-size:11px;color:var(--text2)">'+(sh.client||'—')+' '+(sh.pol||'')+(sh.pod?' → '+sh.pod:'')+'</div></div>'
-        + '<span style="background:#f9731622;color:#f97316;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700">'+lbl+'</span></div>';
+        + '<span style="background:#f9731622;color:#f97316;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700">'+lbl+'</span></div>';
     });
     html += '</div>';
   }
@@ -4299,12 +4299,12 @@ function renderActivityFeed(){
         function chip(label,bv,av,unit){
           var d=delta(bv,av);
           var col=d.up?'#22c55e':'#ef4444', arr=d.up?'↑':'↓';
-          return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:center">'
-            +'<div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">'+label+'</div>'
+          return '<div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:12px 14px;text-align:center">'
+            +'<div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px">'+label+'</div>'
             +'<div style="display:flex;justify-content:center;align-items:baseline;gap:6px">'
-            +'<span style="font-size:20px;font-weight:800;color:var(--text1)">'+bv+(unit?' '+unit:'')+'</span>'
+            +'<span style="font-size:20px;font-weight:600;color:var(--text1)">'+bv+(unit?' '+unit:'')+'</span>'
             +'<span style="font-size:11px;color:var(--text2)">vs '+av+'</span></div>'
-            +'<div style="font-size:13px;font-weight:800;color:'+col+';margin-top:4px">'+arr+' '+d.pct+'</div></div>';
+            +'<div style="font-size:13px;font-weight:600;color:'+col+';margin-top:4px">'+arr+' '+d.pct+'</div></div>';
         }
         var kr=document.getElementById('cmp-kpi-row');
         if(kr) kr.innerHTML=
@@ -4348,7 +4348,7 @@ function renderActivityFeed(){
         }).sort(function(x,y){return (y.aShp+y.bShp)-(x.aShp+x.bShp);}).slice(0,12);
         var maxShp=Math.max.apply(null,combined.map(function(c){return Math.max(c.aShp,c.bShp);}).concat([1]));
         var ctEl=document.getElementById('cmp-client-table');
-        if(ctEl) ctEl.innerHTML='<div style="display:grid;grid-template-columns:180px 1fr 60px 1fr 60px 70px;align-items:center;gap:6px;font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:8px">'
+        if(ctEl) ctEl.innerHTML='<div style="display:grid;grid-template-columns:180px 1fr 60px 1fr 60px 70px;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;padding-bottom:8px;box-shadow:rgba(0,0,0,0.06) 0 -1px 0 0 inset;margin-bottom:8px">'
           +'<div>Client</div><div>Period A</div><div style="text-align:right">A shp</div><div>Period B</div><div style="text-align:right">B shp</div><div style="text-align:right">Δ</div></div>'
           +combined.map(function(c){
             var d=delta(c.bShp,c.aShp),col=d.up?'#22c55e':'#ef4444',arr=d.up?'↑':'↓';
@@ -4356,10 +4356,10 @@ function renderActivityFeed(){
             return '<div style="display:grid;grid-template-columns:180px 1fr 60px 1fr 60px 70px;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--bg3)">'
               +'<div style="font-size:11px;font-weight:600;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.name+'</div>'
               +'<div style="height:6px;background:var(--bg3);border-radius:99px"><div style="height:6px;background:#94a3b8;width:'+wA+'%;border-radius:99px"></div></div>'
-              +'<div style="font-size:11px;font-weight:700;color:var(--text2);text-align:right">'+c.aShp+'</div>'
+              +'<div style="font-size:11px;font-weight:600;color:var(--text2);text-align:right">'+c.aShp+'</div>'
               +'<div style="height:6px;background:var(--bg3);border-radius:99px"><div style="height:6px;background:#3b82f6;width:'+wB+'%;border-radius:99px"></div></div>'
-              +'<div style="font-size:11px;font-weight:700;color:#3b82f6;text-align:right">'+c.bShp+'</div>'
-              +'<div style="font-size:12px;font-weight:800;color:'+col+';text-align:right">'+arr+' '+d.pct+'</div></div>';
+              +'<div style="font-size:11px;font-weight:600;color:#3b82f6;text-align:right">'+c.bShp+'</div>'
+              +'<div style="font-size:12px;font-weight:600;color:'+col+';text-align:right">'+arr+' '+d.pct+'</div></div>';
           }).join('');
 
         /* mini bars */
@@ -4417,7 +4417,7 @@ function renderActivityFeed(){
               +'<td style="padding:8px 10px;font-weight:600;color:#1e293b;font-size:12px">'+c.name+'</td>'
               +'<td style="padding:8px 10px;min-width:100px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:#f1f5f9;border-radius:99px"><div style="height:6px;background:#94a3b8;width:'+wA+'%;border-radius:99px"></div></div><span style="font-size:11px;color:#64748b;min-width:20px;text-align:right">'+c.aShp+'</span></div></td>'
               +'<td style="padding:8px 10px;min-width:100px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:#f1f5f9;border-radius:99px"><div style="height:6px;background:#3b82f6;width:'+wB+'%;border-radius:99px"></div></div><span style="font-size:11px;color:#1d4ed8;min-width:20px;text-align:right">'+c.bShp+'</span></div></td>'
-              +'<td style="padding:8px 10px;font-size:12px;font-weight:800;color:'+col+';text-align:right">'+arr+' '+d.pct+'</td></tr>';
+              +'<td style="padding:8px 10px;font-size:12px;font-weight:600;color:'+col+';text-align:right">'+arr+' '+d.pct+'</td></tr>';
           }).join('');
         }
 
@@ -4433,12 +4433,12 @@ function renderActivityFeed(){
 
         function hChip(label,bv,av){
           var d=delta(bv,av),col=d.up?'#bbf7d0':'#fecaca',tc=d.up?'#166534':'#991b1b',arr=d.up?'↑':'↓';
-          return '<div style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px 18px;text-align:center;min-width:90px">'
+          return '<div style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">'
             +'<div style="font-size:10px;opacity:.6;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">'+label+'</div>'
             +'<div style="display:flex;justify-content:center;align-items:baseline;gap:6px">'
-            +'<span style="font-size:22px;font-weight:800">'+bv+'</span>'
+            +'<span style="font-size:22px;font-weight:600">'+bv+'</span>'
             +'<span style="font-size:11px;opacity:.5">vs '+av+'</span></div>'
-            +'<div style="display:inline-block;background:'+col+';color:'+tc+';font-size:12px;font-weight:800;padding:2px 10px;border-radius:20px;margin-top:4px">'+arr+' '+d.pct+'</div></div>';
+            +'<div style="display:inline-block;background:'+col+';color:'+tc+';font-size:12px;font-weight:600;padding:2px 10px;border-radius:8px;margin-top:4px">'+arr+' '+d.pct+'</div></div>';
         }
 
         /* monthly inline bars */
@@ -4459,21 +4459,21 @@ function renderActivityFeed(){
         }).join('');
 
         var css='*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f8fafc;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page{max-width:1100px;margin:0 auto;padding:28px 24px;}'
-          +'.hero{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#2563eb 100%);color:#fff;border-radius:20px;padding:28px 32px;margin-bottom:20px;}'
-          +'.section{background:#fff;border-radius:16px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #e2e8f0;}'
+          +'.hero{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#2563eb 100%);color:#fff;border-radius:8px;padding:28px 32px;margin-bottom:20px;}'
+          +'.section{background:#fff;border-radius:8px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #e2e8f0;}'
           +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}'
-          +'.period-box{border-radius:12px;padding:14px 18px;}'
+          +'.period-box{border-radius:8px;padding:14px 18px;}'
           +'.kpi-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;}'
           +'.month-row{display:flex;align-items:flex-end;gap:4px;}'
           +'table{width:100%;border-collapse:collapse;}'
-          +'th{padding:8px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e2e8f0;}'
+          +'th{padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e2e8f0;}'
           +'@media print{body{background:#fff;}.section{box-shadow:none;}@page{margin:12mm;}}';
 
         var doc='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FreightTrack — Comparison</title><style>'+css+'</style></head><body><div class="page">'
           /* hero */
           +'<div class="hero">'
-          +'<div style="font-size:11px;font-weight:700;opacity:.45;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">FreightTrack Pro</div>'
-          +'<div style="font-size:24px;font-weight:800;letter-spacing:-.3px">Period Comparison Report</div>'
+          +'<div style="font-size:11px;font-weight:600;opacity:.45;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">FreightTrack Pro</div>'
+          +'<div style="font-size:24px;font-weight:600;letter-spacing:-.3px">Period Comparison Report</div>'
           +'<div style="font-size:12px;opacity:.45;margin-top:4px">Generated '+new Date().toLocaleString()+'</div>'
           +'<div class="kpi-row">'
           +hChip('Shipments',b.total,a.total)
@@ -4485,31 +4485,31 @@ function renderActivityFeed(){
           /* period labels */
           +'<div class="grid2">'
           +'<div class="period-box" style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #94a3b8">'
-          +'<div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Period A — Baseline</div>'
-          +'<div style="font-size:18px;font-weight:800;color:#1e293b;margin-top:4px">'+(lbl.aFrom||'?')+' → '+(lbl.aTo||'?')+'</div>'
+          +'<div style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em">Period A — Baseline</div>'
+          +'<div style="font-size:18px;font-weight:600;color:#1e293b;margin-top:4px">'+(lbl.aFrom||'?')+' → '+(lbl.aTo||'?')+'</div>'
           +'<div style="font-size:12px;color:#64748b;margin-top:2px">'+a.total+' shipments · '+(a.total_teu||0)+' TEU</div></div>'
           +'<div class="period-box" style="background:#eff6ff;border:1px solid #bfdbfe;border-left:4px solid #3b82f6">'
-          +'<div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.06em">Period B — Current</div>'
-          +'<div style="font-size:18px;font-weight:800;color:#1e293b;margin-top:4px">'+(lbl.bFrom||'?')+' → '+(lbl.bTo||'?')+'</div>'
+          +'<div style="font-size:10px;font-weight:600;color:#1d4ed8;text-transform:uppercase;letter-spacing:.06em">Period B — Current</div>'
+          +'<div style="font-size:18px;font-weight:600;color:#1e293b;margin-top:4px">'+(lbl.bFrom||'?')+' → '+(lbl.bTo||'?')+'</div>'
           +'<div style="font-size:12px;color:#64748b;margin-top:2px">'+b.total+' shipments · '+(b.total_teu||0)+' TEU</div></div></div>'
           /* monthly */
-          +'<div class="section"><div style="font-size:13px;font-weight:800;color:#1e293b;margin-bottom:10px">&#128200; Monthly Volume</div>'
+          +'<div class="section"><div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:10px">&#128200; Monthly Volume</div>'
           +'<div style="display:flex;gap:16px;font-size:11px;color:#64748b;margin-bottom:10px">'
           +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:4px"></span>Period A (baseline)</span>'
           +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:4px"></span>Period B (current)</span></div>'
           +'<div class="month-row">'+monthBarsH+'</div></div>'
           /* client comparison table */
-          +'<div class="section"><div style="font-size:13px;font-weight:800;color:#1e293b;margin-bottom:14px">&#128100; Client Comparison</div>'
+          +'<div class="section"><div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:14px">&#128100; Client Comparison</div>'
           +'<table><thead><tr><th>Client</th><th>Period A (baseline)</th><th>Period B (current)</th><th style="text-align:right">Change</th></tr></thead>'
           +'<tbody>'+clientRows()+'</tbody></table></div>'
           /* routes */
           +'<div class="grid2">'
-          +'<div class="section"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>Top Routes — A</div>'+barHTML(a.top_routing,'route','count','#94a3b8')+'</div>'
-          +'<div class="section"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:6px"></span>Top Routes — B</div>'+barHTML(b.top_routing,'route','count','#3b82f6')+'</div>'
-          +'<div class="section"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>POD Export — A</div>'+barHTML(a.top_pod_export,'name','count','#94a3b8')+'</div>'
-          +'<div class="section"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#ef4444;margin-right:6px"></span>POD Export — B</div>'+barHTML(b.top_pod_export,'name','count','#ef4444')+'</div>'
-          +'<div class="section"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>POD Import — A</div>'+barHTML(a.top_pod_import,'name','count','#94a3b8')+'</div>'
-          +'<div class="section"><div style="font-size:12px;font-weight:800;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#22c55e;margin-right:6px"></span>POD Import — B</div>'+barHTML(b.top_pod_import,'name','count','#22c55e')+'</div>'
+          +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>Top Routes — A</div>'+barHTML(a.top_routing,'route','count','#94a3b8')+'</div>'
+          +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:6px"></span>Top Routes — B</div>'+barHTML(b.top_routing,'route','count','#3b82f6')+'</div>'
+          +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>POD Export — A</div>'+barHTML(a.top_pod_export,'name','count','#94a3b8')+'</div>'
+          +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#ef4444;margin-right:6px"></span>POD Export — B</div>'+barHTML(b.top_pod_export,'name','count','#ef4444')+'</div>'
+          +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>POD Import — A</div>'+barHTML(a.top_pod_import,'name','count','#94a3b8')+'</div>'
+          +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#22c55e;margin-right:6px"></span>POD Import — B</div>'+barHTML(b.top_pod_import,'name','count','#22c55e')+'</div>'
           +'</div>'
           +'<div style="text-align:center;padding:16px 0 4px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0">FreightTrack Pro · Comparison Report · '+new Date().toLocaleString()+'</div>'
           +'</div></body></html>';
