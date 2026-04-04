@@ -2333,14 +2333,14 @@ async function loadDashboard(){
       }
       var _now=new Date(),_cm=_now.getMonth(),_cy=_now.getFullYear();
       var _lm=_cm===0?11:_cm-1,_ly=_cm===0?_cy-1:_cy;
-      function _inM(s,m,y){var d=new Date(s.etd||s.eta||s.created_at||'');return !isNaN(d)&&d.getMonth()===m&&d.getFullYear()===y;}
+      function _inM(s,m,y){var raw=s.etd||s.eta||s.created_at||'';if(!raw)return false;var p=raw.split(/[-T]/);if(p.length<3)return false;return(parseInt(p[1],10)-1)===m&&parseInt(p[0],10)===y;}
       var _allShips=ships||[];
       var _totalPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly);}).length;
       var _totalDelta=_totalPrev?Math.round(((total-_totalPrev)/_totalPrev)*100):0;
-      var _expCurr=_allShips.filter(function(s){return(s.direction||s.shipment_type||'').toLowerCase()==='export';}).length;
+      var _expCurr=_allShips.filter(function(s){return _inM(s,_cm,_cy)&&(s.direction||s.shipment_type||'').toLowerCase()==='export';}).length;
       var _expPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly)&&(s.direction||s.shipment_type||'').toLowerCase()==='export';}).length;
       var _expDelta=_expPrev?Math.round(((_expCurr-_expPrev)/_expPrev)*100):0;
-      var _teuCurr=Math.round(_allShips.reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
+      var _teuCurr=Math.round(_allShips.filter(function(s){return _inM(s,_cm,_cy);}).reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
       var _teuPrev=Math.round(_allShips.filter(function(s){return _inM(s,_lm,_ly);}).reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
       var _teuDelta=_teuPrev?Math.round(((_teuCurr-_teuPrev)/_teuPrev)*100):0;
       var _critical=Math.ceil(overdue/2),_minor=Math.floor(overdue/2);
@@ -2390,6 +2390,17 @@ async function loadDashboard(){
     var recent=list.slice(0,6);
     if(typeof renderCards==='function')renderCards(recent,'recent-cards');
     renderActivityFeed();
+  try{
+    var _mn=new Date(),_mc=_mn.getMonth(),_yc=_mn.getFullYear();
+    var _mns=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var _setEl=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+    var _ml=allShipments.filter(function(s){return _inM(s,_mc,_yc);});
+    _setEl('dash-month-label',_mns[_mc]+' '+_yc);
+    _setEl('dash-mini-import',_ml.filter(function(s){return(s.direction||s.shipment_type||'').toLowerCase()==='import';}).length);
+    _setEl('dash-mini-export',_ml.filter(function(s){return(s.direction||s.shipment_type||'').toLowerCase()==='export';}).length);
+    _setEl('dash-mini-ocean',_ml.filter(function(s){return(s.mode||'').toLowerCase()==='ocean';}).length);
+    _setEl('dash-mini-road',_ml.filter(function(s){return(s.mode||'').toLowerCase()==='road';}).length);
+  }catch(e){console.error('dash-mini',e);}
     var tw=document.getElementById('recent-table');
     if(tw){
       if(!recent.length){
