@@ -881,9 +881,216 @@ body.dark .client-bar-fill{background:var(--blue);}
   to{opacity:1;transform:translateY(0) scale(1)}
 }
 
+
+/* ══════════════════════════════════════════════
+   STITCH DESIGN SYSTEM — Material Design 3
+   Injected from Google Stitch DESIGN.md tokens
+   ══════════════════════════════════════════════ */
+
+/* Light mode Stitch tokens */
+:root {
+  --stitch-bg:          #f6fafe;
+  --stitch-surface:     #ffffff;
+  --stitch-surf-low:    #f0f4f8;
+  --stitch-surf-mid:    #eaeef2;
+  --stitch-surf-high:   #e4e9ed;
+  --stitch-primary:     #235fa4;
+  --stitch-primary-dk:  #001c3b;
+  --stitch-secondary:   #d5e3fc;
+  --stitch-text1:       #171c1f;
+  --stitch-text2:       #45464d;
+  --stitch-border:      #c6c6cd;
+  --stitch-tint:        #235fa4;
+  --stitch-error:       #ba1a1a;
+  --stitch-radius:      0.5rem;
+  --stitch-radius-sm:   0.25rem;
+  --stitch-radius-full: 0.75rem;
+}
+
+body.dark {
+  --stitch-bg:          #0f172a;
+  --stitch-surface:     #1e293b;
+  --stitch-surf-low:    #1e293b;
+  --stitch-surf-mid:    #263548;
+  --stitch-surf-high:   #334155;
+  --stitch-primary:     #a6c8ff;
+  --stitch-primary-dk:  #d5e3ff;
+  --stitch-secondary:   #3a485b;
+  --stitch-text1:       #edf1f5;
+  --stitch-text2:       #94a3b8;
+  --stitch-border:      #334155;
+  --stitch-tint:        #a6c8ff;
+  --stitch-error:       #ffb4ab;
+}
+
+/* ── Sidebar upgrade ── */
+.sidebar {
+  background: var(--stitch-surf-low) !important;
+  border-right: 1px solid var(--stitch-border) !important;
+}
+.nav-item {
+  border-radius: var(--stitch-radius) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  transition: background .15s, transform .15s !important;
+}
+.nav-item:hover {
+  background: var(--stitch-surf-high) !important;
+  transform: translateX(3px) !important;
+}
+.nav-item.active {
+  background: var(--stitch-surface) !important;
+  color: var(--stitch-text1) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08) !important;
+}
+
+/* ── Cards upgrade ── */
+.stat-card, .card, .dash-card {
+  background: var(--stitch-surface) !important;
+  border-radius: var(--stitch-radius) !important;
+  border: 1px solid var(--stitch-border) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--stitch-tint);
+  border-radius: 3px 0 0 3px;
+}
+
+/* ── Form inputs ── */
+.form-control, .filter, input[type=text], input[type=date],
+input[type=datetime-local], select, textarea {
+  background: var(--stitch-surf-low) !important;
+  border: none !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
+  color: var(--stitch-text1) !important;
+  font-weight: 500 !important;
+  transition: border-color .2s !important;
+  padding: 10px 14px !important;
+}
+.form-control:focus, .filter:focus, input:focus, select:focus {
+  border-bottom-color: var(--stitch-primary) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+label, .form-label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  color: var(--stitch-text2) !important;
+}
+
+/* ── Buttons upgrade ── */
+.btn-primary {
+  background: var(--stitch-primary) !important;
+  color: #fff !important;
+  border-radius: var(--stitch-radius-sm) !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(35,95,164,.3) !important;
+  transition: transform .15s, box-shadow .15s !important;
+}
+.btn-primary:hover {
+  transform: scale(1.02) !important;
+  box-shadow: 0 4px 16px rgba(35,95,164,.4) !important;
+}
+.btn-primary:active { transform: scale(.97) !important; }
+
+.btn-ghost {
+  background: transparent !important;
+  border: none !important;
+  color: var(--stitch-text2) !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  border-radius: var(--stitch-radius-sm) !important;
+  transition: background .15s !important;
+}
+.btn-ghost:hover { background: var(--stitch-surf-high) !important; }
+
+/* ── Modal upgrade ── */
+.modal {
+  background: var(--stitch-surface) !important;
+  border-radius: var(--stitch-radius) !important;
+  border-left: 3px solid var(--stitch-tint) !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,.2) !important;
+}
+.modal-head {
+  border-bottom: 1px solid var(--stitch-border) !important;
+  padding: 20px 24px !important;
+}
+.modal-title {
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: .1em !important;
+  text-transform: uppercase !important;
+  color: var(--stitch-text1) !important;
+}
+
+/* ── Table rows upgrade ── */
+.ship-row {
+  border-bottom: 1px solid var(--stitch-border) !important;
+  transition: background .12s, transform .12s !important;
+}
+.ship-row:hover {
+  background: var(--stitch-surf-low) !important;
+  transform: translateX(2px) !important;
+}
+
+/* ── Section headers upgrade ── */
+.page-title, h1, h2 {
+  font-weight: 900 !important;
+  letter-spacing: -.03em !important;
+  color: var(--stitch-text1) !important;
+}
+
+/* ── Status badges upgrade ── */
+.badge, .status-badge {
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  letter-spacing: .1em !important;
+  text-transform: uppercase !important;
+  border-radius: var(--stitch-radius-full) !important;
+  padding: 3px 10px !important;
+}
+
+/* ── Breadcrumb style for page subtitles ── */
+.page-sub {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .1em !important;
+  color: var(--stitch-text2) !important;
+}
+
+/* ── Section number tags (like Stitch 01/02/03) ── */
+.section-num {
+  background: var(--stitch-primary);
+  color: #fff;
+  width: 28px; height: 28px;
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 900;
+  border-radius: 2px;
+  margin-right: 10px;
+}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <div id="toast-container"></div>
@@ -1677,7 +1884,8 @@ body.dark .client-bar-fill{background:var(--blue);}
 <div class="overlay" id="modal-add">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-head">
+    <div class="modal-head" style="border-left:3px solid var(--stitch-tint);padding-left:20px">
+      <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--stitch-text2);margin-bottom:4px">MANIFEST CREATION</div>
       <div class="modal-title" id="modal-add-title">New Shipment</div>
       <button class="modal-close" onclick="closeModal('modal-add')"><i class="ph ph-x"></i></button>
     </div>
@@ -2116,6 +2324,10 @@ async function loadDashboard(){
   }catch(e){console.error('greeting',e);}
   try{
     var stats=await apiFetch('/api/stats');
+    var kpi=window._kpiData||{}; try{ if(!Object.keys(kpi).length){kpi=await apiFetch('/api/kpi-report');window._kpiData=kpi;} }catch(_){}
+    var _kpiDir=kpi.by_direction||{};
+    var _kpiMode=kpi.by_mode||{};
+    var _kpiMonthly=kpi.monthly||[];
     var bs=stats.by_status||{};
     var transit=(bs.Sailing||0)+(bs.Stuffed||0);
     var done=(bs.Closed||0)+(bs.Arrived||0);
