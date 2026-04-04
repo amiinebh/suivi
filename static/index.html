@@ -657,21 +657,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
   .section-head{ padding:11px 14px; }
 }
 
-/* ── Recent Shipments table: compact rows ── */
-#recent-table table tbody td{ padding:5px 10px; font-size:12px; }
-#recent-table table thead th{ padding:6px 10px; }
 
-/* ── Table action icon buttons ── */
-.tbl-action-btn{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:28px; height:28px; border-radius:6px;
-  background:transparent; border:none; cursor:pointer;
-  color:var(--text3); font-size:15px;
-  transition:background var(--t), color var(--t);
-  font-family:var(--font);
-}
-.tbl-action-btn:hover{ background:var(--bg3); color:var(--text1); }
-.tbl-action-btn.tbl-action-danger:hover{ background:var(--red-bg); color:var(--red); }
 
 /* ── Mobile: force card view, hide desktop table ── */
 @media(max-width:768px){
@@ -733,6 +719,26 @@ body.dark .client-bar-fill{background:var(--v-develop);}
   .kpi-value, .stat-value{ font-size:24px !important; letter-spacing:-0.96px !important; }
   .card{ padding:14px 16px; }
 }
+
+/* ── Kill legacy row-menu dropdown ── */
+.row-menu-wrap{ position:relative; }
+.row-menu{ display:none !important; }
+.row-menu-btn{ display:none !important; }
+
+/* ── Compact table rows ── */
+#recent-table table tbody td{ padding:5px 10px; font-size:12px; vertical-align:middle; }
+#recent-table table thead th{ padding:6px 10px; }
+
+/* ── Inline action icon buttons ── */
+.tbl-action-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:26px; height:26px; border-radius:5px;
+  background:transparent; border:none; cursor:pointer;
+  color:var(--text3); font-size:14px;
+  transition:background var(--t), color var(--t);
+}
+.tbl-action-btn:hover{ background:var(--bg3); color:var(--text1); }
+.tbl-action-btn.tbl-action-danger:hover{ background:var(--red-bg); color:var(--red); }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
@@ -2183,14 +2189,12 @@ async function loadDashboard(){
             +'<td>'+(typeof modeBadge==='function'?modeBadge(sh.mode):sh.mode||'--')+'</td>'
             +'<td style="color:'+ec+';font-size:12px">'+fmtd(sh.eta)+'<br><span style="font-size:10px;font-weight:700">'+el+'</span></td>'
             +'<td>'+(typeof statusBadge==='function'?statusBadge(sh.status):sh.status||'--')+'</td>'
-            +'<td onclick="event.stopPropagation()">'
-            +'<div class="row-menu-wrap">'
-            +'<button class="row-menu-btn" onclick="toggleRowMenu(event,'+sh.id+')"><i class="ph ph-dots-three" style="font-size:16px"></i></button>'
-            +'<div class="row-menu" id="row-menu-'+sh.id+'">'
-            +'<div class="row-menu-item" onclick="openDetail('+sh.id+')"><i class="ph ph-eye"></i> View</div>'
-            +'<div class="row-menu-item" onclick="editShipment('+sh.id+')"><i class="ph ph-pencil"></i> Edit</div>'
-            +'<div class="row-menu-item danger" onclick="deleteShipment('+sh.id+')"><i class="ph ph-trash"></i> Delete</div>'
-            +'</div></div></td></tr>';
+            +'<td onclick="event.stopPropagation()" style="white-space:nowrap">'
+            +'<div style="display:flex;align-items:center;gap:2px">'
+            +'<button class="tbl-action-btn" title="View" onclick="openDetail('+sh.id+')"><i class="ph-bold ph-eye"></i></button>'
+            +'<button class="tbl-action-btn" title="Edit" onclick="editShipment('+sh.id+')"><i class="ph-bold ph-pencil-simple"></i></button>'
+            +'<button class="tbl-action-btn tbl-action-danger" title="Delete" onclick="deleteShipment('+sh.id+')"><i class="ph-bold ph-trash-simple"></i></button>'
+            +'</div></td></tr>';
         }).join('');
         tw.innerHTML='<table><thead><tr><th>Reference</th><th>Client</th><th>Route</th><th>Mode</th><th>ETA</th><th>Status</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
       }
