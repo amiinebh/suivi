@@ -317,7 +317,7 @@ body.dark .btn-primary:hover{opacity:.88;}
 .btn-sm{padding:5px 10px;font-size:12px;}
 .btn-icon{padding:6px;width:30px;height:30px;}
 .btn-fab{position:fixed;bottom:20px;right:16px;z-index:500;width:48px;height:48px;border-radius:50%;background:var(--text1);color:var(--bg);border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:var(--shadow-full);font-family:var(--font);}
-@media(max-width:640px){.btn-fab{display:flex;}.topbar-actions-desktop{display:none;}}
+/* btn-fab hidden on mobile via bottom-nav rule */
 
 /* Focus ring — Vercel blue */
 .btn:focus-visible,.form-control:focus-visible,.filter:focus-visible{outline:2px solid var(--v-focus);outline-offset:2px;}
@@ -478,7 +478,13 @@ body.dark .stat-sparkline span.active{background:var(--v-develop);}
 
 /* ══ MOBILE SHIP CARDS ══ */
 .mobile-cards{display:none;}
-@media(max-width:640px){.mobile-cards{display:flex;flex-direction:column;gap:10px;}.desktop-table{display:none;}}
+@media(max-width:768px){
+  .mobile-cards{display:flex;flex-direction:column;gap:10px;}
+  .desktop-table{display:none;}
+}
+@media(min-width:769px){
+  .mobile-cards{display:none;}
+}
 .shp-card{background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius-lg);padding:14px 16px;}
 
 /* ══ DASHBOARD COMPONENTS ══ */
@@ -650,6 +656,16 @@ body.dark .client-bar-fill{background:var(--v-develop);}
   .kpi-value, .stat-value{ font-size:24px !important; letter-spacing:-0.96px !important; }
   .card{ padding:14px 16px; }
   .section-head{ padding:11px 14px; }
+}
+
+/* ── Recent Shipments: force mobile card view ── */
+@media(max-width:768px){
+  #recent-table-wrap{ display:none !important; }
+  #recent-cards{ display:flex !important; flex-direction:column; gap:8px; padding:10px 12px; }
+  .row-menu-wrap{ display:none; }
+}
+@media(min-width:769px){
+  #recent-cards{ display:none !important; }
 }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
