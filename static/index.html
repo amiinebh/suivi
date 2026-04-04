@@ -752,6 +752,177 @@ body.dark .client-bar-fill{background:var(--v-develop);}
 .ship-card:hover{ box-shadow:var(--shadow-hover); }
 .ship-card-head,.ship-card-body,.ship-card-foot{ display:none; }
 .ship-ref,.ship-sub,.ship-actions{ display:none; }
+
+/* ── Detail panel: info tab grid ── */
+.info-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  padding:14px;
+}
+.info-chip{
+  background:var(--bg);
+  box-shadow:var(--shadow-card);
+  border-radius:8px;
+  padding:10px 12px;
+}
+.info-chip.full{
+  grid-column:span 2;
+}
+.chip-label{
+  font-size:10px;
+  font-weight:500;
+  font-family:var(--font-mono);
+  color:var(--text3);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:3px;
+}
+.chip-value{
+  font-size:13px;
+  font-weight:500;
+  color:var(--text1);
+  word-break:break-word;
+}
+@media(max-width:480px){
+  .info-grid{ grid-template-columns:1fr 1fr; gap:6px; padding:10px; }
+  .chip-value{ font-size:12px; }
+}
+
+/* ── Toast notifications — bottom right ── */
+#toast-container{
+  position:fixed;
+  bottom:80px;          /* above mobile bottom nav */
+  right:16px;
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  pointer-events:none;
+}
+@media(min-width:769px){
+  #toast-container{ bottom:24px; }
+}
+.toast-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 14px;
+  background:var(--bg);
+  box-shadow:rgba(0,0,0,0.12) 0 0 0 1px, rgba(0,0,0,0.08) 0 4px 16px;
+  border-radius:8px;
+  font-size:13px;
+  font-weight:500;
+  color:var(--text1);
+  pointer-events:all;
+  min-width:220px;
+  max-width:320px;
+  animation:toastIn .18s ease;
+}
+.toast-item.hiding{
+  opacity:0;
+  transform:translateY(6px);
+  transition:opacity .2s, transform .2s;
+}
+.toast-item .t-icon{ font-size:16px; flex-shrink:0; }
+.toast-item .t-close{
+  margin-left:auto;
+  cursor:pointer;
+  color:var(--text3);
+  font-size:12px;
+  flex-shrink:0;
+  padding:2px 4px;
+}
+.toast-item .t-close:hover{ color:var(--text1); }
+@keyframes toastIn{
+  from{ opacity:0; transform:translateY(8px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+
+/* ── Close / dismiss buttons — unified Vercel style ── */
+
+/* Modal X button (top-right corner) */
+.modal-close{
+  position:absolute;
+  top:14px;
+  right:14px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:6px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  color:var(--text3);
+  font-size:16px;
+  transition:background var(--t), color var(--t);
+  z-index:2;
+}
+.modal-close:hover{
+  background:var(--bg3);
+  color:var(--text1);
+}
+.modal-close i{ pointer-events:none; }
+
+/* Ensure modal header has relative positioning for absolute close btn */
+.modal-header{ position:relative; }
+
+/* Detail panel back / close button */
+.detail-header .btn-ghost,
+.detail-header button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:28px;
+  height:28px;
+  border-radius:6px;
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  color:var(--text2);
+  font-size:15px;
+  gap:5px;
+  padding:0 8px;
+  transition:background var(--t), color var(--t);
+}
+.detail-header .btn-ghost:hover,
+.detail-header button:hover{
+  background:var(--bg3);
+  color:var(--text1);
+}
+
+/* Generic inline close on panels / sheets */
+button[onclick*="close"],
+button[onclick*="Close"]{
+  cursor:pointer;
+}
+
+/* Email modal standalone close */
+button[onclick*="closeEmailModal"]{
+  display:inline-flex !important;
+  align-items:center;
+  justify-content:center;
+  width:30px;
+  height:30px;
+  border-radius:6px;
+  background:transparent !important;
+  border:none !important;
+  color:var(--text2) !important;
+  font-size:18px;
+  transition:background var(--t), color var(--t);
+  cursor:pointer;
+}
+button[onclick*="closeEmailModal"]:hover{
+  background:var(--bg3) !important;
+  color:var(--text1) !important;
+}
+
+/* Filter / bulk selection clear button (btn-ghost btn-sm with ph-x) */
+.btn-ghost.btn-sm i.ph-x{
+  font-size:13px;
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
@@ -2086,8 +2257,7 @@ async function loadDashboard(){
       var barH='<div style="display:flex;border-radius:8px;overflow:hidden;height:10px;gap:1px;margin-bottom:8px">';
       segs.forEach(function(sg){barH+='<div style="flex:'+sg.val+';background:'+sg.color+';min-width:2px" title="'+sg.label+': '+sg.val+'"></div>';});
       barH+='</div><div style="display:flex;flex-wrap:wrap;gap:10px">';
-      segs.forEach(function(sg){barH+='<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><span style="width:8px;height:8px;border-radius:50%;background:'+sg.color+';display:inline-block"></span>'+sg.label+' <b style="color:var(--text1)">'+sg.val+'</b></div>';});
-      barH+='</div>';
+      /* legend labels removed */
       sbEl.innerHTML=barH;
     }
     var sg=document.getElementById('stats-grid');
