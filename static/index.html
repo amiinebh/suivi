@@ -739,6 +739,19 @@ body.dark .client-bar-fill{background:var(--v-develop);}
 }
 .tbl-action-btn:hover{ background:var(--bg3); color:var(--text1); }
 .tbl-action-btn.tbl-action-danger:hover{ background:var(--red-bg); color:var(--red); }
+
+/* ── Compact ship-card for mobile ── */
+.ship-card{
+  background:var(--bg);
+  box-shadow:var(--shadow-card);
+  border-radius:8px;
+  padding:12px 14px;
+  cursor:pointer;
+  transition:box-shadow var(--t);
+}
+.ship-card:hover{ box-shadow:var(--shadow-hover); }
+.ship-card-head,.ship-card-body,.ship-card-foot{ display:none; }
+.ship-ref,.ship-sub,.ship-actions{ display:none; }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
@@ -1933,29 +1946,21 @@ function renderCards(ships,containerId){
     var el=diff===null?'':(diff<0?Math.abs(diff)+'d late':(diff===0?'TODAY':(diff===1?'Tomorrow':('In '+diff+'d'))));
     var chk=(isBulk&&window._selectedShips.has(sh.id))?'checked':'';
     return '<div class="ship-card" onclick="openDetail('+sh.id+')" style="position:relative">'
-      +(isBulk?'<div onclick="event.stopPropagation()" style="position:absolute;top:12px;right:12px"><input type="checkbox" '+chk+' onchange="toggleShipmentSelect('+sh.id+',this.checked)" style="width:16px;height:16px;cursor:pointer"></div>':'')
-      +'<div class="ship-card-head">'
-      +'<div><div class="ship-ref">'+sh.ref+'</div>'
-      +'<div class="ship-sub">'+(sh.booking_no||'--')+(sh.carrier?' &middot; '+sh.carrier:'')+'</div></div>'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">'
+      +'<div>'
+      +'<div style="font-size:13px;font-weight:600;color:var(--text1);letter-spacing:-.2px">'+sh.ref+'</div>'
+      +'<div style="font-size:11px;color:var(--text2);margin-top:1px">'+(sh.client||'--')+(sh.carrier?' &middot; '+sh.carrier:'')+'</div>'
+      +'</div>'
       +(typeof statusBadge==='function'?statusBadge(shipStatus(sh)):'<span>'+shipStatus(sh)+'</span>')
       +'</div>'
-      +'<div class="ship-card-body" style="grid-template-columns:repeat(2,1fr);gap:12px">'
-      +'<div class="ship-field"><div class="ship-field-label">Client</div><div class="ship-field-value">'+(sh.client||'--')+'</div></div>'
-      +'<div class="ship-field"><div class="ship-field-label">Incoterm</div><div class="ship-field-value">'+(sh.incoterm||'--')+'</div></div>'
-      +'<div class="ship-field"><div class="ship-field-label">POL</div><div class="ship-field-value">'+(sh.pol||'--')+'</div></div>'
-      +'<div class="ship-field"><div class="ship-field-label">POD</div><div class="ship-field-value">'+(sh.pod||'--')+'</div></div>'
-      +'<div class="ship-field"><div class="ship-field-label">ETD</div><div class="ship-field-value">'+fmtd(sh.etd)+'</div></div>'
-      +'<div class="ship-field"><div class="ship-field-label">ETA</div>'
-      +'<div class="ship-field-value" style="color:'+ec+'">'+fmtd(sh.eta)+(el?'&nbsp;<span style="font-size:10px;font-weight:600;background:'+ec+'22;padding:1px 6px;border-radius:8px">'+el+'</span>':'')+'</div></div>'
-      +'<div class="ship-field" style="grid-column:span 2"><div class="ship-field-label">Quantity</div>'
-      +'<div class="ship-field-value" style="color:var(--accent);font-weight:600">'+(sh.teu?sh.teu+' TEU':'--')+'</div></div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px">'
+      +'<div style="font-size:12px;color:var(--text2);font-family:var(--font-mono)">'+(sh.pol||'--')+' → '+(sh.pod||'--')+'</div>'
+      +'<div style="display:flex;align-items:center;gap:4px" onclick="event.stopPropagation()">'
+      +(el?'<span style="font-size:10px;font-weight:500;color:'+ec+';background:'+ec+'18;padding:2px 7px;border-radius:9999px">'+el+'</span>':'')
+      +'<button class="tbl-action-btn" title="Edit" onclick="editShipment('+sh.id+')"><i class="ph-bold ph-pencil-simple"></i></button>'
+      +'<button class="tbl-action-btn tbl-action-danger" title="Delete" onclick="deleteShipment('+sh.id+')"><i class="ph-bold ph-trash-simple"></i></button>'
       +'</div>'
-      +'<div class="ship-card-foot">'
-      +'<div style="font-size:11px;color:var(--text2)">'+(sh.last_tracked?'<i class="ph ph-arrows-clockwise" style="font-size:10px;margin-right:3px"></i>Updated '+fmtd(sh.last_tracked):'')+'</div>'
-      +'<div class="ship-actions" onclick="event.stopPropagation()">'
-      +'<button class="btn btn-secondary btn-sm btn-icon" onclick="editShipment('+sh.id+')" title="Edit"><i class="ph ph-pencil"></i></button>'
-      +'<button class="btn btn-danger btn-sm btn-icon" onclick="deleteShipment('+sh.id+')" title="Delete"><i class="ph ph-trash"></i></button>'
-      +'</div></div>'
+      +'</div>'
       +'</div>';
   }).join('');
 }
