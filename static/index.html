@@ -2297,36 +2297,87 @@ function renderCards(ships,containerId){
 
 /* ── Render table (desktop) ── */
 function renderTable(ships){
-  window._selectedShips=window._selectedShips||new Set();
-  var wrap=document.getElementById('ship-table');
-  if(!wrap)return;
-  if(!ships.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">&#128269;</div><div class="empty-title">No shipments</div><div class="empty-sub">No results match your filters.</div></div>';return;}
-  var today=new Date();today.setHours(0,0,0,0);
+  window._selectedShips = window._selectedShips || new Set();
+  var wrap = document.getElementById('ship-table');
+  if (!wrap) return;
+  if (!ships.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">&#128269;</div><div class="empty-title">No shipments</div><div class="empty-sub">No results match your filters.</div></div>';
+    return;
+  }
+  var today = new Date(); today.setHours(0,0,0,0);
+  var modeIcon = {
+    'Ocean': '<span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-tint)">directions_boat</span>',
+    'Road':  '<span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-text2)">local_shipping</span>',
+    'Air':   '<span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-text2)">flight</span>'
+  };
+  var thead = '<table style="width:100%;border-collapse:collapse">'
+    + '<thead><tr style="background:var(--stitch-surf-high);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--stitch-text2)">'
+    + '<th style="padding:12px 16px;width:36px;text-align:center"><input type="checkbox" id="check-all" onchange="toggleAllShipments(this.checked)" style="cursor:pointer;width:15px;height:15px"></th>'
+    + '<th style="padding:12px 8px;text-align:left">Ref / Booking</th>'
+    + '<th style="padding:12px 8px;text-align:center;width:50px">Mode</th>'
+    + '<th style="padding:12px 8px;text-align:left">Client</th>'
+    + '<th style="padding:12px 8px;text-align:left">POL</th>'
+    + '<th style="padding:12px 8px;text-align:left">POD</th>'
+    + '<th style="padding:12px 8px;text-align:left">Carrier / Vessel</th>'
+    + '<th style="padding:12px 8px;text-align:center">ETD / ETA</th>'
+    + '<th style="padding:12px 8px;text-align:center">Status</th>'
+    + '<th style="padding:12px 16px;text-align:right;width:110px"></th>'
+    + '</tr></thead><tbody>';
 
-  var modeIcon={'Ocean':'<span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-tint)">directions_boat</span>',
-    'Road':'<span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-text2)">local_shipping</span>',
-    'Air':'<span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-text2)">flight</span>'};
-
-  var thead='<table style="width:100%;border-collapse:collapse">'    +'<thead><tr style="background:var(--stitch-surf-high);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--stitch-text2)">'    +'<th style="padding:12px 16px;width:36px;text-align:center"><input type="checkbox" id="check-all" onchange="toggleAllShipments(this.checked)" style="cursor:pointer;width:15px;height:15px"></th>'    +'<th style="padding:12px 8px;text-align:left">Ref / Booking</th>'    +'<th style="padding:12px 8px;text-align:center;width:50px">Mode</th>'    +'<th style="padding:12px 8px;text-align:left">Client</th>'    +'<th style="padding:12px 8px;text-align:left">POL</th>'    +'<th style="padding:12px 8px;text-align:left">POD</th>'    +'<th style="padding:12px 8px;text-align:left">Carrier / Vessel</th>'    +'<th style="padding:12px 8px;text-align:center">ETD / ETA</th>'    +'<th style="padding:12px 8px;text-align:center">Status</th>'    +'<th style="padding:12px 16px;text-align:right;width:90px"></th>'    +'</tr></thead><tbody>';
-
-  var tbody=ships.map(function(sh){
-    var chk=window._selectedShips.has(sh.id)?'checked':'';
-    var eta=sh.eta?new Date(sh.eta):null;
-    if(eta)eta.setHours(0,0,0,0);
-    var diff=eta?Math.round((eta-today)/86400000):null;
-    var etaColor=diff===null?'var(--stitch-text2)':diff<0?'#ef4444':diff<=2?'#f97316':'var(--stitch-text2)';
-    var etaTag=diff===null?'':diff<0?'<br><span style="font-size:9px;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:.05em">'+Math.abs(diff)+'d LATE</span>':diff===0?'<br><span style="font-size:9px;font-weight:800;color:#ef4444;text-transform:uppercase">TODAY</span>':diff<=2?'<br><span style="font-size:9px;font-weight:800;color:#f97316;text-transform:uppercase">In '+diff+'d</span>':'';
-    var icon=modeIcon[sh.mode]||modeIcon['Ocean'];
-    var st=shipStatus(sh);
-    return '<tr onclick="openDetail('+sh.id+')" style="cursor:pointer;border-bottom:1px solid var(--stitch-border);transition:background .12s,transform .12s" '      +'onmouseover="this.style.background='var(--stitch-surf-low)';this.style.transform='translateX(2px)'" '      +'onmouseout="this.style.background='';this.style.transform=''" class="ship-row">'      +'<td style="padding:14px 16px;text-align:center" onclick="event.stopPropagation()"><input type="checkbox" '+chk+' onchange="toggleShipmentSelect('+sh.id+',this.checked)" style="cursor:pointer;width:15px;height:15px"></td>'      +'<td style="padding:14px 8px">'        +'<div style="font-size:13px;font-weight:700;color:var(--stitch-primary)">'+sh.ref+'</div>'        +'<div style="font-size:10px;color:var(--stitch-text2);margin-top:2px;text-transform:uppercase;letter-spacing:.03em">'+(sh.booking_no||'--')+'</div>'      +'</td>'      +'<td style="padding:14px 8px;text-align:center">'        +'<div style="width:34px;height:34px;border-radius:50%;background:var(--stitch-surf-mid);display:inline-flex;align-items:center;justify-content:center">'+icon+'</div>'      +'</td>'      +'<td style="padding:14px 8px;font-size:12px;font-weight:600;color:var(--stitch-text1)">'+(sh.client||'--')+'</td>'      +'<td style="padding:14px 8px">'        +'<div style="font-size:12px;font-weight:600;color:var(--stitch-text1)">'+(sh.pol||'--')+'</div>'      +'</td>'      +'<td style="padding:14px 8px">'        +'<div style="font-size:12px;font-weight:600;color:var(--stitch-text1)">'+(sh.pod||'--')+'</div>'      +'</td>'      +'<td style="padding:14px 8px">'        +'<div style="font-size:12px;font-weight:600;color:var(--stitch-text1)">'+(sh.carrier||'--')+'</div>'        +'<div style="font-size:10px;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.03em">'+(sh.vessel||'')+'</div>'      +'</td>'      +'<td style="padding:14px 8px;text-align:center">'        +'<div style="font-size:12px;font-weight:700;color:var(--stitch-text1)">'+fmtd(sh.etd)+'</div>'        +'<div style="font-size:10px;color:'+etaColor+'">'+fmtd(sh.eta)+etaTag+'</div>'      +'</td>'      +'<td style="padding:14px 8px;text-align:center">'+statusBadge(st)+'</td>'      +'<td style="padding:14px 16px;text-align:right" onclick="event.stopPropagation()">'        +'<div style="display:flex;gap:4px;justify-content:flex-end;opacity:0" class="row-actions" '          +'onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">'          +'<button onclick="openEdit('+sh.id+')" style="width:30px;height:30px;border-radius:6px;background:var(--stitch-surf-mid);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--stitch-text2);transition:background .15s,color .15s" '            +'onmouseover="this.style.background='var(--stitch-primary)';this.style.color='#fff'" '            +'onmouseout="this.style.background='var(--stitch-surf-mid)';this.style.color='var(--stitch-text2)'">'            +'<span class="material-symbols-outlined" style="font-size:15px">edit</span></button>'          +'<button onclick="openDetail('+sh.id+')" style="width:30px;height:30px;border-radius:6px;background:var(--stitch-surf-mid);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--stitch-text2);transition:background .15s,color .15s" '            +'onmouseover="this.style.background='var(--stitch-primary-dk)';this.style.color='#fff'" '            +'onmouseout="this.style.background='var(--stitch-surf-mid)';this.style.color='var(--stitch-text2)'">'            +'<span class="material-symbols-outlined" style="font-size:15px">visibility</span></button>'          +'<button onclick="deleteShipment('+sh.id+')" style="width:30px;height:30px;border-radius:6px;background:var(--stitch-surf-mid);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--stitch-text2);transition:background .15s,color .15s" '            +'onmouseover="this.style.background='#ef4444';this.style.color='#fff'" '            +'onmouseout="this.style.background='var(--stitch-surf-mid)';this.style.color='var(--stitch-text2)'">'            +'<span class="material-symbols-outlined" style="font-size:15px">delete</span></button>'        +'</div>'      +'</td>'      +'</tr>';
+  var tbody = ships.map(function(sh){
+    var chk = window._selectedShips.has(sh.id) ? 'checked' : '';
+    var eta = sh.eta ? new Date(sh.eta) : null;
+    if (eta) eta.setHours(0,0,0,0);
+    var diff = eta ? Math.round((eta - today) / 86400000) : null;
+    var etaColor = diff === null ? 'var(--stitch-text2)' : diff < 0 ? '#ef4444' : diff <= 2 ? '#f97316' : 'var(--stitch-text2)';
+    var etaTag = '';
+    if (diff !== null) {
+      if (diff < 0) etaTag = '<br><span style="font-size:9px;font-weight:800;color:#ef4444;text-transform:uppercase">' + Math.abs(diff) + 'd LATE</span>';
+      else if (diff === 0) etaTag = '<br><span style="font-size:9px;font-weight:800;color:#ef4444;text-transform:uppercase">TODAY</span>';
+      else if (diff <= 2) etaTag = '<br><span style="font-size:9px;font-weight:800;color:#f97316;text-transform:uppercase">In ' + diff + 'd</span>';
+    }
+    var icon = modeIcon[sh.mode] || modeIcon['Ocean'];
+    var st = shipStatus(sh);
+    var rowStyle = 'cursor:pointer;border-bottom:1px solid var(--stitch-border);transition:background .12s';
+    return '<tr onclick="openDetail(' + sh.id + ')" style="' + rowStyle + '" '
+      + 'onmouseover="this.style.background=\'var(--stitch-surf-low)\'" '
+      + 'onmouseout="this.style.background=\'\'">  '
+      + '<td style="padding:14px 16px;text-align:center" onclick="event.stopPropagation()">'
+        + '<input type="checkbox" ' + chk + ' onchange="toggleShipmentSelect(' + sh.id + ',this.checked)" style="cursor:pointer;width:15px;height:15px">'
+      + '</td>'
+      + '<td style="padding:14px 8px">'
+        + '<div style="font-size:13px;font-weight:700;color:var(--stitch-primary)">' + sh.ref + '</div>'
+        + '<div style="font-size:10px;color:var(--stitch-text2);margin-top:2px;text-transform:uppercase;letter-spacing:.03em">' + (sh.booking_no || '--') + '</div>'
+      + '</td>'
+      + '<td style="padding:14px 8px;text-align:center">'
+        + '<div style="width:34px;height:34px;border-radius:50%;background:var(--stitch-surf-mid);display:inline-flex;align-items:center;justify-content:center">' + icon + '</div>'
+      + '</td>'
+      + '<td style="padding:14px 8px;font-size:12px;font-weight:600;color:var(--stitch-text1)">' + (sh.client || '--') + '</td>'
+      + '<td style="padding:14px 8px;font-size:12px;font-weight:600;color:var(--stitch-text1)">' + (sh.pol || '--') + '</td>'
+      + '<td style="padding:14px 8px;font-size:12px;font-weight:600;color:var(--stitch-text1)">' + (sh.pod || '--') + '</td>'
+      + '<td style="padding:14px 8px">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--stitch-text1)">' + (sh.carrier || '--') + '</div>'
+        + '<div style="font-size:10px;color:var(--stitch-text2);text-transform:uppercase;letter-spacing:.03em">' + (sh.vessel || '') + '</div>'
+      + '</td>'
+      + '<td style="padding:14px 8px;text-align:center">'
+        + '<div style="font-size:12px;font-weight:700;color:var(--stitch-text1)">' + fmtd(sh.etd) + '</div>'
+        + '<div style="font-size:11px;color:' + etaColor + '">' + fmtd(sh.eta) + etaTag + '</div>'
+      + '</td>'
+      + '<td style="padding:14px 8px;text-align:center">' + statusBadge(st) + '</td>'
+      + '<td style="padding:14px 16px;text-align:right" onclick="event.stopPropagation()">'
+        + '<div style="display:inline-flex;gap:4px">'
+          + '<button onclick="openEdit(' + sh.id + ')" title="Edit" style="width:30px;height:30px;border-radius:6px;background:var(--stitch-surf-mid);border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--stitch-text2)" onmouseover="this.style.background=\'var(--stitch-primary)\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'var(--stitch-surf-mid)\';this.style.color=\'var(--stitch-text2)\'">'
+            + '<span class="material-symbols-outlined" style="font-size:15px">edit</span></button>'
+          + '<button onclick="openDetail(' + sh.id + ')" title="View" style="width:30px;height:30px;border-radius:6px;background:var(--stitch-surf-mid);border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--stitch-text2)" onmouseover="this.style.background=\'var(--stitch-primary-dk)\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'var(--stitch-surf-mid)\';this.style.color=\'var(--stitch-text2)\'">'
+            + '<span class="material-symbols-outlined" style="font-size:15px">visibility</span></button>'
+          + '<button onclick="deleteShipment(' + sh.id + ')" title="Delete" style="width:30px;height:30px;border-radius:6px;background:var(--stitch-surf-mid);border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--stitch-text2)" onmouseover="this.style.background=\'#ef4444\';this.style.color=\'#fff\'" onmouseout="this.style.background=\'var(--stitch-surf-mid)\';this.style.color=\'var(--stitch-text2)\'">'
+            + '<span class="material-symbols-outlined" style="font-size:15px">delete</span></button>'
+        + '</div>'
+      + '</td>'
+      + '</tr>';
   }).join('');
 
-  wrap.innerHTML=thead+tbody+'</tbody></table>';
-  /* Show row actions on row hover via JS delegation */
-  wrap.querySelectorAll('.ship-row').forEach(function(tr){
-    tr.addEventListener('mouseenter',function(){var a=tr.querySelector('.row-actions');if(a)a.style.opacity='1';});
-    tr.addEventListener('mouseleave',function(){var a=tr.querySelector('.row-actions');if(a)a.style.opacity='0';});
-  });
+  wrap.innerHTML = thead + tbody + '</tbody></table>';
 }
 
 /* ── Dashboard ── */
