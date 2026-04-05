@@ -19,6 +19,10 @@ def get_shipments(db: Session, search: str = "", status: str = "", mode: str = "
         except: pass
         try: filters.append(models.Shipment.bookingno.ilike(s))
         except: pass
+        try: filters.append(models.Shipment.client_email.ilike(s))
+        except: pass
+        try: filters.append(models.Shipment.clientemail.ilike(s))
+        except: pass
         q = q.filter(or_(*filters))
     if status:
         q = q.filter(models.Shipment.status == status)
