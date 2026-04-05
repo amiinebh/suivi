@@ -167,24 +167,47 @@ def delete_user(db: Session, uid: int):
 
 
 # ── STATS ────────────────────────────────────────────────────────────────────
-def get_stats(db: Session):
-    ships = db.query(models.Shipment).all()
-    total = len(ships)
-    by_status = {}
-    by_mode = {}
-    delayed_count = 0
-    for s in ships:
+def get_stats(db):
+    shipments = db.query(models.Shipment).all()
+    total = len(shipments)
+    
+    bystatus = {}
+    bymode = {}
+    bydirection = {"Export": 0, "Import": 0}
+    totalteu = 0
+    delayed = 0
+    
+    from datetime import date
+    today = date.today()
+    
+    for s in shipments:
         st = s.status or "Pending"
-        by_status[st] = by_status.get(st, 0) + 1
-        md = s.mode or "Ocean"
-        by_mode[md] = by_mode.get(md, 0) + 1
-        if st == "Delayed":
-            delayed_count += 1
+        bystatus[st] = bystatus.get(st, 0) + 1
+        
+        m = s.mode or "Ocean"
+        bymode[m] = bymode.get(m, 0) + 1
+        
+        d = s.direction or ""
+        if d.lower() in ("export", "exp", "x"):
+            bydirection["Export"] += 1
+        elif d.lower() in ("import", "imp", "m"):
+            bydirection["Import"] += 1
+        
+        totalteu += float(s.teu or 0)
+        
+        if s.eta and st not in ("Arrived", "Closed", "Canceled"):
+            eta_date = s.eta.date() if hasattr(s.eta, "date") else s.eta
+            if eta_date < today:
+                delayed += 1
+
     return {
         "total": total,
-        "by_status": by_status,
-        "by_mode": by_mode,
-        "delayed_count": delayed_count
+        "bystatus": bystatus,
+        "bymode": bymode,
+        "bydirection": bydirection,
+        "export": bydirection["Export"],
+        "totalteu": round(totalteu, 2),
+        "delayedcount": delayed,
     }
 
 
