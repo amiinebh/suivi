@@ -27,7 +27,7 @@ def root():
     content = html_path.read_text(encoding="utf-8") if html_path.exists() else "<h1>Loading...</h1>"
     return HTMLResponse(content=content, headers={
         "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache", "Expires": "0", "X-Version": "v26"
+        "Pragma": "no-cache", "Expires": "0", "X-Version": "v27"
     })
 
 @app.get("/track/{ref}")
@@ -47,7 +47,6 @@ def portal_data(ref: str, db: Session = Depends(get_db)):
                    for e in sorted(s.events, key=lambda x: x.timestamp, reverse=True)]
     }
 
-# Shipments
 @app.get("/api/shipments", response_model=list[schemas.ShipmentOut])
 def list_shipments(q: str = "", search: str = "", status: str = "", mode: str = "",
                    db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -60,7 +59,6 @@ async def create_shipment(request: Request, db: Session = Depends(get_db),
         body = await request.json()
     except Exception:
         raise HTTPException(400, "Invalid JSON body")
-    # Support legacy frontend key "quotationnumber" (no underscore)
     if "quotationnumber" in body and "quotation_number" not in body:
         body["quotation_number"] = body.pop("quotationnumber")
     ref = (body.get("ref") or "").strip()
@@ -81,8 +79,6 @@ async def create_shipment(request: Request, db: Session = Depends(get_db),
         import traceback; traceback.print_exc()
         raise HTTPException(500, f"Failed to create shipment: {str(e)}")
 
-
-# Bulk Import
 @app.post("/api/shipments/bulk")
 async def bulk_import_shipments(request: Request, db: Session = Depends(get_db),
                                  current=Depends(get_current_user)):
@@ -90,31 +86,21 @@ async def bulk_import_shipments(request: Request, db: Session = Depends(get_db),
         body = await request.json()
     except Exception:
         raise HTTPException(400, "Invalid JSON body")
-
     rows = body.get("shipments", [])
-    if not rows:
-        raise HTTPException(400, "No shipments provided")
-
+    if not rows: raise HTTPException(400, "No shipments provided")
     allowed = set(schemas.ShipmentCreate.model_fields.keys())
     created_count = 0
     skipped = []
-
     for row in rows:
         ref = str(row.get("ref", "")).strip()
         if not ref:
-            skipped.append({"ref": None, "reason": "Missing ref"})
-            continue
+            skipped.append({"ref": None, "reason": "Missing ref"}); continue
         if crud.get_shipment(db, ref):
-            skipped.append({"ref": ref, "reason": "Already exists"})
-            continue
+            skipped.append({"ref": ref, "reason": "Already exists"}); continue
         sdata = {}
         for k, v in row.items():
-            if k not in allowed:
-                continue
-            if isinstance(v, str):
-                sdata[k] = v.strip() if v.strip() != "" else None
-            else:
-                sdata[k] = v
+            if k not in allowed: continue
+            sdata[k] = v.strip() if isinstance(v, str) else v
         sdata["ref"] = ref
         sdata.setdefault("mode", "Ocean")
         sdata.setdefault("status", "Confirmed")
@@ -124,7 +110,6 @@ async def bulk_import_shipments(request: Request, db: Session = Depends(get_db),
             created_count += 1
         except Exception as e:
             skipped.append({"ref": ref, "reason": str(e)})
-
     return {"created": created_count, "skipped": skipped, "total": len(rows)}
 
 @app.get("/api/shipments/{sid}", response_model=schemas.ShipmentOut)
@@ -161,7 +146,6 @@ async def update_status(sid: int, request: Request, db: Session = Depends(get_db
     db.commit(); db.refresh(s)
     return s
 
-# Tracking
 @app.post("/api/shipments/{sid}/track")
 def track_one(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     import tracker
@@ -177,7 +161,6 @@ def track_all(db: Session = Depends(get_db), current=Depends(get_current_user)):
         except: pass
     return {"ok": True}
 
-# Comments
 @app.post("/api/shipments/{sid}/comments", response_model=schemas.CommentOut)
 def add_comment(sid: int, data: schemas.CommentCreate, db: Session = Depends(get_db),
                 current=Depends(get_current_user)):
@@ -185,7 +168,6 @@ def add_comment(sid: int, data: schemas.CommentCreate, db: Session = Depends(get
     if not s: raise HTTPException(404, "Not found")
     return crud.add_comment(db, sid, data)
 
-# Export
 @app.get("/api/export/xlsx")
 def export_xlsx(search: str = "", status: str = "", mode: str = "",
                 db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -195,7 +177,6 @@ def export_xlsx(search: str = "", status: str = "", mode: str = "",
                     media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     headers={"Content-Disposition": "attachment; filename=shipments.xlsx"})
 
-# KPIs & Stats
 @app.get("/api/kpis")
 def get_kpis(db: Session = Depends(get_db), current=Depends(get_current_user)):
     return crud.get_kpis(db)
@@ -203,7 +184,7 @@ def get_kpis(db: Session = Depends(get_db), current=Depends(get_current_user)):
 @app.get("/api/stats")
 def stats(db: Session = Depends(get_db), current=Depends(get_current_user)):
     return crud.get_stats(db)
-    
+
 @app.get("/api/health")
 def health(db: Session = Depends(get_db)):
     try:
@@ -212,7 +193,6 @@ def health(db: Session = Depends(get_db)):
     except Exception as e:
         return {"status": "error", "db": str(e)}
 
-# Containers
 @app.get("/api/shipments/{sid}/containers")
 def get_containers(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     s = crud.get_shipment_by_id(db, sid)
@@ -239,7 +219,6 @@ def delete_container(cid: int, db: Session = Depends(get_db), current=Depends(ge
     db.delete(cont); db.commit()
     return {"ok": True}
 
-# Email
 @app.post("/api/shipments/{sid}/send-email")
 async def send_email(sid: int, request: Request, db: Session = Depends(get_db),
                      current=Depends(get_current_user)):
@@ -279,7 +258,6 @@ def email_log(sid: int, db: Session = Depends(get_db), current=Depends(get_curre
     try: return crud.get_email_log(db, sid)
     except: return []
 
-# Webhook
 @app.post("/api/webhook/shipsgo")
 async def webhook(payload: dict, db: Session = Depends(get_db)):
     ref = payload.get("reference") or payload.get("container_number")
@@ -289,7 +267,6 @@ async def webhook(payload: dict, db: Session = Depends(get_db)):
             import tracker; tracker.track_and_update(db, s)
     return {"ok": True}
 
-# Shipsgo Proxy
 import httpx
 SHIPSGO_BASE = "https://api.shipsgo.com/v2"
 
@@ -310,7 +287,6 @@ async def shipsgo_proxy(path: str, request: Request):
 @app.get("/debug")
 def debug_page(): return FileResponse("static/debug.html")
 
-# Bulk Import
 @app.post("/api/shipments/bulk-import")
 async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db),
                       current=Depends(get_current_user)):
@@ -324,19 +300,11 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
         raw = str(value or "").strip().lower()
         key = re.sub(r"[^a-z0-9]+", "_", raw).strip("_")
         aliases = {
-            "reference": "ref",
-            "ref_no": "ref",
-            "reference_no": "ref",
-            "booking": "booking_no",
-            "bookingno": "booking_no",
-            "booking_number": "booking_no",
-            "clientemail": "client_email",
-            "email": "client_email",
-            "quotation": "quotation_number",
-            "quotationno": "quotation_number",
-            "quotation_number": "quotation_number",
-            "lasttracked": "last_tracked",
-            "createdat": "created_at",
+            "reference":"ref","ref_no":"ref","reference_no":"ref",
+            "booking":"bookingno","bookingnumber":"bookingno",
+            "clientemail":"clientemail","email":"clientemail",
+            "quotation":"quotation_number","quotationno":"quotation_number",
+            "lasttracked":"lasttracked","createdat":"createdat",
         }
         return aliases.get(key, key)
     headers = [normalize_header(c.value) for c in next(ws.iter_rows(min_row=1, max_row=1))]
@@ -344,27 +312,12 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
     VALID = ["Confirmed","Booked","Stuffed","Sailing","Arrived","Closed","Canceled"]
     def parse_date(val):
         if not val: return None
-        # openpyxl native datetime / date object
-        if hasattr(val, 'strftime'):
-            return val.strftime('%Y-%m-%d')
+        if hasattr(val, 'strftime'): return val.strftime('%Y-%m-%d')
         s = str(val).strip()
-        if not s or s.lower() in ('none', 'null', '-', '--'): return None
-        # try many string formats including YYYY/MM/DD
-        for fmt in (
-            '%Y-%m-%d', '%Y/%m/%d',
-            '%d/%m/%Y', '%d-%m-%Y', '%d.%m.%Y',
-            '%m/%d/%Y', '%m-%d-%Y',
-            '%d %b %Y', '%d %B %Y',
-            '%b %d %Y', '%B %d %Y',
-            '%Y%m%d',
-        ):
+        if not s or s.lower() in ('none','null','-','--'): return None
+        for fmt in ('%Y-%m-%d','%Y/%m/%d','%d/%m/%Y','%d-%m-%Y','%d.%m.%Y','%m/%d/%Y','%Y%m%d'):
             try: return datetime.strptime(s, fmt).strftime('%Y-%m-%d')
             except: pass
-        # last resort: dateutil
-        try:
-            from dateutil import parser as _dp
-            return _dp.parse(s, dayfirst=True).strftime('%Y-%m-%d')
-        except: pass
         return None
     for row in ws.iter_rows(min_row=2, values_only=True):
         rd = {headers[i]: (str(v).strip() if v is not None else "")
@@ -379,25 +332,24 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
             try: teu = int(float(teu_raw)) if teu_raw else None
             except: teu = None
             s = models.Shipment(
-                ref=ref, ref2=rd.get("ref2",""), booking_no=rd.get("booking_no",""),
+                ref=ref, ref2=rd.get("ref2",""), bookingno=rd.get("bookingno",""),
                 mode=rd.get("mode","Ocean"), carrier=rd.get("carrier",""),
                 shipper=rd.get("shipper",""), consignee=rd.get("consignee",""),
-                client=rd.get("client",""), client_email=rd.get("client_email",""),
+                client=rd.get("client",""), clientemail=rd.get("clientemail",""),
                 pol=rd.get("pol",""), pod=rd.get("pod",""),
                 etd=parse_date(rd.get("etd")), eta=parse_date(rd.get("eta")),
                 status=raw_status if raw_status in VALID else "Confirmed",
                 incoterm=rd.get("incoterm",""), vessel=rd.get("vessel",""),
                 voyage=rd.get("voyage",""), teu=teu, note=rd.get("note",""),
                 quotation_number=rd.get("quotation_number",""),
-                last_tracked=rd.get("last_tracked",""),
-                created_at=datetime.utcnow().isoformat()
+                lasttracked=rd.get("lasttracked",""),
+                createdat=datetime.utcnow().isoformat()
             )
             db.add(s); db.commit(); created.append(ref)
         except Exception as e:
             errors.append({"ref": ref, "error": str(e)})
     return {"created": len(created), "skipped": len(skipped), "errors": errors, "refs": created}
 
-# Seed Samples
 @app.post("/api/seed-samples")
 def seed_samples(db: Session = Depends(get_db)):
     allowed = {c.name for c in models.Shipment.__table__.columns}
@@ -407,10 +359,6 @@ def seed_samples(db: Session = Depends(get_db)):
         {"ref":"FT-2026-003","mode":"Air","carrier":"Royal Air Maroc","client":"TechImport MA","pol":"Hong Kong","pod":"Casablanca","etd":"2026-01-20","eta":"2026-01-21","status":"Closed","incoterm":"EXW"},
         {"ref":"FT-2026-004","mode":"Ocean","carrier":"Maersk","client":"Maroc Textiles","pol":"Casablanca","pod":"Hamburg","etd":"2026-01-25","eta":"2026-02-15","status":"Closed","incoterm":"FOB","vessel":"MAERSK ELBA"},
         {"ref":"FT-2026-005","mode":"Ocean","carrier":"MSC","client":"Casa Ceramics","pol":"Valencia","pod":"Casablanca","etd":"2026-02-01","eta":"2026-02-08","status":"Closed","incoterm":"CFR","vessel":"MSC ANNA"},
-        {"ref":"FT-2026-009","mode":"Ocean","carrier":"Maersk","client":"Casa Ceramics","pol":"Casablanca","pod":"Antwerp","etd":"2026-02-18","eta":"2026-03-01","status":"Sailing","incoterm":"CIF","vessel":"MAERSK COPENHAGEN"},
-        {"ref":"FT-2026-010","mode":"Ocean","carrier":"MSC","client":"Maroc Textiles","pol":"Chennai","pod":"Casablanca","etd":"2026-02-20","eta":"2026-03-25","status":"Sailing","incoterm":"FOB","vessel":"MSC ROMA"},
-        {"ref":"FT-2026-013","mode":"Ocean","carrier":"CMA CGM","client":"Maroc Textiles","pol":"Istanbul","pod":"Casablanca","etd":"2026-03-03","eta":"2026-03-10","status":"Confirmed","incoterm":"CFR"},
-        {"ref":"FT-2026-015","mode":"Ocean","carrier":"MSC","client":"TechImport MA","pol":"Ningbo","pod":"Casablanca","etd":"2026-03-06","eta":"2026-04-15","status":"Confirmed","incoterm":"EXW","vessel":"MSC FIAMMETTA"},
     ]
     added = 0
     for s in samples:
@@ -421,142 +369,125 @@ def seed_samples(db: Session = Depends(get_db)):
     return {"added": added, "message": f"Seeded {added} sample shipments"}
 
 
-
 def _build_legacy_kpi_report(db):
     from collections import defaultdict
-    from datetime import datetime
     import re
 
-    import_re = re.compile(r'^RO(\d{2})(\d{2})(\d{3,4})$', re.I)
-    export_re = re.compile(r'^ROE(\d{2})(\d{2})(\d{2,4})$', re.I)
+    import_re = re.compile(r'^RO(\d{2})(\d{2})\d+$', re.I)
+    export_re = re.compile(r'^ROE(\d{2})(\d{2})\d+$', re.I)
 
     def ref_parts(ref):
         ref = (ref or '').strip().upper()
         m = export_re.match(ref)
         if m:
-            yy, mm, seq = m.groups()
-            return {'dir': 'Export', 'month': f'20{yy}-{mm}', 'seq': int(seq)}
+            yy, mm = m.group(1), m.group(2)
+            return {'dir': 'Export', 'month': f'20{yy}-{mm}'}
         m = import_re.match(ref)
         if m:
-            yy, mm, seq = m.groups()
-            return {'dir': 'Import', 'month': f'20{yy}-{mm}', 'seq': int(seq)}
+            yy, mm = m.group(1), m.group(2)
+            return {'dir': 'Import', 'month': f'20{yy}-{mm}'}
         return None
 
     def norm_dir(sh):
-        d = (getattr(sh, 'direction', None) or '').strip().lower()
-        if d in ('export', 'exp', 'x'):
-            return 'Export'
-        if d in ('import', 'imp', 'm'):
+        try:
+            d = (getattr(sh, 'direction', None) or '').strip().lower()
+            if d in ('export', 'exp', 'x'): return 'Export'
+            if d in ('import', 'imp', 'm'): return 'Import'
+            p = ref_parts(getattr(sh, 'ref', None))
+            return p['dir'] if p else 'Import'
+        except Exception:
             return 'Import'
-        p = ref_parts(getattr(sh, 'ref', None))
-        return p['dir'] if p else 'Import'
 
     def norm_mode(sh):
         m = (getattr(sh, 'mode', None) or 'Ocean').strip().lower()
-        if m in ('road', 'ftl', 'road ftl', 'truck'):
-            return 'Road'
-        if m == 'air':
-            return 'Air'
+        if m in ('road', 'ftl', 'road ftl', 'truck'): return 'Road'
+        if m == 'air': return 'Air'
         return 'Ocean'
 
     def num(v):
-        try:
-            return float(v or 0)
-        except Exception:
-            return 0.0
+        try: return float(v or 0)
+        except: return 0.0
 
     shipments = db.query(models.Shipment).all()
     total = len(shipments)
-    total_teu = round(sum(num(getattr(s, 'teu', 0)) for s in shipments), 2)
+    totalteu = round(sum(num(getattr(s, 'teu', 0)) for s in shipments), 2)
 
-    by_status = defaultdict(int)
-    by_mode = defaultdict(int)
-    by_direction = defaultdict(int)
+    bystatus = defaultdict(int)
+    bymode = defaultdict(int)
+    bydirection = defaultdict(int)
     monthly_import = defaultdict(int)
     monthly_export = defaultdict(int)
-
     carrier_all = defaultdict(int)
     carrier_import = defaultdict(int)
     carrier_export = defaultdict(int)
-
     client_all = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     client_import = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     client_export = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
-
-    pol_all = defaultdict(int)
-    pol_import = defaultdict(int)
-    pol_export = defaultdict(int)
-    pod_all = defaultdict(int)
-    pod_import = defaultdict(int)
-    pod_export = defaultdict(int)
-    route_all = defaultdict(int)
-    route_import = defaultdict(int)
-    route_export = defaultdict(int)
+    pol_all = defaultdict(int); pol_import = defaultdict(int); pol_export = defaultdict(int)
+    pod_all = defaultdict(int); pod_import = defaultdict(int); pod_export = defaultdict(int)
+    route_all = defaultdict(int); route_import = defaultdict(int); route_export = defaultdict(int)
 
     for s in shipments:
-        status = (getattr(s, 'status', None) or 'Pending').strip() or 'Pending'
-        direction = norm_dir(s)
-        mode = norm_mode(s)
-        teu = num(getattr(s, 'teu', 0))
-        ref = getattr(s, 'ref', None)
-        client = (getattr(s, 'client', None) or '').strip() or None
-        carrier = (getattr(s, 'carrier', None) or '').strip() or None
-        pol = (getattr(s, 'pol', None) or '').strip().upper()
-        pod = (getattr(s, 'pod', None) or '').strip().upper()
+        try:
+            status = (getattr(s, 'status', None) or 'Pending').strip() or 'Pending'
+            direction = norm_dir(s)
+            mode = norm_mode(s)
+            teu = num(getattr(s, 'teu', 0))
+            ref = getattr(s, 'ref', None)
+            client = (getattr(s, 'client', None) or '').strip() or None
+            carrier = (getattr(s, 'carrier', None) or '').strip() or None
+            pol = (getattr(s, 'pol', None) or '').strip().upper()
+            pod = (getattr(s, 'pod', None) or '').strip().upper()
 
-        by_status[status] += 1
-        by_mode[mode] += 1
-        by_direction[direction] += 1
+            bystatus[status] += 1
+            bymode[mode] += 1
+            bydirection[direction] += 1
 
-        parts = ref_parts(ref)
-        if parts:
-            if parts['dir'] == 'Import':
-                monthly_import[parts['month']] = max(monthly_import[parts['month']], parts['seq'])
-            else:
-                monthly_export[parts['month']] = max(monthly_export[parts['month']], parts['seq'])
+            parts = ref_parts(ref)
+            if parts:
+                if parts['dir'] == 'Import':
+                    monthly_import[parts['month']] += 1
+                else:
+                    monthly_export[parts['month']] += 1
 
-        if carrier:
-            carrier_all[carrier] += 1
-            if direction == 'Import':
-                carrier_import[carrier] += 1
-            else:
-                carrier_export[carrier] += 1
+            if carrier:
+                carrier_all[carrier] += 1
+                if direction == 'Import': carrier_import[carrier] += 1
+                else: carrier_export[carrier] += 1
 
-        if client:
-            client_all[client]['shipments'] += 1
-            client_all[client]['teu'] += teu
-            if direction == 'Import':
-                client_import[client]['shipments'] += 1
-                client_import[client]['teu'] += teu
-            else:
-                client_export[client]['shipments'] += 1
-                client_export[client]['teu'] += teu
+            if client:
+                client_all[client]['shipments'] += 1
+                client_all[client]['teu'] += teu
+                if direction == 'Import':
+                    client_import[client]['shipments'] += 1
+                    client_import[client]['teu'] += teu
+                else:
+                    client_export[client]['shipments'] += 1
+                    client_export[client]['teu'] += teu
 
-        if pol:
-            pol_all[pol] += 1
-            if direction == 'Import':
-                pol_import[pol] += 1
-            else:
-                pol_export[pol] += 1
-        if pod:
-            pod_all[pod] += 1
-            if direction == 'Import':
-                pod_import[pod] += 1
-            else:
-                pod_export[pod] += 1
-        if pol and pod:
-            route = f'{pol} to {pod}'
-            route_all[route] += 1
-            if direction == 'Import':
-                route_import[route] += 1
-            else:
-                route_export[route] += 1
+            if pol:
+                pol_all[pol] += 1
+                if direction == 'Import': pol_import[pol] += 1
+                else: pol_export[pol] += 1
+            if pod:
+                pod_all[pod] += 1
+                if direction == 'Import': pod_import[pod] += 1
+                else: pod_export[pod] += 1
+            if pol and pod:
+                route = f'{pol} to {pod}'
+                route_all[route] += 1
+                if direction == 'Import': route_import[route] += 1
+                else: route_export[route] += 1
+        except Exception:
+            continue
 
     def sort_counts(d, key_name='name', value_name='count', limit=8):
-        return [{key_name: k, value_name: v} for k, v in sorted(d.items(), key=lambda x: (-x[1], x[0]))[:limit]]
+        return [{key_name: k, value_name: v}
+                for k, v in sorted(d.items(), key=lambda x: (-x[1], x[0]))[:limit]]
 
     def sort_client(d, limit=8):
-        rows = [{'name': k, 'shipments': int(v['shipments']), 'teu': round(v['teu'], 2)} for k, v in d.items()]
+        rows = [{'name': k, 'shipments': int(v['shipments']), 'teu': round(v['teu'], 2)}
+                for k, v in d.items()]
         rows.sort(key=lambda x: (-x['shipments'], -x['teu'], x['name']))
         return rows[:limit]
 
@@ -569,7 +500,7 @@ def _build_legacy_kpi_report(db):
             'export_count': monthly_export.get(month, 0),
         })
 
-        return {
+    return {
         "total": total,
         "totalteu": totalteu,
         "total_teu": totalteu,
@@ -586,30 +517,29 @@ def _build_legacy_kpi_report(db):
             "Import": bydirection.get("Import", 0),
         },
         "monthly": monthly,
-        "byclientall": sortclient(clientall),
-        "byclientimport": sortclient(clientimport),
-        "byclientexport": sortclient(clientexport),
-        "bycarrier": sortcounts(carrierall),
-        "bycarrierimport": sortcounts(carrierimport),
-        "bycarrierexport": sortcounts(carrierexport),
-        "toppol": sortcounts(polall),
-        "toppolimport": sortcounts(polimport),
-        "toppolexport": sortcounts(polexport),
-        "toppod": sortcounts(podall),
-        "toppodimport": sortcounts(podimport),
-        "toppodexport": sortcounts(podexport),
-        "toprouting": sortcounts(routeall, "route", "count"),
-        "toproutingimport": sortcounts(routeimport, "route", "count"),
-        "toproutingexport": sortcounts(routeexport, "route", "count"),
+        "byclientall": sort_client(client_all),
+        "byclientimport": sort_client(client_import),
+        "byclientexport": sort_client(client_export),
+        "bycarrier": sort_counts(carrier_all),
+        "bycarrierimport": sort_counts(carrier_import),
+        "bycarrierexport": sort_counts(carrier_export),
+        "toppol": sort_counts(pol_all),
+        "toppolimport": sort_counts(pol_import),
+        "toppolexport": sort_counts(pol_export),
+        "toppod": sort_counts(pod_all),
+        "toppodimport": sort_counts(pod_import),
+        "toppodexport": sort_counts(pod_export),
+        "toprouting": sort_counts(route_all, "route", "count"),
+        "toproutingimport": sort_counts(route_import, "route", "count"),
+        "toproutingexport": sort_counts(route_export, "route", "count"),
         "insights": [],
-        }
-    
+    }
+
 
 @app.get("/api/kpi-report")
-def kpi_report(db: Session = Depends(get_db)):
+def kpi_report(db: Session = Depends(get_db), current=Depends(get_current_user)):
     return _build_legacy_kpi_report(db)
 
-# PDF
 @app.get("/api/shipments/{sid}/pdf")
 def shipment_pdf(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
     import pdfexport
@@ -626,7 +556,6 @@ def dashboard_pdf(db: Session = Depends(get_db), current=Depends(get_current_use
     return Response(content=pdf_bytes, media_type="application/pdf",
                     headers={"Content-Disposition": f"attachment; filename=dashboard_{datetime.now().strftime('%Y%m%d')}.pdf"})
 
-# Auth & Users
 def ensure_admin(db):
     from models import User
     if not db.query(User).filter(User.role == "admin").first():
@@ -709,22 +638,6 @@ def delete_user(uid: int, db: Session = Depends(get_db), current=Depends(require
     db.delete(u); db.commit()
     return {"deleted": uid}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
-
-@app.get("/debug-user-fields")
-def debug_user_fields():
-    from models import User
-    return {"columns": [c.key for c in User.__table__.columns]}
-
-@app.get("/debug-main-version")
-def debug_version():
-    import inspect, main
-    lines = inspect.getsource(main.login)
-    return {"login_source": lines}
-
-
 @app.get("/api/kpi-compare")
 def kpi_compare(
     a_from: str = "", a_to: str = "",
@@ -746,12 +659,12 @@ def kpi_compare(
             return dt
         except: return None
 
-    import_re = _re.compile(r'^RO(\d{2})(\d{2})\d+$', _re.I)
-    export_re = _re.compile(r'^ROE(\d{2})(\d{2})\d+$', _re.I)
+    import_re2 = _re.compile(r'^RO(\d{2})(\d{2})\d+$', _re.I)
+    export_re2 = _re.compile(r'^ROE(\d{2})(\d{2})\d+$', _re.I)
 
     def ship_month_dt(s):
         ref = (getattr(s, 'ref', None) or '').strip().upper()
-        m = export_re.match(ref) or import_re.match(ref)
+        m = export_re2.match(ref) or import_re2.match(ref)
         if m:
             yy, mm = m.group(1), m.group(2)
             try: return datetime(2000 + int(yy), int(mm), 1)
@@ -774,103 +687,84 @@ def kpi_compare(
 
     def run_kpi(ships):
         total = len(ships)
-        total_teu = round(sum(
-            (lambda v: float(v) if v else 0.0)(getattr(s, 'teu', None)) for s in ships
-        ), 2)
-
-        by_status   = defaultdict(int)
-        by_mode     = defaultdict(int)
-        by_dir      = defaultdict(int)
-        monthly_imp = defaultdict(int)
-        monthly_exp = defaultdict(int)
-        client_all  = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
-        carrier_all = defaultdict(int)
-        pol_all     = defaultdict(int)
-        pod_all     = defaultdict(int)
-        pod_exp     = defaultdict(int)
-        pod_imp     = defaultdict(int)
-        route_all   = defaultdict(int)
-        now         = datetime.utcnow()
-        overdue     = 0
-
+        total_teu = round(sum((lambda v: float(v) if v else 0.0)(getattr(s,'teu',None)) for s in ships), 2)
+        by_status = defaultdict(int); by_mode = defaultdict(int); by_dir = defaultdict(int)
+        monthly_imp = defaultdict(int); monthly_exp = defaultdict(int)
+        client_all = defaultdict(lambda: {'shipments':0,'teu':0.0})
+        carrier_all = defaultdict(int); pol_all = defaultdict(int); pod_all = defaultdict(int)
+        pod_exp = defaultdict(int); pod_imp = defaultdict(int); route_all = defaultdict(int)
+        now = datetime.utcnow(); overdue = 0
         for s in ships:
-            ref  = (getattr(s, 'ref', None) or '').strip().upper()
-            d    = (getattr(s, 'direction', None) or '').strip().lower()
-            me   = export_re.match(ref)
-            mi   = import_re.match(ref)
-            direction = ('Export' if me else 'Import') if (me or mi) else                         ('Export' if d in ('export','exp','x') else 'Import')
-            status  = (getattr(s, 'status', None) or 'Pending').strip()
-            teu_val = (lambda v: float(v) if v else 0.0)(getattr(s, 'teu', None))
-            client  = (getattr(s, 'client',  None) or '').strip() or None
-            carrier = (getattr(s, 'carrier', None) or '').strip() or None
-            pol     = (getattr(s, 'pol', None) or '').strip().upper()
-            pod     = (getattr(s, 'pod', None) or '').strip().upper()
-            mode    = (getattr(s, 'mode',    None) or 'Ocean').strip()
-
-            m2 = me or mi
-            if m2:
-                yy, mm = m2.group(1), m2.group(2)
-                month_key = f'20{yy}-{mm}'
-                if direction == 'Import': monthly_imp[month_key] += 1
-                else:                     monthly_exp[month_key] += 1
-
-            by_status[status] += 1
-            by_mode[mode]     += 1
-            by_dir[direction] += 1
-
-            if client:
-                client_all[client]['shipments'] += 1
-                client_all[client]['teu']       += teu_val
-            if carrier: carrier_all[carrier] += 1
-            if pol:     pol_all[pol] += 1
-            if pod:
-                pod_all[pod] += 1
-                if direction == 'Export': pod_exp[pod] += 1
-                else:                     pod_imp[pod] += 1
-            if pol and pod: route_all[f'{pol} → {pod}'] += 1
-
-            eta = getattr(s, 'eta', None)
-            if eta and status not in ('Arrived', 'Closed', 'Canceled'):
-                try:
-                    if now > datetime.strptime(str(eta)[:10], "%Y-%m-%d"):
-                        overdue += 1
-                except: pass
-
+            try:
+                ref = (getattr(s,'ref',None) or '').strip().upper()
+                me = export_re2.match(ref); mi = import_re2.match(ref)
+                d = (getattr(s,'direction',None) or '').strip().lower()
+                direction = ('Export' if me else 'Import') if (me or mi) else \
+                            ('Export' if d in ('export','exp','x') else 'Import')
+                status = (getattr(s,'status',None) or 'Pending').strip()
+                teu_val = (lambda v: float(v) if v else 0.0)(getattr(s,'teu',None))
+                client = (getattr(s,'client',None) or '').strip() or None
+                carrier = (getattr(s,'carrier',None) or '').strip() or None
+                pol = (getattr(s,'pol',None) or '').strip().upper()
+                pod = (getattr(s,'pod',None) or '').strip().upper()
+                mode = (getattr(s,'mode',None) or 'Ocean').strip()
+                m2 = me or mi
+                if m2:
+                    month_key = f'20{m2.group(1)}-{m2.group(2)}'
+                    if direction == 'Import': monthly_imp[month_key] += 1
+                    else: monthly_exp[month_key] += 1
+                by_status[status] += 1; by_mode[mode] += 1; by_dir[direction] += 1
+                if client:
+                    client_all[client]['shipments'] += 1
+                    client_all[client]['teu'] += teu_val
+                if carrier: carrier_all[carrier] += 1
+                if pol: pol_all[pol] += 1
+                if pod:
+                    pod_all[pod] += 1
+                    if direction == 'Export': pod_exp[pod] += 1
+                    else: pod_imp[pod] += 1
+                if pol and pod: route_all[f'{pol} to {pod}'] += 1
+                eta = getattr(s,'eta',None)
+                if eta and status not in ('Arrived','Closed','Canceled'):
+                    try:
+                        if now > datetime.strptime(str(eta)[:10], "%Y-%m-%d"): overdue += 1
+                    except: pass
+            except Exception:
+                continue
         def top8(d, key='name', val='count'):
-            return [{key: k, val: v} for k, v in sorted(d.items(), key=lambda x: -x[1])[:8]]
-
+            return [{key:k,val:v} for k,v in sorted(d.items(),key=lambda x:-x[1])[:8]]
         def top_clients(d):
-            rows = [{'name': k, 'shipments': int(v['shipments']), 'teu': round(v['teu'], 2)}
-                    for k, v in d.items()]
-            return sorted(rows, key=lambda x: -x['shipments'])[:8]
-
-        months = sorted(set(list(monthly_imp) + list(monthly_exp)))
-        monthly = [{'month': m, 'import_count': monthly_imp[m],
-                    'export_count': monthly_exp[m],
-                    'count': monthly_imp[m] + monthly_exp[m]} for m in months]
-
+            rows = [{'name':k,'shipments':int(v['shipments']),'teu':round(v['teu'],2)} for k,v in d.items()]
+            return sorted(rows,key=lambda x:-x['shipments'])[:8]
+        months = sorted(set(list(monthly_imp)+list(monthly_exp)))
+        monthly = [{'month':m,'import_count':monthly_imp[m],'export_count':monthly_exp[m],
+                    'count':monthly_imp[m]+monthly_exp[m]} for m in months]
         return {
-            'total': total, 'total_teu': total_teu,
-            'by_status': dict(by_status), 'by_mode': dict(by_mode),
-            'by_direction': {'Export': by_dir['Export'], 'Import': by_dir['Import']},
-            'monthly': monthly,
-            'by_client_all':  top_clients(client_all),
-            'by_carrier':     top8(carrier_all),
-            'top_pol':        top8(pol_all),
-            'top_pod':        top8(pod_all),
-            'top_pod_export': top8(pod_exp),
-            'top_pod_import': top8(pod_imp),
-            'top_routing':    top8(route_all, key='route'),
-            'overdue': overdue,
+            'total':total,'total_teu':total_teu,
+            'by_status':dict(by_status),'by_mode':dict(by_mode),
+            'by_direction':{'Export':by_dir['Export'],'Import':by_dir['Import']},
+            'monthly':monthly,'by_client_all':top_clients(client_all),
+            'by_carrier':top8(carrier_all),'top_pol':top8(pol_all),
+            'top_pod':top8(pod_all),'top_pod_export':top8(pod_exp),
+            'top_pod_import':top8(pod_imp),'top_routing':top8(route_all,key='route'),
+            'overdue':overdue,
         }
 
     all_ships = db.query(models.Shipment).all()
     ships_a = filter_ships(all_ships, parse_month(a_from), parse_month(a_to, end=True))
     ships_b = filter_ships(all_ships, parse_month(b_from), parse_month(b_to, end=True))
-
     return {
         'period_a': run_kpi(ships_a),
         'period_b': run_kpi(ships_b),
-        'a_range': f'{a_from} → {a_to}',
-        'b_range': f'{b_from} → {b_to}',
+        'a_range': f'{a_from} -> {a_to}',
+        'b_range': f'{b_from} -> {b_to}',
     }
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
+
+@app.get("/debug-user-fields")
+def debug_user_fields():
+    from models import User
+    return {"columns": [c.key for c in User.__table__.columns]}
