@@ -2344,6 +2344,9 @@ async function loadDashboard(){
       var _expCurr=_allShips.filter(function(s){return _dirFromRef(s)==='export';}).length;
       var _expPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly)&&_dirFromRef(s)==='export';}).length;
       var _expDelta=_expPrev?Math.round(((_expCurr-_expPrev)/_expPrev)*100):0;
+      var _impCurr=_allShips.filter(function(s){return _dirFromRef(s)==='import';}).length;
+      var _impPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly)&&_dirFromRef(s)==='import';}).length;
+      var _impDelta=_impPrev?Math.round(((_impCurr-_impPrev)/_impPrev)*100):0;
       var _teuCurr=Math.round(_allShips.reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
       var _teuPrev=Math.round(_allShips.filter(function(s){return _inM(s,_lm,_ly);}).reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
       var _teuDelta=_teuPrev?Math.round(((_teuCurr-_teuPrev)/_teuPrev)*100):0;
@@ -2351,6 +2354,7 @@ async function loadDashboard(){
       sg.innerHTML=
         _kpiCard('TOTAL SHIPMENTS',total,(_totalDelta>=0?'+':'')+_totalDelta+'%',_totalDelta>=0?'green':'blue','#22c55e','vs '+_totalPrev+' last period','',_kpiSpark(function(){return true;},''))
         +_kpiCard('EXPORT',_expCurr,(_expDelta>=0?'↑ ':'↓ ')+Math.abs(_expDelta)+'%','blue','#4f8ef7','vs '+_expPrev+' last period','',_kpiSpark(function(s){return _dirFromRef(s)==='export';},''))
+        +_kpiCard('IMPORT',_impCurr,(_impDelta>=0?'↑ ':'↓ ')+Math.abs(_impDelta)+'%','green','#22c55e','vs '+_impPrev+' last period','',_kpiSpark(function(s){return _dirFromRef(s)==='import';},''))
         +_kpiCard('TOTAL TEU',_teuCurr,(_teuDelta>=0?'+':'')+_teuDelta+'%',_teuDelta>=0?'green':'blue','#22c55e','vs '+_teuPrev+' last period','',_kpiSpark(function(){return true;},''))
         +_kpiCard('OVERDUE',overdue,'WATCH','orange','#f59e0b',_critical+' critical, '+_minor+' minor','orange',_kpiSpark(function(s){return(s.status||'').toLowerCase()==='overdue'||(s.is_overdue===true);},''));
     }
@@ -2493,10 +2497,14 @@ async function loadDashboard(){
     }
 
     // Alerts panel
+    const _today = new Date(); _today.setHours(0,0,0,0);
     const _overdueShips = ships.filter(s=>{
       const st=(s.status||'').toLowerCase();
-      return st==='overdue'||st==='late'||(s.is_overdue===true)||(s.is_overdue===1);
-    }).slice(0,5);
+      if(['closed','canceled','arrived'].indexOf(st)>=0) return false;
+      if(!s.eta) return false;
+      const etaD = new Date(s.eta.split('T')[0]); etaD.setHours(0,0,0,0);
+      return etaD < _today;
+    }).sort((a,b)=>new Date(a.eta)-new Date(b.eta)).slice(0,5);
     const _alEl = document.getElementById('dash-alerts-list');
     const _abEl = document.getElementById('dash-alerts-badge');
     if(_abEl && _overdueShips.length>0){
