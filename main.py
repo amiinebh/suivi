@@ -478,6 +478,7 @@ def _build_legacy_kpi_report(db):
     pol_all = defaultdict(int); pol_import = defaultdict(int); pol_export = defaultdict(int)
     pod_all = defaultdict(int); pod_import = defaultdict(int); pod_export = defaultdict(int)
     route_all = defaultdict(int); route_import = defaultdict(int); route_export = defaultdict(int)
+    incoterm_all = defaultdict(int)
 
     for s in shipments:
         try:
@@ -530,6 +531,10 @@ def _build_legacy_kpi_report(db):
                 route_all[route] += 1
                 if direction == 'Import': route_import[route] += 1
                 else: route_export[route] += 1
+
+            inco = (getattr(s, 'incoterm', None) or '').strip().upper()
+            if inco:
+                incoterm_all[inco] += 1
         except Exception:
             continue
 
@@ -555,6 +560,7 @@ def _build_legacy_kpi_report(db):
     return {
         "total": total,
         "totalteu": totalteu,
+        "by_incoterm": dict(sorted(incoterm_all.items(), key=lambda x: -x[1])),
         "total_teu": totalteu,
         "bystatus": dict(sorted(bystatus.items())),
         "by_status": dict(sorted(bystatus.items())),
