@@ -215,7 +215,7 @@ html,body{height:100%;font-family:var(--font);font-size:var(--fs-base);color:var
 .topbar{
   height:var(--topbar-h);display:flex;align-items:center;gap:10px;padding:0 20px;
   background:var(--bg);box-shadow:rgba(0,0,0,0.06) 0 -1px 0 0 inset;
-  flex-shrink:0;z-index:100;
+  flex-shrink:0;z-index:200;position:sticky;top:0;
 }
 .topbar-title{font-size:14px;font-weight:600;color:var(--text1);letter-spacing:-.2px;white-space:nowrap;}
 .search-box{
@@ -1077,7 +1077,7 @@ button[onclick*="closeEmailModal"]:hover{
       <i class="ph ph-caret-right" style="font-size:10px"></i>
       <span id="page-title" style="color:var(--text1);font-weight:600">Dashboard</span>
     </div>
-    <div style="position:relative;display:flex;align-items:center" id="search-wrap">
+    <div style="position:relative;display:flex;align-items:center;margin-left:auto" id="search-wrap">
       <button class="btn btn-ghost btn-icon btn-sm" id="search-toggle-btn" onclick="toggleSearch()" title="Search" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:var(--radius)">
         <i class="ph ph-magnifying-glass" style="font-size:15px"></i>
       </button>
@@ -1092,9 +1092,6 @@ button[onclick*="closeEmailModal"]:hover{
     <div class="topbar-actions-desktop" style="display:flex;gap:8px;align-items:center">
       <button class="btn btn-ghost btn-icon btn-sm" onclick="toggleTheme()" title="Toggle theme" id="theme-toggle-btn" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center">
         <i class="ph ph-moon" id="theme-icon" style="font-size:15px"></i>
-      </button>
-      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()">
-        <i class="ph ph-plus"></i> New
       </button>
       <div class="profile-wrap" id="profile-wrap">
         <button class="profile-btn" onclick="toggleProfileDropdown()" id="profile-btn">
@@ -1144,9 +1141,7 @@ button[onclick*="closeEmailModal"]:hover{
           <button class="btn btn-ghost btn-sm" onclick="showPage('alerts',null);setBottomNav('alerts')">
             <i class="ph ph-bell"></i> <span id="dash-alert-hint">Alerts</span>
           </button>
-          <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()">
-            <i class="ph ph-plus"></i> New Shipment
-          </button>
+
         </div>
       </div>
 
