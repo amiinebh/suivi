@@ -472,6 +472,12 @@ def _build_legacy_kpi_report(db):
     carrier_all = defaultdict(int)
     carrier_import = defaultdict(int)
     carrier_export = defaultdict(int)
+    carrier_ocean = defaultdict(int)
+    carrier_ocean_import = defaultdict(int)
+    carrier_ocean_export = defaultdict(int)
+    carrier_road = defaultdict(int)
+    carrier_road_import = defaultdict(int)
+    carrier_road_export = defaultdict(int)
     client_all = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     client_import = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     client_export = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
@@ -507,6 +513,14 @@ def _build_legacy_kpi_report(db):
                 carrier_all[carrier] += 1
                 if direction == 'Import': carrier_import[carrier] += 1
                 else: carrier_export[carrier] += 1
+                if mode == 'Road':
+                    carrier_road[carrier] += 1
+                    if direction == 'Import': carrier_road_import[carrier] += 1
+                    else: carrier_road_export[carrier] += 1
+                else:
+                    carrier_ocean[carrier] += 1
+                    if direction == 'Import': carrier_ocean_import[carrier] += 1
+                    else: carrier_ocean_export[carrier] += 1
 
             if client:
                 client_all[client]['shipments'] += 1
@@ -583,6 +597,12 @@ def _build_legacy_kpi_report(db):
         "by_client_export": sort_client(client_export),
         "bycarrier": sort_counts(carrier_all),
         "by_carrier": sort_counts(carrier_all),
+        "by_carrier_ocean": sort_counts(carrier_ocean),
+        "by_carrier_ocean_import": sort_counts(carrier_ocean_import),
+        "by_carrier_ocean_export": sort_counts(carrier_ocean_export),
+        "by_carrier_road": sort_counts(carrier_road),
+        "by_carrier_road_import": sort_counts(carrier_road_import),
+        "by_carrier_road_export": sort_counts(carrier_road_export),
         "bycarrierimport": sort_counts(carrier_import),
         "by_carrier_import": sort_counts(carrier_import),
         "bycarrierexport": sort_counts(carrier_export),
