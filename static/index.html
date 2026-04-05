@@ -2340,14 +2340,15 @@ async function loadDashboard(){
       function _inM(s,m,y){var raw=s.etd||s.eta||s.created_at||'';if(!raw)return false;var p=raw.split(/[-T]/);if(p.length<3)return false;return(parseInt(p[1],10)-1)===m&&parseInt(p[0],10)===y;}
       var _allShips=allShipments||[];
       var _totalPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly);}).length;
-      var _totalDelta=_totalPrev?Math.round(((total-_totalPrev)/_totalPrev)*100):0;
+      var _totalCurr=_allShips.filter(function(s){return _inM(s,_cm,_cy);}).length;
+      var _totalDelta=_totalPrev?Math.round(((_totalCurr-_totalPrev)/_totalPrev)*100):0;
       var _expCurr=_allShips.filter(function(s){return _inM(s,_cm,_cy)&&_dirFromRef(s)==='export';}).length;
       var _expPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly)&&_dirFromRef(s)==='export';}).length;
       var _expDelta=_expPrev?Math.round(((_expCurr-_expPrev)/_expPrev)*100):0;
       var _impCurr=_allShips.filter(function(s){return _inM(s,_cm,_cy)&&_dirFromRef(s)==='import';}).length;
       var _impPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly)&&_dirFromRef(s)==='import';}).length;
       var _impDelta=_impPrev?Math.round(((_impCurr-_impPrev)/_impPrev)*100):0;
-      var _teuCurr=Math.round(_allShips.reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
+      var _teuCurr=Math.round(_allShips.filter(function(s){return _inM(s,_cm,_cy);}).reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
       var _teuPrev=Math.round(_allShips.filter(function(s){return _inM(s,_lm,_ly);}).reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
       var _teuDelta=_teuPrev?Math.round(((_teuCurr-_teuPrev)/_teuPrev)*100):0;
       var _critical=Math.ceil(overdue/2),_minor=Math.floor(overdue/2);
@@ -2503,7 +2504,7 @@ async function loadDashboard(){
       if(['closed','canceled','arrived'].indexOf(st)>=0) return false;
       if(!s.eta) return false;
       const etaD = new Date(s.eta.split('T')[0]); etaD.setHours(0,0,0,0);
-      return etaD < _today;
+      return etaD < new Date(_today.getTime() - 7*86400000);
     }).sort((a,b)=>new Date(a.eta)-new Date(b.eta)).slice(0,5);
     const _alEl = document.getElementById('dash-alerts-list');
     const _abEl = document.getElementById('dash-alerts-badge');
