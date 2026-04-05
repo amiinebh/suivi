@@ -202,13 +202,8 @@ def get_kpis(db: Session = Depends(get_db), current=Depends(get_current_user)):
 
 @app.get("/api/stats")
 def stats(db: Session = Depends(get_db), current=Depends(get_current_user)):
-    s = crud.get_stats(db)
-    kpi = build_legacy_kpi_report(db)
-    s["totalteu"] = kpi.get("totalteu", 0)
-    s["bydirection"] = kpi.get("bydirection", {"Export": 0, "Import": 0})
-    s["export"] = kpi.get("bydirection", {}).get("Export", 0)
-    return s
-
+    return crud.get_stats(db)
+    
 @app.get("/api/health")
 def health(db: Session = Depends(get_db)):
     try:
