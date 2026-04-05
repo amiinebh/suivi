@@ -47,10 +47,52 @@ def portal_data(ref: str, db: Session = Depends(get_db)):
                    for e in sorted(s.events, key=lambda x: x.timestamp, reverse=True)]
     }
 
-@app.get("/api/shipments", response_model=list[schemas.ShipmentOut])
+@app.get("/api/shipments")
 def list_shipments(q: str = "", search: str = "", status: str = "", mode: str = "",
                    db: Session = Depends(get_db), current=Depends(get_current_user)):
-    return crud.get_shipments(db, q or search, status, mode)
+    ships = crud.get_shipments(db, q or search, status, mode)
+    result = []
+    for s in ships:
+        try:
+            item = {
+                "id": s.id,
+                "ref": s.ref or "",
+                "ref2": getattr(s, "ref2", None),
+                "booking_no": getattr(s, "booking_no", None) or getattr(s, "bookingno", None),
+                "mode": s.mode or "Ocean",
+                "carrier": s.carrier,
+                "vessel": getattr(s, "vessel", None),
+                "pol": s.pol,
+                "pod": s.pod,
+                "eta": str(s.eta) if s.eta else None,
+                "etd": str(s.etd) if s.etd else None,
+                "status": s.status or "Pending",
+                "client": s.client,
+                "client_email": getattr(s, "client_email", None) or getattr(s, "clientemail", None),
+                "note": s.note,
+                "notes": getattr(s, "notes", None),
+                "incoterm": s.incoterm,
+                "teu": float(s.teu) if s.teu is not None else None,
+                "shipper": s.shipper,
+                "consignee": s.consignee,
+                "direction": getattr(s, "direction", None),
+                "quotation_number": getattr(s, "quotation_number", None),
+                "shipsgo_id": getattr(s, "shipsgo_id", None),
+                "last_tracked": getattr(s, "last_tracked", None) or getattr(s, "lasttracked", None),
+                "created_at": str(s.created_at) if s.created_at else None,
+                "events": [], "comments": [], "containers": [],
+            }
+            try: item["events"] = [{"id": e.id, "shipment_id": e.shipment_id, "status": e.status, "description": e.description, "location": e.location, "timestamp": str(e.timestamp) if e.timestamp else None} for e in (s.events or [])]
+            except: pass
+            try: item["comments"] = [{"id": c.id, "shipment_id": c.shipment_id, "author": c.author, "text": c.text, "timestamp": str(c.timestamp) if c.timestamp else None} for c in (s.comments or [])]
+            except: pass
+            try: item["containers"] = [{"id": c.id, "shipment_id": c.shipment_id, "container_no": c.container_no, "seal_no": c.seal_no, "size_type": c.size_type, "weight": c.weight, "created_at": str(c.created_at) if c.created_at else None} for c in (s.containers or [])]
+            except: pass
+            result.append(item)
+        except Exception as ex:
+            logging.error(f"Shipment serialize error id={getattr(s,'id','?')}: {ex}")
+            continue
+    return result
 
 @app.post("/api/shipments", response_model=schemas.ShipmentOut)
 async def create_shipment(request: Request, db: Session = Depends(get_db),

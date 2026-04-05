@@ -7,14 +7,19 @@ def get_shipments(db: Session, search: str = "", status: str = "", mode: str = "
     q = db.query(models.Shipment)
     if search:
         s = f"%{search}%"
-        q = q.filter(
-            models.Shipment.ref.ilike(s) |
-            models.Shipment.client.ilike(s) |
-            models.Shipment.pol.ilike(s) |
-            models.Shipment.pod.ilike(s) |
-            models.Shipment.carrier.ilike(s) |
-            models.Shipment.booking_no.ilike(s)
-        )
+        from sqlalchemy import or_
+        filters = [
+            models.Shipment.ref.ilike(s),
+            models.Shipment.client.ilike(s),
+            models.Shipment.pol.ilike(s),
+            models.Shipment.pod.ilike(s),
+            models.Shipment.carrier.ilike(s),
+        ]
+        try: filters.append(models.Shipment.booking_no.ilike(s))
+        except: pass
+        try: filters.append(models.Shipment.bookingno.ilike(s))
+        except: pass
+        q = q.filter(or_(*filters))
     if status:
         q = q.filter(models.Shipment.status == status)
     if mode:
