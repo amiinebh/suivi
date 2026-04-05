@@ -442,10 +442,11 @@ body.dark .modal-backdrop{background:rgba(0,0,0,.65);}
 .admin-only{}
 
 /* ══ STAT / KPI CARDS ══ */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
-@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(5,1fr);}}
+@media(max-width:700px){.stats-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:480px){.stats-grid{grid-template-columns:1fr 1fr;}}
-.stat-card{background:var(--bg);box-shadow:var(--shadow-full);border-radius:var(--radius-lg);padding:16px 18px 12px;display:flex;flex-direction:column;gap:0;position:relative;overflow:hidden;transition:box-shadow var(--t);}
+.stat-card{background:var(--bg);box-shadow:var(--shadow-full);border-radius:var(--radius-lg);padding:14px 14px 10px;display:flex;flex-direction:column;gap:0;position:relative;overflow:hidden;transition:box-shadow var(--t);}
 .stat-card:hover{box-shadow:var(--shadow-hover);}
 .stat-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .stat-card-title{font-size:10px;font-weight:500;color:var(--text2);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.08em;}
@@ -1539,6 +1540,21 @@ button[onclick*="closeEmailModal"]:hover{
           </div><div id="kpi-bar-routes"></div>
         </div></div>
       </div>
+      <!-- Incoterm distribution -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="card"><div class="card__body">
+          <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px">
+            <i class="ph ph-file-text" style="color:var(--accent)"></i> Incoterm Distribution
+          </div>
+          <div id="kpi-bar-incoterm" style="min-height:120px"></div>
+        </div></div>
+        <div class="card"><div class="card__body">
+          <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px">
+            <i class="ph ph-chart-donut" style="color:#a855f7"></i> Incoterm Split
+          </div>
+          <div style="height:160px;position:relative"><canvas id="kpi-chart-incoterm"></canvas></div>
+        </div></div>
+      </div>
       <div class="card" style="margin-bottom:20px"><div class="card__body">
         <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-warning" style="color:#ef4444"></i> Overdue Shipments</div>
         <div id="kpi-overdue"></div>
@@ -2420,7 +2436,7 @@ async function loadDashboard(){
     }
     var recent=list.slice(0,6);
     if(typeof renderCards==='function')renderCards(recent,'recent-cards');
-    renderActivityFeed();
+    if(typeof renderActivityFeed==='function') renderActivityFeed();
   try{
     var _mn=new Date(),_mc=_mn.getMonth(),_yc=_mn.getFullYear();
     var _mns=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -2838,8 +2854,13 @@ async function loadAnalytics(){
     var mcEl=document.getElementById('kpi-chart-monthly');
     if(mcEl&&monthly.length){
       chartRegistry['kpi-chart-monthly']=new Chart(mcEl,{type:'bar',
-        data:{labels:monthly.map(function(m){return m.month;}),datasets:[{label:'Shipments',data:monthly.map(function(m){return m.count;}),backgroundColor:'rgba(79,142,247,.7)',borderRadius:5,borderSkipped:false}]},
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}}},y:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}},beginAtZero:true}}}});
+        data:{labels:monthly.map(function(m){return m.month;}),datasets:[
+          {label:'Export',data:monthly.map(function(m){return m.export_count||0;}),backgroundColor:'rgba(79,142,247,.8)',borderRadius:4,borderSkipped:false,stack:'s'},
+          {label:'Import',data:monthly.map(function(m){return m.import_count||0;}),backgroundColor:'rgba(34,197,94,.75)',borderRadius:4,borderSkipped:false,stack:'s'}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:true,position:'top',labels:{color:tc(),font:{size:10},boxWidth:10,padding:8}}},
+          scales:{x:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}}},y:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}},beginAtZero:true,stacked:true}}}});
     } else if(mcEl) mcEl.parentElement.innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:12px">No monthly data yet</div>';
 
     dc('kpi-chart-status');
@@ -2898,6 +2919,28 @@ async function loadAnalytics(){
             +'<div style="height:6px;background:var(--bg3);border-radius:4px"><div style="height:6px;border-radius:4px;background:'+c+';width:'+w+'%;transition:width .6s ease"></div></div></div>';
         }).join('');
       } else rEl.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px 0">No routing data yet</div>';}
+
+    // ── Incoterm bar + donut ──
+    var incoData = k.by_incoterm || {};
+    bl('kpi-bar-incoterm',
+      Object.entries(incoData).map(function(e){return {name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}),
+      'name','count','#a855f7');
+    dc('kpi-chart-incoterm');
+    var incoEl=document.getElementById('kpi-chart-incoterm');
+    if(incoEl){
+      var incoKeys=Object.keys(incoData).filter(function(k){return incoData[k]>0;});
+      if(incoKeys.length){
+        var incoColors=['#a855f7','#6c63ff','#4f8ef7','#22c55e','#f59e0b','#ef4444','#06b6d4','#f97316'];
+        chartRegistry['kpi-chart-incoterm']=new Chart(incoEl,{type:'doughnut',
+          data:{labels:incoKeys,datasets:[{data:incoKeys.map(function(k){return incoData[k];}),
+            backgroundColor:incoKeys.map(function(_,i){return incoColors[i%incoColors.length];}),
+            borderWidth:0,hoverOffset:8}]},
+          options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
+            plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},boxWidth:10,padding:6}}}}});
+      } else {
+        incoEl.parentElement.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No incoterm data yet</div>';
+      }
+    }
 
     var odEl=document.getElementById('kpi-overdue');
     if(odEl){var now=new Date();now.setHours(0,0,0,0);var ships=(typeof allShipments!=='undefined')?allShipments:[];
@@ -4696,17 +4739,9 @@ function openDigest(){
   h+='</div>';
 
   function _row(ref, sub, badge, badgeColor){
-    return '<div style="display:flex;align-items:center;justify-content:space-between;'
-      +'padding:10px 18px;border-bottom:1px solid var(--border);transition:background var(--t)"'
-      +' onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">'
-      +'<div>'
-      +'<div style="font-size:12px;font-weight:600;color:var(--text1);font-family:var(--font-mono)">'+ref+'</div>'
-      +'<div style="font-size:11px;color:var(--text3);margin-top:1px">'+sub+'</div>'
-      +'</div>'
-      +'<span style="background:'+badgeColor+'18;color:'+badgeColor+';border:1px solid '+badgeColor+'33;'
-      +'padding:2px 9px;border-radius:var(--radius-sm);font-size:10px;font-weight:600;white-space:nowrap">'+badge+'</span>'
-      +'</div>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--border)">'      +'<div>'      +'<div style="font-size:12px;font-weight:600;color:var(--text1);font-family:var(--font-mono)">'+ref+'</div>'      +'<div style="font-size:11px;color:var(--text3);margin-top:1px">'+sub+'</div>'      +'</div>'      +'<span style="background:'+badgeColor+'18;color:'+badgeColor+';border:1px solid '+badgeColor+'33;padding:2px 9px;border-radius:var(--radius-sm);font-size:10px;font-weight:600;white-space:nowrap">'+badge+'</span>'      +'</div>';
   }
+
 
   function _section(icon, label, color, count){
     return '<div style="display:flex;align-items:center;gap:6px;padding:10px 18px 6px;'
