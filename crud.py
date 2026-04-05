@@ -13,7 +13,7 @@ def get_shipments(db: Session, search: str = "", status: str = "", mode: str = "
             models.Shipment.pol.ilike(s) |
             models.Shipment.pod.ilike(s) |
             models.Shipment.carrier.ilike(s) |
-            models.Shipment.bookingno.ilike(s)
+            models.Shipment.booking_no.ilike(s)
         )
     if status:
         q = q.filter(models.Shipment.status == status)
