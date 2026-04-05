@@ -967,120 +967,6 @@ button[onclick*="closeEmailModal"]:hover{
   padding:2px;
   box-shadow:rgba(0,0,0,0.06) 0 0 0 1px inset;
 }
-
-
-/* ══════════════════════════════════════════════════
-   STRIPE THEME
-   Source: Stripe DESIGN.md — Premium fintech light theme
-   White canvas + Deep navy + Signature purple #533afd
-   Blue-tinted multi-layer shadows
-══════════════════════════════════════════════════ */
-body.theme-stripe {
-  /* Core surfaces */
-  --bg:      #ffffff;
-  --bg2:     #f6f9fc;
-  --bg3:     #e5edf5;
-  --bg4:     #cdd5df;
-  --border:  #e5edf5;
-  --border2: #cdd5df;
-
-  /* Text */
-  --text1:   #061b31;
-  --text2:   #273951;
-  --text3:   #64748d;
-  --accent:  #533afd;
-  --accent2: #4434d4;
-
-  /* Semantic */
-  --green:    #108c3d; --green-bg:rgba(21,190,83,0.12); --green-bd:rgba(21,190,83,0.3);
-  --red:      #ea2261; --red-bg:#fff0f5;               --red-bd:rgba(234,34,97,0.2);
-  --blue:     #533afd; --blue-bg:#f0effe;              --blue-bd:rgba(83,58,253,0.2);
-  --yellow:   #9b6829; --yellow-bg:#fef9ee;            --yellow-bd:rgba(155,104,41,0.2);
-  --purple:   #533afd; --purple-bg:#f0effe;            --purple-bd:rgba(83,58,253,0.2);
-  --cyan:     #2874ad; --cyan-bg:#e8f4fb;              --cyan-bd:rgba(40,116,173,0.2);
-  --orange:   #c2410c; --orange-bg:#fff7ed;            --orange-bd:rgba(194,65,12,0.2);
-  --green2:   #15be53;
-  --green-glow:rgba(21,190,83,0.08);
-
-  /* Stripe signature shadows — blue-tinted multi-layer */
-  --shadow-ring:  rgba(50,50,93,0.1) 0px 0px 0px 1px;
-  --shadow-light: rgba(50,50,93,0.08) 0px 1px 3px, rgba(0,0,0,0.06) 0px 1px 2px;
-  --shadow-card:  rgba(50,50,93,0.15) 0px 2px 8px -2px, rgba(0,0,0,0.06) 0px 1px 3px;
-  --shadow-full:  rgba(50,50,93,0.25) 0px 30px 45px -30px, rgba(0,0,0,0.1) 0px 18px 36px -18px;
-  --shadow-hover: rgba(50,50,93,0.3) 0px 30px 50px -25px, rgba(0,0,0,0.12) 0px 18px 36px -18px;
-  --shadow-modal: rgba(3,3,39,0.25) 0px 14px 21px -14px, rgba(0,0,0,0.12) 0px 8px 17px -8px;
-
-  /* Radius — Stripe conservative scale */
-  --radius:    6px;
-  --radius-sm: 4px;
-  --radius-lg: 8px;
-  --radius-xl: 8px;
-
-  /* Typography */
-  --font:      'Inter', 'SF Pro Display', -apple-system, system-ui, sans-serif;
-  --font-mono: 'Source Code Pro', 'SFMono-Regular', ui-monospace, monospace;
-
-  /* Stitch tokens */
-  --stitch-primary:  #533afd;
-  --stitch-surface:  #ffffff;
-  --stitch-surf-low: #f6f9fc;
-  --stitch-surf-mid: #e5edf5;
-  --stitch-text1:    #061b31;
-  --stitch-text2:    #273951;
-  --stitch-border:   #e5edf5;
-  --stitch-tint:     #533afd;
-}
-
-/* Stripe-specific accent overrides */
-body.theme-stripe .btn-primary {
-  background: #533afd !important;
-  color: #fff !important;
-  border-radius: 4px !important;
-  font-weight: 400;
-  letter-spacing: 0;
-}
-body.theme-stripe .btn-primary:hover {
-  background: #4434d4 !important;
-}
-body.theme-stripe .sidebar {
-  border-right: 1px solid #e5edf5;
-}
-body.theme-stripe .topbar {
-  border-bottom: 1px solid #e5edf5;
-  box-shadow: rgba(0,55,112,0.06) 0px 1px 0px;
-}
-body.theme-stripe .nav-item.active {
-  background: rgba(83,58,253,0.08) !important;
-  color: #533afd !important;
-}
-body.theme-stripe .nav-item.active i,
-body.theme-stripe .nav-item.active span {
-  color: #533afd !important;
-}
-body.theme-stripe .card {
-  box-shadow: rgba(50,50,93,0.15) 0px 2px 8px -2px, rgba(0,0,0,0.06) 0px 1px 3px;
-  border: 1px solid #e5edf5;
-}
-body.theme-stripe .card:hover {
-  box-shadow: rgba(50,50,93,0.25) 0px 30px 45px -30px, rgba(0,0,0,0.1) 0px 18px 36px -18px;
-}
-body.theme-stripe .badge {
-  border-radius: 4px !important;
-}
-body.theme-stripe .modal-box {
-  box-shadow: rgba(3,3,39,0.25) 0px 14px 21px -14px, rgba(0,0,0,0.12) 0px 8px 17px -8px;
-  border: 1px solid #e5edf5;
-  border-radius: 6px;
-}
-body.theme-stripe input, body.theme-stripe select, body.theme-stripe textarea {
-  border-color: #e5edf5 !important;
-}
-body.theme-stripe input:focus, body.theme-stripe select:focus {
-  border-color: #533afd !important;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(83,58,253,0.15) !important;
-}
-
 </style>
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
@@ -1206,39 +1092,9 @@ body.theme-stripe input:focus, body.theme-stripe select:focus {
       <input id="global-search" placeholder="Search…" oninput="onSearch(this.value)"/>
     </div>
     <div class="topbar-actions-desktop" style="display:flex;gap:8px;align-items:center">
-      <div style="position:relative;display:inline-block" id="theme-switcher-wrap">
-        <button class="btn btn-ghost btn-sm" onclick="toggleThemeMenu()" id="theme-toggle-btn"
-          style="display:flex;align-items:center;gap:5px;padding:5px 9px;height:32px;font-size:11px;font-weight:500">
-          <i class="ph ph-moon" id="theme-icon" style="font-size:14px"></i>
-          <span id="theme-label" style="font-size:11px">Light</span>
-          <i class="ph ph-caret-down" style="font-size:10px;opacity:.5"></i>
-        </button>
-        <div id="theme-menu" style="display:none;position:absolute;top:38px;right:0;z-index:9999;
-          background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);
-          box-shadow:var(--shadow-modal);min-width:140px;padding:4px;overflow:hidden">
-          <button onclick="setTheme('light')" id="tmopt-light"
-            style="width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;border:none;
-            background:transparent;border-radius:4px;cursor:pointer;font-size:12px;font-weight:500;
-            color:var(--text1);font-family:var(--font)">
-            <i class="ph ph-sun" style="font-size:14px;color:#f59e0b"></i> Light
-            <span id="tmchk-light" style="margin-left:auto;color:var(--accent)">✓</span>
-          </button>
-          <button onclick="setTheme('stripe')" id="tmopt-stripe"
-            style="width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;border:none;
-            background:transparent;border-radius:4px;cursor:pointer;font-size:12px;font-weight:500;
-            color:var(--text1);font-family:var(--font)">
-            <i class="ph ph-credit-card" style="font-size:14px;color:#533afd"></i> Stripe
-            <span id="tmchk-stripe" style="margin-left:auto;color:#533afd;display:none">✓</span>
-          </button>
-          <button onclick="setTheme('dark')" id="tmopt-dark"
-            style="width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;border:none;
-            background:transparent;border-radius:4px;cursor:pointer;font-size:12px;font-weight:500;
-            color:var(--text1);font-family:var(--font)">
-            <i class="ph ph-moon" style="font-size:14px;color:#888"></i> Dark
-            <span id="tmchk-dark" style="margin-left:auto;color:var(--accent);display:none">✓</span>
-          </button>
-        </div>
-      </div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="toggleTheme()" title="Toggle theme" id="theme-toggle-btn" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center">
+        <i class="ph ph-moon" id="theme-icon" style="font-size:15px"></i>
+      </button>
       <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()">
         <i class="ph ph-plus"></i> New
       </button>
@@ -2325,16 +2181,6 @@ function renderCards(ships,containerId){
 }
 
 /* ── Render table (desktop) ── */
-
-/* ── fmtd: format date helper (global) ── */
-function fmtd(d){
-  if(!d)return "--";
-  try{
-    var dt=new Date(d);
-    if(isNaN(dt.getTime()))return String(d);
-    return dt.toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
-  }catch(e){return String(d);}
-}
 function renderTable(ships){
   window._selectedShips = window._selectedShips || new Set();
   var wrap = document.getElementById('ship-table');
@@ -2507,10 +2353,10 @@ async function loadDashboard(){
       var _teuDelta=_teuPrev?Math.round(((_teuCurr-_teuPrev)/_teuPrev)*100):0;
       var _critical=Math.ceil(overdue/2),_minor=Math.floor(overdue/2);
       sg.innerHTML=
-        _kpiCard('TOTAL SHIPMENTS',_totalCurr,(_totalDelta>=0?'+':'')+_totalDelta+'%',_totalDelta>=0?'green':'red','#22c55e','vs '+_totalPrev+' last month','',_kpiSpark(function(){return true;},''))
-        +_kpiCard('EXPORT',_expCurr,(_expDelta>=0?'↑ ':'↓ ')+Math.abs(_expDelta)+'%',_expDelta>=0?'green':'red','#4f8ef7','vs '+_expPrev+' last month','',_kpiSpark(function(s){return _dirFromRef(s)==='export';},''))
-        +_kpiCard('IMPORT',_impCurr,(_impDelta>=0?'↑ ':'↓ ')+Math.abs(_impDelta)+'%',_impDelta>=0?'green':'red','#22c55e','vs '+_impPrev+' last month','',_kpiSpark(function(s){return _dirFromRef(s)==='import';},''))
-        +_kpiCard('TOTAL TEU',_teuCurr,(_teuDelta>=0?'+':'')+_teuDelta+'%',_teuDelta>=0?'green':'red','#22c55e','vs '+_teuPrev+' last month','',_kpiSpark(function(){return true;},''))
+        _kpiCard('TOTAL SHIPMENTS',total,(_totalDelta>=0?'+':'')+_totalDelta+'%',_totalDelta>=0?'green':'blue','#22c55e','vs '+_totalPrev+' last period','',_kpiSpark(function(){return true;},''))
+        +_kpiCard('EXPORT',_expCurr,(_expDelta>=0?'↑ ':'↓ ')+Math.abs(_expDelta)+'%','blue','#4f8ef7','vs '+_expPrev+' last period','',_kpiSpark(function(s){return _dirFromRef(s)==='export';},''))
+        +_kpiCard('IMPORT',_impCurr,(_impDelta>=0?'↑ ':'↓ ')+Math.abs(_impDelta)+'%','green','#22c55e','vs '+_impPrev+' last period','',_kpiSpark(function(s){return _dirFromRef(s)==='import';},''))
+        +_kpiCard('TOTAL TEU',_teuCurr,(_teuDelta>=0?'+':'')+_teuDelta+'%',_teuDelta>=0?'green':'blue','#22c55e','vs '+_teuPrev+' last period','',_kpiSpark(function(){return true;},''))
         +_kpiCard('OVERDUE',overdue,'WATCH','orange','#f59e0b',_critical+' critical, '+_minor+' minor','orange',_kpiSpark(function(s){return(s.status||'').toLowerCase()==='overdue'||(s.is_overdue===true);},''));
     }
     var nc=document.getElementById('nav-count');
@@ -2868,37 +2714,22 @@ function getChartColors(n){
 }
 
 function isDark(){ return document.body.classList.contains('dark'); }
-function setTheme(t){
-  document.body.classList.remove('dark','theme-stripe');
-  if(t==='dark') document.body.classList.add('dark');
-  if(t==='stripe') document.body.classList.add('theme-stripe');
-  localStorage.setItem('ft_theme', t);
-  var icons={light:'ph-sun',stripe:'ph-credit-card',dark:'ph-moon'};
-  var labels={light:'Light',stripe:'Stripe',dark:'Dark'};
-  var iconEl=document.getElementById('theme-icon');
-  var labelEl=document.getElementById('theme-label');
-  if(iconEl){ iconEl.className='ph '+icons[t]; }
-  if(labelEl){ labelEl.textContent=labels[t]; }
-  ['light','stripe','dark'].forEach(function(k){
-    var el=document.getElementById('tmchk-'+k);
-    if(el) el.style.display=k===t?'inline':'none';
-  });
-  var menu=document.getElementById('theme-menu');
-  if(menu) menu.style.display='none';
-}
-function toggleTheme(){ /* legacy — kept for compat */ }
-function toggleThemeMenu(){
-  var m=document.getElementById('theme-menu');
-  if(!m) return;
-  m.style.display=m.style.display==='none'?'block':'none';
-}
-document.addEventListener('click',function(e){
-  var wrap=document.getElementById('theme-switcher-wrap');
-  if(wrap&&!wrap.contains(e.target)){
-    var m=document.getElementById('theme-menu');
-    if(m) m.style.display='none';
+function toggleTheme(){
+  var isDarkNow=document.body.classList.contains('dark');
+  if(isDarkNow){
+    document.body.classList.remove('dark');
+    document.documentElement.setAttribute('data-theme','light');
+    localStorage.setItem('ft_theme','light');
+  } else {
+    document.body.classList.add('dark');
+    document.documentElement.setAttribute('data-theme','dark');
+    localStorage.setItem('ft_theme','dark');
   }
-});
+  var btn=document.getElementById('theme-toggle-btn');
+  if(btn) btn.innerHTML=!isDarkNow
+    ?'<i class="ph ph-sun" style="font-size:16px"></i>'
+    :'<i class="ph ph-moon" style="font-size:16px"></i>';
+}
 
 function chartTextColor(){ return isDark()?'#8892b0':'#5a6a8a'; }
 function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)'; }
@@ -3155,7 +2986,12 @@ function doLogout(){
 window.addEventListener("DOMContentLoaded", () => {
   // Restore theme
   var savedTheme=localStorage.getItem('ft_theme')||'light';
-  setTimeout(function(){ setTheme(savedTheme); }, 0);
+  if(savedTheme==='dark'){
+    document.body.classList.add('dark');
+    document.documentElement.setAttribute('data-theme','dark');
+    var btn=document.getElementById('theme-toggle-btn');
+    if(btn) btn.innerHTML='<i class="ph ph-sun" style="font-size:16px"></i>';
+  }
   if(getToken()){ showApp(); }
   else {
     const ls = document.getElementById("login-screen");
@@ -5101,9 +4937,7 @@ function renderActivityFeed(){
           +'th{padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e2e8f0;}'
           +'@media print{body{background:#fff;}.section{box-shadow:none;}@page{margin:12mm;}}';
 
-        var doc='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FreightTrack — Comparison</title><style>'+css+'
-
-</style></head><body><div class="page">'
+        var doc='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FreightTrack — Comparison</title><style>'+css+'</style></head><body><div class="page">'
           /* hero */
           +'<div class="hero">'
           +'<div style="font-size:11px;font-weight:600;opacity:.45;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">FreightTrack Pro</div>'
