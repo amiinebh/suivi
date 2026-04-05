@@ -1515,9 +1515,15 @@ button[onclick*="closeEmailModal"]:hover{
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-shipping-container" style="color:var(--accent)"></i> Top Carriers</div>
-            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-carriers','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers','imp')">&#8595; Imp</button></div>
-          </div><div id="kpi-bar-carriers"></div>
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-boat" style="color:#4f8ef7"></i> Ocean Carriers</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-carriers-ocean','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers-ocean','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers-ocean','imp')">&#8595; Imp</button></div>
+          </div><div id="kpi-bar-carriers-ocean"></div>
+        </div></div>
+        <div class="card"><div class="card__body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-truck" style="color:#f97316"></i> Road Carriers</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-carriers-road','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers-road','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers-road','imp')">&#8595; Imp</button></div>
+          </div><div id="kpi-bar-carriers-road"></div>
         </div></div>
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -2853,14 +2859,19 @@ async function loadAnalytics(){
     dc('kpi-chart-monthly');
     var mcEl=document.getElementById('kpi-chart-monthly');
     if(mcEl&&monthly.length){
-      chartRegistry['kpi-chart-monthly']=new Chart(mcEl,{type:'bar',
+      chartRegistry['kpi-chart-monthly']=new Chart(mcEl,{type:'line',
         data:{labels:monthly.map(function(m){return m.month;}),datasets:[
-          {label:'Export',data:monthly.map(function(m){return m.export_count||0;}),backgroundColor:'rgba(79,142,247,.8)',borderRadius:4,borderSkipped:false,stack:'s'},
-          {label:'Import',data:monthly.map(function(m){return m.import_count||0;}),backgroundColor:'rgba(34,197,94,.75)',borderRadius:4,borderSkipped:false,stack:'s'}
+          {label:'Export',data:monthly.map(function(m){return m.export_count||0;}),
+            borderColor:'#4f8ef7',backgroundColor:'rgba(79,142,247,0.13)',fill:true,
+            tension:0.45,pointRadius:4,pointBackgroundColor:'#4f8ef7',borderWidth:2},
+          {label:'Import',data:monthly.map(function(m){return m.import_count||0;}),
+            borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,0.13)',fill:true,
+            tension:0.45,pointRadius:4,pointBackgroundColor:'#22c55e',borderWidth:2}
         ]},
         options:{responsive:true,maintainAspectRatio:false,
+          interaction:{mode:'index',intersect:false},
           plugins:{legend:{display:true,position:'top',labels:{color:tc(),font:{size:10},boxWidth:10,padding:8}}},
-          scales:{x:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}}},y:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}},beginAtZero:true,stacked:true}}}});
+          scales:{x:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}}},y:{grid:{color:gc()},ticks:{color:tc(),font:{size:10}},beginAtZero:true}}}});
     } else if(mcEl) mcEl.parentElement.innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:12px">No monthly data yet</div>';
 
     dc('kpi-chart-status');
@@ -2902,7 +2913,8 @@ async function loadAnalytics(){
       }).join('');
     };
     var bl=window._barListFn;
-    bl('kpi-bar-carriers',k.by_carrier||[],'name','count',null);
+    bl('kpi-bar-carriers-ocean',k.by_carrier_ocean||[],'name','count','#4f8ef7');
+    bl('kpi-bar-carriers-road',k.by_carrier_road||[],'name','count','#f97316');
     bl('kpi-bar-clients',clientAll,'name','shipments','#4f8ef7');
     bl('kpi-bar-teu',clientAll.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
     bl('kpi-bar-pod',k.top_pod||[],'name','count','#ef4444');
@@ -2963,6 +2975,8 @@ function kpiMiniTab(btn,targetId,dir){
   if(targetId==='kpi-bar-clients'){bl(targetId,dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]),'name','shipments','#4f8ef7');}
   else if(targetId==='kpi-bar-teu'){var src=dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]);bl(targetId,src.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');}
   else if(targetId==='kpi-bar-carriers'){bl(targetId,dir==='exp'?(k.by_carrier_export||[]):dir==='imp'?(k.by_carrier_import||[]):(k.by_carrier||[]),'name','count',null);}
+  else if(targetId==='kpi-bar-carriers-ocean'){bl(targetId,dir==='exp'?(k.by_carrier_ocean_export||[]):dir==='imp'?(k.by_carrier_ocean_import||[]):(k.by_carrier_ocean||[]),'name','count','#4f8ef7');}
+  else if(targetId==='kpi-bar-carriers-road'){bl(targetId,dir==='exp'?(k.by_carrier_road_export||[]):dir==='imp'?(k.by_carrier_road_import||[]):(k.by_carrier_road||[]),'name','count','#f97316');}
   else if(targetId==='kpi-bar-pod'){bl(targetId,dir==='exp'?(k.top_pod_export||[]):dir==='imp'?(k.top_pod_import||[]):(k.top_pod||[]),'name','count','#ef4444');}
   else if(targetId==='kpi-bar-pol'){bl(targetId,dir==='exp'?(k.top_pol_export||[]):dir==='imp'?(k.top_pol_import||[]):(k.top_pol||[]),'name','count','#22c55e');}
   else if(targetId==='kpi-bar-routes'){
