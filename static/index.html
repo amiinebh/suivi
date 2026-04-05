@@ -2267,6 +2267,9 @@ function renderTable(ships){
 
 /* ── Dashboard ── */
 async function loadDashboard(){
+  if(!allShipments||allShipments.length===0){
+    try{ allShipments=await apiFetch('/api/shipments'); }catch(_){}
+  }
   try{
     var hr=new Date().getHours();
     var greet=(hr<12)?'Good morning':(hr<17?'Good afternoon':'Good evening');
@@ -2338,10 +2341,10 @@ async function loadDashboard(){
       var _allShips=allShipments||[];
       var _totalPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly);}).length;
       var _totalDelta=_totalPrev?Math.round(((total-_totalPrev)/_totalPrev)*100):0;
-      var _expCurr=_allShips.filter(function(s){return _inM(s,_cm,_cy)&&_dirFromRef(s)==='export';}).length;
+      var _expCurr=_allShips.filter(function(s){return _dirFromRef(s)==='export';}).length;
       var _expPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly)&&_dirFromRef(s)==='export';}).length;
       var _expDelta=_expPrev?Math.round(((_expCurr-_expPrev)/_expPrev)*100):0;
-      var _teuCurr=Math.round(_allShips.filter(function(s){return _inM(s,_cm,_cy);}).reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
+      var _teuCurr=Math.round(_allShips.reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
       var _teuPrev=Math.round(_allShips.filter(function(s){return _inM(s,_lm,_ly);}).reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
       var _teuDelta=_teuPrev?Math.round(((_teuCurr-_teuPrev)/_teuPrev)*100):0;
       var _critical=Math.ceil(overdue/2),_minor=Math.floor(overdue/2);
@@ -2530,7 +2533,15 @@ async function loadShipments(){
     const inc=document.getElementById('fil-incoterm')?.value||'';
     const _dirF=document.getElementById('fil-direction')?.value||'';
     let _fs=inc?ships.filter(s=>(s.incoterm||'')===inc):ships;
-    _pgShips=_dirF?_fs.filter(s=>(s.direction||'')===_dirF):_fs;
+    _pgShips=_dirF?_fs.filter(function(s){
+      var d=(s.direction||'').toLowerCase();
+      if(d==='export'||d==='exp') return _dirF==='Export';
+      if(d==='import'||d==='imp') return _dirF==='Import';
+      var ref=(s.ref||'').toUpperCase();
+      if(_dirF==='Export') return ref.startsWith('ROE');
+      if(_dirF==='Import') return ref.startsWith('RO')&&!ref.startsWith('ROE');
+      return true;
+    }):_fs;
     _pgPage = 1;
     const lbl=document.getElementById('ship-count-label');
     if(lbl) lbl.textContent=`${_pgShips.length} shipment${_pgShips.length!==1?'s':''}`;
