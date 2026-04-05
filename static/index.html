@@ -2335,16 +2335,16 @@ async function loadDashboard(){
           +'</div>';
       }
       var _now=new Date(),_cm=_now.getMonth(),_cy=_now.getFullYear();
-      function _dirFromRef(s){var r=(s.direction||s.shipment_type||'').toLowerCase();if(r==='export'||r==='exp')return 'export';if(r==='import'||r==='imp')return 'import';var ref=(s.ref||'').toUpperCase();if(/^ROE\d/.test(ref))return 'export';if(/^ROI\d/.test(ref))return 'import';return '';}
+      function _dirFromRef(s){var r=(s.direction||s.shipment_type||'').toLowerCase();if(r==='export'||r==='exp')return 'export';if(r==='import'||r==='imp')return 'import';var ref=(s.ref||'').toUpperCase();if(/^ROE\d/.test(ref))return 'export';if(ref.startsWith('RO')&&!ref.startsWith('ROE'))return 'import';return '';}
       var _lm=_cm===0?11:_cm-1,_ly=_cm===0?_cy-1:_cy;
       function _inM(s,m,y){var raw=s.etd||s.eta||s.created_at||'';if(!raw)return false;var p=raw.split(/[-T]/);if(p.length<3)return false;return(parseInt(p[1],10)-1)===m&&parseInt(p[0],10)===y;}
       var _allShips=allShipments||[];
       var _totalPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly);}).length;
       var _totalDelta=_totalPrev?Math.round(((total-_totalPrev)/_totalPrev)*100):0;
-      var _expCurr=_allShips.filter(function(s){return _dirFromRef(s)==='export';}).length;
+      var _expCurr=_allShips.filter(function(s){return _inM(s,_cm,_cy)&&_dirFromRef(s)==='export';}).length;
       var _expPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly)&&_dirFromRef(s)==='export';}).length;
       var _expDelta=_expPrev?Math.round(((_expCurr-_expPrev)/_expPrev)*100):0;
-      var _impCurr=_allShips.filter(function(s){return _dirFromRef(s)==='import';}).length;
+      var _impCurr=_allShips.filter(function(s){return _inM(s,_cm,_cy)&&_dirFromRef(s)==='import';}).length;
       var _impPrev=_allShips.filter(function(s){return _inM(s,_lm,_ly)&&_dirFromRef(s)==='import';}).length;
       var _impDelta=_impPrev?Math.round(((_impCurr-_impPrev)/_impPrev)*100):0;
       var _teuCurr=Math.round(_allShips.reduce(function(a,s){return a+(parseFloat(s.teu||s.containers||0)||0);},0));
