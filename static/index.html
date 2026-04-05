@@ -312,7 +312,8 @@ body.dark .btn-primary:hover{opacity:.88;}
 .btn-danger:hover{background:var(--red);color:#fff;box-shadow:none;}
 .btn-sm{padding:5px 10px;font-size:12px;}
 .btn-icon{padding:6px;width:30px;height:30px;}
-.btn-fab{position:fixed;bottom:20px;right:16px;z-index:500;width:48px;height:48px;border-radius:50%;background:var(--text1);color:var(--bg);border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:var(--shadow-full);font-family:var(--font);}
+.btn-fab{position:fixed;bottom:76px;right:16px;z-index:500;width:52px;height:52px;border-radius:50%;background:var(--text1);color:var(--bg);border:none;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:var(--shadow-full);font-family:var(--font);transition:transform .15s,box-shadow .15s;}
+.btn-fab:hover{transform:scale(1.07);box-shadow:var(--shadow-hover);}
 
 /* Focus ring — Vercel blue */
 .btn:focus-visible,.form-control:focus-visible,.filter:focus-visible{outline:2px solid var(--v-focus);outline-offset:2px;}
@@ -424,6 +425,7 @@ body.dark .modal-backdrop{background:rgba(0,0,0,.65);}
   .modal{max-width:100%;border-radius:var(--radius-lg) var(--radius-lg) 0 0;position:fixed;bottom:0;left:0;right:0;max-height:92vh;}
   .modal-backdrop.open{align-items:flex-end;padding:0;}
   .detail-panel{width:100vw;}
+  .btn-fab{display:flex;}
 }
 
 /* ══ UTILITY ══ */
@@ -1141,7 +1143,9 @@ button[onclick*="closeEmailModal"]:hover{
           <button class="btn btn-ghost btn-sm" onclick="showPage('alerts',null);setBottomNav('alerts')">
             <i class="ph ph-bell"></i> <span id="dash-alert-hint">Alerts</span>
           </button>
-
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()">
+            <i class="ph ph-plus"></i> New Shipment
+          </button>
         </div>
       </div>
 
@@ -1775,6 +1779,10 @@ button[onclick*="closeEmailModal"]:hover{
 </div><!-- /app -->
 
 <!-- ═══════ BOTTOM NAV (mobile) ═══════ -->
+<button class="btn-fab" id="fab-new" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
+  <i class="ph ph-plus" style="font-size:22px;line-height:1;display:flex"></i>
+</button>
+
 <nav class="bottom-nav">
   <div class="bottom-nav-items">
     <button class="bnav-item active" id="bnav-dashboard" onclick="showPage('dashboard',null);setBottomNav('dashboard')">
