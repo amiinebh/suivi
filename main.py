@@ -569,30 +569,41 @@ def _build_legacy_kpi_report(db):
             'export_count': monthly_export.get(month, 0),
         })
 
-    return {
-        'total': total,
-        'total_teu': total_teu,
-        'by_status': dict(sorted(by_status.items())),
-        'by_mode': dict(sorted(by_mode.items())),
-        'by_direction': {'Export': by_direction.get('Export', 0), 'Import': by_direction.get('Import', 0)},
-        'monthly': monthly,
-        'by_client_all': sort_client(client_all),
-        'by_client_import': sort_client(client_import),
-        'by_client_export': sort_client(client_export),
-        'by_carrier': sort_counts(carrier_all),
-        'by_carrier_import': sort_counts(carrier_import),
-        'by_carrier_export': sort_counts(carrier_export),
-        'top_pol': sort_counts(pol_all),
-        'top_pol_import': sort_counts(pol_import),
-        'top_pol_export': sort_counts(pol_export),
-        'top_pod': sort_counts(pod_all),
-        'top_pod_import': sort_counts(pod_import),
-        'top_pod_export': sort_counts(pod_export),
-        'top_routing': sort_counts(route_all, 'route', 'count'),
-        'top_routing_import': sort_counts(route_import, 'route', 'count'),
-        'top_routing_export': sort_counts(route_export, 'route', 'count'),
-        'insights': [],
-    }
+        return {
+        "total": total,
+        "totalteu": totalteu,
+        "total_teu": totalteu,
+        "bystatus": dict(sorted(bystatus.items())),
+        "by_status": dict(sorted(bystatus.items())),
+        "bymode": dict(sorted(bymode.items())),
+        "by_mode": dict(sorted(bymode.items())),
+        "bydirection": {
+            "Export": bydirection.get("Export", 0),
+            "Import": bydirection.get("Import", 0),
+        },
+        "by_direction": {
+            "Export": bydirection.get("Export", 0),
+            "Import": bydirection.get("Import", 0),
+        },
+        "monthly": monthly,
+        "byclientall": sortclient(clientall),
+        "byclientimport": sortclient(clientimport),
+        "byclientexport": sortclient(clientexport),
+        "bycarrier": sortcounts(carrierall),
+        "bycarrierimport": sortcounts(carrierimport),
+        "bycarrierexport": sortcounts(carrierexport),
+        "toppol": sortcounts(polall),
+        "toppolimport": sortcounts(polimport),
+        "toppolexport": sortcounts(polexport),
+        "toppod": sortcounts(podall),
+        "toppodimport": sortcounts(podimport),
+        "toppodexport": sortcounts(podexport),
+        "toprouting": sortcounts(routeall, "route", "count"),
+        "toproutingimport": sortcounts(routeimport, "route", "count"),
+        "toproutingexport": sortcounts(routeexport, "route", "count"),
+        "insights": [],
+        }
+    
 
 @app.get("/api/kpi-report")
 def kpi_report(db: Session = Depends(get_db)):
