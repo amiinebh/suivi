@@ -331,19 +331,29 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
             teu_raw = rd.get("teu")
             try: teu = int(float(teu_raw)) if teu_raw else None
             except: teu = None
-            s = models.Shipment(
-                ref=ref, ref2=rd.get("ref2",""), bookingno=rd.get("bookingno",""),
-                mode=rd.get("mode","Ocean"), carrier=rd.get("carrier",""),
-                shipper=rd.get("shipper",""), consignee=rd.get("consignee",""),
-                client=rd.get("client",""), clientemail=rd.get("clientemail",""),
-                pol=rd.get("pol",""), pod=rd.get("pod",""),
-                etd=parse_date(rd.get("etd")), eta=parse_date(rd.get("eta")),
+                        s = models.Shipment(
+                ref=ref,
+                ref2=rd.get("ref2", ""),
+                booking_no=rd.get("bookingno", "") or rd.get("booking_no", ""),
+                mode=rd.get("mode", "Ocean"),
+                carrier=rd.get("carrier", ""),
+                shipper=rd.get("shipper", ""),
+                consignee=rd.get("consignee", ""),
+                client=rd.get("client", ""),
+                client_email=rd.get("clientemail", "") or rd.get("client_email", ""),
+                pol=rd.get("pol", ""),
+                pod=rd.get("pod", ""),
+                etd=parse_date(rd.get("etd")),
+                eta=parse_date(rd.get("eta")),
                 status=raw_status if raw_status in VALID else "Confirmed",
-                incoterm=rd.get("incoterm",""), vessel=rd.get("vessel",""),
-                voyage=rd.get("voyage",""), teu=teu, note=rd.get("note",""),
-                quotation_number=rd.get("quotation_number",""),
-                lasttracked=rd.get("lasttracked",""),
-                createdat=datetime.utcnow().isoformat()
+                incoterm=rd.get("incoterm", ""),
+                vessel=rd.get("vessel", ""),
+                voyage=rd.get("voyage", ""),
+                teu=teu,
+                note=rd.get("note", ""),
+                quotation_number=rd.get("quotation_number", ""),
+                last_tracked=rd.get("lasttracked", "") or rd.get("last_tracked", ""),
+                created_at=datetime.utcnow().isoformat()
             )
             db.add(s); db.commit(); created.append(ref)
         except Exception as e:
