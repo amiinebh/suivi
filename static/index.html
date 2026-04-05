@@ -2268,10 +2268,7 @@ function renderTable(ships){
 /* ── Dashboard ── */
 async function loadDashboard(){
   if(!allShipments||allShipments.length===0){
-    try{
-      var _bootShips=await apiFetch('/api/shipments');
-      allShipments=Array.isArray(_bootShips)?_bootShips:(_bootShips&&(_bootShips.data||_bootShips.shipments)||[]);
-    }catch(_){ allShipments=[]; }
+    try{ allShipments=await apiFetch('/api/shipments'); }catch(_){}
   }
   try{
     var hr=new Date().getHours();
@@ -2338,7 +2335,7 @@ async function loadDashboard(){
           +'</div>';
       }
       var _now=new Date(),_cm=_now.getMonth(),_cy=_now.getFullYear();
-      function _dirFromRef(s){var r=(s.direction||s.shipment_type||'').toLowerCase();if(r==='export'||r==='exp')return 'export';if(r==='import'||r==='imp')return 'import';var ref=(s.ref||'').toUpperCase();if(ref.startsWith('ROE'))return 'export';if(ref.startsWith('RO')&&!ref.startsWith('ROE'))return 'import';return '';}
+      function _dirFromRef(s){var r=(s.direction||s.shipment_type||'').toLowerCase();if(r==='export'||r==='exp')return 'export';if(r==='import'||r==='imp')return 'import';var ref=(s.ref||'').toUpperCase();if(/^ROE\d/.test(ref))return 'export';if(/^ROI\d/.test(ref))return 'import';return '';}
       var _lm=_cm===0?11:_cm-1,_ly=_cm===0?_cy-1:_cy;
       function _inM(s,m,y){var raw=s.etd||s.eta||s.created_at||'';if(!raw)return false;var p=raw.split(/[-T]/);if(p.length<3)return false;return(parseInt(p[1],10)-1)===m&&parseInt(p[0],10)===y;}
       var _allShips=allShipments||[];
@@ -3674,8 +3671,7 @@ function updateUserUI(){
 async function updateAlertsBadge(){
   try{
     const ships = await apiFetch('/api/shipments');
-    const safeShips = Array.isArray(ships) ? ships : ((ships && (ships.data || ships.shipments)) || []);
-    const alerts = buildAlerts(safeShips);
+    const alerts = buildAlerts(ships);
     const badge = document.getElementById('alerts-badge');
     if(badge){ badge.textContent = alerts.length; badge.style.display = alerts.length ? '' : 'none'; }
   }catch(e){}
@@ -3686,8 +3682,7 @@ async function generateReport(){
   var btn=document.querySelector('[onclick="generateReport()"]');
   if(btn){btn.disabled=true;btn.innerHTML='<i class="ph ph-spinner"></i> Generating\u2026';}
   try{
-    var shipsRaw=await apiFetch('/api/shipments');
-    var ships=Array.isArray(shipsRaw)?shipsRaw:((shipsRaw&&(shipsRaw.data||shipsRaw.shipments))||[]);
+    var ships=await apiFetch('/api/shipments');
     var k=await apiFetch('/api/kpi-report');
     if(!k)k={};
     var today=new Date(); var nowMs=new Date(); nowMs.setHours(0,0,0,0);
