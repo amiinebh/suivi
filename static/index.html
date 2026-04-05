@@ -2528,7 +2528,8 @@ async function loadShipments(){
   const mode=document.getElementById('fil-mode')?.value||'';
   const search=(window._searchVal!==undefined?window._searchVal:(document.getElementById('global-search')?.value||''));
   try{
-    const ships=await apiFetch(`/api/shipments?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}&mode=${encodeURIComponent(mode)}`);
+    const _raw=await apiFetch(`/api/shipments?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}&mode=${encodeURIComponent(mode)}`);
+    const ships=Array.isArray(_raw)?_raw:(_raw.data||_raw.shipments||[]);
     allShipments=ships;
     const inc=document.getElementById('fil-incoterm')?.value||'';
     const _dirF=document.getElementById('fil-direction')?.value||'';
