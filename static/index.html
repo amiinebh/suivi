@@ -2807,7 +2807,7 @@ function chartTextColor(){ return isDark()?'#8892b0':'#5a6a8a'; }
 function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)'; }
 
 /* ── KPI Page ── */
-async async function loadAnalytics(){
+async function loadAnalytics(){
   try{
     var k=await apiFetch('/api/kpi-report');
     if(!k||typeof k!=='object') k={};
@@ -4240,12 +4240,6 @@ function _confirmReject() {
   if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
 }
 
-// Expose to global scope for inline onclick handlers
-window.generateReport = typeof generateReport !== "undefined" ? generateReport : function(){};
-window.toggleComparePanel = typeof toggleComparePanel !== "undefined" ? toggleComparePanel : function(){};
-window.runCompare = typeof runCompare !== "undefined" ? runCompare : function(){};
-window.closeCompareModal = typeof closeCompareModal !== "undefined" ? closeCompareModal : function(){};
-window.exportCompareReport = typeof exportCompareReport !== "undefined" ? exportCompareReport : function(){};
 </script>
 
 <script>
@@ -5357,6 +5351,19 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 
+
+// ── Global onclick safety bindings ──
+window.showPage = typeof showPage==="function"?showPage:function(){};
+window.openDetail = typeof openDetail==="function"?openDetail:function(){};
+window.openEdit = typeof openEdit==="function"?openEdit:function(){};
+window.deleteShipment = typeof deleteShipment==="function"?deleteShipment:function(){};
+window.loadShipments = typeof loadShipments==="function"?loadShipments:function(){};
+window.loadDashboard = typeof loadDashboard==="function"?loadDashboard:function(){};
+window.exportXLSX = typeof exportXLSX==="function"?exportXLSX:function(){};
+window.generateReport = typeof generateReport==="function"?generateReport:function(){};
+window.toggleComparePanel = typeof toggleComparePanel==="function"?toggleComparePanel:function(){};
+window.runCompare = typeof runCompare==="function"?runCompare:function(){};
+window.closeCompareModal = typeof closeCompareModal==="function"?closeCompareModal:function(){};
 </script>
 
 
