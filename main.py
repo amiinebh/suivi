@@ -456,6 +456,7 @@ def _build_legacy_kpi_report(db):
     carrier_road = defaultdict(int)
     carrier_road_import = defaultdict(int)
     carrier_road_export = defaultdict(int)
+    incoterm_all = defaultdict(int)
     client_all = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     client_import = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     client_export = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
@@ -494,6 +495,9 @@ def _build_legacy_kpi_report(db):
                     carrier_road[carrier] += 1
                     if direction == 'Import': carrier_road_import[carrier] += 1
                     else: carrier_road_export[carrier] += 1
+            incoterm = (getattr(s, 'incoterm', None) or '').strip()
+            if incoterm:
+                incoterm_all[incoterm] += 1
 
             if client:
                 client_all[client]['shipments'] += 1
@@ -591,6 +595,7 @@ def _build_legacy_kpi_report(db):
         "top_routing_import": sort_counts(route_import, "route", "count"),
         "toproutingexport": sort_counts(route_export, "route", "count"),
         "top_routing_export": sort_counts(route_export, "route", "count"),
+        "by_incoterm": dict(sorted(incoterm_all.items(), key=lambda x: -x[1])),
         "insights": [],
     }
 
