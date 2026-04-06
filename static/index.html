@@ -4110,17 +4110,14 @@ async function generateReport(){
       /* ── FOOTER ───────────────────────────────────────────────────── */
       +'<div style="text-align:center;padding:20px 0 8px;font-size:11px;color:#94a3b8;border-top:1px solid #f1f5f9;margin-top:8px">'
       +'FreightTrack Pro &middot; Report generated '+today.toLocaleString()+' &middot; '+total+' shipments &middot; '+totalTeu+' TEU'
-       +'</div>'
-      +'</div>';
+             +'</div>'
+      +'<\/div><\/body><\/html>';
     var win=window.open('','_blank','width=1100,height=800');
-    if(!win){toast('Pop-up blocked — allow pop-ups','error');return;}
-    win.document.open();
-    win.document.write(h);
-    win.document.close();
+    if(win){win.document.write(h);win.document.close();}
+    else{toast('Pop-up blocked \u2014 allow pop-ups','error');}
   }catch(e){console.error('generateReport',e);toast('Report error: '+e.message,'error');}
   finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-file-arrow-down"></i> Export';}}
 }
-</script>
 
 <!-- ══ BULK ACTION FLOATING BAR ══ -->
 <div id="bulk-bar">
@@ -5132,16 +5129,13 @@ function renderActivityFeed(){
           +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#22c55e;margin-right:6px"></span>POD Import — B</div>'+barHTML(b.top_pod_import,'name','count','#22c55e')+'</div>'
           +'</div>'
           +'<div style="text-align:center;padding:16px 0 4px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0">FreightTrack Pro · Comparison Report · '+new Date().toLocaleString()+'</div>'
-          +'</div>';
+          +'<\/div><\/body><\/html>';
     var win=window.open('','_blank','width=1100,height=800');
-    if(!win){toast('Pop-up blocked — allow pop-ups','error');return;}
-    win.document.open();
-    win.document.write(h);
-    win.document.close();
-  }catch(e){console.error('exportCompareReport',e);toast('Report error: '+e.message,'error');}
+    if(win){win.document.write(h);win.document.close();}
+    else{toast('Pop-up blocked \u2014 allow pop-ups','error');}
+  }catch(e){console.error('exportReport',e);toast('Report error: '+e.message,'error');}
   finally{}
 }
-</script>
 
 <!-- ══ BULK ACTION FLOATING BAR ══ -->
 <div id="bulk-bar">
