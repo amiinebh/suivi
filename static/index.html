@@ -5110,8 +5110,10 @@ function renderActivityFeed(){
     var win=window.open('','_blank','width=1100,height=800');
     if(win){win.document.write(h);win.document.close();}
     else{toast('Pop-up blocked \u2014 allow pop-ups','error');}
-  }catch(e){console.error('exportReport',e);toast('Report error: '+e.message,'error');}
-  finally{}
+  } catch (e) {
+    console.error('exportReport', e);
+    toast('Report error: ' + e.message, 'error');
+  }
 }
 
 // ══════════════════════════════════════════════════════
