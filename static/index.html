@@ -5167,10 +5167,10 @@ async function _applyInlineStatus(shipId, newStatus, el) {
       body: JSON.stringify({status: newStatus})
     });
     if(r.ok) {
-      showToast('Status → '+newStatus,'success');
+      toast('Status → '+newStatus,'success');
       loadShipments();
-    } else { showToast('Update failed','error'); }
-  } catch(err) { showToast('Network error','error'); }
+    } else { toast('Update failed','error'); }
+  } catch(err) { toast('Network error','error'); }
 }
 
 // ── 2. BULK ACTION TOOLBAR ──
@@ -5195,7 +5195,7 @@ async function _bulkSetStatus(status) {
       if(r.ok) ok++;
     }catch(e){}
   }
-  showToast(ok+' shipments → '+status,'success');
+  toast(ok+' shipments → '+status,'success');
   _clearSelection();
   loadShipments();
 }
@@ -5211,7 +5211,7 @@ async function _bulkDelete() {
       if(r.ok) ok++;
     }catch(e){}
   }
-  showToast(ok+' shipments deleted','success');
+  toast(ok+' shipments deleted','success');
   _clearSelection();
   loadShipments();
 }
