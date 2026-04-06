@@ -4982,6 +4982,7 @@ function renderActivityFeed(){
 
       /* ── Export Compare PDF ── */
       async function exportCompareReport(){
+        try {
         if(!window.compareData){toast('Run a comparison first','error');return;}
         var res=window.compareData, lbl=window.compareLabels||{};
         var a=res.period_a, b=res.period_b;
@@ -5108,7 +5109,7 @@ function renderActivityFeed(){
           +'<div style="text-align:center;padding:16px 0 4px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0">FreightTrack Pro · Comparison Report · '+new Date().toLocaleString()+'</div>'
           +'<\/div><\/body><\/html>';
     var win=window.open('','_blank','width=1100,height=800');
-    if(win){win.document.write(h);win.document.close();}
+    if(win){win.document.write(doc);win.document.close();}
     else{toast('Pop-up blocked \u2014 allow pop-ups','error');}
   } catch (e) {
     console.error('exportReport', e);
