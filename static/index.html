@@ -1539,7 +1539,7 @@ button[onclick*="closeEmailModal"]:hover{
         </div></div>
       </div>
       <!-- Incoterm distribution -->
-      <div style="margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px">
             <i class="ph ph-file-text" style="color:var(--accent)"></i> Incoterm Distribution
@@ -2052,7 +2052,7 @@ async function apiFetch(url,options={}){
   const now=Date.now();
   if(useCache && _apiCache[url] && now-_apiCache[url].ts < ttl) return _apiCache[url].data;
   if(useCache && _apiInflight[url]) return _apiInflight[url];
-  const token = sessionStorage.getItem("ft_token");
+  const token = localStorage.getItem("ft_token");
   const h={'Content-Type':'application/json','Accept':'application/json'};
   if(token) h['Authorization'] = 'Bearer ' + token;
   const req=(async function(){
@@ -2730,7 +2730,7 @@ async function trackAll(){
   catch(e){ toast(e.message,'error'); }
 }
 function exportXLSX(){
-  const token=sessionStorage.getItem('ft_token')||'';
+  const token=localStorage.getItem('ft_token')||'';
   window.open('/api/export/xlsx?token='+encodeURIComponent(token),'_blank');
 }
 
@@ -4259,8 +4259,6 @@ function parseDateFlex(v){
   if(m){var mn=MONTHS[m[2].toLowerCase()];if(mn)return m[3]+'-'+String(mn).padStart(2,'0')+'-'+m[1].padStart(2,'0');}
   m=s.match(/^([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})/);
   if(m){var mn2=MONTHS[m[1].toLowerCase()];if(mn2)return m[3]+'-'+String(mn2).padStart(2,'0')+'-'+m[2].padStart(2,'0');}
-  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if(m&&parseInt(m[1])<=12&&parseInt(m[2])>12) return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');
   var dt=new Date(s);
   if(!isNaN(dt.getTime())) return dt.toISOString().slice(0,10);
   return '';
@@ -4308,11 +4306,8 @@ function bulkFileSelected(file){
   if(o['eta_date']!==undefined) o.eta=o['eta_date'];
   if(o['departure']!==undefined&&!o.etd) o.etd=o['departure'];
   if(o['arrival']!==undefined&&!o.eta) o.eta=o['arrival'];
-  if(o['booking']!==undefined&&!o.bookingno) o.bookingno=o['booking'];
   if(o['booking_no']!==undefined&&!o.bookingno) o.bookingno=o['booking_no'];
   if(o['booking_number']!==undefined&&!o.bookingno) o.bookingno=o['booking_number'];
-  if(o['client_email']!==undefined&&!o.clientemail) o.clientemail=o['client_email'];
-  if(o['teu']!==undefined&&!o.teu) o.teu=o['teu'];
   if(o.carrier)   o.carrier   =normalizeCarrier(String(o.carrier));
   if(o.client)    o.client    =normalizeClient(String(o.client));
   if(o.mode)      o.mode      =normalizeMode(String(o.mode));
