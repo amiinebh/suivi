@@ -338,7 +338,13 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
         if hasattr(val, 'strftime'): return val.strftime('%Y-%m-%d')
         s = str(val).strip()
         if not s or s.lower() in ('none','null','-','--'): return None
-        for fmt in ('%Y-%m-%d','%Y/%m/%d','%d/%m/%Y','%d-%m-%Y','%d.%m.%Y','%m/%d/%Y','%Y%m%d'):
+        # Handle timestamp strings like "2026-03-15 00:00:00"
+        if len(s) > 10 and s[10] in (' ', 'T'):
+            s = s[:10]
+        for fmt in ('%Y-%m-%d','%Y/%m/%d','%d/%m/%Y','%d-%m-%Y',
+                    '%d.%m.%Y','%m/%d/%Y','%Y%m%d',
+                    '%d %b %Y','%d-%b-%Y','%b %d, %Y','%B %d, %Y',
+                    '%d %B %Y','%b %d %Y','%B %d %Y'):
             try: return datetime.strptime(s, fmt).strftime('%Y-%m-%d')
             except: pass
         return None
