@@ -240,8 +240,8 @@ body.dark .spark-bar.active{background:var(--v-develop);}
   padding:8px 18px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;
   cursor:pointer;border:none;font-family:var(--font);transition:all var(--t);
   white-space:nowrap;text-decoration:none;letter-spacing:-0.01em;}
-.btn-primary{background:#222222;color:#ffffff;}
-.btn-primary:hover{background:var(--accent);box-shadow:var(--shadow-hover);}
+.btn-primary{background:#ff385c;color:#ffffff;border-radius:8px;font-weight:500;}
+.btn-primary:hover{background:#e00b41;box-shadow:rgba(0,0,0,0.08) 0px 4px 12px;}
 body.dark .btn-primary{background:var(--accent);color:#fff;}
 body.dark .btn-primary:hover{background:var(--accent-dark);}
 .btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border2);}
@@ -1539,19 +1539,14 @@ button[onclick*="closeEmailModal"]:hover{
         </div></div>
       </div>
       <!-- Incoterm distribution -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px">
             <i class="ph ph-file-text" style="color:var(--accent)"></i> Incoterm Distribution
           </div>
           <div id="kpi-bar-incoterm" style="min-height:120px"></div>
         </div></div>
-        <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px">
-            <i class="ph ph-chart-donut" style="color:#a855f7"></i> Incoterm Split
-          </div>
-          <div style="height:160px;position:relative"><canvas id="kpi-chart-incoterm"></canvas></div>
-        </div></div>
+        
       </div>
       <div class="card" style="margin-bottom:20px"><div class="card__body">
         <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-warning" style="color:#ef4444"></i> Overdue Shipments</div>
@@ -4126,7 +4121,7 @@ async function generateReport(){
   <button class="bulk-action-btn" onclick="_clearSelection()">✕ Clear</button>
 </div>
 
-</body></html>';
+<\/body><\/html>';
 
     var win=window.open('','_blank');
     if(win){win.document.write(h);win.document.close();}
@@ -4266,28 +4261,19 @@ function parseDateFlex(v){
   if(!s||s.toLowerCase()==='null'||s==='-'||s==='--') return '';
   var MONTHS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
   var m;
-  // YYYY-MM-DD or YYYY-MM-DD HH:mm:ss
   if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
-  // YYYY/MM/DD
   if(/^\d{4}\/\d{2}\/\d{2}/.test(s)) return s.slice(0,10).replace(/\//g,'-');
-  // YYYYMMDD
   if(/^\d{8}$/.test(s)){var y2=s.slice(0,4),mo2=s.slice(4,6),d2=s.slice(6,8);if(parseInt(mo2)<=12&&parseInt(d2)<=31)return y2+'-'+mo2+'-'+d2;}
-  // DD.MM.YYYY
   m=s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
   if(m) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
-  // DD-MM-YYYY or DD/MM/YYYY or D/M/YYYY
   m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
   if(m) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
-  // DD MMM YYYY or DD-MMM-YYYY
   m=s.match(/^(\d{1,2})[\s\-]([A-Za-z]{3})[\s\-](\d{4})/);
   if(m){var mn=MONTHS[m[2].toLowerCase()];if(mn)return m[3]+'-'+String(mn).padStart(2,'0')+'-'+m[1].padStart(2,'0');}
-  // MMM DD, YYYY
   m=s.match(/^([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})/);
   if(m){var mn2=MONTHS[m[1].toLowerCase()];if(mn2)return m[3]+'-'+String(mn2).padStart(2,'0')+'-'+m[2].padStart(2,'0');}
-  // MM/DD/YYYY US fallback
   m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if(m&&parseInt(m[1])<=12&&parseInt(m[2])>12) return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');
-  // Last resort
   var dt=new Date(s);
   if(!isNaN(dt.getTime())) return dt.toISOString().slice(0,10);
   return '';
@@ -4329,10 +4315,8 @@ function bulkFileSelected(file){
       var ws=wb.Sheets[wb.SheetNames[0]];
       var rows=XLSX.utils.sheet_to_json(ws,{defval:""});
       rows=rows.map(function(r){
-  // Normalize all keys to lowercase with underscores
   var o={};
   Object.keys(r).forEach(function(k){ o[k.trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'')] = r[k]; });
-  // Column aliases
   if(o['etd_date']!==undefined) o.etd=o['etd_date'];
   if(o['eta_date']!==undefined) o.eta=o['eta_date'];
   if(o['departure']!==undefined&&!o.etd) o.etd=o['departure'];
@@ -4341,8 +4325,7 @@ function bulkFileSelected(file){
   if(o['booking_no']!==undefined&&!o.bookingno) o.bookingno=o['booking_no'];
   if(o['booking_number']!==undefined&&!o.bookingno) o.bookingno=o['booking_number'];
   if(o['client_email']!==undefined&&!o.clientemail) o.clientemail=o['client_email'];
-  if(o['quotation_number']!==undefined&&!o.quotation_number) o.quotation_number=o['quotation_number'];
-  if(o['quotation']!==undefined&&!o.quotation_number) o.quotation_number=o['quotation'];
+  if(o['teu']!==undefined&&!o.teu) o.teu=o['teu'];
   if(o.carrier)   o.carrier   =normalizeCarrier(String(o.carrier));
   if(o.client)    o.client    =normalizeClient(String(o.client));
   if(o.mode)      o.mode      =normalizeMode(String(o.mode));
@@ -5158,7 +5141,7 @@ function renderActivityFeed(){
   <button class="bulk-action-btn" onclick="_clearSelection()">✕ Clear</button>
 </div>
 
-</body></html>';
+<\/body><\/html>';
 
         var win=window.open('','_blank');
         if(win){win.document.write(doc);win.document.close();}
@@ -5241,7 +5224,7 @@ async function _bulkSetStatus(status) {
   let ok=0;
   for(const id of ids){
     try{
-      const r=await fetch('/api/shipments/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',...getAuthHeaders()},body:JSON.stringify({status})});
+      const r=await fetch('/api/shipments/'+id+'/status',{method:'PATCH',headers:{'Content-Type':'application/json',...getAuthHeaders()},body:JSON.stringify({status})});
       if(r.ok) ok++;
     }catch(e){}
   }
