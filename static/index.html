@@ -4253,36 +4253,44 @@ function fmtd(d){
 }
 
 function parseDateFlex(v){
-  if(v instanceof Date){if(!isNaN(v.getTime())){var _y=v.getFullYear(),_m=String(v.getMonth()+1).padStart(2,'0'),_d=String(v.getDate()).padStart(2,'0');return _y+'-'+_m+'-'+_d;}return '';}
+  if(v instanceof Date){
+    if(!isNaN(v.getTime())){var _y=v.getFullYear(),_m=String(v.getMonth()+1).padStart(2,'0'),_d=String(v.getDate()).padStart(2,'0');return _y+'-'+_m+'-'+_d;}
+    return '';
+  }
   if(v===null||v===undefined||v==='') return '';
-  // Excel serial number (SheetJS returns these for date cells when raw:true, but with defval sheet_to_json may give strings or numbers)
   if(typeof v==='number'){
-    // Excel date serial: days since 1900-01-00 (with leap year bug)
     var d=new Date(Math.round((v-25569)*86400*1000));
     if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
   }
   var s=String(v).trim();
-  if(!s) return '';
-  // Already YYYY-MM-DD
+  if(!s||s.toLowerCase()==='null'||s==='-'||s==='--') return '';
+  var MONTHS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+  var m;
+  // YYYY-MM-DD or YYYY-MM-DD HH:mm:ss
   if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
   // YYYY/MM/DD
-  if(/^\d{4}\/\d{2}\/\d{2}/.test(s)){return s.slice(0,10).replace(/\//g,'-');}
-  // DD-MM-YYYY
-  var m=s.match(/^(\d{2})-(\d{2})-(\d{4})/);
-  if(m) return m[3]+'-'+m[2]+'-'+m[1];
-  // DD/MM/YYYY
-  m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-  if(m) return m[3]+'-'+m[2]+'-'+m[1];
-  // D/M/YYYY or D-M-YYYY (single digit day/month)
-  m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+  if(/^\d{4}\/\d{2}\/\d{2}/.test(s)) return s.slice(0,10).replace(/\//g,'-');
+  // YYYYMMDD
+  if(/^\d{8}$/.test(s)){var y2=s.slice(0,4),mo2=s.slice(4,6),d2=s.slice(6,8);if(parseInt(mo2)<=12&&parseInt(d2)<=31)return y2+'-'+mo2+'-'+d2;}
+  // DD.MM.YYYY
+  m=s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
   if(m) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
-  // MM/DD/YYYY fallback (US format — only if month<=12 and day>12)
+  // DD-MM-YYYY or DD/MM/YYYY or D/M/YYYY
+  m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(m) return m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');
+  // DD MMM YYYY or DD-MMM-YYYY
+  m=s.match(/^(\d{1,2})[\s\-]([A-Za-z]{3})[\s\-](\d{4})/);
+  if(m){var mn=MONTHS[m[2].toLowerCase()];if(mn)return m[3]+'-'+String(mn).padStart(2,'0')+'-'+m[1].padStart(2,'0');}
+  // MMM DD, YYYY
+  m=s.match(/^([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})/);
+  if(m){var mn2=MONTHS[m[1].toLowerCase()];if(mn2)return m[3]+'-'+String(mn2).padStart(2,'0')+'-'+m[2].padStart(2,'0');}
+  // MM/DD/YYYY US fallback
   m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if(m&&parseInt(m[1])<=12&&parseInt(m[2])>12) return m[3]+'-'+m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0');
-  // Let JS try to parse it
+  // Last resort
   var dt=new Date(s);
   if(!isNaN(dt.getTime())) return dt.toISOString().slice(0,10);
-  return s; // return as-is if nothing works
+  return '';
 }
 var _bulkFile=null,_bulkRows=[];
 function _bulkStep(n){
