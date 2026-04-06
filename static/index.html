@@ -4111,7 +4111,7 @@ async function generateReport(){
       +'<div style="text-align:center;padding:20px 0 8px;font-size:11px;color:#94a3b8;border-top:1px solid #f1f5f9;margin-top:8px">'
       +'FreightTrack Pro &middot; Report generated '+today.toLocaleString()+' &middot; '+total+' shipments &middot; '+totalTeu+' TEU'
       +'</div>'
-      +'</div>
+      +'</div>'
 <!-- ══ BULK ACTION FLOATING BAR ══ -->
 <div id="bulk-bar">
   <span class="bulk-count" id="bulk-count-label">0</span>
@@ -5122,7 +5122,7 @@ function renderActivityFeed(){
           +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#22c55e;margin-right:6px"></span>POD Import — B</div>'+barHTML(b.top_pod_import,'name','count','#22c55e')+'</div>'
           +'</div>'
           +'<div style="text-align:center;padding:16px 0 4px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0">FreightTrack Pro · Comparison Report · '+new Date().toLocaleString()+'</div>'
-          +'</div>
+          +'</div>'
 <!-- ══ BULK ACTION FLOATING BAR ══ -->
 <div id="bulk-bar">
   <span class="bulk-count" id="bulk-count-label">0</span>
@@ -5353,6 +5353,61 @@ document.addEventListener('DOMContentLoaded', function(){
 
 
 // ── Global onclick safety bindings ──
+window._clearSelection = typeof _clearSelection==="function"?_clearSelection:function(){};
+window._confirmReject = typeof _confirmReject==="function"?_confirmReject:function(){};
+window.addContainerRow = typeof addContainerRow==="function"?addContainerRow:function(){};
+window.bulkDeleteShipments = typeof bulkDeleteShipments==="function"?bulkDeleteShipments:function(){};
+window.bulkFileSelected = typeof bulkFileSelected==="function"?bulkFileSelected:function(){};
+window.clearSelectionShipments = typeof clearSelectionShipments==="function"?clearSelectionShipments:function(){};
+window.cloneShipment = typeof cloneShipment==="function"?cloneShipment:function(){};
+window.closeClientModal = typeof closeClientModal==="function"?closeClientModal:function(){};
+window.closeDigest = typeof closeDigest==="function"?closeDigest:function(){};
+window.closeEmailModal = typeof closeEmailModal==="function"?closeEmailModal:function(){};
+window.closeModal = typeof closeModal==="function"?closeModal:function(){};
+window.confirmSendEmail = typeof confirmSendEmail==="function"?confirmSendEmail:function(){};
+window.createUser = typeof createUser==="function"?createUser:function(){};
+window.deleteAllShipments = typeof deleteAllShipments==="function"?deleteAllShipments:function(){};
+window.deleteFromDetail = typeof deleteFromDetail==="function"?deleteFromDetail:function(){};
+window.doBulkUpload = typeof doBulkUpload==="function"?doBulkUpload:function(){};
+window.doChangePassword = typeof doChangePassword==="function"?doChangePassword:function(){};
+window.doLogin = typeof doLogin==="function"?doLogin:function(){};
+window.doLogout = typeof doLogout==="function"?doLogout:function(){};
+window.editFromDetail = typeof editFromDetail==="function"?editFromDetail:function(){};
+window.editShipment = typeof editShipment==="function"?editShipment:function(){};
+window.filterClients = typeof filterClients==="function"?filterClients:function(){};
+window.kpiMiniTab = typeof kpiMiniTab==="function"?kpiMiniTab:function(){};
+window.loadAlerts = typeof loadAlerts==="function"?loadAlerts:function(){};
+window.onSearch = typeof onSearch==="function"?onSearch:function(){};
+window.openClientModal = typeof openClientModal==="function"?openClientModal:function(){};
+window.openEmailPreview = typeof openEmailPreview==="function"?openEmailPreview:function(){};
+window.openModal = typeof openModal==="function"?openModal:function(){};
+window.pageNext = typeof pageNext==="function"?pageNext:function(){};
+window.pagePrev = typeof pagePrev==="function"?pagePrev:function(){};
+window.saveClient = typeof saveClient==="function"?saveClient:function(){};
+window.saveShipment = typeof saveShipment==="function"?saveShipment:function(){};
+window.selectAllShipments = typeof selectAllShipments==="function"?selectAllShipments:function(){};
+window.setKpiPeriod = typeof setKpiPeriod==="function"?setKpiPeriod:function(){};
+window.setPageSize = typeof setPageSize==="function"?setPageSize:function(){};
+window.submitComment = typeof submitComment==="function"?submitComment:function(){};
+window.switchDTab = typeof switchDTab==="function"?switchDTab:function(){};
+window.syncDetail = typeof syncDetail==="function"?syncDetail:function(){};
+window.toggleProfileDropdown = typeof toggleProfileDropdown==="function"?toggleProfileDropdown:function(){};
+window.toggleSearch = typeof toggleSearch==="function"?toggleSearch:function(){};
+window.toggleTheme = typeof toggleTheme==="function"?toggleTheme:function(){};
+window.updateShipmentStatus = typeof updateShipmentStatus==="function"?updateShipmentStatus:function(){};
+window.validateEmailField = typeof validateEmailField==="function"?validateEmailField:function(){};
+window.exportCompareReport = typeof exportCompareReport==="function"?exportCompareReport:function(){};
+window.openDigest = typeof openDigest==="function"?openDigest:function(){};
+window._resetContainerForm = typeof _resetContainerForm==="function"?_resetContainerForm:function(){};
+window._bulkStep = typeof _bulkStep==="function"?_bulkStep:function(){};
+window.closeBulkImport = typeof closeBulkImport==="function"?closeBulkImport:function(){};
+window._bulkSetStatus = typeof _bulkSetStatus==="function"?_bulkSetStatus:function(){};
+window._bulkDelete = typeof _bulkDelete==="function"?_bulkDelete:function(){};
+window._applyInlineStatus = typeof _applyInlineStatus==="function"?_applyInlineStatus:function(){};
+window._toggleStatusDrop = typeof _toggleStatusDrop==="function"?_toggleStatusDrop:function(){};
+window.openFilesSheet = typeof openFilesSheet==="function"?openFilesSheet:function(){};
+window.exportShipmentPDF = typeof exportShipmentPDF==="function"?exportShipmentPDF:function(){};
+window.sendEmail = typeof sendEmail==="function"?sendEmail:function(){};
 window.showPage = typeof showPage==="function"?showPage:function(){};
 window.openDetail = typeof openDetail==="function"?openDetail:function(){};
 window.openEdit = typeof openEdit==="function"?openEdit:function(){};
