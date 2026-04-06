@@ -57,6 +57,20 @@
   --fs-base: 14px; --fs-sm: 13px; --fs-xs: 12px;
   --t: .15s cubic-bezier(.16,1,.3,1);
   --topbar-h: 56px; --sidebar-w: 52px; --sidebar-exp: 220px;
+  --accent:        #ff385c;   /* Rausch Red — primary CTA */
+  --accent-dark:   #e00b41;   /* Deep Rausch — pressed state */
+  --text1:         #222222;   /* Near-black warm */
+  --text2:         #6a6a6a;   /* Secondary gray */
+  --text3:         #929292;   /* Disabled/muted */
+  --bg:            #ffffff;
+  --border:        #c1c1c1;
+  --radius:        20px;      /* Cards */
+  --radius-sm:     8px;       /* Buttons */
+  --shadow-card:   rgba(0,0,0,0.02) 0px 0px 0px 1px,
+                   rgba(0,0,0,0.04) 0px 2px 6px,
+                   rgba(0,0,0,0.10) 0px 4px 8px;
+  --shadow-hover:  rgba(0,0,0,0.08) 0px 4px 12px;
+  --font:          'Airbnb Cereal VF', 'Circular', -apple-system, system-ui, sans-serif;
 }
 
 /* ── Dark mode ── */
@@ -240,8 +254,8 @@ body.dark .spark-bar.active{background:var(--v-develop);}
   padding:8px 18px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;
   cursor:pointer;border:none;font-family:var(--font);transition:all var(--t);
   white-space:nowrap;text-decoration:none;letter-spacing:-0.01em;}
-.btn-primary{background:#222222;color:#ffffff;}
-.btn-primary:hover{background:var(--accent);box-shadow:var(--shadow-hover);}
+.btn-primary{background:#ff385c;color:#ffffff;border-radius:8px;font-weight:500;letter-spacing:-0.01em;}
+.btn-primary:hover{background:#e00b41;box-shadow:rgba(0,0,0,0.08) 0px 4px 12px;}
 body.dark .btn-primary{background:var(--accent);color:#fff;}
 body.dark .btn-primary:hover{background:var(--accent-dark);}
 .btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border2);}
@@ -1533,12 +1547,6 @@ button[onclick*="closeEmailModal"]:hover{
             <i class="ph ph-file-text" style="color:var(--accent)"></i> Incoterm Distribution
           </div>
           <div id="kpi-bar-incoterm" style="min-height:120px"></div>
-        </div></div>
-        <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px">
-            <i class="ph ph-chart-donut" style="color:#a855f7"></i> Incoterm Split
-          </div>
-          <div style="height:160px;position:relative"><canvas id="kpi-chart-incoterm"></canvas></div>
         </div></div>
       </div>
       <div class="card" style="margin-bottom:20px"><div class="card__body">
@@ -2908,27 +2916,7 @@ async function loadAnalytics(){
         }).join('');
       } else rEl.innerHTML='<div style="color:var(--text2);font-size:12px;padding:8px 0">No routing data yet</div>';}
 
-    // ── Incoterm bar + donut ──
-    var incoData = k.by_incoterm || {};
-    bl('kpi-bar-incoterm',
-      Object.entries(incoData).map(function(e){return {name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}),
-      'name','count','#a855f7');
-    dc('kpi-chart-incoterm');
-    var incoEl=document.getElementById('kpi-chart-incoterm');
-    if(incoEl){
-      var incoKeys=Object.keys(incoData).filter(function(k){return incoData[k]>0;});
-      if(incoKeys.length){
-        var incoColors=['#a855f7','#6c63ff','#4f8ef7','#22c55e','#f59e0b','#ef4444','#06b6d4','#f97316'];
-        chartRegistry['kpi-chart-incoterm']=new Chart(incoEl,{type:'doughnut',
-          data:{labels:incoKeys,datasets:[{data:incoKeys.map(function(k){return incoData[k];}),
-            backgroundColor:incoKeys.map(function(_,i){return incoColors[i%incoColors.length];}),
-            borderWidth:0,hoverOffset:8}]},
-          options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-            plugins:{legend:{position:'right',labels:{color:tc(),font:{size:10},boxWidth:10,padding:6}}}}});
-      } else {
-        incoEl.parentElement.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No incoterm data yet</div>';
-      }
-    }
+
 
     var odEl=document.getElementById('kpi-overdue');
     if(odEl){var now=new Date();now.setHours(0,0,0,0);var ships=(typeof allShipments!=='undefined')?allShipments:[];
