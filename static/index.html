@@ -202,7 +202,7 @@ html,body{height:100%;font-family:var(--font);font-size:var(--fs-base);font-weig
 .card-sub{font-size:11px;color:var(--text2);margin-top:1px;font-family:var(--font-mono);}
 
 /* ══ KPI CARDS ══ */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px;;align-items:start}
 .kpi-card{background:var(--bg);box-shadow:var(--shadow-full);border-radius:var(--radius-lg);padding:16px 18px;transition:box-shadow var(--t);}
 .kpi-card:hover{box-shadow:var(--shadow-hover);}
 .kpi-label{font-size:10px;font-weight:500;color:var(--text2);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
@@ -246,6 +246,9 @@ body.dark .btn-primary{background:var(--accent);color:#fff;}
 body.dark .btn-primary:hover{background:var(--accent-dark);}
 .btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border2);}
 .btn-ghost:hover{background:var(--bg4);color:var(--text1);box-shadow:var(--shadow-hover);}
+.btn-secondary{background:var(--bg);color:var(--text1);border:1px solid var(--border2);border-radius:var(--radius-sm);font-weight:500;}
+.btn-secondary:hover{background:var(--bg3);color:var(--text1);box-shadow:var(--shadow-hover);}
+.btn-icon{width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);}
 .btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
 .btn-danger:hover{background:var(--red);color:#fff;}
 .btn-sm{padding:5px 12px;font-size:13px;}
@@ -380,7 +383,7 @@ body.dark .modal-backdrop{background:rgba(0,0,0,.65);}
 .admin-only{}
 
 /* ══ STAT / KPI CARDS ══ */
-.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;;align-items:start}
 @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(5,1fr);}}
 @media(max-width:700px){.stats-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:480px){.stats-grid{grid-template-columns:1fr 1fr;}}
@@ -473,7 +476,7 @@ body.dark .client-bar-fill{background:var(--v-develop);}
 .kpi-ptab:hover:not(.active){ background:var(--bg3); color:var(--text1); }
 
 /* ══ INTEL CARDS ══ */
-.intel-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+.intel-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;;align-items:start}
 .intel-card{background:var(--bg);box-shadow:var(--shadow-full);border-radius:var(--radius-lg);padding:16px;transition:box-shadow var(--t);}
 .intel-card:hover{box-shadow:var(--shadow-hover);}
 .intel-tag{font-family:var(--font-mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:8px;}
@@ -483,8 +486,9 @@ body.dark .client-bar-fill{background:var(--v-develop);}
 .intel-severity{font-size:11px;font-weight:500;padding:2px 8px;border-radius:var(--radius-pill);}
 
 /* ══ OVERLAYS ══ */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(2px);z-index:400;}
-.overlay.open{display:block;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(2px);z-index:400;align-items:center;justify-content:center;padding:16px;}
+.overlay.open{display:flex;}
+@media(max-width:768px){.overlay.open{align-items:flex-end;padding:0;}}
 
 /* ══════════════════════════════════════════════════
    MOBILE LAYOUT — Vercel-style bottom nav
@@ -1003,10 +1007,7 @@ button[onclick*="closeEmailModal"]:hover{
 <div id="toast-wrap" style="position:fixed;bottom:76px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none"></div>
 <div class="version-tag">v27</div>
 
-<!-- FAB for mobile -->
-<button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
-  <i class="ph ph-plus" style="font-size:22px;line-height:1;display:flex"></i>
-</button>
+
 
 <div class="app">
 <!-- ═══════ SIDEBAR (desktop) ═══════ -->
@@ -1054,12 +1055,7 @@ button[onclick*="closeEmailModal"]:hover{
     </div>
   </div>
   <div class="sidebar-bottom" style="padding:8px 6px">
-    <div style="display:flex;align-items:center;justify-content:center">
-      <button class="btn btn-ghost btn-icon btn-sm" onclick="toggleTheme()" title="Toggle theme" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);width:100%">
-        <i class="ph ph-moon" id="theme-icon-sidebar" style="font-size:15px"></i>
-        <span class="nav-label" style="font-size:12px;margin-left:6px" id="theme-label-sidebar">Light Mode</span>
-      </button>
-    </div>
+    
   </div>
 </nav>
 
@@ -1788,9 +1784,7 @@ button[onclick*="closeEmailModal"]:hover{
 </div><!-- /app -->
 
 <!-- ═══════ BOTTOM NAV (mobile) ═══════ -->
-<button class="btn-fab" id="fab-new" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
-  <i class="ph ph-plus" style="font-size:22px;line-height:1;display:flex"></i>
-</button>
+
 
 <nav class="bottom-nav">
   <div class="bottom-nav-items">
@@ -2052,7 +2046,7 @@ async function apiFetch(url,options={}){
   const now=Date.now();
   if(useCache && _apiCache[url] && now-_apiCache[url].ts < ttl) return _apiCache[url].data;
   if(useCache && _apiInflight[url]) return _apiInflight[url];
-  const token = localStorage.getItem("ft_token");
+  const token = sessionStorage.getItem("ft_token");
   const h={'Content-Type':'application/json','Accept':'application/json'};
   if(token) h['Authorization'] = 'Bearer ' + token;
   const req=(async function(){
@@ -2730,7 +2724,7 @@ async function trackAll(){
   catch(e){ toast(e.message,'error'); }
 }
 function exportXLSX(){
-  const token=localStorage.getItem('ft_token')||'';
+  const token=sessionStorage.getItem('ft_token')||'';
   window.open('/api/export/xlsx?token='+encodeURIComponent(token),'_blank');
 }
 
@@ -2991,7 +2985,7 @@ const USER_KEY  = "ft_user";
 
 function getToken(){ return sessionStorage.getItem(TOKEN_KEY); }
 function getUser(){
-  try{ return JSON.parse(localStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
+  try{ return JSON.parse(sessionStorage.getItem(USER_KEY)||"null"); }catch{ return null; }
 }
 function isAdmin(){ return (getUser()||{}).role === "admin"; }
 
@@ -3035,7 +3029,7 @@ async function doLogin(){
       err.style.display = "block"; return;
     }
     sessionStorage.setItem(TOKEN_KEY, d.access_token);
-    localStorage.setItem(USER_KEY, JSON.stringify({role:d.role, name:d.name}));
+    sessionStorage.setItem(USER_KEY, JSON.stringify({role:d.role, name:d.name}));
     showApp();
   } catch(e){
     err.textContent = "Network error — please try again";
@@ -3080,7 +3074,7 @@ function showApp(){
 
 function doLogout(){
   sessionStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  sessionStorage.removeItem(USER_KEY);
   const ls = document.getElementById("login-screen");
   if(ls){ ls.style.display = "flex"; }
 }
@@ -3741,7 +3735,7 @@ function toggleProfileDropdown(){
 }
 
 function updateUserUI(){
-  const raw=localStorage.getItem('user')||sessionStorage.getItem('user')||'{}';
+  const raw=sessionStorage.getItem('user')||sessionStorage.getItem('user')||'{}';
   let user={};
   try{user=JSON.parse(raw);}catch(e){}
   const isAdm=()=>(user?.role||'').toLowerCase()==='admin';
@@ -5204,7 +5198,8 @@ async function _bulkSetStatus(status) {
 
 async function _bulkDelete() {
   if(!window._selectedShips.size) return;
-  if(!confirm('Delete '+window._selectedShips.size+' shipments? This cannot be undone.')) return;
+  const ok = await confirmDialog('Delete '+window._selectedShips.size+' shipments? This cannot be undone.');
+  if(!ok) return;
   const ids=[...window._selectedShips];
   let ok=0;
   for(const id of ids){
@@ -5298,7 +5293,7 @@ function _exportFilteredXLSX() {
   rows.forEach(row=>{
     const cells=[...row.querySelectorAll('td')].map(td=>{
       let t=td.innerText.trim().replace(/\n/g,' ');
-      return '"'+t.replace(/"/g,'""')+'"';
+      return `"${t.replace(/"/g,'""')}"`;
     });
     csv+=cells.join(',')+'\n';
   });
