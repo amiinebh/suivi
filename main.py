@@ -332,7 +332,7 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
             teu_raw = rd.get("teu")
             try: teu = int(float(teu_raw)) if teu_raw else None
             except: teu = None
-                        s = models.Shipment(
+            s = models.Shipment(
                 ref=ref,
                 ref2=rd.get("ref2", ""),
                 booking_no=rd.get("bookingno", "") or rd.get("booking_no", ""),
