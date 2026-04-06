@@ -4119,29 +4119,6 @@ async function generateReport(){
   finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-file-arrow-down"></i> Export';}}
 }
 
-<!-- ══ BULK ACTION FLOATING BAR ══ -->
-<div id="bulk-bar">
-  <span class="bulk-count" id="bulk-count-label">0</span>
-  <span>shipments selected</span>
-  <span class="bulk-sep"></span>
-  <button class="bulk-action-btn" onclick="_bulkSetStatus('Done')">✓ Mark Done</button>
-  <button class="bulk-action-btn" onclick="_bulkSetStatus('In Transit')">⬆ In Transit</button>
-  <button class="bulk-action-btn" onclick="_bulkSetStatus('Pending')">⏸ Pending</button>
-  <span class="bulk-sep"></span>
-  <button class="bulk-action-btn danger" onclick="_bulkDelete()">🗑 Delete</button>
-  <span class="bulk-sep"></span>
-  <button class="bulk-action-btn" onclick="_clearSelection()">✕ Clear</button>
-</div>
-
-</body></html>';
-
-    var win=window.open('','_blank');
-    if(win){win.document.write(h);win.document.close();}
-    else{toast('Pop-up blocked \u2014 allow pop-ups','error');}
-  }catch(e){console.error('generateReport',e);toast('Report error: '+e.message,'error');}
-  finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="ph ph-file-arrow-down"></i> Export';}}
-}
-
 function _teuFromType(t){ return t&&t.startsWith('20')?1:t?2:0; }
 
 function addContainerRow(){
@@ -5136,29 +5113,6 @@ function renderActivityFeed(){
   }catch(e){console.error('exportReport',e);toast('Report error: '+e.message,'error');}
   finally{}
 }
-
-<!-- ══ BULK ACTION FLOATING BAR ══ -->
-<div id="bulk-bar">
-  <span class="bulk-count" id="bulk-count-label">0</span>
-  <span>shipments selected</span>
-  <span class="bulk-sep"></span>
-  <button class="bulk-action-btn" onclick="_bulkSetStatus('Done')">✓ Mark Done</button>
-  <button class="bulk-action-btn" onclick="_bulkSetStatus('In Transit')">⬆ In Transit</button>
-  <button class="bulk-action-btn" onclick="_bulkSetStatus('Pending')">⏸ Pending</button>
-  <span class="bulk-sep"></span>
-  <button class="bulk-action-btn danger" onclick="_bulkDelete()">🗑 Delete</button>
-  <span class="bulk-sep"></span>
-  <button class="bulk-action-btn" onclick="_clearSelection()">✕ Clear</button>
-</div>
-
-</body></html>';
-
-        var win=window.open('','_blank');
-        if(win){win.document.write(doc);win.document.close();}
-        else toast('Pop-up blocked','error');
-      }
-
-      
 
 // ══════════════════════════════════════════════════════
 // AIRBNB DESIGN — FreightTrack Pro v20 JS FEATURES
