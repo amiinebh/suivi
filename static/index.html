@@ -2807,7 +2807,7 @@ function chartTextColor(){ return isDark()?'#8892b0':'#5a6a8a'; }
 function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)'; }
 
 /* ── KPI Page ── */
-async function loadAnalytics(){
+async async function loadAnalytics(){
   try{
     var k=await apiFetch('/api/kpi-report');
     if(!k||typeof k!=='object') k={};
@@ -4239,6 +4239,13 @@ function _confirmReject() {
   closeModal('modal-confirm');
   if (_confirmRes) { _confirmRes(false); _confirmRes = null; }
 }
+
+// Expose to global scope for inline onclick handlers
+window.generateReport = typeof generateReport !== "undefined" ? generateReport : function(){};
+window.toggleComparePanel = typeof toggleComparePanel !== "undefined" ? toggleComparePanel : function(){};
+window.runCompare = typeof runCompare !== "undefined" ? runCompare : function(){};
+window.closeCompareModal = typeof closeCompareModal !== "undefined" ? closeCompareModal : function(){};
+window.exportCompareReport = typeof exportCompareReport !== "undefined" ? exportCompareReport : function(){};
 </script>
 
 <script>
