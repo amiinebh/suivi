@@ -5191,7 +5191,11 @@ async function _bulkSetStatus(status) {
   let ok=0;
   for(const id of ids){
     try{
-      const r=await fetch('/api/shipments/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',...getAuthHeaders()},body:JSON.stringify({status})});
+      const r = await fetch('/api/shipments/' + id + '/status', {
+  method: 'PATCH',
+  headers: {'Content-Type':'application/json', ...getAuthHeaders()},
+  body: JSON.stringify({status})
+});
       if(r.ok) ok++;
     }catch(e){}
   }
