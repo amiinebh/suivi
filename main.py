@@ -529,20 +529,37 @@ def _build_legacy_kpi_report(db):
         },
         "monthly": monthly,
         "byclientall": sort_client(client_all),
+        "by_client_all": sort_client(client_all),
         "byclientimport": sort_client(client_import),
+        "by_client_import": sort_client(client_import),
         "byclientexport": sort_client(client_export),
+        "by_client_export": sort_client(client_export),
         "bycarrier": sort_counts(carrier_all),
+        "by_carrier_ocean": sort_counts(carrier_all),
+        "by_carrier_road": [],
+        "by_carrier": sort_counts(carrier_all),
+        "by_carrier_export": sort_counts(carrier_export),
+        "by_carrier_import": sort_counts(carrier_import),
         "bycarrierimport": sort_counts(carrier_import),
         "bycarrierexport": sort_counts(carrier_export),
         "toppol": sort_counts(pol_all),
+        "top_pol": sort_counts(pol_all),
         "toppolimport": sort_counts(pol_import),
+        "top_pol_import": sort_counts(pol_import),
         "toppolexport": sort_counts(pol_export),
+        "top_pol_export": sort_counts(pol_export),
         "toppod": sort_counts(pod_all),
+        "top_pod": sort_counts(pod_all),
         "toppodimport": sort_counts(pod_import),
+        "top_pod_import": sort_counts(pod_import),
         "toppodexport": sort_counts(pod_export),
+        "top_pod_export": sort_counts(pod_export),
         "toprouting": sort_counts(route_all, "route", "count"),
+        "top_routing": sort_counts(route_all, "route", "count"),
         "toproutingimport": sort_counts(route_import, "route", "count"),
+        "top_routing_import": sort_counts(route_import, "route", "count"),
         "toproutingexport": sort_counts(route_export, "route", "count"),
+        "top_routing_export": sort_counts(route_export, "route", "count"),
         "insights": [],
     }
 
@@ -617,7 +634,7 @@ def change_password(body: dict, db: Session = Depends(get_db), current=Depends(g
 def list_users(db: Session = Depends(get_db), current=Depends(require_admin)):
     from models import User
     return [{"id": u.id, "email": u.email, "name": u.name, "role": u.role,
-             "isactive": u.isactive, "createdat": str(u.createdat)}
+             "is_active": u.isactive, "isactive": u.isactive, "createdat": str(u.createdat)}
             for u in db.query(User).order_by(User.id).all()]
 
 @app.post("/api/users")
