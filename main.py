@@ -12,7 +12,25 @@ models.Base.metadata.create_all(bind=engine)
 from database import run_migrations
 run_migrations()
 
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 app = FastAPI(title="FreightTrack Pro")
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+from fastapi.middleware.cors import CORSMiddleware
+_allowed_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_allowed_origins or ["http://localhost:8000"],
+    allow_credentials=True,
+    allow_methods=["GET","POST","PUT","PATCH","DELETE"],
+    allow_headers=["Authorization","Content-Type"],
+)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 def get_db():
@@ -78,7 +96,7 @@ async def create_shipment(request: Request, db: Session = Depends(get_db),
         return crud.create_shipment(db, s)
     except Exception as e:
         import traceback; traceback.print_exc()
-        raise HTTPException(500, f"Failed to create shipment: {str(e)}")
+        logging.error(f"create_shipment error: {e}"); raise HTTPException(500, "Internal server error")
 
 @app.post("/api/shipments/bulk")
 async def bulk_import_shipments(request: Request, db: Session = Depends(get_db),
@@ -132,6 +150,8 @@ async def update_shipment(sid: int, request: Request, db: Session = Depends(get_
 
 @app.delete("/api/shipments/{sid}")
 def delete_shipment(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    if current.get("role") != "admin":
+        raise HTTPException(403, "Admin only")
     crud.delete_shipment(db, sid)
     return {"ok": True}
 
@@ -214,6 +234,8 @@ def add_container(sid: int, data: dict, db: Session = Depends(get_db),
 
 @app.delete("/api/containers/{cid}")
 def delete_container(cid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
+    if current.get("role") != "admin":
+        raise HTTPException(403, "Admin only")
     from models import Container
     cont = db.query(Container).filter(Container.id == cid).first()
     if not cont: raise HTTPException(404, "Container not found")
@@ -252,7 +274,7 @@ async def send_email(sid: int, request: Request, db: Session = Depends(get_db),
         except: pass
         return {"ok": True, "sent_to": s.clientemail}
     except HTTPException: raise
-    except Exception as e: raise HTTPException(500, f"Email send failed: {str(e)}")
+    except Exception as e: logging.error(f"send_email error: {e}"); raise HTTPException(500, "Internal server error")
 
 @app.get("/api/shipments/{sid}/email-log")
 def email_log(sid: int, db: Session = Depends(get_db), current=Depends(get_current_user)):
@@ -286,7 +308,7 @@ async def shipsgo_proxy(path: str, request: Request):
     return JSONResponse(content=data, status_code=resp.status_code)
 
 @app.get("/debug")
-def debug_page(): return FileResponse("static/debug.html")
+def debug_page(current=Depends(require_admin)): return FileResponse("static/debug.html")
 
 @app.post("/api/shipments/bulk-import")
 async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db),
@@ -362,7 +384,7 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
     return {"created": len(created), "skipped": len(skipped), "errors": errors, "refs": created}
 
 @app.post("/api/seed-samples")
-def seed_samples(db: Session = Depends(get_db)):
+def seed_samples(db: Session = Depends(get_db), current=Depends(require_admin)):
     allowed = {c.name for c in models.Shipment.__table__.columns}
     samples = [
         {"ref":"FT-2026-001","mode":"Ocean","carrier":"MSC","client":"Maroc Textiles","pol":"Shanghai","pod":"Casablanca","etd":"2026-01-05","eta":"2026-02-10","status":"Closed","incoterm":"FOB","vessel":"MSC DIANA"},
@@ -595,15 +617,27 @@ def dashboard_pdf(db: Session = Depends(get_db), current=Depends(get_current_use
 
 def ensure_admin(db):
     from models import User
-    if not db.query(User).filter(User.role == "admin").first():
+    admin_email = os.getenv("ADMIN_EMAIL")
+    admin_pass  = os.getenv("ADMIN_PASSWORD")
+    if not admin_email or not admin_pass:
+        raise RuntimeError(
+            "ADMIN_EMAIL and ADMIN_PASSWORD env vars must be set."
+        )
+    existing = db.query(User).filter(User.role == "admin").first()
+    if not existing:
         db.add(User(
-            email=os.getenv("ADMIN_EMAIL", "admin@freighttrack.com"),
+            email=admin_email,
             name="Admin", role="admin",
-            hashedpw=hash_password(os.getenv("ADMIN_PASSWORD", "Admin1234!")),
+            hashedpw=hash_password(admin_pass),
             isactive=True
         ))
         db.commit()
         print("Default admin created")
+    else:
+        existing.email    = admin_email
+        existing.hashedpw = hash_password(admin_pass)
+        db.commit()
+        print("Admin credentials synced from env vars")
 
 @app.on_event("startup")
 def on_startup():
@@ -616,7 +650,8 @@ def on_startup():
     finally: db.close()
 
 @app.post("/api/auth/login")
-def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, body: schemas.LoginRequest, db: Session = Depends(get_db)):
     from models import User
     user = db.query(User).filter(User.email == body.email, User.isactive == True).first()
     if not user or not verify_password(body.password, user.hashedpw):
@@ -632,7 +667,8 @@ def change_password(body: dict, db: Session = Depends(get_db), current=Depends(g
     from models import User
     old_pw = body.get("old_password", ""); new_pw = body.get("new_password", "")
     if not old_pw or not new_pw: raise HTTPException(400, "Both passwords required")
-    if len(new_pw) < 6: raise HTTPException(400, "New password must be at least 6 characters")
+    if len(new_pw) < 10 or not re.search(r'[A-Z]', new_pw) or not re.search(r'[0-9]', new_pw):
+        raise HTTPException(400, "Password must be at least 10 characters with 1 uppercase letter and 1 number")
     user = db.query(User).filter(User.id == int(current["sub"])).first()
     if not user or not verify_password(old_pw, user.hashedpw):
         raise HTTPException(401, "Current password is incorrect")
@@ -802,6 +838,6 @@ if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")))
 
 @app.get("/debug-user-fields")
-def debug_user_fields():
+def debug_user_fields(current=Depends(require_admin)):
     from models import User
     return {"columns": [c.key for c in User.__table__.columns]}
