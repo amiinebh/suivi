@@ -1365,13 +1365,13 @@ button[onclick*="closeEmailModal"]:hover{
       </div>
 
       <!-- ── KPI Cards Rows ── -->
-      <div id="kpi-cards-r1" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px"></div>
-      <div id="kpi-cards-r2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px"></div>
+      <div id="kpi-cards-r1" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;align-items:start"></div>
+      <div id="kpi-cards-r2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;align-items:start"></div>
 
       <!-- ── COMPARE PANEL ── -->
       <div id="compare-panel" style="display:none;background:var(--stitch-surf-low);border:1px solid var(--stitch-border);border-radius:8px;border-left:4px solid var(--stitch-tint);padding:20px 24px;margin-bottom:24px">
         <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--stitch-text1);margin-bottom:14px"><i class="ph ph-scales" style="color:var(--accent)"></i> Period Comparison</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;align-items:start">
           <div>
             <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:5px"></span>Period A — Baseline (older)</div>
             <div style="display:flex;gap:6px">
@@ -1408,7 +1408,7 @@ button[onclick*="closeEmailModal"]:hover{
           <!-- scrollable body -->
           <div style="padding:20px 22px;overflow-y:auto;max-height:calc(90vh - 60px)">
             <!-- period labels -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;align-items:start">
               <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:12px 16px;border-left:3px solid #94a3b8">
                 <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Period A — Baseline</div>
                 <div id="cmp-label-a" style="font-size:15px;font-weight:600;color:var(--text1);margin-top:3px">--</div>
@@ -1419,7 +1419,7 @@ button[onclick*="closeEmailModal"]:hover{
               </div>
             </div>
             <!-- KPI chips -->
-            <div id="cmp-kpi-row" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px"></div>
+            <div id="cmp-kpi-row" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;align-items:start"></div>
             <!-- monthly chart -->
             <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
               <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:8px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
@@ -1435,7 +1435,7 @@ button[onclick*="closeEmailModal"]:hover{
               <div id="cmp-client-table"></div>
             </div>
             <!-- side by side grids -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
               <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
                 <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#94a3b8;margin-right:6px"></span>Top Routes — A</div>
                 <div id="cmp-routes-a"></div>
@@ -1466,7 +1466,7 @@ button[onclick*="closeEmailModal"]:hover{
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
           <div style="height:190px;position:relative"><canvas id="kpi-chart-monthly"></canvas></div>
@@ -1476,7 +1476,7 @@ button[onclick*="closeEmailModal"]:hover{
           <div style="height:190px;position:relative"><canvas id="kpi-chart-status"></canvas></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-boat" style="color:var(--accent)"></i> Transport Mode</div>
           <div style="height:180px;position:relative"><canvas id="kpi-chart-mode"></canvas></div>
@@ -1486,7 +1486,7 @@ button[onclick*="closeEmailModal"]:hover{
           <div style="height:180px;position:relative"><canvas id="kpi-chart-dir"></canvas></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-users" style="color:var(--accent)"></i> Top Clients — Shipments</div>
@@ -1500,7 +1500,7 @@ button[onclick*="closeEmailModal"]:hover{
           </div><div id="kpi-bar-teu"></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-boat" style="color:#4f8ef7"></i> Ocean Carriers</div>
@@ -1520,7 +1520,7 @@ button[onclick*="closeEmailModal"]:hover{
           </div><div id="kpi-bar-pod"></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-map-pin-line" style="color:#22c55e"></i> Top Origins (POL)</div>
@@ -1535,7 +1535,7 @@ button[onclick*="closeEmailModal"]:hover{
         </div></div>
       </div>
       <!-- Incoterm distribution -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;align-items:start">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px">
             <i class="ph ph-file-text" style="color:var(--accent)"></i> Incoterm Distribution
@@ -2956,8 +2956,32 @@ function kpiMiniTab(btn,targetId,dir){
   if(targetId==='kpi-bar-clients'){bl(targetId,dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]),'name','shipments','#4f8ef7');}
   else if(targetId==='kpi-bar-teu'){var src=dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]);bl(targetId,src.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');}
   else if(targetId==='kpi-bar-carriers'){bl(targetId,dir==='exp'?(k.by_carrier_export||[]):dir==='imp'?(k.by_carrier_import||[]):(k.by_carrier||[]),'name','count',null);}
-  else if(targetId==='kpi-bar-carriers-ocean'){bl(targetId,dir==='exp'?(k.by_carrier_ocean_export||[]):dir==='imp'?(k.by_carrier_ocean_import||[]):(k.by_carrier_ocean||[]),'name','count','#4f8ef7');}
-  else if(targetId==='kpi-bar-carriers-road'){bl(targetId,dir==='exp'?(k.by_carrier_road_export||[]):dir==='imp'?(k.by_carrier_road_import||[]):(k.by_carrier_road||[]),'name','count','#f97316');}
+  else if(targetId==='kpi-bar-carriers-ocean'){
+    var ships=window.allShipments||[];
+    var filtered=ships.filter(function(s){
+      var m=(s.mode||'').toLowerCase();
+      if(!['ocean','sea','fcl','lcl'].some(function(x){return m.includes(x);})) return false;
+      if(dir==='exp') return (s.direction||'').toLowerCase().includes('exp');
+      if(dir==='imp') return (s.direction||'').toLowerCase().includes('imp');
+      return true;
+    });
+    var cm={}; filtered.forEach(function(s){var c=s.carrier||'Unknown';cm[c]=(cm[c]||0)+1;});
+    var arr=Object.entries(cm).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);
+    bl(targetId,arr,'name','count','#4f8ef7');
+  }
+  else if(targetId==='kpi-bar-carriers-road'){
+    var ships=window.allShipments||[];
+    var filtered=ships.filter(function(s){
+      var m=(s.mode||'').toLowerCase();
+      if(!['road','truck','ftl'].some(function(x){return m.includes(x);})) return false;
+      if(dir==='exp') return (s.direction||'').toLowerCase().includes('exp');
+      if(dir==='imp') return (s.direction||'').toLowerCase().includes('imp');
+      return true;
+    });
+    var cm={}; filtered.forEach(function(s){var c=s.carrier||'Unknown';cm[c]=(cm[c]||0)+1;});
+    var arr=Object.entries(cm).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);
+    bl(targetId,arr,'name','count','#f97316');
+  }
   else if(targetId==='kpi-bar-pod'){bl(targetId,dir==='exp'?(k.top_pod_export||[]):dir==='imp'?(k.top_pod_import||[]):(k.top_pod||[]),'name','count','#ef4444');}
   else if(targetId==='kpi-bar-pol'){bl(targetId,dir==='exp'?(k.top_pol_export||[]):dir==='imp'?(k.top_pol_import||[]):(k.top_pol||[]),'name','count','#22c55e');}
   else if(targetId==='kpi-bar-routes'){
@@ -5407,4 +5431,109 @@ window.closeCompareModal = typeof closeCompareModal==="function"?closeCompareMod
 </div>
 
 </body>
-</html>
+</html>var css=`
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#f7f7f7;color:#222222;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:13px;line-height:1.5;}
+  .page{max-width:960px;margin:0 auto;padding:32px 24px;}
+  /* Header */
+  .report-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;background:#fff;border-radius:12px;box-shadow:rgba(0,0,0,0.04) 0 0 0 1px,rgba(0,0,0,0.06) 0 2px 8px;margin-bottom:20px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-icon{width:32px;height:32px;background:#222;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;flex-shrink:0;}
+  .brand-name{font-size:15px;font-weight:700;color:#222;letter-spacing:-.3px;}
+  .brand-sub{font-size:10px;color:#6a6a6a;font-weight:500;letter-spacing:.05em;text-transform:uppercase;margin-top:1px;}
+  .report-meta{text-align:right;font-size:11px;color:#6a6a6a;}
+  .report-meta strong{color:#222;font-size:13px;font-weight:600;display:block;margin-bottom:2px;}
+  /* KPI strip */
+  .kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+  .kpi-chip{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:rgba(0,0,0,0.04) 0 0 0 1px,rgba(0,0,0,0.04) 0 2px 6px;}
+  .kpi-chip .kv{font-size:26px;font-weight:700;color:#222;letter-spacing:-1px;line-height:1.1;margin-bottom:4px;}
+  .kpi-chip .kl{font-size:10px;font-weight:600;color:#6a6a6a;text-transform:uppercase;letter-spacing:.06em;}
+  .kpi-chip.accent .kv{color:#ff385c;}
+  /* Section title */
+  .sec-title{font-size:11px;font-weight:700;color:#6a6a6a;text-transform:uppercase;letter-spacing:.08em;margin:20px 0 10px;display:flex;align-items:center;gap:6px;}
+  .sec-title::after{content:'';flex:1;height:1px;background:rgba(0,0,0,0.08);}
+  /* Table */
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:rgba(0,0,0,0.04) 0 0 0 1px,rgba(0,0,0,0.04) 0 2px 6px;margin-bottom:20px;}
+  thead th{padding:10px 12px;text-align:left;font-size:10px;font-weight:700;color:#6a6a6a;text-transform:uppercase;letter-spacing:.06em;background:#f7f7f7;border-bottom:1px solid rgba(0,0,0,0.08);}
+  tbody tr{border-bottom:1px solid rgba(0,0,0,0.05);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:#fafafa;}
+  tbody td{padding:10px 12px;font-size:12px;color:#222;vertical-align:middle;}
+  .td-mono{font-family:ui-monospace,'JetBrains Mono',monospace;font-size:11px;color:#6a6a6a;}
+  .td-ref{font-family:ui-monospace,'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#222;}
+  /* Badges */
+  .badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:6px;font-size:10px;font-weight:600;white-space:nowrap;}
+  .badge-done{background:#e6f7ef;color:#00a550;}
+  .badge-transit{background:rgba(66,139,255,0.1);color:#428bff;}
+  .badge-pending{background:rgba(145,99,0,0.1);color:#916300;}
+  .badge-overdue{background:rgba(193,53,21,0.1);color:#c13515;}
+  .badge-ocean{background:rgba(66,139,255,0.08);color:#428bff;}
+  .badge-road{background:rgba(224,123,57,0.08);color:#e07b39;}
+  /* Footer */
+  .report-footer{text-align:center;padding:14px;font-size:10px;color:#929292;border-top:1px solid rgba(0,0,0,0.08);margin-top:8px;}
+  @media print{body{background:#fff;}.page{padding:16px;}.report-header,.kpi-chip,table{box-shadow:none!important;border:1px solid rgba(0,0,0,0.1)!important;}}
+`;
+
+var statusBadgeClass=function(st){
+  var s=(st||'').toLowerCase();
+  if(s==='closed'||s==='arrived'||s==='done') return 'badge-done';
+  if(s==='sailing'||s==='stuffed'||s==='in transit') return 'badge-transit';
+  if(s==='overdue') return 'badge-overdue';
+  return 'badge-pending';
+};
+var modeBadgeClass=function(m){
+  return (m||'').toLowerCase().includes('road')?'badge-road':'badge-ocean';
+};
+
+var today=new Date();
+var overdue=ships.filter(function(s){
+  if(!s.eta) return false;
+  var e=new Date(s.eta); e.setHours(0,0,0,0);
+  return e<today && !['Closed','Arrived'].includes(s.status);
+}).length;
+var totalTeu=Math.round(ships.reduce(function(a,s){return a+parseFloat(s.teu||s.containers||0);},0));
+
+var rowsHtml=ships.map(function(s){
+  var etaD=s.eta?new Date(s.eta):null;
+  var late=etaD&&etaD<today&&!['Closed','Arrived'].includes(s.status);
+  return '<tr>'
+    +'<td class="td-ref">'+(s.ref||'--')+'</td>'
+    +'<td style="font-size:11px;color:#6a6a6a;">'+(s.bookingno||'--')+'</td>'
+    +'<td style="font-weight:500;">'+(s.client||'--')+'</td>'
+    +'<td class="td-mono">'+(s.pol||'--')+' → '+(s.pod||'--')+'</td>'
+    +'<td><span class="badge '+(modeBadgeClass(s.mode))+'">'+(s.mode||'--')+'</span></td>'
+    +'<td>'+(s.carrier||'--')+'</td>'
+    +'<td class="td-mono">'+(s.etd?s.etd.slice(0,10):'--')+'</td>'
+    +'<td class="td-mono" style="color:'+(late?'#c13515':'inherit')+'">'+(s.eta?s.eta.slice(0,10):'--')+(late?' ⚠':'')+'</td>'
+    +'<td><span class="badge '+(statusBadgeClass(s.status))+'">'+(s.status||'--')+'</span></td>'
+    +'</tr>';
+}).join('');
+
+var h='<!DOCTYPE html><html lang="en"><head>'
+  +'<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+  +'<title>FreightTrack Pro \u2014 Operations Report<\/title>'
+  +'<style>'+css+'<\/style><\/head><body>'
+  +'<div class="page">'
+  +'<div class="report-header">'
+    +'<div class="brand">'
+      +'<div class="brand-icon">\u26f4<\/div>'
+      +'<div><div class="brand-name">FreightTrack Pro<\/div><div class="brand-sub">Operations Report<\/div><\/div>'
+    +'<\/div>'
+    +'<div class="report-meta"><strong>'+today.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+'<\/strong>'+total+' shipments &middot; '+totalTeu+' TEU<\/div>'
+  +'<\/div>'
+  +'<div class="kpi-strip">'
+    +'<div class="kpi-chip"><div class="kv">'+total+'<\/div><div class="kl">Total<\/div><\/div>'
+    +'<div class="kpi-chip"><div class="kv">'+ships.filter(function(s){return(s.direction||'').toLowerCase().includes('exp');}).length+'<\/div><div class="kl">Export<\/div><\/div>'
+    +'<div class="kpi-chip"><div class="kv">'+ships.filter(function(s){return(s.direction||'').toLowerCase().includes('imp');}).length+'<\/div><div class="kl">Import<\/div><\/div>'
+    +'<div class="kpi-chip"><div class="kv">'+totalTeu+'<\/div><div class="kl">TEU<\/div><\/div>'
+    +'<div class="kpi-chip accent"><div class="kv">'+overdue+'<\/div><div class="kl">Overdue<\/div><\/div>'
+  +'<\/div>'
+  +'<div class="sec-title">Shipment Details<\/div>'
+  +'<table><thead><tr>'
+    +'<th>Ref<\/th><th>Booking<\/th><th>Client<\/th><th>Route<\/th><th>Mode<\/th><th>Carrier<\/th><th>ETD<\/th><th>ETA<\/th><th>Status<\/th>'
+  +'<\/tr><\/thead><tbody>'+rowsHtml+'<\/tbody><\/table>'
+  +'<div class="report-footer">FreightTrack Pro &middot; Report generated '+today.toLocaleString()+' &middot; '+total+' shipments &middot; '+totalTeu+' TEU<\/div>'
+  +'<\/div><\/body><\/html>';
+
+
