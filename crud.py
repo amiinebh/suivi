@@ -7,23 +7,14 @@ def get_shipments(db: Session, search: str = "", status: str = "", mode: str = "
     q = db.query(models.Shipment)
     if search:
         s = f"%{search}%"
-        from sqlalchemy import or_
-        filters = [
-            models.Shipment.ref.ilike(s),
-            models.Shipment.client.ilike(s),
-            models.Shipment.pol.ilike(s),
-            models.Shipment.pod.ilike(s),
-            models.Shipment.carrier.ilike(s),
-        ]
-        try: filters.append(models.Shipment.booking_no.ilike(s))
-        except: pass
-        try: filters.append(models.Shipment.bookingno.ilike(s))
-        except: pass
-        try: filters.append(models.Shipment.client_email.ilike(s))
-        except: pass
-        try: filters.append(models.Shipment.clientemail.ilike(s))
-        except: pass
-        q = q.filter(or_(*filters))
+        q = q.filter(
+            models.Shipment.ref.ilike(s) |
+            models.Shipment.client.ilike(s) |
+            models.Shipment.pol.ilike(s) |
+            models.Shipment.pod.ilike(s) |
+            models.Shipment.carrier.ilike(s) |
+            models.Shipment.bookingno.ilike(s)
+        )
     if status:
         q = q.filter(models.Shipment.status == status)
     if mode:
@@ -175,17 +166,12 @@ def get_stats(db: Session):
     return {
         "total": total,
         "bystatus": bystatus,
-        "by_status": bystatus,
         "bymode": bymode,
-        "by_mode": bymode,
         "bydirection": {"Export": export_count, "Import": import_count},
-        "by_direction": {"Export": export_count, "Import": import_count},
         "export": export_count,
         "import": import_count,
         "totalteu": round(totalteu, 2),
-        "total_teu": round(totalteu, 2),
         "delayedcount": delayed,
-        "delayed_count": delayed,
         "ocean": ocean_count,
         "road": road_count,
     }

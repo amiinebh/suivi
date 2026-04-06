@@ -47,52 +47,10 @@ def portal_data(ref: str, db: Session = Depends(get_db)):
                    for e in sorted(s.events, key=lambda x: x.timestamp, reverse=True)]
     }
 
-@app.get("/api/shipments")
+@app.get("/api/shipments", response_model=list[schemas.ShipmentOut])
 def list_shipments(q: str = "", search: str = "", status: str = "", mode: str = "",
                    db: Session = Depends(get_db), current=Depends(get_current_user)):
-    ships = crud.get_shipments(db, q or search, status, mode)
-    result = []
-    for s in ships:
-        try:
-            item = {
-                "id": s.id,
-                "ref": s.ref or "",
-                "ref2": getattr(s, "ref2", None),
-                "booking_no": getattr(s, "booking_no", None) or getattr(s, "bookingno", None),
-                "mode": s.mode or "Ocean",
-                "carrier": s.carrier,
-                "vessel": getattr(s, "vessel", None),
-                "pol": s.pol,
-                "pod": s.pod,
-                "eta": str(s.eta) if s.eta else None,
-                "etd": str(s.etd) if s.etd else None,
-                "status": s.status or "Pending",
-                "client": s.client,
-                "client_email": getattr(s, "client_email", None) or getattr(s, "clientemail", None),
-                "note": s.note,
-                "notes": getattr(s, "notes", None),
-                "incoterm": s.incoterm,
-                "teu": float(s.teu) if s.teu is not None else None,
-                "shipper": s.shipper,
-                "consignee": s.consignee,
-                "direction": getattr(s, "direction", None),
-                "quotation_number": getattr(s, "quotation_number", None),
-                "shipsgo_id": getattr(s, "shipsgo_id", None),
-                "last_tracked": getattr(s, "last_tracked", None) or getattr(s, "lasttracked", None),
-                "created_at": str(s.created_at) if s.created_at else None,
-                "events": [], "comments": [], "containers": [],
-            }
-            try: item["events"] = [{"id": e.id, "shipment_id": e.shipment_id, "status": e.status, "description": e.description, "location": e.location, "timestamp": str(e.timestamp) if e.timestamp else None} for e in (s.events or [])]
-            except: pass
-            try: item["comments"] = [{"id": c.id, "shipment_id": c.shipment_id, "author": c.author, "text": c.text, "timestamp": str(c.timestamp) if c.timestamp else None} for c in (s.comments or [])]
-            except: pass
-            try: item["containers"] = [{"id": c.id, "shipment_id": c.shipment_id, "container_no": c.container_no, "seal_no": c.seal_no, "size_type": c.size_type, "weight": c.weight, "created_at": str(c.created_at) if c.created_at else None} for c in (s.containers or [])]
-            except: pass
-            result.append(item)
-        except Exception as ex:
-            logging.error(f"Shipment serialize error id={getattr(s,'id','?')}: {ex}")
-            continue
-    return result
+    return crud.get_shipments(db, q or search, status, mode)
 
 @app.post("/api/shipments", response_model=schemas.ShipmentOut)
 async def create_shipment(request: Request, db: Session = Depends(get_db),
@@ -373,7 +331,7 @@ async def bulk_import(file: UploadFile = File(...), db: Session = Depends(get_db
             teu_raw = rd.get("teu")
             try: teu = int(float(teu_raw)) if teu_raw else None
             except: teu = None
-            s = models.Shipment(
+                        s = models.Shipment(
                 ref=ref,
                 ref2=rd.get("ref2", ""),
                 booking_no=rd.get("bookingno", "") or rd.get("booking_no", ""),
@@ -472,19 +430,12 @@ def _build_legacy_kpi_report(db):
     carrier_all = defaultdict(int)
     carrier_import = defaultdict(int)
     carrier_export = defaultdict(int)
-    carrier_ocean = defaultdict(int)
-    carrier_ocean_import = defaultdict(int)
-    carrier_ocean_export = defaultdict(int)
-    carrier_road = defaultdict(int)
-    carrier_road_import = defaultdict(int)
-    carrier_road_export = defaultdict(int)
     client_all = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     client_import = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     client_export = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     pol_all = defaultdict(int); pol_import = defaultdict(int); pol_export = defaultdict(int)
     pod_all = defaultdict(int); pod_import = defaultdict(int); pod_export = defaultdict(int)
     route_all = defaultdict(int); route_import = defaultdict(int); route_export = defaultdict(int)
-    incoterm_all = defaultdict(int)
 
     for s in shipments:
         try:
@@ -513,14 +464,6 @@ def _build_legacy_kpi_report(db):
                 carrier_all[carrier] += 1
                 if direction == 'Import': carrier_import[carrier] += 1
                 else: carrier_export[carrier] += 1
-                if mode == 'Road':
-                    carrier_road[carrier] += 1
-                    if direction == 'Import': carrier_road_import[carrier] += 1
-                    else: carrier_road_export[carrier] += 1
-                else:
-                    carrier_ocean[carrier] += 1
-                    if direction == 'Import': carrier_ocean_import[carrier] += 1
-                    else: carrier_ocean_export[carrier] += 1
 
             if client:
                 client_all[client]['shipments'] += 1
@@ -545,10 +488,6 @@ def _build_legacy_kpi_report(db):
                 route_all[route] += 1
                 if direction == 'Import': route_import[route] += 1
                 else: route_export[route] += 1
-
-            inco = (getattr(s, 'incoterm', None) or '').strip().upper()
-            if inco:
-                incoterm_all[inco] += 1
         except Exception:
             continue
 
@@ -574,7 +513,6 @@ def _build_legacy_kpi_report(db):
     return {
         "total": total,
         "totalteu": totalteu,
-        "by_incoterm": dict(sorted(incoterm_all.items(), key=lambda x: -x[1])),
         "total_teu": totalteu,
         "bystatus": dict(sorted(bystatus.items())),
         "by_status": dict(sorted(bystatus.items())),
@@ -590,51 +528,20 @@ def _build_legacy_kpi_report(db):
         },
         "monthly": monthly,
         "byclientall": sort_client(client_all),
-        "by_client_all": sort_client(client_all),
         "byclientimport": sort_client(client_import),
-        "by_client_import": sort_client(client_import),
         "byclientexport": sort_client(client_export),
-        "by_client_export": sort_client(client_export),
         "bycarrier": sort_counts(carrier_all),
-        "by_carrier": sort_counts(carrier_all),
-        "by_carrier_ocean": sort_counts(carrier_ocean),
-        "by_carrier_ocean_import": sort_counts(carrier_ocean_import),
-        "by_carrier_ocean_export": sort_counts(carrier_ocean_export),
-        "by_carrier_road": sort_counts(carrier_road),
-        "by_carrier_road_import": sort_counts(carrier_road_import),
-        "by_carrier_road_export": sort_counts(carrier_road_export),
         "bycarrierimport": sort_counts(carrier_import),
-        "by_carrier_import": sort_counts(carrier_import),
         "bycarrierexport": sort_counts(carrier_export),
-        "by_carrier_export": sort_counts(carrier_export),
         "toppol": sort_counts(pol_all),
-        "top_pol": sort_counts(pol_all),
-        "by_pol_all": sort_counts(pol_all),
         "toppolimport": sort_counts(pol_import),
-        "by_pol_import": sort_counts(pol_import),
-        "top_pol_import": sort_counts(pol_import),
         "toppolexport": sort_counts(pol_export),
-        "by_pol_export": sort_counts(pol_export),
-        "top_pol_export": sort_counts(pol_export),
         "toppod": sort_counts(pod_all),
-        "top_pod": sort_counts(pod_all),
-        "by_pod_all": sort_counts(pod_all),
-        "top_destinations": sort_counts(pod_all),
         "toppodimport": sort_counts(pod_import),
-        "by_pod_import": sort_counts(pod_import),
-        "top_pod_import": sort_counts(pod_import),
         "toppodexport": sort_counts(pod_export),
-        "by_pod_export": sort_counts(pod_export),
-        "top_pod_export": sort_counts(pod_export),
         "toprouting": sort_counts(route_all, "route", "count"),
-        "top_routing": sort_counts(route_all, "route", "count"),
-        "by_route_all": sort_counts(route_all, "route", "count"),
         "toproutingimport": sort_counts(route_import, "route", "count"),
-        "top_routing_import": sort_counts(route_import, "route", "count"),
-        "by_route_import": sort_counts(route_import, "route", "count"),
         "toproutingexport": sort_counts(route_export, "route", "count"),
-        "top_routing_export": sort_counts(route_export, "route", "count"),
-        "by_route_export": sort_counts(route_export, "route", "count"),
         "insights": [],
     }
 

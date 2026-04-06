@@ -155,7 +155,6 @@ class ShipmentOut(BaseModel):
     teu: Optional[float] = None
     shipper: Optional[str] = None
     consignee: Optional[str] = None
-    direction: Optional[str] = None
     quotation_number: Optional[str] = None
     shipsgo_id: Optional[int] = None
     last_tracked: Optional[str] = None
