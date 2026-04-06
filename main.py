@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from sqlalchemy.orm import Session
 import models, schemas, crud, export
+from models import Shipment as ShipmentModel
 from database import SessionLocal, engine
 import os, logging, io
 logging.basicConfig(level=logging.INFO)
