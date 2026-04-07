@@ -2847,36 +2847,29 @@ async function loadAnalytics(){
     var mcEl=document.getElementById('kpi-chart-monthly');
     if(mcEl&&monthly.length){
       chartRegistry['kpi-chart-monthly']=new ApexCharts(mcEl,{
-        chart:{type:'area',height:190,toolbar:{show:false},zoom:{enabled:false},fontFamily:'inherit',background:'transparent',animations:{enabled:true,speed:600}},
+        chart:{type:'area',height:190,toolbar:{show:false},zoom:{enabled:false},fontFamily:'inherit',background:'transparent'},
         theme:{mode:isDark()?'dark':'light'},
         series:[{name:'Export',data:monthly.map(function(m){return m.export_count||0;})},{name:'Import',data:monthly.map(function(m){return m.import_count||0;})}],
         xaxis:{categories:monthly.map(function(m){return m.month;}),labels:{style:{fontSize:'10px'}},axisBorder:{show:false},axisTicks:{show:false}},
-        yaxis:{labels:{style:{fontSize:'10px'}},min:0},
-        colors:['#4f8ef7','#22c55e'],
-        fill:{type:'gradient',gradient:{opacityFrom:0.35,opacityTo:0.05}},
-        stroke:{curve:'smooth',width:2},markers:{size:4},
-        tooltip:{shared:true,intersect:false},
-        legend:{position:'top',fontSize:'10px'},
-        grid:{borderColor:gc(),strokeDashArray:3},
-        dataLabels:{enabled:false}
-      });
-      chartRegistry['kpi-chart-monthly'].render();
+        yaxis:{labels:{style:{fontSize:'10px'}},min:0},colors:['#4f8ef7','#22c55e'],
+        fill:{type:'gradient',gradient:{opacityFrom:0.35,opacityTo:0.05}},stroke:{curve:'smooth',width:2},markers:{size:4},
+        tooltip:{shared:true,intersect:false},legend:{position:'top',fontSize:'10px'},
+        grid:{borderColor:gc(),strokeDashArray:3},dataLabels:{enabled:false}
+      });chartRegistry['kpi-chart-monthly'].render();
     } else if(mcEl){mcEl.innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:12px">No monthly data yet</div>';}
     dc('kpi-chart-status');
     var scEl=document.getElementById('kpi-chart-status');
     if(scEl){var sKeys=Object.keys(byStatus),sVals=Object.values(byStatus);
-      var sColMap={Pending:'#f59e0b',Confirmed:'#4f8ef7',Booked:'#06b6d4',Stuffed:'#8b5cf6',Sailing:'#3b82f6',Arrived:'#22c55e',Closed:'#6b7280',Canceled:'#ef4444'};
+      var sCM={Pending:'#f59e0b',Confirmed:'#4f8ef7',Booked:'#06b6d4',Stuffed:'#8b5cf6',Sailing:'#3b82f6',Arrived:'#22c55e',Closed:'#6b7280',Canceled:'#ef4444'};
       if(sKeys.filter(function(k){return byStatus[k]>0;}).length){
         chartRegistry['kpi-chart-status']=new ApexCharts(scEl,{
           chart:{type:'donut',height:190,toolbar:{show:false},fontFamily:'inherit',background:'transparent'},
-          theme:{mode:isDark()?'dark':'light'},
-          series:sVals,labels:sKeys,
-          colors:sKeys.map(function(s){return sColMap[s]||'#aaa';}),
+          theme:{mode:isDark()?'dark':'light'},series:sVals,labels:sKeys,
+          colors:sKeys.map(function(s){return sCM[s]||'#aaa';}),
           plotOptions:{pie:{donut:{size:'60%',labels:{show:true,total:{show:true,label:'Total',fontSize:'11px',formatter:function(w){return w.globals.seriesTotals.reduce(function(a,b){return a+b;},0);}}}}}},
           legend:{position:'right',fontSize:'10px'},dataLabels:{enabled:false},
           tooltip:{y:{formatter:function(v,o){var t=o.globals.seriesTotals.reduce(function(a,b){return a+b;},0);return v+' ('+Math.round(v/t*100)+'%)';}}}
-        });
-        chartRegistry['kpi-chart-status'].render();
+        });chartRegistry['kpi-chart-status'].render();
       } else {scEl.innerHTML='<div style="text-align:center;padding:50px;color:var(--text2);font-size:12px">No status data</div>';}
     }
     dc('kpi-chart-mode');
@@ -2885,14 +2878,11 @@ async function loadAnalytics(){
       if(mKeys.length){
         chartRegistry['kpi-chart-mode']=new ApexCharts(modeEl,{
           chart:{type:'donut',height:180,toolbar:{show:false},fontFamily:'inherit',background:'transparent'},
-          theme:{mode:isDark()?'dark':'light'},
-          series:mKeys.map(function(x){return byMode[x];}),labels:mKeys,
+          theme:{mode:isDark()?'dark':'light'},series:mKeys.map(function(x){return byMode[x];}),labels:mKeys,
           colors:['#4f8ef7','#22c55e','#f59e0b','#06b6d4'],
-          plotOptions:{pie:{donut:{size:'60%'}}},
-          legend:{position:'right',fontSize:'10px'},dataLabels:{enabled:false},
-          tooltip:{y:{formatter:function(v){return v+' shipments';}}}
-        });
-        chartRegistry['kpi-chart-mode'].render();
+          plotOptions:{pie:{donut:{size:'60%'}}},legend:{position:'right',fontSize:'10px'},
+          dataLabels:{enabled:false},tooltip:{y:{formatter:function(v){return v+' shipments';}}}
+        });chartRegistry['kpi-chart-mode'].render();
       } else {modeEl.innerHTML='<div style="text-align:center;padding:50px;color:var(--text2);font-size:12px">No mode data</div>';}
     }
     dc('kpi-chart-dir');
@@ -2901,13 +2891,11 @@ async function loadAnalytics(){
       if(dVals[0]+dVals[1]>0){
         chartRegistry['kpi-chart-dir']=new ApexCharts(dirEl,{
           chart:{type:'donut',height:180,toolbar:{show:false},fontFamily:'inherit',background:'transparent'},
-          theme:{mode:isDark()?'dark':'light'},
-          series:dVals,labels:['Export','Import'],colors:['#4f8ef7','#22c55e'],
+          theme:{mode:isDark()?'dark':'light'},series:dVals,labels:['Export','Import'],colors:['#4f8ef7','#22c55e'],
           plotOptions:{pie:{donut:{size:'55%',labels:{show:true,total:{show:true,label:'Total',fontSize:'11px'}}}}},
           legend:{position:'right',fontSize:'11px'},dataLabels:{enabled:false},
           tooltip:{y:{formatter:function(v){var t=dVals[0]+dVals[1];return v+' ('+Math.round(v/t*100)+'%)';}}}
-        });
-        chartRegistry['kpi-chart-dir'].render();
+        });chartRegistry['kpi-chart-dir'].render();
       } else {dirEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No direction data yet</div>';}
     }
     window._barListFn=function(id,items,nKey,vKey,fbColor){
@@ -2925,8 +2913,13 @@ async function loadAnalytics(){
       }).join('');
     };
     var bl=window._barListFn;
-    bl('kpi-bar-carriers-ocean',k.by_carrier_ocean||[],'name','count','#4f8ef7');
-    bl('kpi-bar-carriers-road',k.by_carrier_road||[],'name','count','#f97316');
+    (function(){
+      var _xD=function(x){var d=(x.direction||x.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var rf=(x.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};
+      var _buildC=function(modeTokens,dir){return(window.allShipments||[]).filter(function(x){var m=(x.mode||'').toLowerCase();return modeTokens.some(function(t){return m.includes(t);})&&(dir==='all'||_xD(x)===dir);}).reduce(function(acc,x){var c=(x.carrier||'Unknown').trim();acc[c]=(acc[c]||0)+1;return acc;},{});};
+      var _toArr=function(m){return Object.entries(m).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);};
+      bl('kpi-bar-carriers-ocean',_toArr(_buildC(['ocean','sea','fcl','lcl'],'all')),'name','count','#4f8ef7');
+      bl('kpi-bar-carriers-road', _toArr(_buildC(['road','truck','ftl'],'all')), 'name','count','#f97316');
+    })();
     bl('kpi-bar-clients',clientAll,'name','shipments','#4f8ef7');
     bl('kpi-bar-teu',clientAll.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
     bl('kpi-bar-pod',k.top_pod||[],'name','count','#ef4444');
@@ -2954,15 +2947,13 @@ async function loadAnalytics(){
     if(incoEl){var incoData=k.by_incoterm||{};
       var incoKeys=Object.keys(incoData).filter(function(ik){return incoData[ik]>0;});
       if(incoKeys.length){
-        var incoColors=['#a855f7','#6c63ff','#4f8ef7','#22c55e','#f59e0b','#ef4444','#06b6d4','#f97316'];
         chartRegistry['kpi-chart-incoterm']=new ApexCharts(incoEl,{
           chart:{type:'donut',height:180,toolbar:{show:false},fontFamily:'inherit',background:'transparent'},
           theme:{mode:isDark()?'dark':'light'},
           series:incoKeys.map(function(ik){return incoData[ik];}),labels:incoKeys,
-          colors:incoColors,plotOptions:{pie:{donut:{size:'60%'}}},
-          legend:{position:'right',fontSize:'10px'},dataLabels:{enabled:false}
-        });
-        chartRegistry['kpi-chart-incoterm'].render();
+          colors:['#a855f7','#6c63ff','#4f8ef7','#22c55e','#f59e0b','#ef4444','#06b6d4','#f97316'],
+          plotOptions:{pie:{donut:{size:'60%'}}},legend:{position:'right',fontSize:'10px'},dataLabels:{enabled:false}
+        });chartRegistry['kpi-chart-incoterm'].render();
       } else {incoEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No incoterm data yet</div>';}
     }
     
@@ -2987,7 +2978,7 @@ function kpiMiniTab(btn,targetId,dir){
   if(targetId==='kpi-bar-clients'){bl(targetId,dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]),'name','shipments','#4f8ef7');}
   else if(targetId==='kpi-bar-teu'){var src=dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]);bl(targetId,src.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');}
   else if(targetId==='kpi-bar-carriers'){bl(targetId,dir==='exp'?(k.by_carrier_export||[]):dir==='imp'?(k.by_carrier_import||[]):(k.by_carrier||[]),'name','count',null);}
-  else if(targetId==='kpi-bar-carriers-ocean'||targetId==='kpi-bar-carriers-road'){var _isOc=(targetId==='kpi-bar-carriers-ocean');var _xD=function(x){var d=(x.direction||x.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var rf=(x.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};var _shC=(window.allShipments||[]).filter(function(x){var m=(x.mode||'').toLowerCase();var ok=_isOc?['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}):['road','truck','ftl'].some(function(t){return m.includes(t);});if(!ok)return false;if(dir==='all')return true;return _xD(x)===dir;});var _cM={};_shC.forEach(function(x){var c=(x.carrier||'Unknown').trim();if(c)_cM[c]=(_cM[c]||0)+1;});var _cA=Object.entries(_cM).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_cA,'name','count',_isOc?'#4f8ef7':'#f97316');}
+  else if(targetId==='kpi-bar-carriers-ocean'||targetId==='kpi-bar-carriers-road'){var _isOc=(targetId==='kpi-bar-carriers-ocean');var _xD2=function(x){var d=(x.direction||x.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var rf=(x.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};var _shC=(window.allShipments||[]).filter(function(x){var m=(x.mode||'').toLowerCase();var ok=_isOc?['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}):['road','truck','ftl'].some(function(t){return m.includes(t);});if(!ok)return false;if(dir==='all')return true;return _xD2(x)===dir;});var _cM={};_shC.forEach(function(x){var c=(x.carrier||'Unknown').trim();if(c)_cM[c]=(_cM[c]||0)+1;});var _cA=Object.entries(_cM).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_cA,'name','count',_isOc?'#4f8ef7':'#f97316');}
   else if(targetId==='kpi-bar-pod'){bl(targetId,dir==='exp'?(k.top_pod_export||[]):dir==='imp'?(k.top_pod_import||[]):(k.top_pod||[]),'name','count','#ef4444');}
   else if(targetId==='kpi-bar-pol'){bl(targetId,dir==='exp'?(k.top_pol_export||[]):dir==='imp'?(k.top_pol_import||[]):(k.top_pol||[]),'name','count','#22c55e');}
   else if(targetId==='kpi-bar-routes'){
@@ -3833,7 +3824,10 @@ async function generateReport(){
     var total=k.total||0, totalTeu=k.total_teu||0;
     var monthly=k.monthly||[];
     var clientExp=k.by_client_export||[], clientImp=k.by_client_import||[];
-    var carriersExp=k.by_carrier_export||[], carriersImp=k.by_carrier_import||[];
+    var _rDir=function(s){var d=(s.direction||s.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var rf=(s.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};
+    var _cGroup=function(arr){var m={};arr.forEach(function(s){var c=(s.carrier||'Unknown').trim();m[c]=(m[c]||0)+1;});return Object.entries(m).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;});};
+    var carriersExp=_cGroup(ships.filter(function(s){return _rDir(s)==='exp';}));
+    var carriersImp=_cGroup(ships.filter(function(s){return _rDir(s)==='imp';}));
     var topPodExp=k.top_pod_export||[], topPodImp=k.top_pod_import||[];
     var topPolExp=k.top_pol_export||[], topPolImp=k.top_pol_import||[];
     var topRExp=k.top_routing_export||[], topRImp=k.top_routing_import||[];
@@ -4936,20 +4930,12 @@ function renderActivityFeed(){
           chartRegistry['cmp-chart-monthly']=new ApexCharts(ctx,{
           chart:{type:'bar',height:130,toolbar:{show:false},fontFamily:'inherit',background:'transparent',animations:{enabled:false}},
           theme:{mode:isDark()?'dark':'light'},
-          series:[
-            {name:labelA||'Period A',data:allMonths.map(function(m){return aMap[m]||0;})},
-            {name:labelB||'Period B',data:allMonths.map(function(m){return bMap[m]||0;})}
-          ],
+          series:[{name:labelA||'Period A',data:allMonths.map(function(m){return aMap[m]||0;})},{name:labelB||'Period B',data:allMonths.map(function(m){return bMap[m]||0;})}],
           xaxis:{categories:allMonths,labels:{style:{fontSize:'9px'}},axisBorder:{show:false},axisTicks:{show:false}},
-          yaxis:{labels:{style:{fontSize:'9px'}},min:0},
-          colors:['#94a3b8','#3b82f6'],
-          plotOptions:{bar:{columnWidth:'60%',borderRadius:3}},
-          legend:{position:'top',fontSize:'10px'},
-          dataLabels:{enabled:false},
-          grid:{borderColor:gc(),strokeDashArray:3},
-          tooltip:{shared:true,intersect:false}
-        });
-        chartRegistry['cmp-chart-monthly'].render();
+          yaxis:{labels:{style:{fontSize:'9px'}},min:0},colors:['#94a3b8','#3b82f6'],
+          plotOptions:{bar:{columnWidth:'60%',borderRadius:3}},legend:{position:'top',fontSize:'10px'},
+          dataLabels:{enabled:false},grid:{borderColor:gc(),strokeDashArray:3},tooltip:{shared:true,intersect:false}
+        });chartRegistry['cmp-chart-monthly'].render();
         }
 
         /* client comparison table */
