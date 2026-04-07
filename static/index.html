@@ -1002,8 +1002,10 @@ button[onclick*="closeEmailModal"]:hover{
     </div>
   </div>
 <div id="toast-wrap" style="position:fixed;bottom:76px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none"></div>
-<div class="version-tag"></div>
+<div class="version-tag">v27</div>
+
 <!-- FAB for mobile -->
+<button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
   <i class="ph ph-plus" style="font-size:22px;line-height:1;display:flex"></i>
 </button>
 
@@ -1050,6 +1052,14 @@ button[onclick*="closeEmailModal"]:hover{
     </div>
     <div class="nav-item admin-only" onclick="openModal('modal-bulk-import');_bulkStep(1)">
       <i class="ph ph-file-arrow-up"></i><span class="nav-label">Import XLSX</span>
+    </div>
+  </div>
+  <div class="sidebar-bottom" style="padding:8px 6px">
+    <div style="display:flex;align-items:center;justify-content:center">
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="toggleTheme()" title="Toggle theme" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);width:100%">
+        <i class="ph ph-moon" id="theme-icon-sidebar" style="font-size:15px"></i>
+        <span class="nav-label" style="font-size:12px;margin-left:6px" id="theme-label-sidebar">Light Mode</span>
+      </button>
     </div>
   </div>
 </nav>
@@ -1360,8 +1370,8 @@ button[onclick*="closeEmailModal"]:hover{
       </div>
 
       <!-- ── KPI Cards Rows ── -->
-      <div id="kpi-cards-r1" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12pxalign-items:start;"></div>
-      <div id="kpi-cards-r2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24pxalign-items:start;"></div>
+      <div id="kpi-cards-r1" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:12px;align-items:start;"></div>
+      <div id="kpi-cards-r2" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px;align-items:start;"></div>
 
       <!-- ── COMPARE PANEL ── -->
       <div id="compare-panel" style="display:none;background:var(--stitch-surf-low);border:1px solid var(--stitch-border);border-radius:8px;border-left:4px solid var(--stitch-tint);padding:20px 24px;margin-bottom:24px">
@@ -1403,7 +1413,7 @@ button[onclick*="closeEmailModal"]:hover{
           <!-- scrollable body -->
           <div style="padding:20px 22px;overflow-y:auto;max-height:calc(90vh - 60px)">
             <!-- period labels -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16pxalign-items:start;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
               <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:12px 16px;border-left:3px solid #94a3b8">
                 <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Period A — Baseline</div>
                 <div id="cmp-label-a" style="font-size:15px;font-weight:600;color:var(--text1);margin-top:3px">--</div>
@@ -1414,7 +1424,7 @@ button[onclick*="closeEmailModal"]:hover{
               </div>
             </div>
             <!-- KPI chips -->
-            <div id="cmp-kpi-row" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16pxalign-items:start;"></div>
+            <div id="cmp-kpi-row" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px"></div>
             <!-- monthly chart -->
             <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
               <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:8px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
@@ -1430,7 +1440,7 @@ button[onclick*="closeEmailModal"]:hover{
               <div id="cmp-client-table"></div>
             </div>
             <!-- side by side grids -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
               <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
                 <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#94a3b8;margin-right:6px"></span>Top Routes — A</div>
                 <div id="cmp-routes-a"></div>
@@ -1461,7 +1471,7 @@ button[onclick*="closeEmailModal"]:hover{
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
+      <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
           <div style="height:190px;position:relative"><canvas id="kpi-chart-monthly"></canvas></div>
@@ -1471,7 +1481,7 @@ button[onclick*="closeEmailModal"]:hover{
           <div style="height:190px;position:relative"><canvas id="kpi-chart-status"></canvas></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-boat" style="color:var(--accent)"></i> Transport Mode</div>
           <div style="height:180px;position:relative"><canvas id="kpi-chart-mode"></canvas></div>
@@ -1481,7 +1491,7 @@ button[onclick*="closeEmailModal"]:hover{
           <div style="height:180px;position:relative"><canvas id="kpi-chart-dir"></canvas></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-users" style="color:var(--accent)"></i> Top Clients — Shipments</div>
@@ -1495,7 +1505,7 @@ button[onclick*="closeEmailModal"]:hover{
           </div><div id="kpi-bar-teu"></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-boat" style="color:#4f8ef7"></i> Ocean Carriers</div>
@@ -1515,7 +1525,7 @@ button[onclick*="closeEmailModal"]:hover{
           </div><div id="kpi-bar-pod"></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-map-pin-line" style="color:#22c55e"></i> Top Origins (POL)</div>
@@ -1530,14 +1540,13 @@ button[onclick*="closeEmailModal"]:hover{
         </div></div>
       </div>
       <!-- Incoterm distribution -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
+      <div style="margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px">
             <i class="ph ph-file-text" style="color:var(--accent)"></i> Incoterm Distribution
           </div>
           <div id="kpi-bar-incoterm" style="min-height:120px"></div>
         </div></div>
-        
       </div>
       <div class="card" style="margin-bottom:20px"><div class="card__body">
         <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-warning" style="color:#ef4444"></i> Overdue Shipments</div>
@@ -2953,8 +2962,7 @@ function kpiMiniTab(btn,targetId,dir){
   if(targetId==='kpi-bar-clients'){bl(targetId,dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]),'name','shipments','#4f8ef7');}
   else if(targetId==='kpi-bar-teu'){var src=dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]);bl(targetId,src.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');}
   else if(targetId==='kpi-bar-carriers'){bl(targetId,dir==='exp'?(k.by_carrier_export||[]):dir==='imp'?(k.by_carrier_import||[]):(k.by_carrier||[]),'name','count',null);}
-  else if(targetId==='kpi-bar-carriers-ocean'){var _allS=window.allShipments||[];var _fOc=_allS.filter(function(x){var m=(x.mode||'').toLowerCase();if(!['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}))return false;if(dir==='exp')return(x.direction||'').toLowerCase().includes('exp');if(dir==='imp')return(x.direction||'').toLowerCase().includes('imp');return true;});var _cmOc={};_fOc.forEach(function(x){var c=x.carrier||'Unknown';_cmOc[c]=(_cmOc[c]||0)+1;});var _arOc=Object.entries(_cmOc).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_arOc,'name','count','#4f8ef7');}
-  else if(targetId==='kpi-bar-carriers-road'){var _allS2=window.allShipments||[];var _fRd=_allS2.filter(function(x){var m=(x.mode||'').toLowerCase();if(!['road','truck','ftl'].some(function(t){return m.includes(t);}))return false;if(dir==='exp')return(x.direction||'').toLowerCase().includes('exp');if(dir==='imp')return(x.direction||'').toLowerCase().includes('imp');return true;});var _cmRd={};_fRd.forEach(function(x){var c=x.carrier||'Unknown';_cmRd[c]=(_cmRd[c]||0)+1;});var _arRd=Object.entries(_cmRd).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_arRd,'name','count','#f97316');}
+  else if(targetId==='kpi-bar-carriers-ocean'||targetId==='kpi-bar-carriers-road'){var _isOc=(targetId==='kpi-bar-carriers-ocean');var _xDir=function(x){var d=(x.direction||x.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var rf=(x.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};var _shC=(window.allShipments||[]).filter(function(x){var m=(x.mode||'').toLowerCase();var mOk=_isOc?['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}):['road','truck','ftl','road'].some(function(t){return m.includes(t);});if(!mOk)return false;if(dir==='all')return true;return _xDir(x)===dir;});var _cMap={};_shC.forEach(function(x){var c=(x.carrier||'Unknown').trim();if(c)_cMap[c]=(_cMap[c]||0)+1;});var _cArr=Object.entries(_cMap).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_cArr,'name','count',_isOc?'#4f8ef7':'#f97316');}
   else if(targetId==='kpi-bar-pod'){bl(targetId,dir==='exp'?(k.top_pod_export||[]):dir==='imp'?(k.top_pod_import||[]):(k.top_pod||[]),'name','count','#ef4444');}
   else if(targetId==='kpi-bar-pol'){bl(targetId,dir==='exp'?(k.top_pol_export||[]):dir==='imp'?(k.top_pol_import||[]):(k.top_pol||[]),'name','count','#22c55e');}
   else if(targetId==='kpi-bar-routes'){
@@ -3976,7 +3984,6 @@ async function generateReport(){
     var incotermArr=Object.entries(incotermMap).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;});
     var _incColors=['#ff385c','#428bff','#22c55e','#f59e0b','#8b5cf6','#06b6d4','#ec4899','#6b7280'];
     var incotermHTML=incotermArr.length?(function(){var maxV=Math.max.apply(null,incotermArr.map(function(i){return i.count;}))||1;var totV=incotermArr.reduce(function(a,i){return a+i.count;},0)||1;return incotermArr.map(function(item,idx){var pct=Math.round(item.count/totV*100);var w=Math.round(item.count/maxV*100);var col=_incColors[idx%_incColors.length];return '<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="font-weight:600;color:#222222">'+item.name+'</span><span style="color:#6a6a6a">'+item.count+' <b style="color:'+col+'">'+pct+'%</b></span></div><div style="height:7px;background:#f2f2f2;border-radius:99px;overflow:hidden"><div style="height:7px;border-radius:99px;background:'+col+';width:'+w+'%"></div></div></div>';}).join('');})():'<div style="color:#929292;font-size:12px;padding:12px 0">No incoterm data</div>';
-
     function splitCard(title,icon,color,expContent,impContent){
       return '<div class="split-card">'
         +'<div class="split-header">'+sectionTitle(icon,title,color)+'</div>'
@@ -4071,7 +4078,6 @@ async function generateReport(){
         barRows(topRImp,'route','count','#f59e0b'))
 
 
-      /* ── INCOTERM ── */
       +'<div class="card">'
       +sectionTitle('&#128196;','Incoterm Distribution','#ff385c')
       +incotermHTML
