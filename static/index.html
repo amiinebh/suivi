@@ -3842,6 +3842,17 @@ async function generateReport(){
       +'</tbody></table></div></div>';
 
     var DOCX_SCRIPT=`
+window._doExport=function(){
+  var btn=document.getElementById('btnDocx');
+  if(typeof docx==='undefined'){
+    if(btn)btn.textContent='Loading...';
+    var t=0,iv=setInterval(function(){
+      t++;
+      if(typeof docx!=='undefined'){clearInterval(iv);if(btn)btn.textContent='Export Word';window._exportDocx();}
+      else if(t>30){clearInterval(iv);alert('docx.js failed to load. Check internet.');}
+    },200);
+  }else{window._exportDocx();}
+};
 window._exportDocx=function(){
   if(typeof docx==='undefined'){alert('docx.js not loaded');return;}
   var D=window._RD;
@@ -3876,7 +3887,7 @@ window._exportDocx=function(){
 };`;
 
     var full='<!DOCTYPE html><html><head><meta charset="utf-8"><title>FreightTrack Report</title><script src="https://unpkg.com/docx@8.5.0/build/index.js"><\/script><style>'+css+'</style></head><body>'
-      +'<div class="btns"><button class="btn bp" onclick="window.print()">&#128438; Print / PDF</button><button class="btn bw" onclick="(function(){if(typeof docx!=='undefined'){window._exportDocx&&window._exportDocx();}else{var b=this;b.textContent='Loading...';var t=0;var iv=setInterval(function(){t++;if(typeof docx!=='undefined'){clearInterval(iv);b.textContent='📄 Export Word';window._exportDocx&&window._exportDocx();}else if(t>30){clearInterval(iv);alert('docx.js failed to load. Check your internet connection.');}},200);}}).call(this)">&#128462; Export Word</button></div>'
+      +'<div class="btns"><button class="btn bp" onclick="window.print()">&#128438; Print / PDF</button><button class="btn bw" id="btnDocx" onclick="window._doExport()">&#128462; Export Word</button></div>'
       +'<div class="pg">'+body+'</div>'
       +'<script>'+DOCX_SCRIPT+'<\/script>'
       +'</body></html>';
