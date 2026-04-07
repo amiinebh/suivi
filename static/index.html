@@ -2875,7 +2875,7 @@ async function loadAnalytics(){
     var bl=window._barListFn;
     (function(){
       var _xD=function(x){var d=(x.direction||x.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var rf=(x.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};
-      var _bC=function(tokens,dir){var m={};(window.allShipments||[]).filter(function(x){var md=(x.mode||'').toLowerCase();return tokens.length===0||tokens.some(function(t){return md.includes(t);});}).filter(function(x){return dir==='all'||_xD(x)===dir;}).forEach(function(x){var c=(x.carrier||'Unknown').trim();if(c)m[c]=(m[c]||0)+1;});return Object.entries(m).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);};
+      var _bC=function(tokens,dir){var m={};(allShipments||[]).filter(function(x){var md=(x.mode||'').toLowerCase();return !tokens.length||tokens.some(function(t){return md.includes(t);});}).filter(function(x){return dir==='all'||_xD(x)===dir;}).forEach(function(x){var c=(x.carrier||'Unknown').trim();if(c)m[c]=(m[c]||0)+1;});return Object.entries(m).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);};
       bl('kpi-bar-carriers-ocean',_bC(['ocean','sea','fcl','lcl'],'all'),'name','count','#4f8ef7');
       bl('kpi-bar-carriers-road', _bC(['road','truck','ftl'],'all'), 'name','count','#f97316');
     })();
@@ -2926,7 +2926,7 @@ function kpiMiniTab(btn,targetId,dir){
   if(targetId==='kpi-bar-clients'){bl(targetId,dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]),'name','shipments','#4f8ef7');}
   else if(targetId==='kpi-bar-teu'){var src=dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]);bl(targetId,src.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');}
   else if(targetId==='kpi-bar-carriers'){bl(targetId,dir==='exp'?(k.by_carrier_export||[]):dir==='imp'?(k.by_carrier_import||[]):(k.by_carrier||[]),'name','count',null);}
-  else if(targetId==='kpi-bar-carriers-ocean'||targetId==='kpi-bar-carriers-road'){var _isOc=(targetId==='kpi-bar-carriers-ocean');var _xD=function(x){var d=(x.direction||x.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var rf=(x.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};var _shC=(window.allShipments||[]).filter(function(x){var m=(x.mode||'').toLowerCase();var ok=_isOc?['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}):['road','truck','ftl'].some(function(t){return m.includes(t);});if(!ok)return false;if(dir==='all')return true;return _xD(x)===dir;});var _cM={};_shC.forEach(function(x){var c=(x.carrier||'Unknown').trim();if(c)_cM[c]=(_cM[c]||0)+1;});var _cA=Object.entries(_cM).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_cA,'name','count',_isOc?'#4f8ef7':'#f97316');}
+  else if(targetId==='kpi-bar-carriers-ocean'||targetId==='kpi-bar-carriers-road'){var _isOc=(targetId==='kpi-bar-carriers-ocean');var _xD=function(x){var d=(x.direction||x.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var rf=(x.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};var _shC=(allShipments||[]).filter(function(x){var m=(x.mode||'').toLowerCase();var ok=_isOc?['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}):['road','truck','ftl'].some(function(t){return m.includes(t);});if(!ok)return false;if(dir==='all')return true;return _xD(x)===dir;});var _cM={};_shC.forEach(function(x){var c=(x.carrier||'Unknown').trim();if(c)_cM[c]=(_cM[c]||0)+1;});var _cA=Object.entries(_cM).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_cA,'name','count',_isOc?'#4f8ef7':'#f97316');}
   else if(targetId==='kpi-bar-pod'){bl(targetId,dir==='exp'?(k.top_pod_export||[]):dir==='imp'?(k.top_pod_import||[]):(k.top_pod||[]),'name','count','#ef4444');}
   else if(targetId==='kpi-bar-pol'){bl(targetId,dir==='exp'?(k.top_pol_export||[]):dir==='imp'?(k.top_pol_import||[]):(k.top_pol||[]),'name','count','#22c55e');}
   else if(targetId==='kpi-bar-routes'){
@@ -3761,214 +3761,129 @@ async function updateAlertsBadge(){
 async function generateReport(){
   (async()=>{
     var ships=await apiFetch('/api/shipments');
-    if(!ships){showToast('Failed to load data','error');return;}
+    if(!ships){showToast&&showToast('Failed to load','error');return;}
     ships=Array.isArray(ships)?ships:(ships.data||ships.shipments||[]);
-    var k=await apiFetch('/api/kpi-report');
-    if(!k)k={};
-
-    /* ── helpers ── */
-    var fmt=function(d){if(!d)return '—';var x=new Date(d);return isNaN(x)?d:x.toLocaleDateString('en-GB');};
-    var _rDir=function(s){var d=(s.direction||s.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var rf=(s.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};
-    var _cGrp=function(arr,tokens){var m={};arr.filter(function(s){var md=(s.mode||'').toLowerCase();return !tokens.length||tokens.some(function(t){return md.includes(t);});}).forEach(function(s){var c=(s.carrier||'Unknown').trim();if(c)m[c]=(m[c]||0)+1;});return Object.entries(m).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;});};
-
-    /* ── KPI numbers ── */
+    var k=await apiFetch('/api/kpi-report');if(!k)k={};
+    var fmt=function(d){if(!d)return '-';var x=new Date(d);return isNaN(x)?d:x.toLocaleDateString('en-GB');};
+    var rDir=function(s){var d=(s.direction||s.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var r=(s.ref||'').toUpperCase();if(/^ROE/.test(r))return 'exp';if(/^RO/.test(r))return 'imp';return 'all';};
+    var cGrp=function(arr,tok){var m={};arr.filter(function(s){var md=(s.mode||'').toLowerCase();return !tok.length||tok.some(function(t){return md.includes(t);});}).forEach(function(s){var c=(s.carrier||'Unknown').trim();if(c)m[c]=(m[c]||0)+1;});return Object.entries(m).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;});};
     var total=ships.length;
-    var expShips=ships.filter(function(s){return _rDir(s)==='exp';});
-    var impShips=ships.filter(function(s){return _rDir(s)==='imp';});
-    var totalTeu=ships.reduce(function(a,s){return a+(parseFloat(s.teu)||0);},0).toFixed(1);
-    var byStatus=k.by_status||{};
-    var byMode=k.by_mode||{};
-    var byDir=k.by_direction||{};
-    var monthly=k.by_monthly||k.monthly||[];
-    var sailing=(byStatus['Sailing']||0);
-    var confirmed=(byStatus['Confirmed']||0);
-    var arrived=(byStatus['Arrived']||0)+(byStatus['Closed']||0);
-    var pending=(byStatus['Pending']||0);
-    var topClient=k.by_client_all&&k.by_client_all.length?k.by_client_all[0].name:'—';
-
-    /* ── carriers ── */
-    var cOceanExp=_cGrp(expShips,['ocean','sea','fcl','lcl']);
-    var cOceanImp=_cGrp(impShips,['ocean','sea','fcl','lcl']);
-    var cOceanAll=_cGrp(ships,['ocean','sea','fcl','lcl']);
-    var cRoadExp=_cGrp(expShips,['road','truck','ftl']);
-    var cRoadImp=_cGrp(impShips,['road','truck','ftl']);
-    var cRoadAll=_cGrp(ships,['road','truck','ftl']);
-
-    /* ── incoterm ── */
-    var incMap={};ships.forEach(function(s){var inc=(s.incoterm||s.paymentterm||'').toString().trim().toUpperCase()||'Unknown';incMap[inc]=(incMap[inc]||0)+1;});
+    var exp=ships.filter(function(s){return rDir(s)==='exp';});
+    var imp=ships.filter(function(s){return rDir(s)==='imp';});
+    var teu=ships.reduce(function(a,s){return a+(parseFloat(s.teu)||0);},0).toFixed(1);
+    var bySt=k.by_status||{};var byMo=k.by_mode||{};var monthly=k.by_monthly||k.monthly||[];
+    var cOE=cGrp(exp,['ocean','sea','fcl','lcl']),cOI=cGrp(imp,['ocean','sea','fcl','lcl']);
+    var cRE=cGrp(exp,['road','truck','ftl']),cRI=cGrp(imp,['road','truck','ftl']);
+    var incMap={};ships.forEach(function(s){var v=(s.incoterm||s.paymentterm||'').toString().trim().toUpperCase()||'N/A';incMap[v]=(incMap[v]||0)+1;});
     var incArr=Object.entries(incMap).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;});
-
-    /* ── top lists from k ── */
-    var clientAll=k.by_client_all||[];
-    var clientExp=k.by_client_export||[];
-    var clientImp=k.by_client_import||[];
-    var teuList=k.by_client_teu||(clientAll.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}));
-    var topPodExp=k.top_pod_export||[];var topPodImp=k.top_pod_import||[];
-    var topPolExp=k.top_pol_export||[];var topPolImp=k.top_pol_import||[];
-    var topRExp=k.top_routing_export||[];var topRImp=k.top_routing_import||[];
-
-    /* ── active ships table ── */
+    var cliAll=k.by_client_all||[];var teuList=cliAll.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);});
+    var pDE=k.top_pod_export||[],pDI=k.top_pod_import||[];
+    var pLE=k.top_pol_export||[],pLI=k.top_pol_import||[];
+    var rE=k.top_routing_export||[],rI=k.top_routing_import||[];
     var active=ships.filter(function(s){return ['Pending','Confirmed','Booked','Stuffed','Sailing'].indexOf(s.status)!==-1;});
-
-    /* ─── CSS ─────────────────────────────────────────────────── */
-    var css=`
-      @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-      *{margin:0;padding:0;box-sizing:border-box;}
-      body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#fff;color:#222;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-      .page{max-width:1100px;margin:0 auto;padding:32px 28px;}
-      .hero{background:#1a1a2e;color:#fff;border-radius:20px;padding:32px 36px 28px;margin-bottom:20px;}
-      .hero-brand{font-size:11px;font-weight:700;opacity:.4;text-transform:uppercase;letter-spacing:.14em;margin-bottom:6px;}
-      .hero-title{font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:4px;}
-      .hero-sub{font-size:13px;opacity:.45;margin-bottom:22px;}
-      .chips{display:flex;gap:10px;flex-wrap:wrap;}
-      .chip{border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:11px 18px;text-align:center;min-width:100px;background:rgba(255,255,255,.06);}
-      .chip-num{font-size:22px;font-weight:700;letter-spacing:-.4px;line-height:1.1;}
-      .chip-lbl{font-size:10px;opacity:.45;text-transform:uppercase;letter-spacing:.1em;margin-top:3px;font-weight:600;}
-      .chip.exp{border-color:rgba(255,56,92,.5);background:rgba(255,56,92,.14);}
-      .chip.imp{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.1);}
-      .kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
-      .kpi-card{background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 2px 8px rgba(0,0,0,.07);}
-      .kc-icon{font-size:18px;margin-bottom:8px;}
-      .kc-val{font-size:22px;font-weight:700;letter-spacing:-.4px;color:#111;}
-      .kc-lbl{font-size:11px;color:#888;font-weight:600;margin-top:2px;}
-      .card{background:#fff;border-radius:18px;padding:20px 22px;margin-bottom:16px;box-shadow:0 0 0 1px rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.07);}
-      .card-title{font-size:13px;font-weight:700;color:#111;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
-      .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;align-items:start;}
-      .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;align-items:start;}
-      .split{display:grid;grid-template-columns:1fr 1px 1fr;background:#fff;border-radius:18px;overflow:hidden;margin-bottom:16px;box-shadow:0 0 0 1px rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.07);}
-      .split-hdr{padding:14px 20px 12px;border-bottom:1px solid #f0f0f0;font-size:13px;font-weight:700;grid-column:1/-1;display:flex;align-items:center;gap:7px;}
-      .split-col{padding:16px 20px;}
-      .split-div{background:#f0f0f0;}
-      .dir-lbl{font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;display:inline-block;margin-bottom:10px;}
-      .exp-lbl{background:rgba(255,56,92,.08);color:#ff385c;}
-      .imp-lbl{background:rgba(34,197,94,.08);color:#16a34a;}
-      .bar-row{margin-bottom:9px;}
-      .bar-top{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;}
-      .bar-name{font-weight:600;color:#222;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-      .bar-val{color:#777;font-size:11px;}
-      .bar-pct{font-weight:700;}
-      .bar-track{height:6px;background:#f1f5f9;border-radius:99px;overflow:hidden;}
-      .bar-fill{height:6px;border-radius:99px;}
-      table{width:100%;border-collapse:collapse;font-size:11px;}
-      thead th{padding:7px 9px;text-align:left;color:#888;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #f0f0f0;}
-      tbody td{padding:7px 9px;color:#222;font-weight:500;border-bottom:1px solid #f7f7f7;}
-      tbody tr:nth-child(even){background:#fafafa;}
-      .badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;}
-      .no-data{color:#aaa;font-size:12px;padding:12px 0;}
-      .print-btn{position:fixed;top:20px;right:20px;background:#111;color:#fff;border:none;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;z-index:999;font-family:inherit;}
-      @media print{.print-btn{display:none!important;}.page{padding:16px;}.card,.split,.kpi-card{box-shadow:none!important;border:1px solid #e8e8e8!important;page-break-inside:avoid;}.hero{border-radius:12px;}@page{margin:14mm 12mm;size:A4;}}
-    `;
-
-    /* ─── helpers ─────────────────────────────────────────────── */
-    function chip(num,lbl,cls){return '<div class="chip'+(cls?' '+cls:'')+'"><div class="chip-num">'+num+'</div><div class="chip-lbl">'+lbl+'</div></div>';}
-    function kpiCard(icon,val,lbl,color){return '<div class="kpi-card"><div class="kc-icon">'+icon+'</div><div class="kc-val" style="color:'+(color||'#111')+'">'+val+'</div><div class="kc-lbl">'+lbl+'</div></div>';}
-    function bars(items,nKey,vKey,color,limit){
-      if(!items||!items.length)return '<div class="no-data">No data</div>';
-      var PAL=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444','#f97316','#ec4899'];
-      var top=items.slice(0,limit||8);
-      var mx=Math.max.apply(null,top.map(function(i){return i[vKey]||0;}).concat([1]));
-      var tot=top.reduce(function(s,i){return s+(i[vKey]||0);},0)||1;
-      return top.map(function(item,idx){
-        var v=item[vKey]||0,pct=Math.round(v/tot*100),w=Math.round(v/mx*100);
-        var c=color||PAL[idx%PAL.length];
-        return '<div class="bar-row"><div class="bar-top"><span class="bar-name">'+item[nKey]+'</span><span class="bar-val">'+v+' <span class="bar-pct" style="color:'+c+'">'+pct+'%</span></span></div><div class="bar-track"><div class="bar-fill" style="background:'+c+';width:'+w+'%"></div></div></div>';
+    var topCli=cliAll.length?cliAll[0].name:'-';
+    window._RD={ships:ships,exp:exp,imp:imp,total:total,teu:teu,bySt:bySt,byMo:byMo,monthly:monthly,cOE:cOE,cOI:cOI,cRE:cRE,cRI:cRI,incArr:incArr,cliAll:cliAll,teuList:teuList,pDE:pDE,pDI:pDI,pLE:pLE,pLI:pLI,rE:rE,rI:rI,active:active,topCli:topCli};
+    function BR(items,nk,vk,col,lim){
+      if(!items||!items.length)return '<p style="color:#aaa;font-size:11px;padding:8px 0">No data</p>';
+      var P=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444','#f97316','#ec4899'];
+      var top=items.slice(0,lim||8),mx=Math.max.apply(null,top.map(function(i){return i[vk]||0;}).concat([1]));
+      var tot=top.reduce(function(s,i){return s+(i[vk]||0);},0)||1;
+      return top.map(function(it,i){var v=it[vk]||0,p=Math.round(v/tot*100),w=Math.round(v/mx*100),c=col||P[i%P.length];
+        return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="font-weight:600;color:#111;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+it[nk]+'</span><span style="color:#888">'+v+' <b style="color:'+c+'">'+p+'%</b></span></div><div style="height:5px;background:#f0f4f8;border-radius:9px;overflow:hidden"><div style="height:5px;border-radius:9px;background:'+c+';width:'+w+'%"></div></div></div>';
       }).join('');
     }
-    function splitSection(title,icon,color,expHTML,impHTML){
-      return '<div class="split">'
-        +'<div class="split-hdr"><span style="color:'+color+'">'+icon+'</span> '+title+'</div>'
-        +'<div class="split-col"><span class="dir-lbl exp-lbl">&#8593; Export</span>'+expHTML+'</div>'
-        +'<div class="split-div"></div>'
-        +'<div class="split-col"><span class="dir-lbl imp-lbl">&#8595; Import</span>'+impHTML+'</div>'
-        +'</div>';
+    function SP(title,icon,col,eH,iH){
+      return '<div style="border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 0 0 1px rgba(0,0,0,.05),0 2px 8px rgba(0,0,0,.06)">'
+        +'<div style="padding:12px 18px;border-bottom:1px solid #f0f0f0;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px"><span style="color:'+col+'">'+icon+'</span>'+title+'</div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1px 1fr">'
+        +'<div style="padding:14px 18px"><div style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:8px;display:inline-block;margin-bottom:8px;background:rgba(255,56,92,.08);color:#ff385c">&#8593; Export</div>'+eH+'</div>'
+        +'<div style="background:#f0f0f0"></div>'
+        +'<div style="padding:14px 18px"><div style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:8px;display:inline-block;margin-bottom:8px;background:rgba(34,197,94,.08);color:#16a34a">&#8595; Import</div>'+iH+'</div>'
+        +'</div></div>';
     }
-    function statusBadge(st){var m={Pending:'#f59e0b',Confirmed:'#4f8ef7',Booked:'#06b6d4',Stuffed:'#8b5cf6',Sailing:'#3b82f6',Arrived:'#22c55e',Closed:'#6b7280',Canceled:'#ef4444'};var c=m[st]||'#aaa';return '<span class="badge" style="background:'+c+'22;color:'+c+'">'+st+'</span>';}
-
-    /* ─── BUILD HTML ──────────────────────────────────────────── */
+    function SB(st){var M={Pending:'#f59e0b',Confirmed:'#4f8ef7',Booked:'#06b6d4',Stuffed:'#8b5cf6',Sailing:'#3b82f6',Arrived:'#22c55e',Closed:'#6b7280',Canceled:'#ef4444'};var c=M[st]||'#aaa';return '<span style="padding:2px 8px;border-radius:7px;font-size:10px;font-weight:700;background:'+c+'22;color:'+c+'">'+st+'</span>';}
+    var css="@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#f8fafc;color:#1e293b;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.pg{max-width:1100px;margin:0 auto;padding:32px 24px;}.hero{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;border-radius:20px;padding:32px 36px 28px;margin-bottom:18px;}.chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}.chip{border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:10px 18px;text-align:center;min-width:95px;background:rgba(255,255,255,.07);}.cn{font-size:22px;font-weight:700;letter-spacing:-.4px;}.cl{font-size:10px;opacity:.5;text-transform:uppercase;letter-spacing:.09em;margin-top:3px;font-weight:600;}.chip.ex{border-color:rgba(255,56,92,.5);background:rgba(255,56,92,.15);}.chip.im{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.11);}.kr{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;margin-bottom:16px;}.kc{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 0 0 1px rgba(0,0,0,.055),0 1px 6px rgba(0,0,0,.06);}.kv{font-size:20px;font-weight:700;letter-spacing:-.3px;}.kl{font-size:10px;color:#94a3b8;font-weight:600;margin-top:3px;}.card{background:#fff;border-radius:16px;padding:18px 20px;margin-bottom:14px;box-shadow:0 0 0 1px rgba(0,0,0,.05),0 1px 6px rgba(0,0,0,.06);}.ct{font-size:12px;font-weight:700;color:#334155;margin-bottom:12px;}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;align-items:start;}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;align-items:start;}table{width:100%;border-collapse:collapse;font-size:11px;}thead th{padding:7px 8px;text-align:left;color:#94a3b8;font-weight:700;font-size:10px;text-transform:uppercase;border-bottom:2px solid #f1f5f9;}tbody td{padding:7px 8px;color:#334155;font-weight:500;border-bottom:1px solid #f8fafc;}tbody tr:hover{background:#f8fafc;}.btns{position:fixed;top:14px;right:14px;display:flex;gap:8px;z-index:9999;}.btn{border:none;padding:9px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}.bp{background:#1e293b;color:#fff;}.bw{background:#2563eb;color:#fff;}@media print{.btns{display:none!important;}.pg{padding:16px;}@page{margin:12mm 10mm;size:A4;}}";
     var body=''
-
-      /* HERO */
       +'<div class="hero">'
-      +'<div class="hero-brand">FreightTrack Pro</div>'
-      +'<div class="hero-title">Logistics Report</div>'
-      +'<div class="hero-sub">Generated '+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</div>'
+      +'<div style="font-size:10px;font-weight:700;opacity:.35;text-transform:uppercase;letter-spacing:.14em;margin-bottom:5px">FreightTrack Pro</div>'
+      +'<div style="font-size:26px;font-weight:700;letter-spacing:-.5px">Logistics Report</div>'
+      +'<div style="font-size:12px;opacity:.4;margin-top:3px">'+new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+'</div>'
       +'<div class="chips">'
-      +chip(total,'Total')
-      +chip(expShips.length,'Export','exp')
-      +chip(impShips.length,'Import','imp')
-      +chip(totalTeu,'TEU')
+      +'<div class="chip"><div class="cn">'+total+'</div><div class="cl">Total</div></div>'
+      +'<div class="chip ex"><div class="cn">'+exp.length+'</div><div class="cl">Export</div></div>'
+      +'<div class="chip im"><div class="cn">'+imp.length+'</div><div class="cl">Import</div></div>'
+      +'<div class="chip"><div class="cn">'+teu+'</div><div class="cl">TEU</div></div>'
       +'</div></div>'
-
-      /* KPI CARDS — no status cards per request */
-      +'<div class="kpi-row">'
-      +kpiCard('📦',total,'Total Shipments','#111')
-      +kpiCard('📐',totalTeu,'Total TEU','#4f8ef7')
-      +kpiCard('🏆',topClient,'Top Client','#f59e0b')
-      +kpiCard('🚢',(byMode['Ocean']||byMode['FCL']||byMode['LCL']||0),'Ocean Shipments','#3b82f6')
-      +kpiCard('🚛',(byMode['Road']||byMode['FTL']||0),'Road Shipments','#f97316')
-      +kpiCard('✈️',(byMode['Air']||0),'Air Shipments','#06b6d4')
-      +kpiCard('⬆️',expShips.length,'Exports','#ff385c')
-      +kpiCard('⬇️',impShips.length,'Imports','#22c55e')
+      +'<div class="kr">'
+      +'<div class="kc"><div class="kv">'+total+'</div><div class="kl">Total Shipments</div></div>'
+      +'<div class="kc"><div class="kv" style="color:#4f8ef7">'+teu+'</div><div class="kl">Total TEU</div></div>'
+      +'<div class="kc"><div class="kv" style="color:#f59e0b;font-size:13px;line-height:1.3">'+topCli+'</div><div class="kl">Top Client</div></div>'
+      +'<div class="kc"><div class="kv" style="color:#3b82f6">'+((byMo.Ocean||byMo.FCL||byMo.LCL||0))+'</div><div class="kl">Ocean Shipments</div></div>'
+      +'<div class="kc"><div class="kv" style="color:#f97316">'+((byMo.Road||byMo.FTL||0))+'</div><div class="kl">Road Shipments</div></div>'
+      +'<div class="kc"><div class="kv" style="color:#ff385c">'+exp.length+'</div><div class="kl">Exports</div></div>'
+      +'<div class="kc"><div class="kv" style="color:#22c55e">'+imp.length+'</div><div class="kl">Imports</div></div>'
       +'</div>'
-
-      /* DIRECTION + MODE + STATUS */
-      +'<div class="grid-3">'
-      /* Direction */
-      +'<div class="card"><div class="card-title">&#9783; Export vs Import</div>'
-      +bars([{name:'Export',count:expShips.length},{name:'Import',count:impShips.length}],'name','count',null)
+      +'<div class="g3">'
+      +'<div class="card"><div class="ct">&#9783; Export vs Import</div>'+BR([{name:'Export',count:exp.length},{name:'Import',count:imp.length}],'name','count',null)+'</div>'
+      +'<div class="card"><div class="ct">&#128674; Transport Mode</div>'+BR(Object.entries(byMo).filter(function(e){return e[1]>0;}).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}),'name','count',null)+'</div>'
+      +'<div class="card"><div class="ct">&#128200; Shipment Status</div>'+BR(Object.entries(bySt).filter(function(e){return e[1]>0;}).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}),'name','count',null)+'</div>'
       +'</div>'
-      /* Mode */
-      +'<div class="card"><div class="card-title">&#128674; Transport Mode</div>'
-      +bars(Object.entries(byMode).filter(function(e){return e[1]>0;}).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}),'name','count',null)
-      +'</div>'
-      /* Status */
-      +'<div class="card"><div class="card-title">&#128200; Shipment Status</div>'
-      +bars(Object.entries(byStatus).filter(function(e){return e[1]>0;}).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}),'name','count',null)
-      +'</div>'
-      +'</div>'
-
-      /* MONTHLY */
-      +(monthly.length?'<div class="card"><div class="card-title">&#128200; Monthly Volume</div>'
-      +'<div style="overflow-x:auto"><table><thead><tr><th>Month</th><th>Export</th><th>Import</th><th>Total</th></tr></thead><tbody>'
-      +monthly.map(function(m){return '<tr><td>'+m.month+'</td><td>'+((m.export_count)||0)+'</td><td>'+((m.import_count)||0)+'</td><td>'+((m.export_count||0)+(m.import_count||0))+'</td></tr>';}).join('')
-      +'</tbody></table></div></div>':'')
-
-      /* OCEAN CARRIERS */
-      +splitSection('Ocean Carriers','&#9973;','#4f8ef7',bars(cOceanExp,'name','count','#4f8ef7'),bars(cOceanImp,'name','count','#4f8ef7'))
-
-      /* ROAD CARRIERS */
-      +splitSection('Road Carriers','&#128664;','#f97316',bars(cRoadExp,'name','count','#f97316'),bars(cRoadImp,'name','count','#f97316'))
-
-      /* TOP CLIENTS */
-      +'<div class="grid-2">'
-      +'<div class="card"><div class="card-title">&#128101; Top Clients by Shipments</div>'+bars(clientAll,'name','shipments',null)+'</div>'
-      +'<div class="card"><div class="card-title">&#128101; Top Clients by TEU</div>'+bars(teuList,'name','teu','#6c63ff')+'</div>'
-      +'</div>'
-
-      /* INCOTERM */
-      +'<div class="card"><div class="card-title">&#128196; Incoterm Distribution</div>'
-      +bars(incArr,'name','count',null)+'</div>'
-
-      /* POD / POL */
-      +splitSection('Top Destinations (POD)','&#128205;','#ef4444',bars(topPodExp,'name','count','#ef4444'),bars(topPodImp,'name','count','#ef4444'))
-      +splitSection('Top Origins (POL)','&#128204;','#22c55e',bars(topPolExp,'name','count','#22c55e'),bars(topPolImp,'name','count','#22c55e'))
-
-      /* ROUTINGS */
-      +splitSection('Top Routings','&#128256;','#a78bfa',bars(topRExp,'route','count','#a78bfa'),bars(topRImp,'route','count','#a78bfa'))
-
-      /* ACTIVE SHIPMENTS TABLE */
-      +'<div class="card"><div class="card-title">&#9741; Active Shipments</div>'
-      +'<div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Client</th><th>Mode</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th><th>TEU</th><th>Status</th></tr></thead><tbody>'
-      +active.map(function(s){return '<tr><td><b>'+s.ref+'</b></td><td>'+(s.client||'—')+'</td><td>'+(s.mode||'—')+'</td><td>'+(s.pol||'—')+'</td><td>'+(s.pod||'—')+'</td><td>'+fmt(s.etd)+'</td><td>'+fmt(s.eta)+'</td><td>'+(s.teu||'—')+'</td><td>'+statusBadge(s.status)+'</td></tr>';}).join('')
+      +(monthly.length?'<div class="card"><div class="ct">&#128200; Monthly Volume</div><table><thead><tr><th>Month</th><th>Export</th><th>Import</th><th>Total</th></tr></thead><tbody>'+monthly.map(function(m){return '<tr><td>'+m.month+'</td><td>'+(m.export_count||0)+'</td><td>'+(m.import_count||0)+'</td><td>'+((m.export_count||0)+(m.import_count||0))+'</td></tr>';}).join('')+'</tbody></table></div>':'')
+      +SP('Ocean Carriers','&#9973;','#4f8ef7',BR(cOE,'name','count','#4f8ef7'),BR(cOI,'name','count','#4f8ef7'))
+      +SP('Road Carriers','&#128664;','#f97316',BR(cRE,'name','count','#f97316'),BR(cRI,'name','count','#f97316'))
+      +'<div class="g2"><div class="card"><div class="ct">&#128101; Top Clients by Shipments</div>'+BR(cliAll,'name','shipments',null)+'</div>'
+      +'<div class="card"><div class="ct">&#128101; Top Clients by TEU</div>'+BR(teuList,'name','teu','#6c63ff')+'</div></div>'
+      +'<div class="card"><div class="ct">&#128196; Incoterm Distribution</div>'+BR(incArr,'name','count',null)+'</div>'
+      +SP('Top Destinations (POD)','&#128205;','#ef4444',BR(pDE,'name','count','#ef4444'),BR(pDI,'name','count','#ef4444'))
+      +SP('Top Origins (POL)','&#128204;','#22c55e',BR(pLE,'name','count','#22c55e'),BR(pLI,'name','count','#22c55e'))
+      +SP('Top Routings','&#128256;','#a78bfa',BR(rE,'route','count','#a78bfa'),BR(rI,'route','count','#a78bfa'))
+      +'<div class="card"><div class="ct">&#9741; Active Shipments</div><div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Client</th><th>Mode</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th><th>TEU</th><th>Status</th></tr></thead><tbody>'
+      +active.map(function(s){return '<tr><td><b>'+s.ref+'</b></td><td>'+(s.client||'-')+'</td><td>'+(s.mode||'-')+'</td><td>'+(s.pol||'-')+'</td><td>'+(s.pod||'-')+'</td><td>'+fmt(s.etd)+'</td><td>'+fmt(s.eta)+'</td><td>'+(s.teu||'-')+'</td><td>'+SB(s.status)+'</td></tr>';}).join('')
       +'</tbody></table></div></div>';
 
-    /* ─── RENDER ──────────────────────────────────────────────── */
+    var DOCX_SCRIPT=`
+window._exportDocx=function(){
+  if(typeof docx==='undefined'){alert('docx.js not loaded');return;}
+  var D=window._RD;
+  var doc=new docx.Document({numbering:{config:[]},sections:[{children:(function(){
+    var P=docx.Paragraph,T=docx.TextRun,TBL=docx.Table,TR=docx.TableRow,TC=docx.TableCell,WT=docx.WidthType,BS=docx.BorderStyle,HL=docx.HeadingLevel,AT=docx.AlignmentType;
+    var BORDER={top:{style:BS.SINGLE,size:1,color:'E2E8F0'},bottom:{style:BS.SINGLE,size:1,color:'E2E8F0'},left:{style:BS.SINGLE,size:1,color:'E2E8F0'},right:{style:BS.SINGLE,size:1,color:'E2E8F0'}};
+    function hdr(txt,lvl){return new P({text:txt,heading:lvl||HL.HEADING_2,spacing:{before:300,after:120}});}
+    function cell(txt,bold,shade){return new TC({children:[new P({children:[new T({text:String(txt||'-'),bold:!!bold,size:20})],spacing:{before:60,after:60}})],borders:BORDER,shading:shade?{fill:shade}:undefined,margins:{top:80,bottom:80,left:100,right:100}});}
+    function tbl(hdrs,rows){return new TBL({width:{size:100,type:WT.PERCENTAGE},rows:[new TR({children:hdrs.map(function(h){return cell(h,true,'F1F5F9');}),tableHeader:true})].concat(rows.map(function(r,i){return new TR({children:r.map(function(v){return cell(v,false,i%2===1?'FAFAFA':null);})});}))});}
+    var out=[];
+    out.push(new P({children:[new T({text:'FreightTrack Pro',bold:true,size:56,color:'1A1A2E'})],spacing:{after:60}}));
+    out.push(new P({children:[new T({text:'Logistics Report  |  Generated: '+new Date().toLocaleDateString('en-GB'),size:22,color:'64748B'})],spacing:{after:400}}));
+    out.push(hdr('Summary',HL.HEADING_1));
+    out.push(tbl(['Metric','Value'],[['Total Shipments',D.total],['Total TEU',D.teu],['Export Shipments',D.exp.length],['Import Shipments',D.imp.length],['Top Client',D.topCli]]));
+    out.push(hdr('Monthly Volume'));
+    if(D.monthly&&D.monthly.length)out.push(tbl(['Month','Export','Import','Total'],D.monthly.map(function(m){return[m.month,m.export_count||0,m.import_count||0,(m.export_count||0)+(m.import_count||0)];})));
+    out.push(hdr('Ocean Carriers — Export'));if(D.cOE&&D.cOE.length)out.push(tbl(['Carrier','Shipments'],D.cOE.slice(0,10).map(function(c){return[c.name,c.count];})));
+    out.push(hdr('Ocean Carriers — Import'));if(D.cOI&&D.cOI.length)out.push(tbl(['Carrier','Shipments'],D.cOI.slice(0,10).map(function(c){return[c.name,c.count];})));
+    out.push(hdr('Road Carriers — Export'));if(D.cRE&&D.cRE.length)out.push(tbl(['Carrier','Shipments'],D.cRE.slice(0,10).map(function(c){return[c.name,c.count];})));
+    out.push(hdr('Road Carriers — Import'));if(D.cRI&&D.cRI.length)out.push(tbl(['Carrier','Shipments'],D.cRI.slice(0,10).map(function(c){return[c.name,c.count];})));
+    out.push(hdr('Top Clients'));if(D.cliAll&&D.cliAll.length)out.push(tbl(['Client','Shipments','TEU'],D.cliAll.slice(0,15).map(function(c){return[c.name,c.shipments||c.count||0,c.teu||0];})));
+    out.push(hdr('Incoterm Distribution'));if(D.incArr&&D.incArr.length)out.push(tbl(['Incoterm','Count'],D.incArr.map(function(i){return[i.name,i.count];})));
+    out.push(hdr('Top POD'));if(D.pDE&&D.pDE.length)out.push(tbl(['Port','Count'],D.pDE.slice(0,10).map(function(p){return[p.name,p.count];})));
+    out.push(hdr('Top POL'));if(D.pLE&&D.pLE.length)out.push(tbl(['Port','Count'],D.pLE.slice(0,10).map(function(p){return[p.name,p.count];})));
+    out.push(hdr('Active Shipments',HL.HEADING_1));
+    out.push(tbl(['Ref','Client','Mode','POL','POD','ETD','ETA','TEU','Status'],D.active.map(function(s){return[s.ref,s.client||'-',s.mode||'-',s.pol||'-',s.pod||'-',s.etd||'-',s.eta||'-',s.teu||'-',s.status];})));
+    return out;
+  })()}]});
+  docx.Packer.toBlob(doc).then(function(blob){
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FreightTrack-Report.docx';a.click();
+  });
+};`;
+
     var full='<!DOCTYPE html><html><head><meta charset="utf-8"><title>FreightTrack Report</title><style>'+css+'</style></head><body>'
-      +'<button class="print-btn" onclick="window.print()">&#128438; Print / PDF</button>'
-      +'<div class="page">'+body+'</div></body></html>';
-    var newWin=window.open('','_blank');
-    if(newWin){newWin.document.open();newWin.document.write(full);newWin.document.close();}
-    else{showToast('Pop-up blocked — allow pop-ups for this site','error');}
+      +'<div class="btns"><button class="btn bp" onclick="window.print()">&#128438; Print / PDF</button><button class="btn bw" onclick="window._exportDocx&&window._exportDocx()">&#128462; Export Word</button></div>'
+      +'<div class="pg">'+body+'</div>'
+      +'<script>'+DOCX_SCRIPT+'<\/script>'
+      +'<script src="https://unpkg.com/docx@8.5.0/build/index.js"><\/script>'
+      +'</body></html>';
+    var w=window.open('','_blank');
+    if(w){w.document.open();w.document.write(full);w.document.close();}
+    else{showToast&&showToast('Pop-up blocked','error');}
   })();
 }
 
@@ -4332,7 +4247,7 @@ async function deleteAllShipments(){
       catch(e){fail++;}
     }
     window._selectedShips=new Set();
-    window.allShipments=[];
+    allShipments=[];
     toast('Deleted '+ok+' shipment(s)'+(fail?' ('+fail+' failed)':''),'success');
     if(typeof loadShipments==='function')loadShipments();
     if(typeof loadDashboard==='function')loadDashboard();
@@ -4672,10 +4587,10 @@ document.addEventListener('click',function(){
 });
 function renderActivityFeed(){
   var feed=document.getElementById('activity-feed');
-  if(!feed||!window.allShipments)return;
+  if(!feed||!allShipments)return;
   var colors={Delivered:'#22c55e','In Transit':'#3b82f6',Pending:'#f59e0b',Overdue:'#ef4444'};
   var icons={Delivered:'ph-check-circle','In Transit':'ph-truck',Pending:'ph-clock',Overdue:'ph-warning'};
-  var recent=window.allShipments.slice().sort(function(a,b){return new Date(b.updated_at||b.eta||b.etd||0)-new Date(a.updated_at||a.eta||a.etd||0);}).slice(0,10);
+  var recent=allShipments.slice().sort(function(a,b){return new Date(b.updated_at||b.eta||b.etd||0)-new Date(a.updated_at||a.eta||a.etd||0);}).slice(0,10);
   feed.innerHTML=recent.map(function(s){
     var st=(typeof shipStatus==='function')?shipStatus(s):(s.status||'Pending');
     var cl=colors[st]||'#94a3b8', ic=icons[st]||'ph-package';
