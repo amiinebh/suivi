@@ -1370,8 +1370,8 @@ button[onclick*="closeEmailModal"]:hover{
       </div>
 
       <!-- ── KPI Cards Rows ── -->
-      <div id="kpi-cards-r1" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;align-items:start"></div>
-      <div id="kpi-cards-r2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;align-items:start"></div>
+      <div id="kpi-cards-r1" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12pxalign-items:start;"></div>
+      <div id="kpi-cards-r2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24pxalign-items:start;"></div>
 
       <!-- ── COMPARE PANEL ── -->
       <div id="compare-panel" style="display:none;background:var(--stitch-surf-low);border:1px solid var(--stitch-border);border-radius:8px;border-left:4px solid var(--stitch-tint);padding:20px 24px;margin-bottom:24px">
@@ -1413,7 +1413,7 @@ button[onclick*="closeEmailModal"]:hover{
           <!-- scrollable body -->
           <div style="padding:20px 22px;overflow-y:auto;max-height:calc(90vh - 60px)">
             <!-- period labels -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16pxalign-items:start;">
               <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:12px 16px;border-left:3px solid #94a3b8">
                 <div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em">Period A — Baseline</div>
                 <div id="cmp-label-a" style="font-size:15px;font-weight:600;color:var(--text1);margin-top:3px">--</div>
@@ -1424,7 +1424,7 @@ button[onclick*="closeEmailModal"]:hover{
               </div>
             </div>
             <!-- KPI chips -->
-            <div id="cmp-kpi-row" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px"></div>
+            <div id="cmp-kpi-row" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16pxalign-items:start;"></div>
             <!-- monthly chart -->
             <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
               <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:8px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
@@ -1440,7 +1440,7 @@ button[onclick*="closeEmailModal"]:hover{
               <div id="cmp-client-table"></div>
             </div>
             <!-- side by side grids -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
               <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
                 <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#94a3b8;margin-right:6px"></span>Top Routes — A</div>
                 <div id="cmp-routes-a"></div>
@@ -1471,7 +1471,7 @@ button[onclick*="closeEmailModal"]:hover{
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-trend-up" style="color:var(--accent)"></i> Monthly Volume</div>
           <div style="height:190px;position:relative"><canvas id="kpi-chart-monthly"></canvas></div>
@@ -1481,7 +1481,7 @@ button[onclick*="closeEmailModal"]:hover{
           <div style="height:190px;position:relative"><canvas id="kpi-chart-status"></canvas></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-boat" style="color:var(--accent)"></i> Transport Mode</div>
           <div style="height:180px;position:relative"><canvas id="kpi-chart-mode"></canvas></div>
@@ -1491,7 +1491,7 @@ button[onclick*="closeEmailModal"]:hover{
           <div style="height:180px;position:relative"><canvas id="kpi-chart-dir"></canvas></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-users" style="color:var(--accent)"></i> Top Clients — Shipments</div>
@@ -1505,7 +1505,7 @@ button[onclick*="closeEmailModal"]:hover{
           </div><div id="kpi-bar-teu"></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-boat" style="color:#4f8ef7"></i> Ocean Carriers</div>
@@ -1525,7 +1525,7 @@ button[onclick*="closeEmailModal"]:hover{
           </div><div id="kpi-bar-pod"></div>
         </div></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-map-pin-line" style="color:#22c55e"></i> Top Origins (POL)</div>
@@ -1540,7 +1540,7 @@ button[onclick*="closeEmailModal"]:hover{
         </div></div>
       </div>
       <!-- Incoterm distribution -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12pxalign-items:start;">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px">
             <i class="ph ph-file-text" style="color:var(--accent)"></i> Incoterm Distribution
@@ -2963,8 +2963,8 @@ function kpiMiniTab(btn,targetId,dir){
   if(targetId==='kpi-bar-clients'){bl(targetId,dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]),'name','shipments','#4f8ef7');}
   else if(targetId==='kpi-bar-teu'){var src=dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]);bl(targetId,src.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');}
   else if(targetId==='kpi-bar-carriers'){bl(targetId,dir==='exp'?(k.by_carrier_export||[]):dir==='imp'?(k.by_carrier_import||[]):(k.by_carrier||[]),'name','count',null);}
-  else if(targetId==='kpi-bar-carriers-ocean'){var _s=window.allShipments||[];var _f=_s.filter(function(x){var m=(x.mode||'').toLowerCase();if(!['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}))return false;if(dir==='exp')return(x.direction||'').toLowerCase().includes('exp');if(dir==='imp')return(x.direction||'').toLowerCase().includes('imp');return true;});var _cm={};_f.forEach(function(x){var c=x.carrier||'Unknown';_cm[c]=(_cm[c]||0)+1;});var _ar=Object.entries(_cm).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_ar,'name','count','#4f8ef7');}
-  else if(targetId==='kpi-bar-carriers-road'){var _s2=window.allShipments||[];var _f2=_s2.filter(function(x){var m=(x.mode||'').toLowerCase();if(!['road','truck','ftl'].some(function(t){return m.includes(t);}))return false;if(dir==='exp')return(x.direction||'').toLowerCase().includes('exp');if(dir==='imp')return(x.direction||'').toLowerCase().includes('imp');return true;});var _cm2={};_f2.forEach(function(x){var c=x.carrier||'Unknown';_cm2[c]=(_cm2[c]||0)+1;});var _ar2=Object.entries(_cm2).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_ar2,'name','count','#f97316');}
+  else if(targetId==='kpi-bar-carriers-ocean'){var _allS=window.allShipments||[];var _fOc=_allS.filter(function(x){var m=(x.mode||'').toLowerCase();if(!['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}))return false;if(dir==='exp')return(x.direction||'').toLowerCase().includes('exp');if(dir==='imp')return(x.direction||'').toLowerCase().includes('imp');return true;});var _cmOc={};_fOc.forEach(function(x){var c=x.carrier||'Unknown';_cmOc[c]=(_cmOc[c]||0)+1;});var _arOc=Object.entries(_cmOc).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_arOc,'name','count','#4f8ef7');}
+  else if(targetId==='kpi-bar-carriers-road'){var _allS2=window.allShipments||[];var _fRd=_allS2.filter(function(x){var m=(x.mode||'').toLowerCase();if(!['road','truck','ftl'].some(function(t){return m.includes(t);}))return false;if(dir==='exp')return(x.direction||'').toLowerCase().includes('exp');if(dir==='imp')return(x.direction||'').toLowerCase().includes('imp');return true;});var _cmRd={};_fRd.forEach(function(x){var c=x.carrier||'Unknown';_cmRd[c]=(_cmRd[c]||0)+1;});var _arRd=Object.entries(_cmRd).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_arRd,'name','count','#f97316');}
   else if(targetId==='kpi-bar-pod'){bl(targetId,dir==='exp'?(k.top_pod_export||[]):dir==='imp'?(k.top_pod_import||[]):(k.top_pod||[]),'name','count','#ef4444');}
   else if(targetId==='kpi-bar-pol'){bl(targetId,dir==='exp'?(k.top_pol_export||[]):dir==='imp'?(k.top_pol_import||[]):(k.top_pol||[]),'name','count','#22c55e');}
   else if(targetId==='kpi-bar-routes'){
@@ -3946,8 +3946,6 @@ async function generateReport(){
       *{margin:0;padding:0;box-sizing:border-box;}
       body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#ffffff;color:#222222;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:14px;line-height:1.5;}
       .page{max-width:1100px;margin:0 auto;padding:32px 28px;}
-
-      /* ── HERO ── */
       .hero{background:#222222;color:#fff;border-radius:20px;padding:32px 36px 28px;margin-bottom:24px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
       .hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;}
       .hero-brand{font-size:11px;font-weight:700;opacity:.45;text-transform:uppercase;letter-spacing:.14em;margin-bottom:8px;}
@@ -3961,20 +3959,9 @@ async function generateReport(){
       .kpi-exp{border-color:rgba(255,56,92,.4);background:rgba(255,56,92,.12);}
       .kpi-imp{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.1);}
       .kpi-teu{border-color:rgba(66,139,255,.35);background:rgba(66,139,255,.1);}
-
-      /* ── CARDS ── */
       .card{background:#ffffff;border-radius:20px;padding:22px 24px;margin-bottom:16px;box-shadow:rgba(0,0,0,0.02) 0px 0px 0px 1px,rgba(0,0,0,0.04) 0px 2px 6px,rgba(0,0,0,0.1) 0px 4px 8px;}
-
-      /* ── GRIDS ── */
       .grid-3{display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:14px;margin-bottom:16px;align-items:start;}
       .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;align-items:start;}
-
-      /* ── SECTION TITLE ── */
-      .sec-hd{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
-      .sec-bar{width:4px;height:20px;border-radius:2px;flex-shrink:0;}
-      .sec-lbl{font-size:12px;font-weight:700;color:#222222;text-transform:uppercase;letter-spacing:.07em;}
-
-      /* ── SPLIT CARD ── */
       .split-card{background:#ffffff;border-radius:20px;overflow:hidden;margin-bottom:16px;box-shadow:rgba(0,0,0,0.02) 0px 0px 0px 1px,rgba(0,0,0,0.04) 0px 2px 6px,rgba(0,0,0,0.1) 0px 4px 8px;}
       .split-header{padding:16px 22px 14px;border-bottom:1px solid rgba(0,0,0,0.06);}
       .split-body{display:grid;grid-template-columns:1fr 1px 1fr;}
@@ -3983,74 +3970,22 @@ async function generateReport(){
       .dir-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 12px;border-radius:14px;margin-bottom:14px;letter-spacing:.02em;}
       .exp-badge{background:rgba(255,56,92,.08);color:#ff385c;}
       .imp-badge{background:rgba(34,197,94,.08);color:#16a34a;}
-
-      /* ── BAR ROWS ── */
-      .bar-row{margin-bottom:11px;}
-      .bar-label-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;font-weight:500;}
-      .bar-label-row span:first-child{color:#222222;font-weight:600;}
-      .bar-label-row span:last-child{color:#6a6a6a;}
-      .bar-track{height:7px;background:#f2f2f2;border-radius:99px;overflow:hidden;}
-      .bar-fill{height:7px;border-radius:99px;}
-
-      /* ── STATUS BADGE ── */
-      .st-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:14px;}
-
-      /* ── MONTHLY BARS ── */
-      .month-chart{display:flex;align-items:flex-end;gap:4px;padding:12px 0 0;}
-      .month-legend{display:flex;gap:16px;margin-top:12px;font-size:11px;font-weight:600;color:#6a6a6a;}
-      .leg-dot{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:5px;}
-
-      /* ── TABLE ── */
       table{width:100%;border-collapse:collapse;font-size:12px;}
       thead tr{border-bottom:2px solid #f2f2f2;}
       thead th{padding:8px 10px;text-align:left;color:#6a6a6a;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.07em;}
       tbody tr{border-bottom:1px solid #f7f7f7;}
       tbody tr:nth-child(even){background:#fafafa;}
       tbody td{padding:8px 10px;color:#222222;font-weight:500;}
-
-      /* ── FOOTER ── */
       .rpt-footer{text-align:center;padding:22px 0 8px;font-size:11px;color:#929292;border-top:1px solid rgba(0,0,0,0.06);margin-top:8px;}
-      .rpt-footer strong{color:#222222;}
-
-      /* ── PRINT ── */
-      @media print{
-        body{background:#fff;}
-        .page{padding:16px;}
-        .no-print{display:none!important;}
-        .card,.split-card{box-shadow:none!important;border:1px solid #e5e5e5!important;}
-        .hero{border-radius:12px;}
-        @page{margin:14mm 12mm;}
-      }
+      @media print{body{background:#fff;}.page{padding:16px;}.no-print{display:none!important;}.card,.split-card{box-shadow:none!important;border:1px solid #e5e5e5!important;}.hero{border-radius:12px;}@page{margin:14mm 12mm;}}
     `;
 
 
-    /* ── INCOTERM DISTRIBUTION ── */
     var incotermMap={};
-    ships.forEach(function(s){
-      var inc=(s.incoterm||s.paymentterm||'Unknown').toString().trim().toUpperCase()||'Unknown';
-      incotermMap[inc]=(incotermMap[inc]||0)+1;
-    });
-    var incotermArr=Object.entries(incotermMap)
-      .map(function(e){return{name:e[0],count:e[1]};})
-      .sort(function(a,b){return b.count-a.count;});
-    var incotermColors=['#ff385c','#428bff','#22c55e','#f59e0b','#8b5cf6','#06b6d4','#ec4899','#6b7280'];
-    var incotermHTML=incotermArr.length
-      ? (function(){
-          var maxV=Math.max.apply(null,incotermArr.map(function(i){return i.count;}))||1;
-          var totV=incotermArr.reduce(function(a,i){return a+i.count;},0)||1;
-          return incotermArr.map(function(item,idx){
-            var pct=Math.round(item.count/totV*100);
-            var w=Math.round(item.count/maxV*100);
-            var col=incotermColors[idx%incotermColors.length];
-            return '<div style="margin-bottom:11px">'
-              +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">'
-              +'<span style="font-weight:600;color:#222222">'+item.name+'</span>'
-              +'<span style="color:#6a6a6a">'+item.count+' <b style="color:'+col+'">'+pct+'%</b></span></div>'
-              +'<div style="height:7px;background:#f2f2f2;border-radius:99px;overflow:hidden">'
-              +'<div style="height:7px;border-radius:99px;background:'+col+';width:'+w+'%"></div></div></div>';
-          }).join('');
-        })()
-      : '<div style="color:#929292;font-size:12px;padding:12px 0">No incoterm data</div>';
+    ships.forEach(function(s){var inc=(s.incoterm||s.paymentterm||'').toString().trim().toUpperCase()||'Unknown';incotermMap[inc]=(incotermMap[inc]||0)+1;});
+    var incotermArr=Object.entries(incotermMap).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;});
+    var _incColors=['#ff385c','#428bff','#22c55e','#f59e0b','#8b5cf6','#06b6d4','#ec4899','#6b7280'];
+    var incotermHTML=incotermArr.length?(function(){var maxV=Math.max.apply(null,incotermArr.map(function(i){return i.count;}))||1;var totV=incotermArr.reduce(function(a,i){return a+i.count;},0)||1;return incotermArr.map(function(item,idx){var pct=Math.round(item.count/totV*100);var w=Math.round(item.count/maxV*100);var col=_incColors[idx%_incColors.length];return '<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="font-weight:600;color:#222222">'+item.name+'</span><span style="color:#6a6a6a">'+item.count+' <b style="color:'+col+'">'+pct+'%</b></span></div><div style="height:7px;background:#f2f2f2;border-radius:99px;overflow:hidden"><div style="height:7px;border-radius:99px;background:'+col+';width:'+w+'%"></div></div></div>';}).join('');})():'<div style="color:#929292;font-size:12px;padding:12px 0">No incoterm data</div>';
 
     function splitCard(title,icon,color,expContent,impContent){
       return '<div class="split-card">'
@@ -4146,7 +4081,7 @@ async function generateReport(){
         barRows(topRImp,'route','count','#f59e0b'))
 
 
-      /* ── INCOTERM DISTRIBUTION ─────────────────────────────────── */
+      /* ── INCOTERM ── */
       +'<div class="card">'
       +sectionTitle('&#128196;','Incoterm Distribution','#ff385c')
       +incotermHTML
