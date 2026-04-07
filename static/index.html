@@ -483,9 +483,8 @@ body.dark .client-bar-fill{background:var(--v-develop);}
 .intel-severity{font-size:11px;font-weight:500;padding:2px 8px;border-radius:var(--radius-pill);}
 
 /* ══ OVERLAYS ══ */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(2px);z-index:400;align-items:center;justify-content:center;padding:16px;}
-.overlay.open{display:flex;}
-@media(max-width:768px){.overlay.open{align-items:flex-end;padding:0;}}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(2px);z-index:400;}
+.overlay.open{display:block;}
 
 /* ══════════════════════════════════════════════════
    MOBILE LAYOUT — Vercel-style bottom nav
@@ -1366,12 +1365,13 @@ button[onclick*="closeEmailModal"]:hover{
           <button onclick="generateReport()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border:none;border-radius:6px;background:var(--text1);color:var(--bg);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;box-shadow:0 2px 8px rgba(35,95,164,.3);transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform=''">
             <span class="material-symbols-outlined" style="font-size:15px">download</span> Export
           </button>
+          <button id="main-word-btn" onclick="exportDocxDirect()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border:none;border-radius:6px;background:#2563eb;color:#fff;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.3);transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform=''"><span class="material-symbols-outlined" style="font-size:15px">description</span> Export Word</button>
         </div>
       </div>
 
       <!-- ── KPI Cards Rows ── -->
-      <div id="kpi-cards-r1" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:12px;align-items:start;"></div>
-      <div id="kpi-cards-r2" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px;align-items:start;"></div>
+      <div id="kpi-cards-r1" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px"></div>
+      <div id="kpi-cards-r2" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px"></div>
 
       <!-- ── COMPARE PANEL ── -->
       <div id="compare-panel" style="display:none;background:var(--stitch-surf-low);border:1px solid var(--stitch-border);border-radius:8px;border-left:4px solid var(--stitch-tint);padding:20px 24px;margin-bottom:24px">
@@ -1540,13 +1540,14 @@ button[onclick*="closeEmailModal"]:hover{
         </div></div>
       </div>
       <!-- Incoterm distribution -->
-      <div style="margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
           <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px">
             <i class="ph ph-file-text" style="color:var(--accent)"></i> Incoterm Distribution
           </div>
           <div id="kpi-bar-incoterm" style="min-height:120px"></div>
         </div></div>
+        
       </div>
       <div class="card" style="margin-bottom:20px"><div class="card__body">
         <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-warning" style="color:#ef4444"></i> Overdue Shipments</div>
@@ -2926,7 +2927,7 @@ function kpiMiniTab(btn,targetId,dir){
   if(targetId==='kpi-bar-clients'){bl(targetId,dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]),'name','shipments','#4f8ef7');}
   else if(targetId==='kpi-bar-teu'){var src=dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]);bl(targetId,src.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');}
   else if(targetId==='kpi-bar-carriers'){bl(targetId,dir==='exp'?(k.by_carrier_export||[]):dir==='imp'?(k.by_carrier_import||[]):(k.by_carrier||[]),'name','count',null);}
-  else if(targetId==='kpi-bar-carriers-ocean'||targetId==='kpi-bar-carriers-road'){var _isOc=(targetId==='kpi-bar-carriers-ocean');var _xD=function(x){var d=(x.direction||x.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var rf=(x.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};var _shC=(allShipments||[]).filter(function(x){var m=(x.mode||'').toLowerCase();var ok=_isOc?['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}):['road','truck','ftl'].some(function(t){return m.includes(t);});if(!ok)return false;if(dir==='all')return true;return _xD(x)===dir;});var _cM={};_shC.forEach(function(x){var c=(x.carrier||'Unknown').trim();if(c)_cM[c]=(_cM[c]||0)+1;});var _cA=Object.entries(_cM).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_cA,'name','count',_isOc?'#4f8ef7':'#f97316');}
+  else if(targetId==='kpi-bar-carriers-ocean'||targetId==='kpi-bar-carriers-road'){var _isOc2=(targetId==='kpi-bar-carriers-ocean');var _xD2=function(x){var d=(x.direction||x.shipment_type||'').toLowerCase();if(d.includes('exp'))return 'exp';if(d.includes('imp'))return 'imp';var rf=(x.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};var _shC2=(allShipments||[]).filter(function(x){var m=(x.mode||'').toLowerCase();var ok=_isOc2?['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}):['road','truck','ftl'].some(function(t){return m.includes(t);});if(!ok)return false;if(dir==='all')return true;return _xD2(x)===dir;});var _cM2={};_shC2.forEach(function(x){var c=(x.carrier||'Unknown').trim();if(c)_cM2[c]=(_cM2[c]||0)+1;});var _cA2=Object.entries(_cM2).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);bl(targetId,_cA2,'name','count',_isOc2?'#4f8ef7':'#f97316');}
   else if(targetId==='kpi-bar-pod'){bl(targetId,dir==='exp'?(k.top_pod_export||[]):dir==='imp'?(k.top_pod_import||[]):(k.top_pod||[]),'name','count','#ef4444');}
   else if(targetId==='kpi-bar-pol'){bl(targetId,dir==='exp'?(k.top_pol_export||[]):dir==='imp'?(k.top_pol_import||[]):(k.top_pol||[]),'name','count','#22c55e');}
   else if(targetId==='kpi-bar-routes'){
@@ -3758,7 +3759,63 @@ async function updateAlertsBadge(){
 }
 
 /* ── Generate Report ── */
-async function generateReport(){
+async function exportDocxDirect(){
+  var btn=document.getElementById('main-word-btn');
+  function runExport(){
+    var d=window._RD;
+    if(!d){showToast('Open the report first, then export Word','error');return;}
+    var doc=new docx.Document({sections:[{children:(function(){
+      var P=docx.Paragraph,T=docx.TextRun,TBL=docx.Table,TR=docx.TableRow,TC=docx.TableCell,WT=docx.WidthType,BS=docx.BorderStyle,HL=docx.HeadingLevel;
+      var BD={top:{style:BS.SINGLE,size:1,color:'E2E8F0'},bottom:{style:BS.SINGLE,size:1,color:'E2E8F0'},left:{style:BS.SINGLE,size:1,color:'E2E8F0'},right:{style:BS.SINGLE,size:1,color:'E2E8F0'}};
+      function hdr(t,l){return new P({text:t,heading:l||HL.HEADING_2,spacing:{before:280,after:120}});}
+      function cell(t,bold,bg){return new TC({children:[new P({children:[new T({text:String(t||'-'),bold:!!bold,size:20})],spacing:{before:60,after:60}})],borders:BD,shading:bg?{fill:bg}:undefined,margins:{top:80,bottom:80,left:100,right:100}});}
+      function tbl(hdrs,rows){return new TBL({width:{size:100,type:WT.PERCENTAGE},rows:[new TR({children:hdrs.map(function(h){return cell(h,true,'F1F5F9');}),tableHeader:true})].concat(rows.map(function(r,i){return new TR({children:r.map(function(v){return cell(v,false,i%2?'FAFAFA':null);})})}))});}
+      var out=[];
+      out.push(new P({children:[new T({text:'FreightTrack Pro - Logistics Report',bold:true,size:52,color:'1A1A2E'})],spacing:{after:80}}));
+      out.push(new P({children:[new T({text:'Generated: '+new Date().toLocaleDateString('en-GB'),size:22,color:'64748B'})],spacing:{after:400}}));
+      out.push(hdr('Summary',HL.HEADING_1));
+      out.push(tbl(['Metric','Value'],[['Total Shipments',d.total],['Total TEU',d.teu],['Export Shipments',d.exp.length],['Import Shipments',d.imp.length],['Top Client',d.topCli]]));
+      if(d.monthly&&d.monthly.length){out.push(hdr('Monthly Volume'));out.push(tbl(['Month','Export','Import','Total'],d.monthly.map(function(m){return[m.month,m.export_count||0,m.import_count||0,(m.export_count||0)+(m.import_count||0)];})));}
+      if(d.cOE&&d.cOE.length){out.push(hdr('Ocean Carriers - Export'));out.push(tbl(['Carrier','Shipments'],d.cOE.slice(0,10).map(function(c){return[c.name,c.count];})));}
+      if(d.cOI&&d.cOI.length){out.push(hdr('Ocean Carriers - Import'));out.push(tbl(['Carrier','Shipments'],d.cOI.slice(0,10).map(function(c){return[c.name,c.count];})));}
+      if(d.cRE&&d.cRE.length){out.push(hdr('Road Carriers - Export'));out.push(tbl(['Carrier','Shipments'],d.cRE.slice(0,10).map(function(c){return[c.name,c.count];})));}
+      if(d.cRI&&d.cRI.length){out.push(hdr('Road Carriers - Import'));out.push(tbl(['Carrier','Shipments'],d.cRI.slice(0,10).map(function(c){return[c.name,c.count];})));}
+      if(d.cliAll&&d.cliAll.length){out.push(hdr('Top Clients'));out.push(tbl(['Client','Shipments','TEU'],d.cliAll.slice(0,15).map(function(c){return[c.name,c.shipments||c.count||0,c.teu||0];})));}
+      if(d.incArr&&d.incArr.length){out.push(hdr('Incoterm Distribution'));out.push(tbl(['Incoterm','Count'],d.incArr.map(function(i){return[i.name,i.count];})));}
+      if(d.pDE&&d.pDE.length){out.push(hdr('Top Destinations (POD)'));out.push(tbl(['Port','Count'],d.pDE.slice(0,10).map(function(p){return[p.name,p.count];})));}
+      if(d.pLE&&d.pLE.length){out.push(hdr('Top Origins (POL)'));out.push(tbl(['Port','Count'],d.pLE.slice(0,10).map(function(p){return[p.name,p.count];})));}
+      out.push(hdr('Active Shipments',HL.HEADING_1));
+      out.push(tbl(['Ref','Client','Mode','POL','POD','ETD','ETA','TEU','Status'],d.active.map(function(s){return[s.ref,s.client||'-',s.mode||'-',s.pol||'-',s.pod||'-',s.etd||'-',s.eta||'-',s.teu||'-',s.status];})));
+      return out;
+    })()}]});
+    docx.Packer.toBlob(doc).then(function(blob){
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='FreightTrack-Report.docx';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      if(btn){btn.textContent='Export Word';btn.disabled=false;}
+      showToast('Word document downloaded','success');
+    }).catch(function(err){
+      if(btn){btn.textContent='Export Word';btn.disabled=false;}
+      showToast('Export failed: '+err.message,'error');
+    });
+  }
+  if(typeof docx!=='undefined'){runExport();return;}
+  if(btn){btn.textContent='Loading...';btn.disabled=true;}
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js';
+  s.onload=function(){runExport();};
+  s.onerror=function(){
+    var s2=document.createElement('script');
+    s2.src='https://unpkg.com/docx@8.5.0/build/index.js';
+    s2.onload=function(){runExport();};
+    s2.onerror=function(){if(btn){btn.textContent='Export Word';btn.disabled=false;}showToast('Could not load docx.js','error');};
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s);
+}
+
+function generateReport(){
   (async()=>{
     var ships=await apiFetch('/api/shipments');
     if(!ships){showToast&&showToast('Failed to load','error');return;}
@@ -3802,7 +3859,7 @@ async function generateReport(){
         +'</div></div>';
     }
     function SB(st){var M={Pending:'#f59e0b',Confirmed:'#4f8ef7',Booked:'#06b6d4',Stuffed:'#8b5cf6',Sailing:'#3b82f6',Arrived:'#22c55e',Closed:'#6b7280',Canceled:'#ef4444'};var c=M[st]||'#aaa';return '<span style="padding:2px 8px;border-radius:7px;font-size:10px;font-weight:700;background:'+c+'22;color:'+c+'">'+st+'</span>';}
-    var css="@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#f8fafc;color:#1e293b;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.pg{max-width:1100px;margin:0 auto;padding:32px 24px;}.hero{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;border-radius:20px;padding:32px 36px 28px;margin-bottom:18px;}.chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}.chip{border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:10px 18px;text-align:center;min-width:95px;background:rgba(255,255,255,.07);}.cn{font-size:22px;font-weight:700;letter-spacing:-.4px;}.cl{font-size:10px;opacity:.5;text-transform:uppercase;letter-spacing:.09em;margin-top:3px;font-weight:600;}.chip.ex{border-color:rgba(255,56,92,.5);background:rgba(255,56,92,.15);}.chip.im{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.11);}.kr{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;margin-bottom:16px;}.kc{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 0 0 1px rgba(0,0,0,.055),0 1px 6px rgba(0,0,0,.06);}.kv{font-size:20px;font-weight:700;letter-spacing:-.3px;}.kl{font-size:10px;color:#94a3b8;font-weight:600;margin-top:3px;}.card{background:#fff;border-radius:16px;padding:18px 20px;margin-bottom:14px;box-shadow:0 0 0 1px rgba(0,0,0,.05),0 1px 6px rgba(0,0,0,.06);}.ct{font-size:12px;font-weight:700;color:#334155;margin-bottom:12px;}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;align-items:start;}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;align-items:start;}table{width:100%;border-collapse:collapse;font-size:11px;}thead th{padding:7px 8px;text-align:left;color:#94a3b8;font-weight:700;font-size:10px;text-transform:uppercase;border-bottom:2px solid #f1f5f9;}tbody td{padding:7px 8px;color:#334155;font-weight:500;border-bottom:1px solid #f8fafc;}tbody tr:hover{background:#f8fafc;}.btns{position:fixed;top:14px;right:14px;display:flex;gap:8px;z-index:9999;}.btn{border:none;padding:9px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}.bp{background:#1e293b;color:#fff;}.bw{background:#2563eb;color:#fff;}@media print{.btns{display:none!important;}.pg{padding:16px;}@page{margin:12mm 10mm;size:A4;}}";
+    var css="@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#f8fafc;color:#1e293b;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.pg{max-width:1100px;margin:0 auto;padding:32px 24px;}.hero{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;border-radius:20px;padding:32px 36px 28px;margin-bottom:18px;}.chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}.chip{border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:10px 18px;text-align:center;min-width:95px;background:rgba(255,255,255,.07);}.cn{font-size:22px;font-weight:700;letter-spacing:-.4px;}.cl{font-size:10px;opacity:.5;text-transform:uppercase;letter-spacing:.09em;margin-top:3px;font-weight:600;}.chip.ex{border-color:rgba(255,56,92,.5);background:rgba(255,56,92,.15);}.chip.im{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.11);}.kr{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px;margin-bottom:16px;}.kc{background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 0 0 1px rgba(0,0,0,.055),0 1px 6px rgba(0,0,0,.06);}.kv{font-size:20px;font-weight:700;letter-spacing:-.3px;}.kl{font-size:10px;color:#94a3b8;font-weight:600;margin-top:3px;}.card{background:#fff;border-radius:16px;padding:18px 20px;margin-bottom:14px;box-shadow:0 0 0 1px rgba(0,0,0,.05),0 1px 6px rgba(0,0,0,.06);}.ct{font-size:12px;font-weight:700;color:#334155;margin-bottom:12px;}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;align-items:start;}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;align-items:start;}table{width:100%;border-collapse:collapse;font-size:11px;}thead th{padding:7px 8px;text-align:left;color:#94a3b8;font-weight:700;font-size:10px;text-transform:uppercase;border-bottom:2px solid #f1f5f9;}tbody td{padding:7px 8px;color:#334155;font-weight:500;border-bottom:1px solid #f8fafc;}tbody tr:hover{background:#f8fafc;}.btn-p{position:fixed;top:14px;right:14px;border:none;padding:9px 18px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:#1e293b;color:#fff;z-index:9999;}@media print{.btn-p{display:none!important;}.pg{padding:16px;}@page{margin:12mm 10mm;size:A4;}}";
     var body=''
       +'<div class="hero">'
       +'<div style="font-size:10px;font-weight:700;opacity:.35;text-transform:uppercase;letter-spacing:.14em;margin-bottom:5px">FreightTrack Pro</div>'
@@ -3824,77 +3881,25 @@ async function generateReport(){
       +'<div class="kc"><div class="kv" style="color:#22c55e">'+imp.length+'</div><div class="kl">Imports</div></div>'
       +'</div>'
       +'<div class="g3">'
-      +'<div class="card"><div class="ct">&#9783; Export vs Import</div>'+BR([{name:'Export',count:exp.length},{name:'Import',count:imp.length}],'name','count',null)+'</div>'
-      +'<div class="card"><div class="ct">&#128674; Transport Mode</div>'+BR(Object.entries(byMo).filter(function(e){return e[1]>0;}).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}),'name','count',null)+'</div>'
-      +'<div class="card"><div class="ct">&#128200; Shipment Status</div>'+BR(Object.entries(bySt).filter(function(e){return e[1]>0;}).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}),'name','count',null)+'</div>'
+      +'<div class="card"><div class="ct">Export vs Import</div>'+BR([{name:'Export',count:exp.length},{name:'Import',count:imp.length}],'name','count',null)+'</div>'
+      +'<div class="card"><div class="ct">Transport Mode</div>'+BR(Object.entries(byMo).filter(function(e){return e[1]>0;}).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}),'name','count',null)+'</div>'
+      +'<div class="card"><div class="ct">Shipment Status</div>'+BR(Object.entries(bySt).filter(function(e){return e[1]>0;}).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}),'name','count',null)+'</div>'
       +'</div>'
-      +(monthly.length?'<div class="card"><div class="ct">&#128200; Monthly Volume</div><table><thead><tr><th>Month</th><th>Export</th><th>Import</th><th>Total</th></tr></thead><tbody>'+monthly.map(function(m){return '<tr><td>'+m.month+'</td><td>'+(m.export_count||0)+'</td><td>'+(m.import_count||0)+'</td><td>'+((m.export_count||0)+(m.import_count||0))+'</td></tr>';}).join('')+'</tbody></table></div>':'')
+      +(monthly.length?'<div class="card"><div class="ct">Monthly Volume</div><table><thead><tr><th>Month</th><th>Export</th><th>Import</th><th>Total</th></tr></thead><tbody>'+monthly.map(function(m){return '<tr><td>'+m.month+'</td><td>'+(m.export_count||0)+'</td><td>'+(m.import_count||0)+'</td><td>'+((m.export_count||0)+(m.import_count||0))+'</td></tr>';}).join('')+'</tbody></table></div>':'')
       +SP('Ocean Carriers','&#9973;','#4f8ef7',BR(cOE,'name','count','#4f8ef7'),BR(cOI,'name','count','#4f8ef7'))
       +SP('Road Carriers','&#128664;','#f97316',BR(cRE,'name','count','#f97316'),BR(cRI,'name','count','#f97316'))
-      +'<div class="g2"><div class="card"><div class="ct">&#128101; Top Clients by Shipments</div>'+BR(cliAll,'name','shipments',null)+'</div>'
-      +'<div class="card"><div class="ct">&#128101; Top Clients by TEU</div>'+BR(teuList,'name','teu','#6c63ff')+'</div></div>'
-      +'<div class="card"><div class="ct">&#128196; Incoterm Distribution</div>'+BR(incArr,'name','count',null)+'</div>'
+      +'<div class="g2"><div class="card"><div class="ct">Top Clients by Shipments</div>'+BR(cliAll,'name','shipments',null)+'</div>'
+      +'<div class="card"><div class="ct">Top Clients by TEU</div>'+BR(teuList,'name','teu','#6c63ff')+'</div></div>'
+      +'<div class="card"><div class="ct">Incoterm Distribution</div>'+BR(incArr,'name','count',null)+'</div>'
       +SP('Top Destinations (POD)','&#128205;','#ef4444',BR(pDE,'name','count','#ef4444'),BR(pDI,'name','count','#ef4444'))
       +SP('Top Origins (POL)','&#128204;','#22c55e',BR(pLE,'name','count','#22c55e'),BR(pLI,'name','count','#22c55e'))
       +SP('Top Routings','&#128256;','#a78bfa',BR(rE,'route','count','#a78bfa'),BR(rI,'route','count','#a78bfa'))
-      +'<div class="card"><div class="ct">&#9741; Active Shipments</div><div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Client</th><th>Mode</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th><th>TEU</th><th>Status</th></tr></thead><tbody>'
+      +'<div class="card"><div class="ct">Active Shipments</div><div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Client</th><th>Mode</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th><th>TEU</th><th>Status</th></tr></thead><tbody>'
       +active.map(function(s){return '<tr><td><b>'+s.ref+'</b></td><td>'+(s.client||'-')+'</td><td>'+(s.mode||'-')+'</td><td>'+(s.pol||'-')+'</td><td>'+(s.pod||'-')+'</td><td>'+fmt(s.etd)+'</td><td>'+fmt(s.eta)+'</td><td>'+(s.teu||'-')+'</td><td>'+SB(s.status)+'</td></tr>';}).join('')
       +'</tbody></table></div></div>';
-
-    var DOCX_SCRIPT=`
-window._doExport=function(){
-  var btn=document.getElementById('btnDocx');
-  if(typeof docx!=='undefined'){window._exportDocx();return;}
-  if(btn){btn.textContent='Loading...';btn.disabled=true;}
-  var s=document.createElement('script');
-  s.src='https://unpkg.com/docx@8.5.0/build/index.js';
-  s.onload=function(){
-    if(btn){btn.textContent='Export Word';btn.disabled=false;}
-    window._exportDocx();
-  };
-  s.onerror=function(){
-    if(btn){btn.textContent='Export Word';btn.disabled=false;}
-    alert('Failed to load docx.js — check internet connection.');
-  };
-  document.head.appendChild(s);
-};
-window._exportDocx=function(){
-  if(typeof docx==='undefined'){alert('docx.js not loaded');return;}
-  var D=window._RD;
-  var doc=new docx.Document({numbering:{config:[]},sections:[{children:(function(){
-    var P=docx.Paragraph,T=docx.TextRun,TBL=docx.Table,TR=docx.TableRow,TC=docx.TableCell,WT=docx.WidthType,BS=docx.BorderStyle,HL=docx.HeadingLevel,AT=docx.AlignmentType;
-    var BORDER={top:{style:BS.SINGLE,size:1,color:'E2E8F0'},bottom:{style:BS.SINGLE,size:1,color:'E2E8F0'},left:{style:BS.SINGLE,size:1,color:'E2E8F0'},right:{style:BS.SINGLE,size:1,color:'E2E8F0'}};
-    function hdr(txt,lvl){return new P({text:txt,heading:lvl||HL.HEADING_2,spacing:{before:300,after:120}});}
-    function cell(txt,bold,shade){return new TC({children:[new P({children:[new T({text:String(txt||'-'),bold:!!bold,size:20})],spacing:{before:60,after:60}})],borders:BORDER,shading:shade?{fill:shade}:undefined,margins:{top:80,bottom:80,left:100,right:100}});}
-    function tbl(hdrs,rows){return new TBL({width:{size:100,type:WT.PERCENTAGE},rows:[new TR({children:hdrs.map(function(h){return cell(h,true,'F1F5F9');}),tableHeader:true})].concat(rows.map(function(r,i){return new TR({children:r.map(function(v){return cell(v,false,i%2===1?'FAFAFA':null);})});}))});}
-    var out=[];
-    out.push(new P({children:[new T({text:'FreightTrack Pro',bold:true,size:56,color:'1A1A2E'})],spacing:{after:60}}));
-    out.push(new P({children:[new T({text:'Logistics Report  |  Generated: '+new Date().toLocaleDateString('en-GB'),size:22,color:'64748B'})],spacing:{after:400}}));
-    out.push(hdr('Summary',HL.HEADING_1));
-    out.push(tbl(['Metric','Value'],[['Total Shipments',D.total],['Total TEU',D.teu],['Export Shipments',D.exp.length],['Import Shipments',D.imp.length],['Top Client',D.topCli]]));
-    out.push(hdr('Monthly Volume'));
-    if(D.monthly&&D.monthly.length)out.push(tbl(['Month','Export','Import','Total'],D.monthly.map(function(m){return[m.month,m.export_count||0,m.import_count||0,(m.export_count||0)+(m.import_count||0)];})));
-    out.push(hdr('Ocean Carriers — Export'));if(D.cOE&&D.cOE.length)out.push(tbl(['Carrier','Shipments'],D.cOE.slice(0,10).map(function(c){return[c.name,c.count];})));
-    out.push(hdr('Ocean Carriers — Import'));if(D.cOI&&D.cOI.length)out.push(tbl(['Carrier','Shipments'],D.cOI.slice(0,10).map(function(c){return[c.name,c.count];})));
-    out.push(hdr('Road Carriers — Export'));if(D.cRE&&D.cRE.length)out.push(tbl(['Carrier','Shipments'],D.cRE.slice(0,10).map(function(c){return[c.name,c.count];})));
-    out.push(hdr('Road Carriers — Import'));if(D.cRI&&D.cRI.length)out.push(tbl(['Carrier','Shipments'],D.cRI.slice(0,10).map(function(c){return[c.name,c.count];})));
-    out.push(hdr('Top Clients'));if(D.cliAll&&D.cliAll.length)out.push(tbl(['Client','Shipments','TEU'],D.cliAll.slice(0,15).map(function(c){return[c.name,c.shipments||c.count||0,c.teu||0];})));
-    out.push(hdr('Incoterm Distribution'));if(D.incArr&&D.incArr.length)out.push(tbl(['Incoterm','Count'],D.incArr.map(function(i){return[i.name,i.count];})));
-    out.push(hdr('Top POD'));if(D.pDE&&D.pDE.length)out.push(tbl(['Port','Count'],D.pDE.slice(0,10).map(function(p){return[p.name,p.count];})));
-    out.push(hdr('Top POL'));if(D.pLE&&D.pLE.length)out.push(tbl(['Port','Count'],D.pLE.slice(0,10).map(function(p){return[p.name,p.count];})));
-    out.push(hdr('Active Shipments',HL.HEADING_1));
-    out.push(tbl(['Ref','Client','Mode','POL','POD','ETD','ETA','TEU','Status'],D.active.map(function(s){return[s.ref,s.client||'-',s.mode||'-',s.pol||'-',s.pod||'-',s.etd||'-',s.eta||'-',s.teu||'-',s.status];})));
-    return out;
-  })()}]});
-  docx.Packer.toBlob(doc).then(function(blob){
-    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='FreightTrack-Report.docx';a.click();
-  });
-};`;
-
     var full='<!DOCTYPE html><html><head><meta charset="utf-8"><title>FreightTrack Report</title><style>'+css+'</style></head><body>'
-      +'<div class="btns"><button class="btn bp" onclick="window.print()">&#128438; Print / PDF</button><button class="btn bw" id="btnDocx" onclick="window._doExport()">&#128462; Export Word</button></div>'
+      +'<button class="btn-p" onclick="window.print()">&#128438; Print / PDF</button>'
       +'<div class="pg">'+body+'</div>'
-      +'<script>'+DOCX_SCRIPT+'<\/script>'
       +'</body></html>';
     var w=window.open('','_blank');
     if(w){w.document.open();w.document.write(full);w.document.close();}
