@@ -3763,7 +3763,7 @@ async function exportDocxDirect(){
   var btn=document.getElementById('main-word-btn');
   function runExport(){
     var d=window._RD;
-    if(!d){showToast('Open the report first, then export Word','error');return;}
+    if(!d){(typeof toast==='function'?toast('Open the report first, then export Word','error'):alert('Open the report first'));return;}
     var doc=new docx.Document({sections:[{children:(function(){
       var P=docx.Paragraph,T=docx.TextRun,TBL=docx.Table,TR=docx.TableRow,TC=docx.TableCell,WT=docx.WidthType,BS=docx.BorderStyle,HL=docx.HeadingLevel;
       var BD={top:{style:BS.SINGLE,size:1,color:'E2E8F0'},bottom:{style:BS.SINGLE,size:1,color:'E2E8F0'},left:{style:BS.SINGLE,size:1,color:'E2E8F0'},right:{style:BS.SINGLE,size:1,color:'E2E8F0'}};
@@ -3794,10 +3794,10 @@ async function exportDocxDirect(){
       a.download='FreightTrack-Report.docx';
       document.body.appendChild(a);a.click();document.body.removeChild(a);
       if(btn){btn.textContent='Export Word';btn.disabled=false;}
-      showToast('Word document downloaded','success');
+      (typeof toast==='function'?toast('Word document downloaded','success'):console.log('Word exported'));
     }).catch(function(err){
       if(btn){btn.textContent='Export Word';btn.disabled=false;}
-      showToast('Export failed: '+err.message,'error');
+      (typeof toast==='function'?toast('Export failed: '+err.message,'error'):alert('Export failed: '+err.message));
     });
   }
   if(typeof docx!=='undefined'){runExport();return;}
@@ -3809,7 +3809,7 @@ async function exportDocxDirect(){
     var s2=document.createElement('script');
     s2.src='https://unpkg.com/docx@8.5.0/build/index.js';
     s2.onload=function(){runExport();};
-    s2.onerror=function(){if(btn){btn.textContent='Export Word';btn.disabled=false;}showToast('Could not load docx.js','error');};
+    s2.onerror=function(){if(btn){btn.textContent='Export Word';btn.disabled=false;}(typeof toast==='function'?toast('Could not load docx.js','error'):alert('Could not load docx.js'));};
     document.head.appendChild(s2);
   };
   document.head.appendChild(s);
@@ -3818,7 +3818,7 @@ async function exportDocxDirect(){
 function generateReport(){
   (async()=>{
     var ships=await apiFetch('/api/shipments');
-    if(!ships){showToast&&showToast('Failed to load','error');return;}
+    if(!ships){(typeof toast==='function'?toast('Failed to load','error'):console.error('Failed to load'));return;}
     ships=Array.isArray(ships)?ships:(ships.data||ships.shipments||[]);
     var k=await apiFetch('/api/kpi-report');if(!k)k={};
     var fmt=function(d){if(!d)return '-';var x=new Date(d);return isNaN(x)?d:x.toLocaleDateString('en-GB');};
@@ -3903,7 +3903,7 @@ function generateReport(){
       +'</body></html>';
     var w=window.open('','_blank');
     if(w){w.document.open();w.document.write(full);w.document.close();}
-    else{showToast&&showToast('Pop-up blocked','error');}
+    else{(typeof toast==='function'?toast('Pop-up blocked','error'):alert('Pop-up blocked — please allow pop-ups'));}
   })();
 }
 
