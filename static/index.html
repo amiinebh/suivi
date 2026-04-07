@@ -3875,11 +3875,10 @@ window._exportDocx=function(){
   });
 };`;
 
-    var full='<!DOCTYPE html><html><head><meta charset="utf-8"><title>FreightTrack Report</title><style>'+css+'</style></head><body>'
-      +'<div class="btns"><button class="btn bp" onclick="window.print()">&#128438; Print / PDF</button><button class="btn bw" onclick="window._exportDocx&&window._exportDocx()">&#128462; Export Word</button></div>'
+    var full='<!DOCTYPE html><html><head><meta charset="utf-8"><title>FreightTrack Report</title><script src="https://unpkg.com/docx@8.5.0/build/index.js"><\/script><style>'+css+'</style></head><body>'
+      +'<div class="btns"><button class="btn bp" onclick="window.print()">&#128438; Print / PDF</button><button class="btn bw" onclick="(function(){if(typeof docx!=='undefined'){window._exportDocx&&window._exportDocx();}else{var b=this;b.textContent='Loading...';var t=0;var iv=setInterval(function(){t++;if(typeof docx!=='undefined'){clearInterval(iv);b.textContent='\u{1F4C4} Export Word';window._exportDocx&&window._exportDocx();}else if(t>30){clearInterval(iv);alert('docx.js failed to load. Check your internet connection.');}},200);}}).call(this)">&#128462; Export Word</button></div>'
       +'<div class="pg">'+body+'</div>'
       +'<script>'+DOCX_SCRIPT+'<\/script>'
-      +'<script src="https://unpkg.com/docx@8.5.0/build/index.js"><\/script>'
       +'</body></html>';
     var w=window.open('','_blank');
     if(w){w.document.open();w.document.write(full);w.document.close();}
