@@ -5317,7 +5317,7 @@ function _exportFilteredXLSX() {
   rows.forEach(row=>{
     const cells=[...row.querySelectorAll('td')].map(td=>{
       let t=td.innerText.trim().replace(/\n/g,' ');
-      return `"${t.replace(/"/g,'""')}"`;
+      return '"' + t.replace(/"/g, '""') + '"';
     });
     csv+=cells.join(',')+'\n';
   });
