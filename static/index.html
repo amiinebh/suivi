@@ -4483,7 +4483,7 @@ function openDigest(){
     +'<span style="font-size:10px;color:var(--text3)">Generated '+new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})+'</span>'
     +'</div>';
 
-  document.getElementById("digest-body").innerHTML=h;
+  const db=document.getElementById("digest-body");if(db)db.innerHTML=h;
   document.getElementById("modal-digest").style.display="flex";
 }
 
@@ -4774,6 +4774,45 @@ function renderActivityFeed(){
           +'th{padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #e2e8f0;}'
           +'@media print{body{background:#fff;}.section{box-shadow:none;}@page{margin:12mm;}}';
 
+        
+        /* ── Auto-generate Executive Summary ── */
+        var genExecSummary = function() {
+          var aModes=a.by_mode||{}, bModes=b.by_mode||{};
+          var topM = Object.entries(bModes).sort(function(x,y){return y[1]-x[1]})[0];
+          var mainModeStr = topM && topM[1]>0 ? topM[0] : 'Ocean';
+
+          var dShp = delta(b.total, a.total);
+          var dTeu = delta(b.total_teu||0, a.total_teu||0);
+          var trendStr = '';
+          if(dShp.pct==='--') trendStr='saw initial activity';
+          else if(dShp.up) trendStr=(dShp.pct==='+0%'?'remained stable':'saw growth of '+dShp.pct.replace('+',''));
+          else trendStr='experienced a decline of '+dShp.pct;
+
+          var aClients=a.by_client_all||[], bClients=b.by_client_all||[];
+          var cliStr = '';
+          if(bClients.length) {
+            var topB = bClients[0];
+            var topA = aClients.length ? aClients[0] : null;
+            if(topA && topA.name === topB.name) {
+              cliStr = ' <b>'+topB.name+'</b> remained the top client across both periods.';
+            } else {
+              cliStr = ' <b>'+topB.name+'</b> emerged as the new top client, replacing '+(topA?topA.name:'others')+'.';
+            }
+          }
+
+          var expD = delta((b.by_direction||{}).Export||0, (a.by_direction||{}).Export||0);
+          var impD = delta((b.by_direction||{}).Import||0, (a.by_direction||{}).Import||0);
+          var dirStr = 'Export volume moved by '+expD.pct+' while Import moved by '+impD.pct+'.';
+
+          return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid var(--accent);border-radius:8px;padding:16px 20px;margin-bottom:20px;">'
+            +'<div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em;">&#10024; AI Executive Summary</div>'
+            +'<div style="font-size:13px;line-height:1.6;color:#334155;">'
+            +'During this period, overall shipment volume <b>'+trendStr+'</b> ('+b.total+' vs '+a.total+' shipments). '
+            +'TEU volume tracked at '+dTeu.pct+' ('+(b.total_teu||0)+' vs '+(a.total_teu||0)+' TEU). '
+            +'<b>'+mainModeStr+'</b> was the dominant transport mode. '+dirStr+cliStr
+            +'</div></div>';
+        };
+
         var doc='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FreightTrack — Comparison</title><style>'+css+'</style></head><body><div class="page">'
           /* hero */
           +'<div class="hero">'
@@ -4787,6 +4826,7 @@ function renderActivityFeed(){
           +hChip('TEU',b.total_teu||0,a.total_teu||0)
           +hChip('Overdue',b.overdue||0,a.overdue||0)
           +'</div></div>'
+          +genExecSummary()
           /* period labels */
           +'<div class="grid2">'
           +'<div class="period-box" style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #94a3b8">'
