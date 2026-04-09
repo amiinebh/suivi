@@ -1392,6 +1392,14 @@ button[onclick*="closeEmailModal"]:hover{
             </div>
           </div>
           <div style="display:flex;gap:8px">
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px">
+              <button class="btn btn-ghost btn-sm" onclick="setPreset('q1yoy')" style="font-size:10px;padding:4px 10px;border:1.5px solid var(--accent);color:var(--accent);font-weight:700">⚡ Q1 YoY</button>
+              <button class="btn btn-ghost btn-sm" onclick="setPreset('q2yoy')" style="font-size:10px;padding:4px 10px">Q2 YoY</button>
+              <button class="btn btn-ghost btn-sm" onclick="setPreset('q3yoy')" style="font-size:10px;padding:4px 10px">Q3 YoY</button>
+              <button class="btn btn-ghost btn-sm" onclick="setPreset('q4yoy')" style="font-size:10px;padding:4px 10px">Q4 YoY</button>
+              <button class="btn btn-ghost btn-sm" onclick="setPreset('h1yoy')" style="font-size:10px;padding:4px 10px">H1 YoY</button>
+              <button class="btn btn-ghost btn-sm" onclick="setPreset('fullyoy')" style="font-size:10px;padding:4px 10px">Full Year</button>
+            </div>
             <button class="btn btn-primary" onclick="runCompare()" style="font-size:12px;gap:5px"><i class="ph ph-magnifying-glass"></i> Compare</button>
           </div>
         </div>
@@ -1448,6 +1456,18 @@ button[onclick*="closeEmailModal"]:hover{
               <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
                 <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-right:6px"></span>Top Routes — B</div>
                 <div id="cmp-routes-b"></div>
+              </div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px;grid-column:1/-1">
+                <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-chart-bar" style="color:var(--accent)"></i> Transport Mode — A vs B</div>
+                <div id="cmp-mode-breakdown" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
+              </div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
+                <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><i class="ph ph-boat" style="color:#94a3b8"></i> Top Carriers — Period A</div>
+                <div id="cmp-carriers-a"></div>
+              </div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
+                <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><i class="ph ph-boat" style="color:#3b82f6"></i> Top Carriers — Period B</div>
+                <div id="cmp-carriers-b"></div>
               </div>
               <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
                 <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><i class="ph ph-map-pin" style="color:#ef4444"></i> POD Export — A</div>
@@ -2948,6 +2968,23 @@ function kpiMiniTab(btn,targetId,dir){
         +'<span style="color:var(--text2)">'+r.count+' <b style="color:'+c+'">'+pct+'%</b></span></div>'
         +'<div style="height:6px;background:var(--bg3);border-radius:4px"><div style="height:6px;border-radius:4px;background:'+c+';width:'+w+'%;transition:width .6s ease"></div></div></div>';
     }).join('');}
+}
+function setPreset(key){
+  var cy=new Date().getFullYear(),py=cy-1;
+  var map={
+    q1yoy:{aFrom:py+'-01',aTo:py+'-03',bFrom:cy+'-01',bTo:cy+'-03'},
+    q2yoy:{aFrom:py+'-04',aTo:py+'-06',bFrom:cy+'-04',bTo:cy+'-06'},
+    q3yoy:{aFrom:py+'-07',aTo:py+'-09',bFrom:cy+'-07',bTo:cy+'-09'},
+    q4yoy:{aFrom:py+'-10',aTo:py+'-12',bFrom:cy+'-10',bTo:cy+'-12'},
+    h1yoy:{aFrom:py+'-01',aTo:py+'-06',bFrom:cy+'-01',bTo:cy+'-06'},
+    fullyoy:{aFrom:py+'-01',aTo:py+'-12',bFrom:cy+'-01',bTo:cy+'-12'}
+  };
+  var p=map[key]; if(!p) return;
+  var g=function(id,v){var e=document.getElementById(id);if(e)e.value=v;};
+  g('cmp-a-from',p.aFrom); g('cmp-a-to',p.aTo);
+  g('cmp-b-from',p.bFrom); g('cmp-b-to',p.bTo);
+  var panel=document.getElementById('compare-panel');
+  if(panel&&panel.style.display==='none') toggleComparePanel();
 }
 function setKpiDir(dir,btn){window._kpiDir=dir;loadAnalytics();}
 function setKpiPeriod(p,btn){window._kpiPeriod=p;
@@ -4582,18 +4619,22 @@ function renderActivityFeed(){
         }).sort(function(x,y){return (y.aShp+y.bShp)-(x.aShp+x.bShp);}).slice(0,12);
         var maxShp=Math.max.apply(null,combined.map(function(c){return Math.max(c.aShp,c.bShp);}).concat([1]));
         var ctEl=document.getElementById('cmp-client-table');
-        if(ctEl) ctEl.innerHTML='<div style="display:grid;grid-template-columns:180px 1fr 60px 1fr 60px 70px;align-items:center;gap:6px;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;padding-bottom:8px;box-shadow:rgba(0,0,0,0.06) 0 -1px 0 0 inset;margin-bottom:8px">'
-          +'<div>Client</div><div>Period A</div><div style="text-align:right">A shp</div><div>Period B</div><div style="text-align:right">B shp</div><div style="text-align:right">Δ</div></div>'
+        if(ctEl) ctEl.innerHTML='<div style="display:grid;grid-template-columns:130px 1fr 46px 1fr 46px 54px 44px 44px 54px;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;padding-bottom:8px;box-shadow:rgba(0,0,0,0.06) 0 -1px 0 0 inset;margin-bottom:8px">'
+          +'<div>Client</div><div>Period A</div><div style="text-align:right">A shp</div><div>Period B</div><div style="text-align:right">B shp</div><div style="text-align:right">Δ shp</div><div style="text-align:right">A TEU</div><div style="text-align:right">B TEU</div><div style="text-align:right">Δ TEU</div></div>'
           +combined.map(function(c){
             var d=delta(c.bShp,c.aShp),col=d.up?'#22c55e':'#ef4444',arr=d.up?'↑':'↓';
             var wA=Math.round(c.aShp/maxShp*100),wB=Math.round(c.bShp/maxShp*100);
-            return '<div style="display:grid;grid-template-columns:180px 1fr 60px 1fr 60px 70px;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--bg3)">'
+            var dt=delta(c.bTeu,c.aTeu),tc=dt.up?'#22c55e':'#ef4444',ta=dt.up?'↑':'↓';
+            return '<div style="display:grid;grid-template-columns:130px 1fr 46px 1fr 46px 54px 44px 44px 54px;align-items:center;gap:4px;padding:6px 0;border-bottom:1px solid var(--bg3)">'
               +'<div style="font-size:11px;font-weight:600;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+c.name+'</div>'
               +'<div style="height:6px;background:var(--bg3);border-radius:99px"><div style="height:6px;background:#94a3b8;width:'+wA+'%;border-radius:99px"></div></div>'
               +'<div style="font-size:11px;font-weight:600;color:var(--text2);text-align:right">'+c.aShp+'</div>'
               +'<div style="height:6px;background:var(--bg3);border-radius:99px"><div style="height:6px;background:#3b82f6;width:'+wB+'%;border-radius:99px"></div></div>'
               +'<div style="font-size:11px;font-weight:600;color:#3b82f6;text-align:right">'+c.bShp+'</div>'
-              +'<div style="font-size:12px;font-weight:600;color:'+col+';text-align:right">'+arr+' '+d.pct+'</div></div>';
+              +'<div style="font-size:12px;font-weight:600;color:'+col+';text-align:right">'+arr+' '+d.pct+'</div>'
+              +'<div style="font-size:11px;color:var(--text2);text-align:right">'+c.aTeu+'</div>'
+              +'<div style="font-size:11px;font-weight:600;color:#6c63ff;text-align:right">'+c.bTeu+'</div>'
+              +'<div style="font-size:12px;font-weight:600;color:'+tc+';text-align:right">'+ta+' '+dt.pct+'</div></div>';
           }).join('');
 
         /* mini bars */
@@ -4618,6 +4659,40 @@ function renderActivityFeed(){
         miniBar('cmp-pod-exp-b', b.top_pod_export||[], 'name','count','#ef4444');
         miniBar('cmp-pod-imp-a', a.top_pod_import||[], 'name','count','#94a3b8');
         miniBar('cmp-pod-imp-b', b.top_pod_import||[], 'name','count','#22c55e');
+
+        /* ── Mode Breakdown ── */
+        var mEl=document.getElementById('cmp-mode-breakdown');
+        if(mEl){
+          var aModes=a.by_mode||{},bModes=b.by_mode||{};
+          var allM=Array.from(new Set(Object.keys(aModes).concat(Object.keys(bModes)))).filter(function(m){return(aModes[m]||0)+(bModes[m]||0)>0;});
+          var mC={Ocean:'#4f8ef7',Road:'#f97316',Air:'#06b6d4'};
+          function mc(m){return mC[m]||'#a78bfa';}
+          function modeSide(map){
+            var tot=Object.values(map).reduce(function(s,x){return s+x;},0)||1;
+            return allM.map(function(m){var v=map[m]||0,pct=Math.round(v/tot*100),c=mc(m);
+              return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="font-weight:600;color:var(--text1)">'+m+'</span><span style="color:var(--text2)">'+v+' <b style="color:'+c+'">'+pct+'%</b></span></div><div style="height:5px;background:var(--bg3);border-radius:4px"><div style="height:5px;background:'+c+';width:'+pct+'%;border-radius:4px"></div></div></div>';
+            }).join('');
+          }
+          function modeSideB(mapA,mapB){
+            var tot=Object.values(mapB).reduce(function(s,x){return s+x;},0)||1;
+            return allM.map(function(m){var av=mapA[m]||0,bv=mapB[m]||0,pct=Math.round(bv/tot*100),c=mc(m),d=delta(bv,av),dc=d.up?'#22c55e':'#ef4444';
+              return '<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="font-weight:600;color:var(--text1)">'+m+'</span><span style="color:var(--text2)">'+bv+' <b style="color:'+c+'">'+pct+'%</b> <b style="color:'+dc+'">'+d.pct+'</b></span></div><div style="height:5px;background:var(--bg3);border-radius:4px"><div style="height:5px;background:'+c+';width:'+pct+'%;border-radius:4px"></div></div></div>';
+            }).join('');
+          }
+          mEl.innerHTML='<div><div style="font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Period A</div>'+modeSide(aModes)+'</div>'
+            +'<div><div style="font-size:10px;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Period B <span style="font-size:9px;font-weight:400;color:var(--text2)">(Δ vs A)</span></div>'+modeSideB(aModes,bModes)+'</div>';
+        }
+
+        /* ── Carrier Comparison ── */
+        function cmpCarriers(ships,elId,color){
+          var m={};(ships||[]).forEach(function(s){var c=(s.carrier||'').trim();if(c&&c!=='Unknown')m[c]=(m[c]||0)+1;});
+          var arr=Object.entries(m).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,6);
+          miniBar(elId,arr,'name','count',color);
+        }
+        var _sA=(allShipments||[]).filter(function(s){var d=(s.etd||s.eta||s.created_at||'').substring(0,7);return d>=aFrom&&d<=aTo;});
+        var _sB=(allShipments||[]).filter(function(s){var d=(s.etd||s.eta||s.created_at||'').substring(0,7);return d>=bFrom&&d<=bTo;});
+        cmpCarriers(_sA,'cmp-carriers-a','#94a3b8');
+        cmpCarriers(_sB,'cmp-carriers-b','#3b82f6');
       }
 
       /* ── Export Compare PDF ── */
@@ -4646,14 +4721,10 @@ function renderActivityFeed(){
         function clientRows(){
           return combined.map(function(c){
             var d=delta(c.bShp,c.aShp),col=d.up?'#16a34a':'#dc2626',arr=d.up?'↑':'↓';
+            var dt=delta(c.bTeu,c.aTeu),tc=dt.up?'#16a34a':'#dc2626',ta=dt.up?'↑':'↓';
             var wA=Math.round(c.aShp/maxShp*100),wB=Math.round(c.bShp/maxShp*100);
-            return '<tr style="border-bottom:1px solid #f1f5f9">'
-              +'<td style="padding:8px 10px;font-weight:600;color:#1e293b;font-size:12px">'+c.name+'</td>'
-              +'<td style="padding:8px 10px;min-width:100px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:#f1f5f9;border-radius:99px"><div style="height:6px;background:#94a3b8;width:'+wA+'%;border-radius:99px"></div></div><span style="font-size:11px;color:#64748b;min-width:20px;text-align:right">'+c.aShp+'</span></div></td>'
-              +'<td style="padding:8px 10px;min-width:100px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:#f1f5f9;border-radius:99px"><div style="height:6px;background:#3b82f6;width:'+wB+'%;border-radius:99px"></div></div><span style="font-size:11px;color:#1d4ed8;min-width:20px;text-align:right">'+c.bShp+'</span></div></td>'
-              +'<td style="padding:8px 10px;font-size:12px;font-weight:600;color:'+col+';text-align:right">'+arr+' '+d.pct+'</td></tr>';
-          }).join('');
-        }
+            return '<tr style="border-bottom:1px solid #f1f5f9">'              +'<td style="padding:7px 10px;font-weight:600;color:#1e293b;font-size:12px">'+c.name+'</td>'              +'<td style="padding:7px 10px;min-width:90px"><div style="display:flex;align-items:center;gap:5px"><div style="flex:1;height:5px;background:#f1f5f9;border-radius:99px"><div style="height:5px;background:#94a3b8;width:'+wA+'%;border-radius:99px"></div></div><span style="font-size:11px;color:#64748b;min-width:18px;text-align:right">'+c.aShp+'</span></div></td>'              +'<td style="padding:7px 10px;min-width:90px"><div style="display:flex;align-items:center;gap:5px"><div style="flex:1;height:5px;background:#f1f5f9;border-radius:99px"><div style="height:5px;background:#3b82f6;width:'+wB+'%;border-radius:99px"></div></div><span style="font-size:11px;color:#1d4ed8;min-width:18px;text-align:right">'+c.bShp+'</span></div></td>'              +'<td style="padding:7px 10px;font-size:12px;font-weight:700;color:'+col+';text-align:center;white-space:nowrap">'+arr+' '+d.pct+'</td>'              +'<td style="padding:7px 10px;font-size:11px;color:#64748b;text-align:right">'+c.aTeu+'</td>'              +'<td style="padding:7px 10px;font-size:11px;font-weight:600;color:#6c63ff;text-align:right">'+c.bTeu+'</td>'              +'<td style="padding:7px 10px;font-size:12px;font-weight:700;color:'+tc+';text-align:center;white-space:nowrap">'+ta+' '+dt.pct+'</td></tr>';
+          }).join('');      }
 
         function barHTML(items,nKey,vKey,color){
           if(!items||!items.length)return '<div style="color:#94a3b8;font-size:12px">No data</div>';
@@ -4734,7 +4805,7 @@ function renderActivityFeed(){
           +'<div class="month-row">'+monthBarsH+'</div></div>'
           /* client comparison table */
           +'<div class="section"><div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:14px">&#128100; Client Comparison</div>'
-          +'<table><thead><tr><th>Client</th><th>Period A (baseline)</th><th>Period B (current)</th><th style="text-align:right">Change</th></tr></thead>'
+          +'<table><thead><tr><th>Client</th><th>Period A</th><th>Period B</th><th style="text-align:center">Δ Shp</th><th style="text-align:right">A TEU</th><th style="text-align:right">B TEU</th><th style="text-align:center">Δ TEU</th></tr></thead>'
           +'<tbody>'+clientRows()+'</tbody></table></div>'
           /* routes */
           +'<div class="grid2">'
@@ -4745,6 +4816,25 @@ function renderActivityFeed(){
           +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>POD Import — A</div>'+barHTML(a.top_pod_import,'name','count','#94a3b8')+'</div>'
           +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#22c55e;margin-right:6px"></span>POD Import — B</div>'+barHTML(b.top_pod_import,'name','count','#22c55e')+'</div>'
           +'</div>'
+          /* Mode breakdown in PDF */
+          +(function(){
+            var aModes=a.by_mode||{},bModes=b.by_mode||{};
+            var allM=Array.from(new Set(Object.keys(aModes).concat(Object.keys(bModes)))).filter(function(m){return(aModes[m]||0)+(bModes[m]||0)>0;});
+            if(!allM.length) return '';
+            var mC={Ocean:'#4f8ef7',Road:'#f97316',Air:'#06b6d4'};
+            function mc(m){return mC[m]||'#a78bfa';}
+            var rows=allM.map(function(m){
+              var av=aModes[m]||0,bv=bModes[m]||0;
+              var totA=Object.values(aModes).reduce(function(s,x){return s+x;},0)||1;
+              var totB=Object.values(bModes).reduce(function(s,x){return s+x;},0)||1;
+              var pA=Math.round(av/totA*100),pB=Math.round(bv/totB*100);
+              var d=(!av?bv>0?'+100%':'--':((bv-av)/av*100).toFixed(0)+'%');
+              var dcol=bv>=av?'#16a34a':'#dc2626';
+              var c=mc(m);
+              return '<tr style="border-bottom:1px solid #f1f5f9">'                +'<td style="padding:7px 10px;font-weight:600;color:#1e293b;font-size:12px">'+m+'</td>'                +'<td style="padding:7px 10px;font-size:12px;color:#64748b;text-align:right">'+av+' <span style="color:'+c+';font-size:10px">('+pA+'%)</span></td>'                +'<td style="padding:7px 10px;font-size:12px;color:#1d4ed8;text-align:right">'+bv+' <span style="color:'+c+';font-size:10px">('+pB+'%)</span></td>'                +'<td style="padding:7px 10px;font-size:12px;font-weight:700;color:'+dcol+';text-align:center">'+d+'</td></tr>';
+            }).join('');
+            return '<div class="section"><div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:10px">&#9881; Transport Mode Breakdown</div>'              +'<table><thead><tr><th>Mode</th><th style="text-align:right">Period A</th><th style="text-align:right">Period B</th><th style="text-align:center">Change</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+          })()
           +'<div style="text-align:center;padding:16px 0 4px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0">FreightTrack Pro · Comparison Report · '+new Date().toLocaleString()+'</div>'
           +'</div>'
 
