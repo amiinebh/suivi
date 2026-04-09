@@ -234,6 +234,7 @@ body.dark .spark-bar.active{background:var(--v-develop);}
 .badge-cyan  {background:var(--cyan-bg);  color:var(--cyan);}
 .badge-orange{background:var(--orange-bg);color:var(--orange);}
 .badge-slate {background:var(--bg3);      color:var(--text2);}
+.badge-flexi {background:rgba(168,85,247,.13); color:#a855f7;}
 
 /* ══ BUTTONS — Vercel style ══ */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
@@ -1223,6 +1224,10 @@ button[onclick*="closeEmailModal"]:hover{
                   <div style="font-size:9.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Road</div>
                   <div id="dash-mini-air" style="font-size:18px;font-weight:600;color:var(--text1);margin-top:3px">—</div>
                 </div>
+                <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:var(--radius);padding:10px 12px">
+                  <div style="font-size:9.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Flexi</div>
+                  <div id="dash-mini-flexi" style="font-size:18px;font-weight:600;color:#a855f7;margin-top:3px">—</div>
+                </div>
               </div>
               <div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Top Clients</div>
               <div id="dash-top-clients" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -1264,7 +1269,7 @@ button[onclick*="closeEmailModal"]:hover{
           </select>
         <select class="filter" id="fil-mode" onchange="loadShipments()">
           <option value="">All Modes</option>
-          <option>Ocean</option><option>Road</option>
+          <option>Ocean</option><option>Road</option><option>Flexi</option>
         </select>
         <select class="filter" id="fil-direction" onchange="loadShipments()"><option value="">All Directions</option><option value="Export">↑ Export</option><option value="Import">↓ Import</option></select>
         <select class="filter" id="fil-incoterm" onchange="loadShipments()">
@@ -1517,6 +1522,12 @@ button[onclick*="closeEmailModal"]:hover{
             <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-truck" style="color:#f97316"></i> Road Carriers</div>
             <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-carriers-road','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers-road','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers-road','imp')">&#8595; Imp</button></div>
           </div><div id="kpi-bar-carriers-road"></div>
+        </div></div>
+        <div class="card"><div class="card__body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-arrows-left-right" style="color:#a855f7"></i> Flexi Carriers</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-carriers-flexi','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers-flexi','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers-flexi','imp')">&#8595; Imp</button></div>
+          </div><div id="kpi-bar-carriers-flexi"></div>
         </div></div>
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -1841,7 +1852,7 @@ button[onclick*="closeEmailModal"]:hover{
         </div>
         <div class="form-group">
           <label>Mode</label>
-          <select id="f-mode" class="form-control"><option value="Ocean">Ocean (FCL)</option><option value="Road">Road (FTL)</option></select>
+          <select id="f-mode" class="form-control"><option value="Ocean">Ocean (FCL)</option><option value="Road">Road (FTL)</option><option value="Flexi">Flexi</option></select>
         </div>
         <div class="form-group">
           <label>Direction</label>
@@ -2225,7 +2236,8 @@ function renderTable(ships){
   var modeIcon = {
     'Ocean': '<span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-tint)">directions_boat</span>',
     'Road':  '<span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-text2)">local_shipping</span>',
-    'Air':   '<span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-text2)">flight</span>'
+    'Air':   '<span class="material-symbols-outlined" style="font-size:18px;color:var(--stitch-text2)">flight</span>',
+    'Flexi': '<span class="material-symbols-outlined" style="font-size:18px;color:#a855f7">swap_horiz</span>'
   };
   var thead = '<table style="width:100%;border-collapse:collapse">'
     + '<thead><tr style="background:var(--stitch-surf-high);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--stitch-text2)">'
@@ -2511,6 +2523,7 @@ async function loadDashboard(){
     _setEl('dash-mini-export', _exp||0);
     _setEl('dash-mini-ocean', _ocean||0);
     _setEl('dash-mini-air', _road||0);
+    _setEl('dash-mini-flexi', _ml.filter(function(s){return(s.mode||'').toLowerCase().includes('flexi');}).length||0);
 
     // Top clients
     const _clientMap = {};
@@ -2841,6 +2854,7 @@ async function loadAnalytics(){
       r2.appendChild(kpiCard('ph-flag-banner','#22c55e',(byStatus['Arrived']||0)+(byStatus['Closed']||0),'Arrived / Closed','Completed'));
       r2.appendChild(kpiCard('ph-hourglass','#ef4444',byStatus['Pending']||0,'Pending','No container data'));
       r2.appendChild(kpiCard('ph-truck','#06b6d4',byMode['Road']||0,'Road (FTL)',(byMode['Ocean']||0)+' Ocean (FCL)'));
+      r2.appendChild(kpiCard('ph-arrows-left-right','#a855f7',byMode['Flexi']||0,'Flexi','flexible transport'));
       r2.appendChild(kpiCard('ph-star','#f59e0b',topCl,'Top Client',topTeu+' TEU'));
     }
     function dc(id){destroyChart(id);}
@@ -2879,6 +2893,7 @@ async function loadAnalytics(){
       var bc=function(tokens){var m={};(allShipments||[]).filter(function(x){var md=(x.mode||'').toLowerCase();return tokens.some(function(t){return md.includes(t);});}).forEach(function(x){var c=(x.carrier||'Unknown').trim();if(c)m[c]=(m[c]||0)+1;});return Object.entries(m).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);};
       bl('kpi-bar-carriers-ocean',bc(['ocean','sea','fcl','lcl']),'name','count','#4f8ef7');
       bl('kpi-bar-carriers-road',bc(['road','truck','ftl']),'name','count','#f97316');
+      bl('kpi-bar-carriers-flexi',bc(['flexi']),'name','count','#a855f7');
     })();
     bl('kpi-bar-clients',clientAll,'name','shipments','#4f8ef7');
     bl('kpi-bar-teu',clientAll.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
@@ -2927,13 +2942,13 @@ function kpiMiniTab(btn,targetId,dir){
   if(targetId==='kpi-bar-clients'){bl(targetId,dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]),'name','shipments','#4f8ef7');}
   else if(targetId==='kpi-bar-teu'){var src=dir==='exp'?(k.by_client_export||[]):dir==='imp'?(k.by_client_import||[]):(k.by_client_all||[]);bl(targetId,src.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');}
   else if(targetId==='kpi-bar-carriers'){bl(targetId,dir==='exp'?(k.by_carrier_export||[]):dir==='imp'?(k.by_carrier_import||[]):(k.by_carrier||[]),'name','count',null);}
-  else if(targetId==='kpi-bar-carriers-ocean'||targetId==='kpi-bar-carriers-road'){
-    var _isOc=(targetId==='kpi-bar-carriers-ocean');
+  else if(targetId==='kpi-bar-carriers-ocean'||targetId==='kpi-bar-carriers-road'||targetId==='kpi-bar-carriers-flexi'){
+    var _isOc=(targetId==='kpi-bar-carriers-ocean'); var _isFl=(targetId==='kpi-bar-carriers-flexi');
     var _xD=function(x){var dv=(x.direction||x.shipment_type||'').toLowerCase();if(dv.includes('exp'))return 'exp';if(dv.includes('imp'))return 'imp';var rf=(x.ref||'').toUpperCase();if(/^ROE/.test(rf))return 'exp';if(/^RO/.test(rf))return 'imp';return 'all';};
-    var _filtered=(allShipments||[]).filter(function(x){var m=(x.mode||'').toLowerCase();var ok=_isOc?['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}):['road','truck','ftl'].some(function(t){return m.includes(t);});return ok&&(dir==='all'||_xD(x)===dir);});
+    var _filtered=(allShipments||[]).filter(function(x){var m=(x.mode||'').toLowerCase();var ok=_isOc?['ocean','sea','fcl','lcl'].some(function(t){return m.includes(t);}):_isFl?['flexi'].some(function(t){return m.includes(t);}):['road','truck','ftl'].some(function(t){return m.includes(t);});return ok&&(dir==='all'||_xD(x)===dir);});
     var _cm={};_filtered.forEach(function(x){var c=(x.carrier||'Unknown').trim();if(c)_cm[c]=(_cm[c]||0)+1;});
     var _ca=Object.entries(_cm).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,8);
-    bl(targetId,_ca,'name','count',_isOc?'#4f8ef7':'#f97316');}
+    bl(targetId,_ca,'name','count',_isOc?'#4f8ef7':_isFl?'#a855f7':'#f97316');}
   else if(targetId==='kpi-bar-pod'){bl(targetId,dir==='exp'?(k.top_pod_export||[]):dir==='imp'?(k.top_pod_import||[]):(k.top_pod||[]),'name','count','#ef4444');}
   else if(targetId==='kpi-bar-pol'){bl(targetId,dir==='exp'?(k.top_pol_export||[]):dir==='imp'?(k.top_pol_import||[]):(k.top_pol||[]),'name','count','#22c55e');}
   else if(targetId==='kpi-bar-routes'){
@@ -5124,6 +5139,8 @@ function exportDocxDirect(){
   if(d.cOI&&d.cOI.length){body+=para('Ocean Carriers - Import',{heading:2});body+=tbl(['Carrier','Shipments'],d.cOI.slice(0,10).map(function(c){return[c.name,c.count];}));}
   if(d.cRE&&d.cRE.length){body+=para('Road Carriers - Export',{heading:2});body+=tbl(['Carrier','Shipments'],d.cRE.slice(0,10).map(function(c){return[c.name,c.count];}));}
   if(d.cRI&&d.cRI.length){body+=para('Road Carriers - Import',{heading:2});body+=tbl(['Carrier','Shipments'],d.cRI.slice(0,10).map(function(c){return[c.name,c.count];}));}
+  if(d.cFE&&d.cFE.length){body+=para('Flexi Carriers - Export',{heading:2});body+=tbl(['Carrier','Shipments'],d.cFE.slice(0,10).map(function(c){return[c.name,c.count];}));}
+  if(d.cFI&&d.cFI.length){body+=para('Flexi Carriers - Import',{heading:2});body+=tbl(['Carrier','Shipments'],d.cFI.slice(0,10).map(function(c){return[c.name,c.count];}));}
   if(d.cliAll&&d.cliAll.length){body+=para('Top Clients',{heading:2});body+=tbl(['Client','Shipments','TEU'],d.cliAll.slice(0,15).map(function(c){return[c.name,c.shipments||c.count||0,c.teu||0];}));}
   if(d.incArr&&d.incArr.length){body+=para('Incoterm Distribution',{heading:2});body+=tbl(['Incoterm','Count'],d.incArr.map(function(i){return[i.name,i.count];}));}
   if(d.pDE&&d.pDE.length){body+=para('Top Destinations (POD)',{heading:2});body+=tbl(['Port','Count'],d.pDE.slice(0,10).map(function(p){return[p.name,p.count];}));}
@@ -5168,6 +5185,7 @@ function generateReport(){
     var bySt=k.by_status||{},byMo=k.by_mode||{},monthly=k.by_monthly||k.monthly||[];
     var cOE=cGrp(exp,['ocean','sea','fcl','lcl']),cOI=cGrp(imp,['ocean','sea','fcl','lcl']);
     var cRE=cGrp(exp,['road','truck','ftl']),cRI=cGrp(imp,['road','truck','ftl']);
+    var cFE=cGrp(exp,['flexi']),cFI=cGrp(imp,['flexi']);
     var incMap={};ships.forEach(function(s){var v=(s.incoterm||s.paymentterm||'').toString().trim().toUpperCase()||'N/A';incMap[v]=(incMap[v]||0)+1;});
     var incArr=Object.entries(incMap).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;});
     var cliAll=k.by_client_all||[],teuList=cliAll.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);});
@@ -5175,7 +5193,7 @@ function generateReport(){
     var rE=k.top_routing_export||[],rI=k.top_routing_import||[];
     var active=ships.filter(function(s){return ['Pending','Confirmed','Booked','Stuffed','Sailing'].indexOf(s.status)!==-1;});
     var topCli=cliAll.length?cliAll[0].name:'-';
-    window._RD={ships:ships,exp:exp,imp:imp,total:total,teu:teu,bySt:bySt,byMo:byMo,monthly:monthly,cOE:cOE,cOI:cOI,cRE:cRE,cRI:cRI,incArr:incArr,cliAll:cliAll,teuList:teuList,pDE:pDE,pDI:pDI,pLE:pLE,pLI:pLI,rE:rE,rI:rI,active:active,topCli:topCli};
+    window._RD={ships:ships,exp:exp,imp:imp,total:total,teu:teu,bySt:bySt,byMo:byMo,monthly:monthly,cOE:cOE,cOI:cOI,cRE:cRE,cRI:cRI,cFE:cFE,cFI:cFI,incArr:incArr,cliAll:cliAll,teuList:teuList,pDE:pDE,pDI:pDI,pLE:pLE,pLI:pLI,rE:rE,rI:rI,active:active,topCli:topCli};
     function BR(items,nk,vk,col,lim){
       if(!items||!items.length)return '<p style="color:#aaa;font-size:11px;padding:8px 0">No data</p>';
       var P=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444','#f97316','#ec4899'];
@@ -5196,6 +5214,7 @@ function generateReport(){
       +(monthly.length?'<div class="card"><div class="ct">Monthly Volume</div><table><thead><tr><th>Month</th><th>Export</th><th>Import</th><th>Total</th></tr></thead><tbody>'+monthly.map(function(m){return '<tr><td>'+m.month+'</td><td>'+(m.export_count||0)+'</td><td>'+(m.import_count||0)+'</td><td>'+((m.export_count||0)+(m.import_count||0))+'</td></tr>';}).join('')+'</tbody></table></div>':'')
       +SP('Ocean Carriers','&#9973;','#4f8ef7',BR(cOE,'name','count','#4f8ef7'),BR(cOI,'name','count','#4f8ef7'))
       +SP('Road Carriers','&#128664;','#f97316',BR(cRE,'name','count','#f97316'),BR(cRI,'name','count','#f97316'))
+      +SP('Flexi Carriers','&#8644;','#a855f7',BR(cFE,'name','count','#a855f7'),BR(cFI,'name','count','#a855f7'))
       +'<div class="g2"><div class="card"><div class="ct">Top Clients by Shipments</div>'+BR(cliAll,'name','shipments')+'</div><div class="card"><div class="ct">Top Clients by TEU</div>'+BR(teuList,'name','teu','#6c63ff')+'</div></div>'
       +'<div class="card"><div class="ct">Incoterm Distribution</div>'+BR(incArr,'name','count')+'</div>'
       +SP('Top Destinations (POD)','&#128205;','#ef4444',BR(pDE,'name','count','#ef4444'),BR(pDI,'name','count','#ef4444'))
