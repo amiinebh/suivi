@@ -1264,7 +1264,7 @@ button[onclick*="closeEmailModal"]:hover{
           </select>
         <select class="filter" id="fil-mode" onchange="loadShipments()">
           <option value="">All Modes</option>
-          <option>Ocean</option><option>Road</option><option>Flexi</option>
+          <option>Ocean</option><option>Road</option>
         </select>
         <select class="filter" id="fil-direction" onchange="loadShipments()"><option value="">All Directions</option><option value="Export">↑ Export</option><option value="Import">↓ Import</option></select>
         <select class="filter" id="fil-incoterm" onchange="loadShipments()">
@@ -1278,9 +1278,6 @@ button[onclick*="closeEmailModal"]:hover{
         </button>
         <button class="btn btn-ghost btn-sm topbar-actions-desktop admin-only" onclick="openModal('modal-bulk-import');_bulkStep(1)" style="font-size:12px">
           <i class="ph ph-file-arrow-up"></i> Import XLSX
-        </button>
-        <button class="btn btn-danger btn-sm topbar-actions-desktop admin-only" onclick="deleteAllShipments()" style="font-size:12px;background:#7f1d1d;border-color:#7f1d1d">
-          <i class="ph ph-warning"></i> Delete ALL
         </button>
       </div>
       <!-- Bulk action toolbar -->
@@ -1844,7 +1841,7 @@ button[onclick*="closeEmailModal"]:hover{
         </div>
         <div class="form-group">
           <label>Mode</label>
-          <select id="f-mode" class="form-control"><option value="Ocean">Ocean (FCL)</option><option value="Road">Road (FTL)</option><option value="Flexi">Flexi</option></select>
+          <select id="f-mode" class="form-control"><option value="Ocean">Ocean (FCL)</option><option value="Road">Road (FTL)</option></select>
         </div>
         <div class="form-group">
           <label>Direction</label>
@@ -2128,7 +2125,7 @@ function statusBadge(st){
 var CARRIER_NORM={'MSK':'Maersk','MAERSK':'Maersk','MAERSK LINE':'Maersk','MAERSKLINE':'Maersk','CMA':'CMA-CGM','CMA CGM':'CMA-CGM','CMACGM':'CMA-CGM','MSC':'MSC','HPL':'Hapag-Lloyd','HAPAG LLOYD':'Hapag-Lloyd','HAPAG-LLOYD':'Hapag-Lloyd','EVE':'Evergreen','EVERGREEN':'Evergreen','COSCO':'COSCO','ONE':'ONE','ZIM':'ZIM','ARKAS':'Arkas','MARFRET':'Marfret','COMANAV':'Comanav'};
 function normalizeCarrier(n){if(!n)return n;var k=n.trim().toUpperCase().replace(/[^A-Z0-9 ]/g,' ').trim();if(CARRIER_NORM[k])return CARRIER_NORM[k];return n.trim().charAt(0).toUpperCase()+n.trim().slice(1);}
 function normalizeClient(n){if(!n)return n;var M={'COPAG':'COPAG'};return M[n.trim().toUpperCase()]||n.trim().charAt(0).toUpperCase()+n.trim().slice(1);}
-function normalizeMode(m){if(!m)return 'Ocean';var _m=m.trim().toLowerCase();if(['road','ftl','truck','road (ftl)'].includes(_m))return 'Road';if(['flexi','flex','flexible'].includes(_m))return 'Flexi';return 'Ocean';}
+function normalizeMode(m){if(!m)return 'Ocean';return['road','ftl','truck','road (ftl)'].includes(m.trim().toLowerCase())?'Road':'Ocean';}
 function normalizeDirection(d){if(!d)return '';var v=d.trim().toLowerCase();if(['export','exp','x'].includes(v))return 'Export';if(['import','imp','m'].includes(v))return 'Import';return d.trim().charAt(0).toUpperCase()+d.trim().slice(1);}
 function computeAutoStatus(etd,eta,hc){if(!hc)return 'Pending';var t=new Date();t.setHours(0,0,0,0);function pd(s){if(!s)return null;var d=new Date(s.split('T')[0]);return isNaN(d)?null:d;}var e=pd(etd),a=pd(eta);if(e&&t<e)return 'Confirmed';if(e&&a&&t>=e&&t<a)return 'Sailing';if(a&&t>=a)return 'Arrived';if(e&&t>=e)return 'Sailing';return 'Confirmed';}
 function shipStatus(s){var hc=(Array.isArray(s.containers)&&s.containers.length>0)||(s.teu&&s.teu>0);return computeAutoStatus(s.etd,s.eta,hc);}
@@ -4859,6 +4856,19 @@ async function _bulkDelete() {
   loadShipments();
 }
 
+async function _bulkDeleteAll() {
+  const all = (allShipments||[]);
+  if(!all.length){ toast('No shipments to delete','error'); return; }
+  if(!confirm('Delete ALL '+all.length+' shipments? This cannot be undone.')) return;
+  let ok = 0;
+  for(const s of all){
+    try{ await apiFetch('/api/shipments/'+s.id,{method:'DELETE'}); ok++; }catch(e){}
+  }
+  toast(ok+' shipments deleted','success');
+  clearApiCache('/api/shipments'); clearApiCache('/api/stats');
+  loadDashboard(); loadShipments();
+}
+
 function _clearSelection() {
   window._selectedShips.clear();
   document.querySelectorAll('#ship-table input[type="checkbox"]').forEach(cb=>cb.checked=false);
@@ -5047,7 +5057,9 @@ window.closeCompareModal = typeof closeCompareModal==="function"?closeCompareMod
   <button class="bulk-action-btn" onclick="_bulkSetStatus('In Transit')">⬆ In Transit</button>
   <button class="bulk-action-btn" onclick="_bulkSetStatus('Pending')">⏸ Pending</button>
   <span class="bulk-sep"></span>
-  <button class="bulk-action-btn danger" onclick="_bulkDelete()">🗑 Delete</button>
+  <button class="bulk-action-btn danger" onclick="_bulkDelete()">🗑 Delete Selected</button>
+  <span class="bulk-sep"></span>
+  <button class="bulk-action-btn danger" onclick="_bulkDeleteAll()">🗑 Delete All</button>
   <span class="bulk-sep"></span>
   <button class="bulk-action-btn" onclick="_clearSelection()">✕ Clear</button>
 </div>
