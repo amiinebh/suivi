@@ -1264,7 +1264,7 @@ button[onclick*="closeEmailModal"]:hover{
           </select>
         <select class="filter" id="fil-mode" onchange="loadShipments()">
           <option value="">All Modes</option>
-          <option>Ocean</option><option>Road</option>
+          <option>Ocean</option><option>Road</option><option>Flexi</option>
         </select>
         <select class="filter" id="fil-direction" onchange="loadShipments()"><option value="">All Directions</option><option value="Export">↑ Export</option><option value="Import">↓ Import</option></select>
         <select class="filter" id="fil-incoterm" onchange="loadShipments()">
@@ -1278,6 +1278,9 @@ button[onclick*="closeEmailModal"]:hover{
         </button>
         <button class="btn btn-ghost btn-sm topbar-actions-desktop admin-only" onclick="openModal('modal-bulk-import');_bulkStep(1)" style="font-size:12px">
           <i class="ph ph-file-arrow-up"></i> Import XLSX
+        </button>
+        <button class="btn btn-danger btn-sm topbar-actions-desktop admin-only" onclick="deleteAllShipments()" style="font-size:12px;background:#7f1d1d;border-color:#7f1d1d">
+          <i class="ph ph-warning"></i> Delete ALL
         </button>
       </div>
       <!-- Bulk action toolbar -->
