@@ -3765,14 +3765,13 @@ async function updateAlertsBadge(){
 }
 
 /* ── Generate Report ── */
-async 
 function _teuFromType(t){ return t&&t.startsWith('20')?1:t?2:0; }
 
 function addContainerRow(){
   const qty = parseInt(document.getElementById('new-cont-qty')?.value)||0;
   const type = document.getElementById('new-cont-type').value;
-  if(!qty||qty<1){ showToast('Enter quantity','error'); return; }
-  if(!type){ showToast('Select container type','error'); return; }
+  if(!qty||qty<1){ toast('Enter quantity','error'); return; }
+  if(!type){ toast('Select container type','error'); return; }
   const teuEach = _teuFromType(type);
   // Merge if same type already exists
   const existing = formContainers.find(c=>c.size_type===type);
@@ -4808,10 +4807,10 @@ async function _applyInlineStatus(shipId, newStatus, el) {
       body: JSON.stringify({status: newStatus})
     });
     if(r.ok) {
-      showToast('Status → '+newStatus,'success');
+      toast('Status → '+newStatus,'success');
       loadShipments();
-    } else { showToast('Update failed','error'); }
-  } catch(err) { showToast('Network error','error'); }
+    } else { toast('Update failed','error'); }
+  } catch(err) { toast('Network error','error'); }
 }
 
 // ── 2. BULK ACTION TOOLBAR ──
@@ -4836,7 +4835,7 @@ async function _bulkSetStatus(status) {
       if(r.ok) ok++;
     }catch(e){}
   }
-  showToast(ok+' shipments → '+status,'success');
+  toast(ok+' shipments → '+status,'success');
   _clearSelection();
   loadShipments();
 }
@@ -4852,7 +4851,7 @@ async function _bulkDelete() {
       if(r.ok) ok++;
     }catch(e){}
   }
-  showToast(ok+' shipments deleted','success');
+  toast(ok+' shipments deleted','success');
   _clearSelection();
   loadShipments();
 }
@@ -4931,7 +4930,7 @@ const _origShowPage = typeof showPage==='function' ? showPage : null;
 // ── 5. FILTERED XLSX EXPORT ──
 function _exportFilteredXLSX() {
   const rows = document.querySelectorAll('#ship-table tbody tr:not([style*="display:none"])');
-  if(!rows.length){ showToast('No rows to export','error'); return; }
+  if(!rows.length){ toast('No rows to export','error'); return; }
   const headers = [...document.querySelectorAll('#ship-table thead th')].map(th=>th.innerText.trim());
   let csv = headers.join(',')+'\n';
   rows.forEach(row=>{
@@ -4946,7 +4945,7 @@ function _exportFilteredXLSX() {
   const a=document.createElement('a');
   a.href=url; a.download='freighttrack-export-'+new Date().toISOString().slice(0,10)+'.csv';
   a.click(); URL.revokeObjectURL(url);
-  showToast('Exported '+rows.length+' rows','success');
+  toast('Exported '+rows.length+' rows','success');
 }
 
 // Wire export button if it exists
