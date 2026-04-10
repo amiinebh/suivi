@@ -4609,15 +4609,14 @@ function renderActivityFeed(){
           chip('TEU',        b.total_teu||0,                   a.total_teu||0)+
           chip('Overdue',    b.overdue||0,                     a.overdue||0);
 
-        /* monthly chart — 2-panel split: Period A (muted) | Period B (vivid) */
+        /* monthly chart — 2-panel split: Period A (muted) | Period B (vivid) — each with own date range */
         var aM=a.monthly||[],bM=b.monthly||[];
-        var allMonths=Array.from(new Set(aM.map(function(m){return m.month;}).concat(bM.map(function(m){return m.month;})))).sort();
-        // Destroy both panel charts
+        // Each period uses ONLY its own months
+        var aMonths=aM.map(function(m){return m.month;}).sort();
+        var bMonths=bM.map(function(m){return m.month;}).sort();
         ['cmp-chart-monthly','cmp-chart-monthly-b'].forEach(destroyChart);
-        // Upgrade container to 2-panel grid
         var cmpMonthlyWrap=document.getElementById('cmp-chart-monthly');
-        if(cmpMonthlyWrap&&allMonths.length){
-          // Create sibling element for Period B if not exists
+        if(cmpMonthlyWrap){
           var cmpBEl=document.getElementById('cmp-chart-monthly-b');
           if(!cmpBEl){cmpBEl=document.createElement('div');cmpBEl.id='cmp-chart-monthly-b';
             cmpMonthlyWrap.parentNode.style.display='grid';
@@ -4625,26 +4624,22 @@ function renderActivityFeed(){
             cmpMonthlyWrap.parentNode.style.gap='12px';
             cmpMonthlyWrap.parentNode.appendChild(cmpBEl);}
           var modeKeys=['Ocean','Road','Air','Flexi'];
-          // Period A: muted desaturated colors
           var modeColA={Ocean:'#93b4d4',Road:'#d4a574',Air:'#74bcd4',Flexi:'#c4a8d4'};
-          // Period B: vivid colors
           var modeColB={Ocean:'#4f8ef7',Road:'#f97316',Air:'#06b6d4',Flexi:'#a855f7'};
           function buildMM2(ships,months){var mm={};modeKeys.forEach(function(k){mm[k]={};months.forEach(function(mo){mm[k][mo]=0;});});(ships||[]).forEach(function(s){var md=s.mode||'',mo=(s.etd||s.eta||s.created_at||'').substring(0,7);if(!mo||months.indexOf(mo)<0)return;var k=modeKeys.find(function(k){return md.toLowerCase().includes(k.toLowerCase());});if(k)mm[k][mo]++;});return mm;}
-          var mmA=buildMM2(_sA,allMonths),mmB=buildMM2(_sB,allMonths);
-          function hasData(mm){return modeKeys.some(function(k){return allMonths.some(function(m){return mm[k][m]>0;});});}
-          function buildSeries(mm,colMap,label){
-            var s=modeKeys.filter(function(k){return allMonths.some(function(m){return mm[k][m]>0;});}).map(function(k){return{name:k,data:allMonths.map(function(m){return mm[k][m]||0;})};});
-            if(!s.length){var mObj=(label==='A'?a:b);var eM={},iM={};(mObj.monthly||[]).forEach(function(m){eM[m.month]=m.export_count||0;iM[m.month]=m.import_count||0;});s=[{name:'Export',data:allMonths.map(function(m){return eM[m]||0;})},{name:'Import',data:allMonths.map(function(m){return iM[m]||0;})}];}
+          var mmA=buildMM2(_sA,aMonths),mmB=buildMM2(_sB,bMonths);
+          function buildSeries(mm,months,mData,colMap,label){
+            var s=modeKeys.filter(function(k){return months.some(function(m){return mm[k][m]>0;});}).map(function(k){return{name:k,data:months.map(function(m){return mm[k][m]||0;})};});
+            if(!s.length){var eM={},iM={};(mData||[]).forEach(function(m){eM[m.month]=m.export_count||0;iM[m.month]=m.import_count||0;});s=[{name:'Export',data:months.map(function(m){return eM[m]||0;})},{name:'Import',data:months.map(function(m){return iM[m]||0;})}];}
             return s;
           }
-          function areaConfig(series,colMap,title,subtitle){
+          function areaConfig(series,months,colMap,title,subtitle){
             var keys=series.map(function(s){return s.name;});
-            var cols=keys.map(function(k){return colMap[k]||(colMap===modeColA?'#aaa':'#a78bfa');});
+            var cols=keys.map(function(k){return colMap[k]||'#a78bfa';});
             return {chart:{type:'area',height:190,toolbar:{show:false},zoom:{enabled:false},fontFamily:'inherit',background:'transparent',stacked:true,animations:{enabled:false}},
               theme:{mode:isDark()?'dark':'light'},series:series,
-              xaxis:{categories:allMonths,labels:{style:{fontSize:'9px'}},axisBorder:{show:false},axisTicks:{show:false}},
-              yaxis:{labels:{style:{fontSize:'9px'}},min:0},
-              colors:cols,
+              xaxis:{categories:months,labels:{style:{fontSize:'9px'}},axisBorder:{show:false},axisTicks:{show:false}},
+              yaxis:{labels:{style:{fontSize:'9px'}},min:0},colors:cols,
               fill:{type:'gradient',gradient:{opacityFrom:0.45,opacityTo:0.05}},
               stroke:{curve:'smooth',width:2},markers:{size:0},
               tooltip:{shared:true,intersect:false},
@@ -4654,14 +4649,14 @@ function renderActivityFeed(){
               grid:{borderColor:isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)',strokeDashArray:3},
               dataLabels:{enabled:false}};
           }
-          var sA=buildSeries(mmA,modeColA,'A');
-          var sB=buildSeries(mmB,modeColB,'B');
-          var labelA=(aFrom||'Period A')+' → '+(aTo||'');
-          var labelB=(bFrom||'Period B')+' → '+(bTo||'');
-          chartRegistry['cmp-chart-monthly']=new ApexCharts(cmpMonthlyWrap,areaConfig(sA,modeColA,'Period A (baseline)',labelA));
-          chartRegistry['cmp-chart-monthly'].render();
-          chartRegistry['cmp-chart-monthly-b']=new ApexCharts(cmpBEl,areaConfig(sB,modeColB,'Period B (current)',labelB));
-          chartRegistry['cmp-chart-monthly-b'].render();
+          var sA=buildSeries(mmA,aMonths,aM,modeColA,'A');
+          var sB=buildSeries(mmB,bMonths,bM,modeColB,'B');
+          var labelA=(aFrom||'')+' → '+(aTo||'');
+          var labelB=(bFrom||'')+' → '+(bTo||'');
+          if(aMonths.length){chartRegistry['cmp-chart-monthly']=new ApexCharts(cmpMonthlyWrap,areaConfig(sA,aMonths,modeColA,'Period A (baseline)',labelA));chartRegistry['cmp-chart-monthly'].render();}
+          else{cmpMonthlyWrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No data for Period A</div>';}
+          if(bMonths.length){chartRegistry['cmp-chart-monthly-b']=new ApexCharts(cmpBEl,areaConfig(sB,bMonths,modeColB,'Period B (current)',labelB));chartRegistry['cmp-chart-monthly-b'].render();}
+          else{cmpBEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No data for Period B</div>';}
         }
 
         /* client comparison table */
