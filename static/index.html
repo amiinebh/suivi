@@ -1340,7 +1340,7 @@ button[onclick*="closeEmailModal"]:hover{
         <div>
           <div style="font-size:10px;font-weight:500;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:8px">FREIGHT COMMAND › KPI ANALYSIS</div>
           <div style="font-size:32px;font-weight:600;letter-spacing:-1.28px;color:var(--text1);line-height:1.1">INTELLIGENCE HUB</div>
-          <div style="font-size:13px;color:var(--text2);margin-top:6px;font-weight:400">Live operational metrics &amp; period comparison</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:6px;font-weight:400">Live operational metrics &amp; period comparison &nbsp;<span id="kpi-live-badge" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;background:var(--green-bg,#dcfce7);color:var(--green,#16a34a);padding:2px 8px;border-radius:99px;vertical-align:middle"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block"></span><span id="kpi-live-label">Live</span></span></div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <!-- Period tabs - Stitch style -->
@@ -1437,6 +1437,28 @@ button[onclick*="closeEmailModal"]:hover{
             <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
               <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-users" style="color:var(--accent)"></i> Client Comparison — A vs B</div>
               <div id="cmp-client-table"></div>
+            </div>
+            <!-- ── Radar: Period A vs B ── -->
+            <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
+              <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:10px">
+                <i class="ph ph-chart-polar" style="color:#a855f7"></i> Period Comparison Radar
+              </div>
+              <div id="cmp-radar-chart" style="height:260px"></div>
+            </div>
+            <!-- ── Mode Donuts ── -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
+                <div style="font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>Period A · Mode Split
+                </div>
+                <div id="cmp-donut-mode-a" style="height:180px"></div>
+              </div>
+              <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
+                <div style="font-size:11px;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+                  <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:6px"></span>Period B · Mode Split
+                </div>
+                <div id="cmp-donut-mode-b" style="height:180px"></div>
+              </div>
             </div>
             <!-- side by side grids -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
@@ -1547,10 +1569,13 @@ button[onclick*="closeEmailModal"]:hover{
       <!-- Incoterm distribution -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
-          <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px">
+          <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:8px">
             <i class="ph ph-file-text" style="color:var(--accent)"></i> Incoterm Distribution
           </div>
-          <div id="kpi-bar-incoterm" style="min-height:120px"></div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div id="kpi-chart-incoterm-donut" style="min-width:140px;height:140px"></div>
+            <div id="kpi-bar-incoterm" style="flex:1;min-height:120px;padding-top:6px"></div>
+          </div>
         </div></div>
         <div class="card"><div class="card__body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -2856,7 +2881,7 @@ async function loadAnalytics(){
 
     dc('kpi-chart-monthly');
     var mcEl=document.getElementById('kpi-chart-monthly');
-    if(mcEl&&monthly.length){chartRegistry['kpi-chart-monthly']=new ApexCharts(mcEl,{chart:{type:'area',height:190,toolbar:{show:false},zoom:{enabled:false},fontFamily:'inherit',background:'transparent'},theme:{mode:isDark()?'dark':'light'},series:[{name:'Export',data:monthly.map(function(m){return m.export_count||0;})},{name:'Import',data:monthly.map(function(m){return m.import_count||0;})}],xaxis:{categories:monthly.map(function(m){return m.month;}),labels:{style:{fontSize:'10px'}},axisBorder:{show:false},axisTicks:{show:false}},yaxis:{labels:{style:{fontSize:'10px'}},min:0},colors:['#4f8ef7','#22c55e'],fill:{type:'gradient',gradient:{opacityFrom:0.35,opacityTo:0.05}},stroke:{curve:'smooth',width:2},markers:{size:4},tooltip:{shared:true,intersect:false},legend:{position:'top',fontSize:'10px'},grid:{borderColor:isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)',strokeDashArray:3},dataLabels:{enabled:false}});chartRegistry['kpi-chart-monthly'].render();}else if(mcEl){mcEl.innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:12px">No monthly data yet</div>';}
+    if(mcEl&&monthly.length){var modeMonthly={};['Ocean','Road','Air','Flexi'].forEach(function(md){modeMonthly[md]={};monthly.forEach(function(m){modeMonthly[md][m.month]=0;});});(allShipments||[]).forEach(function(s){var md=s.mode||'Other',mo=(s.etd||s.eta||s.created_at||'').substring(0,7);if(!mo||mo<monthly[0].month||mo>monthly[monthly.length-1].month)return;var k=Object.keys(modeMonthly).find(function(k){return md.toLowerCase().includes(k.toLowerCase());});if(k&&modeMonthly[k][mo]!==undefined)modeMonthly[k][mo]++;});var modeColors={Ocean:'#4f8ef7',Road:'#f97316',Air:'#06b6d4',Flexi:'#a855f7'};var modeSeries=Object.keys(modeMonthly).filter(function(k){return Object.values(modeMonthly[k]).some(function(v){return v>0;});}).map(function(k){return{name:k,data:monthly.map(function(m){return modeMonthly[k][m.month]||0;})};});var seriesData=modeSeries.length?modeSeries:[{name:'Export',data:monthly.map(function(m){return m.export_count||0;})},{name:'Import',data:monthly.map(function(m){return m.import_count||0;})}];var seriesColors=modeSeries.length?modeSeries.map(function(s){return modeColors[s.name]||'#a78bfa';}):["#4f8ef7",'#22c55e'];chartRegistry['kpi-chart-monthly']=new ApexCharts(mcEl,{chart:{type:'area',height:190,toolbar:{show:false},zoom:{enabled:false},fontFamily:'inherit',background:'transparent',stacked:true},theme:{mode:isDark()?'dark':'light'},series:seriesData,xaxis:{categories:monthly.map(function(m){return m.month;}),labels:{style:{fontSize:'10px'}},axisBorder:{show:false},axisTicks:{show:false}},yaxis:{labels:{style:{fontSize:'10px'}},min:0},colors:seriesColors,fill:{type:'gradient',gradient:{opacityFrom:0.45,opacityTo:0.05}},stroke:{curve:'smooth',width:2},markers:{size:0},tooltip:{shared:true,intersect:false},legend:{position:'top',fontSize:'10px'},grid:{borderColor:gc(),strokeDashArray:3},dataLabels:{enabled:false}});chartRegistry['kpi-chart-monthly'].render();}else if(mcEl){mcEl.innerHTML='<div style="text-align:center;padding:60px;color:var(--text2);font-size:12px">No monthly data yet</div>';}
     dc('kpi-chart-status');
     var scEl=document.getElementById('kpi-chart-status');
     if(scEl){var sK=Object.keys(byStatus),sV=Object.values(byStatus);var sCM={Pending:'#f59e0b',Confirmed:'#4f8ef7',Booked:'#06b6d4',Stuffed:'#8b5cf6',Sailing:'#3b82f6',Arrived:'#22c55e',Closed:'#6b7280',Canceled:'#ef4444'};if(sK.filter(function(k){return byStatus[k]>0;}).length){chartRegistry['kpi-chart-status']=new ApexCharts(scEl,{chart:{type:'donut',height:190,toolbar:{show:false},fontFamily:'inherit',background:'transparent'},theme:{mode:isDark()?'dark':'light'},series:sV,labels:sK,colors:sK.map(function(s){return sCM[s]||'#aaa';}),plotOptions:{pie:{donut:{size:'60%',labels:{show:true,total:{show:true,label:'Total',fontSize:'11px',formatter:function(w){return w.globals.seriesTotals.reduce(function(a,b){return a+b;},0);}}}}}},legend:{position:'right',fontSize:'10px'},dataLabels:{enabled:false},tooltip:{y:{formatter:function(v,o){var t=o.globals.seriesTotals.reduce(function(a,b){return a+b;},0);return v+' ('+Math.round(v/t*100)+'%)';}}}});chartRegistry['kpi-chart-status'].render();}else{scEl.innerHTML='<div style="text-align:center;padding:50px;color:var(--text2);font-size:12px">No status data</div>';}}
@@ -2909,9 +2934,9 @@ async function loadAnalytics(){
     bl('kpi-bar-incoterm',
       Object.entries(incoData).map(function(e){return {name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}),
       'name','count','#a855f7');
-    dc('kpi-chart-incoterm');
-    var incoEl=document.getElementById('kpi-chart-incoterm');
-    if(incoEl){var inD=k.by_incoterm||{};var iK=Object.keys(inD).filter(function(ik){return inD[ik]>0;});if(iK.length){chartRegistry['kpi-chart-incoterm']=new ApexCharts(incoEl,{chart:{type:'donut',height:180,toolbar:{show:false},fontFamily:'inherit',background:'transparent'},theme:{mode:isDark()?'dark':'light'},series:iK.map(function(ik){return inD[ik];}),labels:iK,colors:['#a855f7','#6c63ff','#4f8ef7','#22c55e','#f59e0b','#ef4444','#06b6d4','#f97316'],plotOptions:{pie:{donut:{size:'60%'}}},legend:{position:'right',fontSize:'10px'},dataLabels:{enabled:false}});chartRegistry['kpi-chart-incoterm'].render();}else{incoEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No incoterm data yet</div>';}}
+    dc('kpi-chart-incoterm-donut');
+    var incoEl=document.getElementById('kpi-chart-incoterm-donut');
+    if(incoEl){var inD=k.by_incoterm||{};var iK=Object.keys(inD).filter(function(ik){return inD[ik]>0;});if(iK.length){chartRegistry['kpi-chart-incoterm-donut']=new ApexCharts(incoEl,{chart:{type:'donut',height:180,toolbar:{show:false},fontFamily:'inherit',background:'transparent'},theme:{mode:isDark()?'dark':'light'},series:iK.map(function(ik){return inD[ik];}),labels:iK,colors:['#a855f7','#6c63ff','#4f8ef7','#22c55e','#f59e0b','#ef4444','#06b6d4','#f97316'],plotOptions:{pie:{donut:{size:'65%',labels:{show:true,total:{show:true,showAlways:true,label:'Total',fontSize:'11px',color:tc(),formatter:function(w){return w.globals.seriesTotals.reduce(function(a,b){return a+b;},0);}}}}}},legend:{position:'right',fontSize:'10px'},dataLabels:{enabled:false}});chartRegistry['kpi-chart-incoterm'].render();}else{incoEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No incoterm data yet</div>';}}
     
     var odEl=document.getElementById('kpi-overdue');
     if(odEl){var now=new Date();now.setHours(0,0,0,0);var ships=(typeof allShipments!=='undefined')?allShipments:[];
@@ -4528,6 +4553,7 @@ function renderActivityFeed(){
       function closeCompareModal(){
         document.getElementById('modal-compare-backdrop').style.display='none';
         document.body.style.overflow='';
+        ['cmp-chart-monthly','cmp-radar-chart','cmp-donut-mode-a','cmp-donut-mode-b'].forEach(destroyChart);
       }
       function openCompareModal(){
         document.getElementById('modal-compare-backdrop').style.display='block';
@@ -4592,7 +4618,10 @@ function renderActivityFeed(){
         destroyChart('cmp-chart-monthly');
         var ctx=document.getElementById('cmp-chart-monthly');
         if(ctx&&allMonths.length){
-          chartRegistry['cmp-chart-monthly']=new ApexCharts(ctx,{chart:{type:'bar',height:130,toolbar:{show:false},fontFamily:'inherit',background:'transparent',animations:{enabled:false}},theme:{mode:isDark()?'dark':'light'},series:[{name:aFrom||'Period A',data:allMonths.map(function(m){return aMap[m]||0;})},{name:bFrom||'Period B',data:allMonths.map(function(m){return bMap[m]||0;})}],xaxis:{categories:allMonths,labels:{style:{fontSize:'9px'}},axisBorder:{show:false},axisTicks:{show:false}},yaxis:{labels:{style:{fontSize:'9px'}},min:0},colors:['#94a3b8','#3b82f6'],plotOptions:{bar:{columnWidth:'60%',borderRadius:3}},legend:{position:'top',fontSize:'10px'},dataLabels:{enabled:false},grid:{borderColor:isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)',strokeDashArray:3},tooltip:{shared:true,intersect:false}});chartRegistry['cmp-chart-monthly'].render();
+          var aExpMap={},aImpMap={},bExpMap={},bImpMap={};
+          aM.forEach(function(m){aExpMap[m.month]=m.export_count||0;aImpMap[m.month]=m.import_count||0;});
+          bM.forEach(function(m){bExpMap[m.month]=m.export_count||0;bImpMap[m.month]=m.import_count||0;});
+          chartRegistry['cmp-chart-monthly']=new ApexCharts(ctx,{chart:{type:'bar',height:160,toolbar:{show:false},fontFamily:'inherit',background:'transparent',animations:{enabled:false}},theme:{mode:isDark()?'dark':'light'},series:[{name:'A Export',data:allMonths.map(function(m){return aExpMap[m]||0;})},{name:'A Import',data:allMonths.map(function(m){return aImpMap[m]||0;})},{name:'B Export',data:allMonths.map(function(m){return bExpMap[m]||0;})},{name:'B Import',data:allMonths.map(function(m){return bImpMap[m]||0;})}],xaxis:{categories:allMonths,labels:{style:{fontSize:'9px'}},axisBorder:{show:false},axisTicks:{show:false}},yaxis:{labels:{style:{fontSize:'9px'}},min:0},colors:['#94a3b8','#64748b','#3b82f6','#06b6d4'],plotOptions:{bar:{columnWidth:'55%',borderRadius:2,grouped:true}},legend:{position:'top',fontSize:'10px'},dataLabels:{enabled:false},grid:{borderColor:isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)',strokeDashArray:3},tooltip:{shared:true,intersect:false}});chartRegistry['cmp-chart-monthly'].render();
         }
 
         /* client comparison table */
@@ -4681,6 +4710,59 @@ function renderActivityFeed(){
         var _sB=(allShipments||[]).filter(function(s){var d=(s.etd||s.eta||s.created_at||'').substring(0,7);return d>=bFrom&&d<=bTo;});
         cmpCarriers(_sA,'cmp-carriers-a','#94a3b8');
         cmpCarriers(_sB,'cmp-carriers-b','#3b82f6');
+
+        /* ── Radar: Period A vs B ── */
+        destroyChart('cmp-radar-chart');
+        var radarEl=document.getElementById('cmp-radar-chart');
+        if(radarEl){
+          var rA=a,rB=b;
+          var radarMetrics=['Shipments','TEU','Export','Import','Overdue'];
+          var radarA=[rA.total||0,rA.total_teu||0,(rA.by_direction||{}).Export||0,(rA.by_direction||{}).Import||0,rA.overdue||0];
+          var radarB=[rB.total||0,rB.total_teu||0,(rB.by_direction||{}).Export||0,(rB.by_direction||{}).Import||0,rB.overdue||0];
+          // Normalize to 0-100 scale per metric
+          var maxR=radarMetrics.map(function(_,i){return Math.max(radarA[i],radarB[i],1);});
+          var normA=radarA.map(function(v,i){return Math.round(v/maxR[i]*100);});
+          var normB=radarB.map(function(v,i){return Math.round(v/maxR[i]*100);});
+          chartRegistry['cmp-radar-chart']=new ApexCharts(radarEl,{
+            chart:{type:'radar',height:260,toolbar:{show:false},fontFamily:'inherit',background:'transparent'},
+            theme:{mode:isDark()?'dark':'light'},
+            series:[
+              {name:'Period A',data:normA},
+              {name:'Period B',data:normB}
+            ],
+            xaxis:{categories:radarMetrics.map(function(m,i){return m+' ('+radarA[i]+' vs '+radarB[i]+')';})},
+            colors:['#94a3b8','#3b82f6'],
+            fill:{opacity:0.18},
+            stroke:{width:2},
+            markers:{size:4},
+            legend:{position:'top',fontSize:'11px'},
+            dataLabels:{enabled:false},
+            plotOptions:{radar:{polygons:{strokeColors:isDark()?'rgba(42,58,92,.5)':'rgba(208,216,240,.7)',fill:{colors:isDark()?['#1e293b','#0f172a']:['#f8fafc','#f1f5f9']}}}}
+          });
+          chartRegistry['cmp-radar-chart'].render();
+        }
+
+        /* ── Mode Donuts ── */
+        function renderModeDonut(elId,modeMap,color){
+          destroyChart(elId);
+          var el=document.getElementById(elId); if(!el)return;
+          var keys=Object.keys(modeMap).filter(function(k){return(modeMap[k]||0)>0;});
+          if(!keys.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No data</div>';return;}
+          var mC={Ocean:'#4f8ef7',Road:'#f97316',Air:'#06b6d4',Flexi:'#a855f7'};
+          chartRegistry[elId]=new ApexCharts(el,{
+            chart:{type:'donut',height:180,toolbar:{show:false},fontFamily:'inherit',background:'transparent'},
+            theme:{mode:isDark()?'dark':'light'},
+            series:keys.map(function(k){return modeMap[k]||0;}),
+            labels:keys,
+            colors:keys.map(function(k){return mC[k]||color||'#a78bfa';}),
+            plotOptions:{pie:{donut:{size:'62%',labels:{show:true,total:{show:true,showAlways:true,label:'Total',fontSize:'11px',color:isDark()?'#8892b0':'#5a6a8a',formatter:function(w){return w.globals.seriesTotals.reduce(function(a,b){return a+b;},0);}}}}}},
+            legend:{position:'bottom',fontSize:'10px'},
+            dataLabels:{enabled:false}
+          });
+          chartRegistry[elId].render();
+        }
+        renderModeDonut('cmp-donut-mode-a',a.by_mode||{},'#94a3b8');
+        renderModeDonut('cmp-donut-mode-b',b.by_mode||{},'#3b82f6');
       }
 
       /* ── Export Compare PDF ── */
@@ -5091,6 +5173,24 @@ document.addEventListener('DOMContentLoaded', function(){
     const orig=el.onclick;
     el.addEventListener('click',()=>setTimeout(_showKPIRange,100));
   });
+
+  // ── Live refresh: reload KPI every 60s, update badge ──
+  var _kpiLastUpdate=Date.now();
+  function _updateLiveBadge(){
+    var el=document.getElementById('kpi-live-label');
+    if(!el)return;
+    var secs=Math.round((Date.now()-_kpiLastUpdate)/1000);
+    el.textContent=secs<10?'Live':secs<60?'Updated '+secs+'s ago':'Updated '+(Math.floor(secs/60))+'m ago';
+  }
+  setInterval(function(){
+    var pg=document.getElementById('page-analytics');
+    if(pg&&(pg.style.display==='block'||pg.classList.contains('active')||getComputedStyle(pg).display!=='none')){
+      _kpiLastUpdate=Date.now();
+      if(typeof loadAnalytics==='function'){window._analyticsLoaded=false;loadAnalytics();}
+      var el=document.getElementById('kpi-live-label');if(el)el.textContent='Live';
+    }
+  },60000);
+  setInterval(_updateLiveBadge,5000);
 });
 
 
