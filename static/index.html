@@ -4609,19 +4609,23 @@ function renderActivityFeed(){
           chip('TEU',        b.total_teu||0,                   a.total_teu||0)+
           chip('Overdue',    b.overdue||0,                     a.overdue||0);
 
-        /* monthly chart */
+        /* monthly chart — stacked area by mode, matching KPI page style */
         var aM=a.monthly||[],bM=b.monthly||[];
         var allMonths=Array.from(new Set(aM.map(function(m){return m.month;}).concat(bM.map(function(m){return m.month;})))).sort();
-        var aMap={},bMap={};
-        aM.forEach(function(m){aMap[m.month]=(m.import_count||0)+(m.export_count||0);});
-        bM.forEach(function(m){bMap[m.month]=(m.import_count||0)+(m.export_count||0);});
         destroyChart('cmp-chart-monthly');
         var ctx=document.getElementById('cmp-chart-monthly');
         if(ctx&&allMonths.length){
-          var aExpMap={},aImpMap={},bExpMap={},bImpMap={};
-          aM.forEach(function(m){aExpMap[m.month]=m.export_count||0;aImpMap[m.month]=m.import_count||0;});
-          bM.forEach(function(m){bExpMap[m.month]=m.export_count||0;bImpMap[m.month]=m.import_count||0;});
-          chartRegistry['cmp-chart-monthly']=new ApexCharts(ctx,{chart:{type:'bar',height:160,toolbar:{show:false},fontFamily:'inherit',background:'transparent',animations:{enabled:false}},theme:{mode:isDark()?'dark':'light'},series:[{name:'A Export',data:allMonths.map(function(m){return aExpMap[m]||0;})},{name:'A Import',data:allMonths.map(function(m){return aImpMap[m]||0;})},{name:'B Export',data:allMonths.map(function(m){return bExpMap[m]||0;})},{name:'B Import',data:allMonths.map(function(m){return bImpMap[m]||0;})}],xaxis:{categories:allMonths,labels:{style:{fontSize:'9px'}},axisBorder:{show:false},axisTicks:{show:false}},yaxis:{labels:{style:{fontSize:'9px'}},min:0},colors:['#94a3b8','#64748b','#3b82f6','#06b6d4'],plotOptions:{bar:{columnWidth:'55%',borderRadius:2,grouped:true}},legend:{position:'top',fontSize:'10px'},dataLabels:{enabled:false},grid:{borderColor:isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)',strokeDashArray:3},tooltip:{shared:true,intersect:false}});chartRegistry['cmp-chart-monthly'].render();
+          var modeKeys=['Ocean','Road','Air','Flexi'];
+          var modeColMap={Ocean:'#4f8ef7',Road:'#f97316',Air:'#06b6d4',Flexi:'#a855f7'};
+          function buildMM(ships,months){var mm={};modeKeys.forEach(function(k){mm[k]={};months.forEach(function(mo){mm[k][mo]=0;});});(ships||[]).forEach(function(s){var md=s.mode||'',mo=(s.etd||s.eta||s.created_at||'').substring(0,7);if(!mo||months.indexOf(mo)<0)return;var k=modeKeys.find(function(k){return md.toLowerCase().includes(k.toLowerCase());});if(k)mm[k][mo]++;});return mm;}
+          var mmA=buildMM(_sA,allMonths),mmB=buildMM(_sB,allMonths);
+          var aS=modeKeys.filter(function(k){return allMonths.some(function(m){return mmA[k][m]>0;});}).map(function(k){return{name:'A·'+k,data:allMonths.map(function(m){return mmA[k][m]||0;})};});
+          var bS=modeKeys.filter(function(k){return allMonths.some(function(m){return mmB[k][m]>0;});}).map(function(k){return{name:'B·'+k,data:allMonths.map(function(m){return mmB[k][m]||0;})};});
+          var seriesAll=aS.concat(bS);
+          if(!seriesAll.length){var aEM={},aIM={},bEM={},bIM={};aM.forEach(function(m){aEM[m.month]=m.export_count||0;aIM[m.month]=m.import_count||0;});bM.forEach(function(m){bEM[m.month]=m.export_count||0;bIM[m.month]=m.import_count||0;});seriesAll=[{name:'A Export',data:allMonths.map(function(m){return aEM[m]||0;})},{name:'A Import',data:allMonths.map(function(m){return aIM[m]||0;})},{name:'B Export',data:allMonths.map(function(m){return bEM[m]||0;})},{name:'B Import',data:allMonths.map(function(m){return bIM[m]||0;})}];}
+          var seriesColors=seriesAll.map(function(s){var mk=s.name.replace(/^[AB]·/,'');return modeColMap[mk]||(s.name.startsWith('B')?'#3b82f6':'#94a3b8');});
+          chartRegistry['cmp-chart-monthly']=new ApexCharts(ctx,{chart:{type:'area',height:190,toolbar:{show:false},zoom:{enabled:false},fontFamily:'inherit',background:'transparent',stacked:true,animations:{enabled:false}},theme:{mode:isDark()?'dark':'light'},series:seriesAll,xaxis:{categories:allMonths,labels:{style:{fontSize:'9px'}},axisBorder:{show:false},axisTicks:{show:false}},yaxis:{labels:{style:{fontSize:'9px'}},min:0},colors:seriesColors,fill:{type:'gradient',gradient:{opacityFrom:0.4,opacityTo:0.05}},stroke:{curve:'smooth',width:2},markers:{size:0},tooltip:{shared:true,intersect:false},legend:{position:'top',fontSize:'10px'},grid:{borderColor:isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)',strokeDashArray:3},dataLabels:{enabled:false}});
+          chartRegistry['cmp-chart-monthly'].render();
         }
 
         /* client comparison table */
