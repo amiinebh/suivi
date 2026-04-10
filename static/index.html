@@ -4609,54 +4609,64 @@ function renderActivityFeed(){
           chip('TEU',        b.total_teu||0,                   a.total_teu||0)+
           chip('Overdue',    b.overdue||0,                     a.overdue||0);
 
-        /* monthly chart — 2-panel split: Period A (muted) | Period B (vivid) — each with own date range */
+        /* monthly chart — Export panel | Import panel, month-indexed x-axis */
         var aM=a.monthly||[],bM=b.monthly||[];
-        // Each period uses ONLY its own months
-        var aMonths=aM.map(function(m){return m.month;}).sort();
-        var bMonths=bM.map(function(m){return m.month;}).sort();
         ['cmp-chart-monthly','cmp-chart-monthly-b'].forEach(destroyChart);
-        var cmpMonthlyWrap=document.getElementById('cmp-chart-monthly');
-        if(cmpMonthlyWrap){
-          var cmpBEl=document.getElementById('cmp-chart-monthly-b');
-          if(!cmpBEl){cmpBEl=document.createElement('div');cmpBEl.id='cmp-chart-monthly-b';
-            cmpMonthlyWrap.parentNode.style.display='grid';
-            cmpMonthlyWrap.parentNode.style.gridTemplateColumns='1fr 1fr';
-            cmpMonthlyWrap.parentNode.style.gap='12px';
-            cmpMonthlyWrap.parentNode.appendChild(cmpBEl);}
-          var modeKeys=['Ocean','Road','Air','Flexi'];
-          var modeColA={Ocean:'#93b4d4',Road:'#d4a574',Air:'#74bcd4',Flexi:'#c4a8d4'};
-          var modeColB={Ocean:'#4f8ef7',Road:'#f97316',Air:'#06b6d4',Flexi:'#a855f7'};
-          function buildMM2(ships,months){var mm={};modeKeys.forEach(function(k){mm[k]={};months.forEach(function(mo){mm[k][mo]=0;});});(ships||[]).forEach(function(s){var md=s.mode||'',mo=(s.etd||s.eta||s.created_at||'').substring(0,7);if(!mo||months.indexOf(mo)<0)return;var k=modeKeys.find(function(k){return md.toLowerCase().includes(k.toLowerCase());});if(k)mm[k][mo]++;});return mm;}
-          var mmA=buildMM2(_sA,aMonths),mmB=buildMM2(_sB,bMonths);
-          function buildSeries(mm,months,mData,colMap,label){
-            var s=modeKeys.filter(function(k){return months.some(function(m){return mm[k][m]>0;});}).map(function(k){return{name:k,data:months.map(function(m){return mm[k][m]||0;})};});
-            if(!s.length){var eM={},iM={};(mData||[]).forEach(function(m){eM[m.month]=m.export_count||0;iM[m.month]=m.import_count||0;});s=[{name:'Export',data:months.map(function(m){return eM[m]||0;})},{name:'Import',data:months.map(function(m){return iM[m]||0;})}];}
-            return s;
+        var cmpExpEl=document.getElementById('cmp-chart-monthly');
+        if(cmpExpEl){
+          // Ensure sibling Import panel exists
+          var cmpImpEl=document.getElementById('cmp-chart-monthly-b');
+          if(!cmpImpEl){
+            cmpImpEl=document.createElement('div');
+            cmpImpEl.id='cmp-chart-monthly-b';
+            var wrap=cmpExpEl.parentNode;
+            wrap.style.display='grid';
+            wrap.style.gridTemplateColumns='1fr 1fr';
+            wrap.style.gap='12px';
+            wrap.appendChild(cmpImpEl);
           }
-          function areaConfig(series,months,colMap,title,subtitle){
-            var keys=series.map(function(s){return s.name;});
-            var cols=keys.map(function(k){return colMap[k]||'#a78bfa';});
-            return {chart:{type:'area',height:190,toolbar:{show:false},zoom:{enabled:false},fontFamily:'inherit',background:'transparent',stacked:true,animations:{enabled:false}},
-              theme:{mode:isDark()?'dark':'light'},series:series,
-              xaxis:{categories:months,labels:{style:{fontSize:'9px'}},axisBorder:{show:false},axisTicks:{show:false}},
-              yaxis:{labels:{style:{fontSize:'9px'}},min:0},colors:cols,
-              fill:{type:'gradient',gradient:{opacityFrom:0.45,opacityTo:0.05}},
-              stroke:{curve:'smooth',width:2},markers:{size:0},
-              tooltip:{shared:true,intersect:false},
+          // Build month-indexed categories: M1, M2 … Mn (longest period sets the count)
+          var maxLen=Math.max(aM.length,bM.length);
+          var mIdx=Array.from({length:maxLen},function(_,i){return 'M'+(i+1);});
+          // Series: export counts per period
+          var aExp=aM.map(function(m){return m.export_count||0;});
+          var bExp=bM.map(function(m){return m.export_count||0;});
+          var aImp=aM.map(function(m){return m.import_count||0;});
+          var bImp=bM.map(function(m){return m.import_count||0;});
+          // Pad shorter array with nulls so lines stop naturally
+          function pad(arr,len){var r=arr.slice();while(r.length<len)r.push(null);return r;}
+          var aExpP=pad(aExp,maxLen),bExpP=pad(bExp,maxLen);
+          var aImpP=pad(aImp,maxLen),bImpP=pad(bImp,maxLen);
+          var labelA=(aFrom||'Period A')+' → '+(aTo||'');
+          var labelB=(bFrom||'Period B')+' → '+(bTo||'');
+          function lineConfig(s1,s2,title){
+            return {
+              chart:{type:'area',height:190,toolbar:{show:false},zoom:{enabled:false},fontFamily:'inherit',background:'transparent',animations:{enabled:false}},
+              theme:{mode:isDark()?'dark':'light'},
+              series:[
+                {name:'Period A ('+labelA+')',data:s1},
+                {name:'Period B ('+labelB+')',data:s2}
+              ],
+              xaxis:{categories:mIdx,labels:{style:{fontSize:'9px'}},axisBorder:{show:false},axisTicks:{show:false}},
+              yaxis:{labels:{style:{fontSize:'9px'}},min:0},
+              colors:['#93b4d4','#4f8ef7'],
+              fill:{type:'gradient',gradient:{opacityFrom:0.35,opacityTo:0.04}},
+              stroke:{curve:'smooth',width:2},
+              markers:{size:0},
+              tooltip:{shared:true,intersect:false,x:{formatter:function(val,opts){
+                var iA=aM[opts.dataPointIndex],iB=bM[opts.dataPointIndex];
+                return (iA?iA.month:'—')+' vs '+(iB?iB.month:'—');
+              }}},
               title:{text:title,style:{fontSize:'11px',fontWeight:'600',color:isDark()?'#8892b0':'#5a6a8a'}},
-              subtitle:{text:subtitle,style:{fontSize:'10px',color:isDark()?'#64748b':'#94a3b8'}},
               legend:{position:'top',fontSize:'10px'},
               grid:{borderColor:isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240,.6)',strokeDashArray:3},
-              dataLabels:{enabled:false}};
+              dataLabels:{enabled:false}
+            };
           }
-          var sA=buildSeries(mmA,aMonths,aM,modeColA,'A');
-          var sB=buildSeries(mmB,bMonths,bM,modeColB,'B');
-          var labelA=(aFrom||'')+' → '+(aTo||'');
-          var labelB=(bFrom||'')+' → '+(bTo||'');
-          if(aMonths.length){chartRegistry['cmp-chart-monthly']=new ApexCharts(cmpMonthlyWrap,areaConfig(sA,aMonths,modeColA,'Period A (baseline)',labelA));chartRegistry['cmp-chart-monthly'].render();}
-          else{cmpMonthlyWrap.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No data for Period A</div>';}
-          if(bMonths.length){chartRegistry['cmp-chart-monthly-b']=new ApexCharts(cmpBEl,areaConfig(sB,bMonths,modeColB,'Period B (current)',labelB));chartRegistry['cmp-chart-monthly-b'].render();}
-          else{cmpBEl.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2);font-size:12px">No data for Period B</div>';}
+          chartRegistry['cmp-chart-monthly']=new ApexCharts(cmpExpEl,lineConfig(aExpP,bExpP,'↑ Export — Period A vs B'));
+          chartRegistry['cmp-chart-monthly'].render();
+          chartRegistry['cmp-chart-monthly-b']=new ApexCharts(cmpImpEl,lineConfig(aImpP,bImpP,'↓ Import — Period A vs B'));
+          chartRegistry['cmp-chart-monthly-b'].render();
         }
 
         /* client comparison table */
