@@ -4861,22 +4861,45 @@ function renderActivityFeed(){
             +'<div style="display:inline-block;background:'+col+';color:'+tc+';font-size:12px;font-weight:600;padding:2px 10px;border-radius:8px;margin-top:4px">'+arr+' '+d.pct+'</div></div>';
         }
 
-        /* monthly inline bars */
+        /* monthly PDF — SVG line charts: Export | Import, Period A vs B */
         var aM=a.monthly||[],bM=b.monthly||[];
-        var allMo=Array.from(new Set(aM.map(function(m){return m.month;}).concat(bM.map(function(m){return m.month;})))).sort();
-        var aMp={},bMp={};
-        aM.forEach(function(m){aMp[m.month]=(m.import_count||0)+(m.export_count||0);});
-        bM.forEach(function(m){bMp[m.month]=(m.import_count||0)+(m.export_count||0);});
-        var maxMo=Math.max.apply(null,allMo.map(function(m){return Math.max(aMp[m]||0,bMp[m]||0);}).concat([1]));
-        var monthBarsH=allMo.map(function(m){
-          var av=aMp[m]||0,bv=bMp[m]||0;
-          var ha=Math.max(Math.round(av/maxMo*80),av?4:0),hb=Math.max(Math.round(bv/maxMo*80),bv?4:0);
-          return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">'
-            +'<div style="display:flex;align-items:flex-end;gap:2px;height:86px">'
-            +'<div style="width:14px;background:#94a3b8;border-radius:4px 4px 0 0;height:'+ha+'px"></div>'
-            +'<div style="width:14px;background:#3b82f6;border-radius:4px 4px 0 0;height:'+hb+'px"></div>'
-            +'</div><div style="font-size:9px;color:#94a3b8;white-space:nowrap">'+m+'</div></div>';
-        }).join('');
+        var maxLen=Math.max(aM.length,bM.length)||1;
+        function svgLineChart(aVals,bVals,label,w,h){
+          var pts=Math.max(aVals.length,bVals.length);if(!pts)return '';
+          var maxV=Math.max.apply(null,aVals.concat(bVals).concat([1]));
+          var pl=32,pr=12,pt=20,pb=20,cw=w-pl-pr,ch=h-pt-pb;
+          function px(i){return pl+Math.round(i/(pts-1||1)*cw);}
+          function py(v){return pt+Math.round((1-v/maxV)*ch);}
+          function uid(){return 'g'+Math.random().toString(36).slice(2,8);}
+          function series(vals,col){
+            if(!vals.length)return '';
+            var id=uid();
+            var area='M'+px(0)+','+py(vals[0])+vals.map(function(v,i){return' L'+px(i)+','+py(v);}).join('')+' L'+px(vals.length-1)+','+(pt+ch)+' L'+px(0)+','+(pt+ch)+' Z';
+            var line=vals.map(function(v,i){return(i?'L':'M')+px(i)+','+py(v);}).join(' ');
+            return '<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="'+col+'" stop-opacity=".25"/><stop offset="100%" stop-color="'+col+'" stop-opacity=".02"/></linearGradient></defs>'
+              +'<path d="'+area+'" fill="url(#'+id+')" />'
+              +'<path d="'+line+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+          }
+          var grids=[0,.25,.5,.75,1].map(function(t){
+            var y=pt+Math.round(t*ch),v=Math.round(maxV*(1-t));
+            return '<line x1="'+pl+'" y1="'+y+'" x2="'+(pl+cw)+'" y2="'+y+'" stroke="#e2e8f0" stroke-dasharray="3 3" stroke-width="1"/>'
+              +'<text x="'+(pl-4)+'" y="'+(y+4)+'" text-anchor="end" font-size="8" fill="#94a3b8">'+v+'</text>';
+          }).join('');
+          var step=Math.max(1,Math.floor(pts/6));
+          var xlbls=Array.from({length:pts},function(_,i){return i;})
+            .filter(function(i){return i%step===0||i===pts-1;})
+            .map(function(i){return '<text x="'+px(i)+'" y="'+(pt+ch+14)+'" text-anchor="middle" font-size="8" fill="#94a3b8">M'+(i+1)+'</text>';}).join('');
+          return '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'" style="display:block">'
+            +'<text x="'+pl+'" y="13" font-size="11" font-weight="600" fill="#334155">'+label+'</text>'
+            +grids+series(aVals,'#10b981')+series(bVals,'#f97316')+xlbls+'</svg>';
+        }
+        function pad0(arr,n){var r=arr.slice();while(r.length<n)r.push(0);return r;}
+        var aExpV=pad0(aM.map(function(m){return m.export_count||0;}),maxLen);
+        var bExpV=pad0(bM.map(function(m){return m.export_count||0;}),maxLen);
+        var aImpV=pad0(aM.map(function(m){return m.import_count||0;}),maxLen);
+        var bImpV=pad0(bM.map(function(m){return m.import_count||0;}),maxLen);
+        var svgExp=svgLineChart(aExpV,bExpV,'&#8593; Export',340,140);
+        var svgImp=svgLineChart(aImpV,bImpV,'&#8595; Import',340,140);
 
         var css='*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f8fafc;-webkit-print-color-adjust:exact;print-color-adjust:exact;}.page{max-width:1100px;margin:0 auto;padding:28px 24px;}'
           +'.hero{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 50%,#2563eb 100%);color:#fff;border-radius:8px;padding:28px 32px;margin-bottom:20px;}'
@@ -4954,10 +4977,14 @@ function renderActivityFeed(){
           +'<div style="font-size:12px;color:#64748b;margin-top:2px">'+b.total+' shipments · '+(b.total_teu||0)+' TEU</div></div></div>'
           /* monthly */
           +'<div class="section"><div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:10px">&#128200; Monthly Volume</div>'
-          +'<div style="display:flex;gap:16px;font-size:11px;color:#64748b;margin-bottom:10px">'
-          +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:4px"></span>Period A (baseline)</span>'
-          +'<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:4px"></span>Period B (current)</span></div>'
-          +'<div class="month-row">'+monthBarsH+'</div></div>'
+          +'<div style="display:flex;gap:8px;font-size:10px;color:#64748b;margin-bottom:12px">'
+          +'<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981"></span>Period A</span>'
+          +'<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f97316"></span>Period B</span>'
+          +'</div>'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'
+          +(svgExp?'<div>'+svgExp+'</div>':'<div style="color:#94a3b8;font-size:11px;padding:20px 0">No export data</div>')
+          +(svgImp?'<div>'+svgImp+'</div>':'<div style="color:#94a3b8;font-size:11px;padding:20px 0">No import data</div>')
+          +'</div></div>'
           /* client comparison table */
           +'<div class="section"><div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:14px">&#128100; Client Comparison</div>'
           +'<table><thead><tr><th>Client</th><th>Period A</th><th>Period B</th><th style="text-align:center">Δ Shp</th><th style="text-align:right">A TEU</th><th style="text-align:right">B TEU</th><th style="text-align:center">Δ TEU</th></tr></thead>'
