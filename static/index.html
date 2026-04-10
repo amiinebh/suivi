@@ -1003,10 +1003,7 @@ button[onclick*="closeEmailModal"]:hover{
 <div id="toast-wrap" style="position:fixed;bottom:76px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none"></div>
 <div class="version-tag">v27</div>
 
-<!-- FAB for mobile -->
-<button class="btn btn-fab" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
-  <i class="ph ph-plus" style="font-size:22px;line-height:1;display:flex"></i>
-</button>
+
 
 <div class="app">
 <!-- ═══════ SIDEBAR (desktop) ═══════ -->
@@ -1532,12 +1529,6 @@ button[onclick*="closeEmailModal"]:hover{
             <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-carriers-road','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers-road','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-carriers-road','imp')">&#8595; Imp</button></div>
           </div><div id="kpi-bar-carriers-road"></div>
         </div></div>
-        <div class="card"><div class="card__body">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-map-pin" style="color:#ef4444"></i> Top Destinations (POD)</div>
-            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-pod','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pod','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pod','imp')">&#8595; Imp</button></div>
-          </div><div id="kpi-bar-pod"></div>
-        </div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div class="card"><div class="card__body">
@@ -1561,7 +1552,12 @@ button[onclick*="closeEmailModal"]:hover{
           </div>
           <div id="kpi-bar-incoterm" style="min-height:120px"></div>
         </div></div>
-        
+        <div class="card"><div class="card__body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-map-pin" style="color:#ef4444"></i> Top Destinations (POD)</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-pod','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pod','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-pod','imp')">&#8595; Imp</button></div>
+          </div><div id="kpi-bar-pod"></div>
+        </div></div>
       </div>
       <div class="card" style="margin-bottom:20px"><div class="card__body">
         <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-warning" style="color:#ef4444"></i> Overdue Shipments</div>
@@ -1803,9 +1799,6 @@ button[onclick*="closeEmailModal"]:hover{
 </div><!-- /app -->
 
 <!-- ═══════ BOTTOM NAV (mobile) ═══════ -->
-<button class="btn-fab" id="fab-new" onclick="openModal('modal-add');editId=null;resetForm()" title="New Shipment">
-  <i class="ph ph-plus" style="font-size:22px;line-height:1;display:flex"></i>
-</button>
 
 <nav class="bottom-nav">
   <div class="bottom-nav-items">
