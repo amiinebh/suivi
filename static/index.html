@@ -94,7 +94,7 @@ html,body{height:100%;font-family:var(--font);font-size:var(--fs-base);font-weig
 /* ══ SIDEBAR ══ */
 .sidebar{
   width:var(--sidebar-w);
-  background:#ffffff;
+  background:var(--bg);
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
   transition:width var(--t);
@@ -151,7 +151,7 @@ html,body{height:100%;font-family:var(--font);font-size:var(--fs-base);font-weig
 /* ══ TOPBAR ══ */
 .topbar{
   height:var(--topbar-h);display:flex;align-items:center;gap:10px;padding:0 20px;
-  background:#ffffff;border-bottom:1px solid var(--border);
+  background:var(--bg);border-bottom:1px solid var(--border);
   flex-shrink:0;z-index:200;position:sticky;top:0;
 }
 .topbar-title{font-size:14px;font-weight:600;color:var(--text1);letter-spacing:-.2px;white-space:nowrap;}
@@ -1055,10 +1055,6 @@ button[onclick*="closeEmailModal"]:hover{
   </div>
   <div class="sidebar-bottom" style="padding:8px 6px">
     <div style="display:flex;align-items:center;justify-content:center">
-      <button class="btn btn-ghost btn-icon btn-sm" onclick="toggleTheme()" title="Toggle theme" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:var(--radius);width:100%">
-        <i class="ph ph-moon" id="theme-icon-sidebar" style="font-size:15px"></i>
-        <span class="nav-label" style="font-size:12px;margin-left:6px" id="theme-label-sidebar">Light Mode</span>
-      </button>
     </div>
   </div>
 </nav>
@@ -1136,9 +1132,7 @@ button[onclick*="closeEmailModal"]:hover{
           <button class="btn btn-ghost btn-sm" onclick="showPage('alerts',null);setBottomNav('alerts')">
             <i class="ph ph-bell"></i> <span id="dash-alert-hint">Alerts</span>
           </button>
-          <button class="btn btn-primary btn-sm" onclick="openModal('modal-add');editId=null;resetForm()">
-            <i class="ph ph-plus"></i> New Shipment
-          </button>
+
         </div>
       </div>
 
@@ -3092,6 +3086,7 @@ function doLogout(){
   if(ls){ ls.style.display = "flex"; }
 }
 
+(function(){try{var savedTheme=localStorage.getItem('ft_theme')||'light';if(savedTheme==='dark'){document.body.classList.add('dark');document.documentElement.setAttribute('data-theme','dark');}}catch(e){}})();
 window.addEventListener("DOMContentLoaded", () => {
   // Restore theme
   var savedTheme=localStorage.getItem('ft_theme')||'light';
