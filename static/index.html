@@ -1426,7 +1426,7 @@ button[onclick*="closeEmailModal"]:hover{
           <div style="position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 22px;box-shadow:rgba(0,0,0,0.06) 0 -1px 0 0 inset;background:var(--bg)">
             <div style="font-size:14px;font-weight:600;color:var(--text1)"><i class="ph ph-scales" style="color:var(--accent)"></i> Comparison Results</div>
             <div style="display:flex;gap:8px">
-              <button class="btn btn-ghost btn-sm" onclick="exportCompareReport()" style="font-size:11px"><i class="ph ph-file-arrow-down"></i> Export PDF</button>
+              <button class="btn btn-sm" onclick="exportCompareReport()" style="font-size:11px;font-weight:600;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border:none;padding:6px 14px;border-radius:6px;display:flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(37,99,235,.35)"><i class="ph ph-printer"></i> Print / PDF</button>
               <button class="btn btn-ghost btn-sm" onclick="closeCompareModal()"><i class="ph ph-x"></i></button>
             </div>
           </div>
@@ -5108,9 +5108,27 @@ function renderActivityFeed(){
 
           +'<\/body><\/html>';
 
+        // Inject print button + auto-print trigger into the report
+        var printBtn='<div style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;gap:10px">'
+          +'<button onclick="window.print()" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;border:none;border-radius:8px;padding:11px 22px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,.45);font-family:inherit">'
+          +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9V2h12v7"/><rect x="3" y="9" width="18" height="10" rx="2"/><path d="M6 19v-5h12v5"/></svg>'
+          +' Print / Save PDF</button>'
+          +'<button onclick="document.getElementById(\'ft-print-bar\').style.display=\'none\'" style="background:#64748b;color:#fff;border:none;border-radius:8px;padding:11px 14px;font-size:13px;cursor:pointer;font-family:inherit">✕</button>'
+          +'</div>';
+        doc=doc.replace('<\/body>','<div id="ft-print-bar">'+printBtn+'<\/div><\/body>');
+        // Also hide the floating button when printing
+        doc=doc.replace('@media print{',
+          '@media print{#ft-print-bar{display:none!important;}');
         var win=window.open('','_blank');
-        if(win){win.document.write(doc);win.document.close();}
-        else toast('Pop-up blocked','error');
+        if(win){
+          win.document.write(doc);
+          win.document.close();
+          // auto-trigger print dialog after content renders
+          win.onload=function(){
+            setTimeout(function(){try{win.focus();win.print();}catch(e){}},600);
+          };
+        }
+        else toast('Pop-up blocked — allow pop-ups then retry','error');
       }
 
       
