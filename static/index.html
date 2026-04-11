@@ -5528,7 +5528,6 @@ function exportDocxDirect(){
   if(d.incArr&&d.incArr.length){body+=para('Incoterm Distribution',{heading:2});body+=tbl(['Incoterm','Count'],d.incArr.map(function(i){return[i.name,i.count];}));}
   if(d.pDE&&d.pDE.length){body+=para('Top Destinations (POD)',{heading:2});body+=tbl(['Port','Count'],d.pDE.slice(0,10).map(function(p){return[p.name,p.count];}));}
   if(d.pLE&&d.pLE.length){body+=para('Top Origins (POL)',{heading:2});body+=tbl(['Port','Count'],d.pLE.slice(0,10).map(function(p){return[p.name,p.count];}));}
-  body+=para('Active Shipments',{heading:1});
   body+=tbl(['Ref','Client','Mode','POL','POD','ETD','ETA','TEU','Status'],d.active.map(function(s){return[s.ref,s.client||'-',s.mode||'-',s.pol||'-',s.pod||'-',s.etd||'-',s.eta||'-',s.teu||'-',s.status];}));
   var docXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+body+'<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>';
   var styleXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:style w:type="paragraph" w:styleId="Normal"><w:name w:val="Normal"/><w:rPr><w:sz w:val="20"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr><w:rPr><w:b/><w:sz w:val="32"/><w:color w:val="1A1A2E"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="200" w:after="100"/></w:pPr><w:rPr><w:b/><w:sz w:val="24"/><w:color w:val="334155"/></w:rPr></w:style><w:style w:type="table" w:styleId="TableGrid"><w:name w:val="Table Grid"/></w:style></w:styles>';
@@ -5600,7 +5599,7 @@ function generateReport(){
       +'<div class="card"><div class="ct">Incoterm Distribution</div>'+BR(incArr,'name','count')+'</div>'
       +SP('Top Destinations (POD)','&#128205;','#ef4444',BR(pDE,'name','count','#ef4444'),BR(pDI,'name','count','#ef4444'))
       +SP('Top Origins (POL)','&#128204;','#22c55e',BR(pLE,'name','count','#22c55e'),BR(pLI,'name','count','#22c55e'))
-      +'<div class="card"><div class="ct">Active Shipments</div><div style="overflow-x:auto"><table><thead><tr><th>Ref</th><th>Client</th><th>Mode</th><th>POL</th><th>POD</th><th>ETD</th><th>ETA</th><th>TEU</th><th>Status</th></tr></thead><tbody>'+active.map(function(s){return '<tr><td><b>'+s.ref+'</b></td><td>'+(s.client||'-')+'</td><td>'+(s.mode||'-')+'</td><td>'+(s.pol||'-')+'</td><td>'+(s.pod||'-')+'</td><td>'+fmt(s.etd)+'</td><td>'+fmt(s.eta)+'</td><td>'+(s.teu||'-')+'</td><td>'+SB(s.status)+'</td></tr>';}).join('')+'</tbody></table></div></div>';
+
     var full='<!DOCTYPE html><html><head><meta charset="utf-8"><title>FreightTrack Report</title><style>'+css+'</style></head><body><button class="btn-p" onclick="window.print()">&#128438; Print / PDF</button><div class="pg">'+body+'</div></body></html>';
     var w=window.open('','_blank');
     if(w){w.document.open();w.document.write(full);w.document.close();}
