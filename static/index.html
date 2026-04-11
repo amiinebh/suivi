@@ -2947,8 +2947,11 @@ async function loadAnalytics(){
       var PAL=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444','#f97316','#ec4899'];
       el.innerHTML=items.slice(0,8).map(function(item,i){
         var v=item[vKey]||0,pct=Math.round(v/totV*100),w=Math.round(v/maxV*100),c=fbColor||PAL[i%8];
+        var portLabel=item[nKey]||'—';
+        var geo=(item.flag||item.country)?
+          '<span style="font-size:10px;color:var(--text2);margin-left:5px;font-weight:400;opacity:.8">'+(item.flag?item.flag+' ':'')+item.country+'</span>':'';
         return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
-          +'<span style="color:var(--text1);font-weight:600;max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(item[nKey]||'—')+'</span>'
+          +'<span style="color:var(--text1);font-weight:600;max-width:68%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+portLabel+geo+'</span>'
           +'<span style="color:var(--text2)">'+v+' <b style="color:'+c+'">'+pct+'%</b></span></div>'
           +'<div style="height:6px;background:var(--bg3);border-radius:4px"><div style="height:6px;border-radius:4px;background:'+c+';width:'+w+'%;transition:width .6s ease"></div></div></div>';
       }).join('');
@@ -2970,8 +2973,9 @@ async function loadAnalytics(){
       if(tr.length){var maxR=Math.max.apply(null,tr.map(function(r){return r.count;}))||1,totR=tr.reduce(function(s,r){return s+r.count;},0)||1;
         var PAL=['#4f8ef7','#22c55e','#f59e0b','#a78bfa','#06b6d4','#ef4444','#f97316','#ec4899'];
         rEl.innerHTML=tr.slice(0,8).map(function(r,i){var pct=Math.round(r.count/totR*100),w=Math.round(r.count/maxR*100),c=PAL[i%8];
+          var rGeo=r.flag||r.country?'<span style="font-size:10px;color:var(--text2);margin-left:5px;font-weight:400;opacity:.8">'+(r.flag?r.flag+' ':'')+r.country+'</span>':'';
           return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'
-            +'<span style="color:var(--text1);font-weight:600">→ '+(r.route||'—')+'</span>'
+            +'<span style="color:var(--text1);font-weight:600;max-width:68%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">→ '+(r.route||'—')+rGeo+'</span>'
             +'<span style="color:var(--text2)">'+r.count+' <b style="color:'+c+'">'+pct+'%</b></span></div>'
             +'<div style="height:6px;background:var(--bg3);border-radius:4px"><div style="height:6px;border-radius:4px;background:'+c+';width:'+w+'%;transition:width .6s ease"></div></div></div>';
         }).join('');
@@ -4781,7 +4785,7 @@ function renderActivityFeed(){
             var v=item[vKey]||0,pct=Math.round(v/totV*100),w=Math.round(v/maxV*100);
             return '<div style="margin-bottom:7px">'
               +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">'
-              +'<span style="font-weight:600;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%">'+item[nKey]+'</span>'
+              +'<span style="font-weight:600;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%">'+item[nKey]+geo+'</span>'
               +'<span style="color:var(--text2)">'+v+' <b style="color:'+color+'">'+pct+'%</b></span></div>'
               +'<div style="height:4px;background:var(--bg3);border-radius:99px">'
               +'<div style="height:4px;background:'+color+';width:'+w+'%;border-radius:99px"></div></div></div>';
@@ -4933,6 +4937,7 @@ function renderActivityFeed(){
           var totV=items.slice(0,7).reduce(function(s,i){return s+(i[vKey]||0);},0)||1;
           return items.slice(0,7).map(function(item){
             var v=item[vKey]||0,pct=Math.round(v/totV*100),w=Math.round(v/maxV*100);
+            var geo=(item.flag||item.country)?(' <span style="font-size:9px;color:#94a3b8;font-weight:400">'+(item.flag?item.flag+' ':'')+item.country+'</span>'):'';
             return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%">'+item[nKey]+'</span><span style="color:#64748b">'+v+' <b style="color:'+color+'">'+pct+'%</b></span></div><div style="height:6px;background:#f1f5f9;border-radius:99px"><div style="height:6px;background:'+color+';width:'+w+'%;border-radius:99px"></div></div></div>';
           }).join('');
         }
