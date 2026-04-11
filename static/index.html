@@ -4838,16 +4838,9 @@ function renderActivityFeed(){
             +'<div><div style="font-size:10px;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Period B <span style="font-size:9px;font-weight:400;color:var(--text2)">(Δ vs A)</span></div>'+modeSideB(aModes,bModes)+'</div>';
         }
 
-        /* ── Carrier Comparison ── */
-        function cmpCarriers(ships,elId,color){
-          var m={};(ships||[]).forEach(function(s){var c=(s.carrier||'').trim();if(c&&c!=='Unknown')m[c]=(m[c]||0)+1;});
-          var arr=Object.entries(m).map(function(e){return{name:e[0],count:e[1]};}).sort(function(a,b){return b.count-a.count;}).slice(0,6);
-          miniBar(elId,arr,'name','count',color);
-        }
-        var _sA=(allShipments||[]).filter(function(s){var d=(s.etd||s.eta||s.created_at||'').substring(0,7);return d>=aFrom&&d<=aTo;});
-        var _sB=(allShipments||[]).filter(function(s){var d=(s.etd||s.eta||s.created_at||'').substring(0,7);return d>=bFrom&&d<=bTo;});
-        cmpCarriers(_sA,'cmp-carriers-a','#94a3b8');
-        cmpCarriers(_sB,'cmp-carriers-b','#3b82f6');
+        /* ── Carrier Comparison — use backend data directly ── */
+        miniBar('cmp-carriers-a', (a.by_carrier||[]).map(function(x){return{name:x.name||x.key,count:x.count||x.value||0};}), 'name','count','#94a3b8');
+        miniBar('cmp-carriers-b', (b.by_carrier||[]).map(function(x){return{name:x.name||x.key,count:x.count||x.value||0};}), 'name','count','#3b82f6');
 
         /* ── Radar: Period A vs B ── */
         destroyChart('cmp-radar-chart');
