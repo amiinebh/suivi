@@ -832,6 +832,7 @@ def _build_legacy_kpi_report(db):
     bydirection = defaultdict(int)
     monthly_import = defaultdict(int)
     monthly_export = defaultdict(int)
+    monthly_teu    = defaultdict(float)
     carrier_all = defaultdict(int)
     carrier_import = defaultdict(int)
     carrier_export = defaultdict(int)
@@ -868,6 +869,7 @@ def _build_legacy_kpi_report(db):
                     monthly_import[parts['month']] += 1
                 else:
                     monthly_export[parts['month']] += 1
+                monthly_teu[parts['month']] += teu
 
             if carrier:
                 carrier_all[carrier] += 1
@@ -930,6 +932,7 @@ def _build_legacy_kpi_report(db):
             'count': monthly_import.get(month, 0) + monthly_export.get(month, 0),
             'import_count': monthly_import.get(month, 0),
             'export_count': monthly_export.get(month, 0),
+            'teu': round(monthly_teu.get(month, 0), 1),
         })
 
     return {
