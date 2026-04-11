@@ -1454,12 +1454,18 @@ button[onclick*="closeEmailModal"]:hover{
               </div>
               <div id="cmp-chart-monthly"></div>
             </div>
-            <!-- client comparison table -->
+            <!-- client comparison table — Export / Import split -->
             <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
-              <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:12px"><i class="ph ph-users" style="color:var(--accent)"></i> Client Comparison — A vs B</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-users" style="color:#4f8ef7;margin-right:6px"></i>Client Comparison</div>
+                <div style="display:flex;gap:4px;background:var(--bg2);border-radius:8px;padding:3px">
+                  <button onclick="cmpClientTab('all')" id="cmp-cli-tab-all" style="padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--text1);color:var(--bg);transition:.15s">All</button>
+                  <button onclick="cmpClientTab('exp')" id="cmp-cli-tab-exp" style="padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text2);transition:.15s">↑ Export</button>
+                  <button onclick="cmpClientTab('imp')" id="cmp-cli-tab-imp" style="padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text2);transition:.15s">↓ Import</button>
+                </div>
+              </div>
               <div id="cmp-client-table"></div>
             </div>
-            <!-- ── Radar: Period A vs B ── -->
             <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
               <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:10px">
                 <i class="ph ph-chart-polar" style="color:#a855f7"></i> Period Comparison Radar
@@ -1484,11 +1490,25 @@ button[onclick*="closeEmailModal"]:hover{
             <!-- side by side grids -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
               <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
-                <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#94a3b8;margin-right:6px"></span>Top Routes — A</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                  <div style="font-size:11px;font-weight:600;color:var(--text1)"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#94a3b8;margin-right:6px"></span>Period A — Top Routes</div>
+                  <div style="display:flex;gap:3px;background:var(--bg2);border-radius:6px;padding:2px">
+                    <button onclick="cmpRouteTab('a','all')" id="cmp-rt-a-all" style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;border:none;cursor:pointer;background:var(--text1);color:var(--bg);transition:.15s">All</button>
+                    <button onclick="cmpRouteTab('a','exp')" id="cmp-rt-a-exp" style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text2);transition:.15s">↑ Exp</button>
+                    <button onclick="cmpRouteTab('a','imp')" id="cmp-rt-a-imp" style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text2);transition:.15s">↓ Imp</button>
+                  </div>
+                </div>
                 <div id="cmp-routes-a"></div>
               </div>
               <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px">
-                <div style="font-size:11px;font-weight:600;color:var(--text1);margin-bottom:10px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-right:6px"></span>Top Routes — B</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                  <div style="font-size:11px;font-weight:600;color:var(--text1)"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-right:6px"></span>Period B — Top Routes</div>
+                  <div style="display:flex;gap:3px;background:var(--bg2);border-radius:6px;padding:2px">
+                    <button onclick="cmpRouteTab('b','all')" id="cmp-rt-b-all" style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;border:none;cursor:pointer;background:var(--text1);color:var(--bg);transition:.15s">All</button>
+                    <button onclick="cmpRouteTab('b','exp')" id="cmp-rt-b-exp" style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text2);transition:.15s">↑ Exp</button>
+                    <button onclick="cmpRouteTab('b','imp')" id="cmp-rt-b-imp" style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--text2);transition:.15s">↓ Imp</button>
+                  </div>
+                </div>
                 <div id="cmp-routes-b"></div>
               </div>
               <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:14px;grid-column:1/-1">
@@ -2791,7 +2811,12 @@ function exportXLSX(){
 
 /* ── Charts registry ── */
 const chartRegistry = {};
-function destroyChart(id){ if(chartRegistry[id]){ chartRegistry[id].destroy(); delete chartRegistry[id]; } }
+function destroyChart(id){
+  if(chartRegistry[id]){
+    try{ chartRegistry[id].destroy(); }catch(_){}
+    delete chartRegistry[id];
+  }
+}
 
 function getChartColors(n){
   const palette=['#4f8ef7','#6c63ff','#22c55e','#f59e0b','#ef4444','#06b6d4','#f97316','#a855f7'];
@@ -2857,6 +2882,8 @@ function chartGridColor(){ return isDark()?'rgba(42,58,92,.4)':'rgba(208,216,240
 
 /* ── KPI Page ── */
 async function loadAnalytics(){
+  if(window._analyticsRunning) return;
+  window._analyticsRunning = true;
   try{
     if(!allShipments||allShipments.length===0){
       try{ var _s=await apiFetch('/api/shipments'); allShipments=Array.isArray(_s)?_s:(_s.data||_s.shipments||[]); }catch(_){}
@@ -2971,6 +2998,7 @@ async function loadAnalytics(){
       else odEl.innerHTML='<div style="text-align:center;padding:28px;color:var(--green);font-size:14px;font-weight:600">✓ No overdue shipments</div>';}
 
   }catch(e){console.error('loadAnalytics:',e);toast('KPI load error: '+e.message,'error');}
+  finally{ window._analyticsRunning = false; }
 }
 
 function kpiMiniTab(btn,targetId,dir){
@@ -4690,19 +4718,38 @@ function renderActivityFeed(){
           chartRegistry['cmp-chart-monthly-b'].render();
         }
 
-        /* client comparison table */
-        var aClients=a.by_client_all||[], bClients=b.by_client_all||[];
-        var allNames=Array.from(new Set(aClients.map(function(c){return c.name;}).concat(bClients.map(function(c){return c.name;}))));
-        var aMap2={},bMap2={};
-        aClients.forEach(function(c){aMap2[c.name]=c;});
-        bClients.forEach(function(c){bMap2[c.name]=c;});
-        var combined=allNames.map(function(n){
-          var ac=aMap2[n]||{shipments:0,teu:0},bc=bMap2[n]||{shipments:0,teu:0};
-          return {name:n,aShp:ac.shipments||0,bShp:bc.shipments||0,aTeu:ac.teu||0,bTeu:bc.teu||0};
-        }).sort(function(x,y){return (y.aShp+y.bShp)-(x.aShp+x.bShp);}).slice(0,12);
-        var maxShp=Math.max.apply(null,combined.map(function(c){return Math.max(c.aShp,c.bShp);}).concat([1]));
-        var ctEl=document.getElementById('cmp-client-table');
-        if(ctEl) ctEl.innerHTML='<div style="display:grid;grid-template-columns:130px 1fr 46px 1fr 46px 54px 44px 44px 54px;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;padding-bottom:8px;box-shadow:rgba(0,0,0,0.06) 0 -1px 0 0 inset;margin-bottom:8px">'
+        /* client comparison table — Export / Import split */
+        window._cmpClientDir = window._cmpClientDir || 'all';
+        window._cmpData_a = a;
+        window._cmpData_b = b;
+
+        function renderCmpClientTable(dir){
+          window._cmpClientDir = dir;
+          // Tab highlight
+          ['all','exp','imp'].forEach(function(d){
+            var btn=document.getElementById('cmp-cli-tab-'+d);
+            if(!btn)return;
+            btn.style.background = d===dir?'var(--text1)':'transparent';
+            btn.style.color      = d===dir?'var(--bg)':'var(--text2)';
+          });
+          var _a=window._cmpData_a||{}, _b=window._cmpData_b||{};
+          var aClients = dir==='exp'?(_a.by_client_export||[]) : dir==='imp'?(_a.by_client_import||[]) : (_a.by_client_all||[]);
+          var bClients = dir==='exp'?(_b.by_client_export||[]) : dir==='imp'?(_b.by_client_import||[]) : (_b.by_client_all||[]);
+          var allNames=Array.from(new Set(aClients.map(function(c){return c.name;}).concat(bClients.map(function(c){return c.name;}))));
+          var aMap2={},bMap2={};
+          aClients.forEach(function(c){aMap2[c.name]=c;});
+          bClients.forEach(function(c){bMap2[c.name]=c;});
+          var combined=allNames.map(function(n){
+            var ac=aMap2[n]||{shipments:0,teu:0},bc=bMap2[n]||{shipments:0,teu:0};
+            return {name:n,aShp:ac.shipments||0,bShp:bc.shipments||0,aTeu:ac.teu||0,bTeu:bc.teu||0};
+          }).sort(function(x,y){return (y.aShp+y.bShp)-(x.aShp+x.bShp);}).slice(0,12);
+          var maxShp=Math.max.apply(null,combined.map(function(c){return Math.max(c.aShp,c.bShp);}).concat([1]));
+          var dirLabel = dir==='exp'?' — ↑ Export' : dir==='imp'?' — ↓ Import' : '';
+          var ctEl=document.getElementById('cmp-client-table');
+          if(!ctEl) return;
+          if(!combined.length){ctEl.innerHTML='<div style="color:var(--text2);font-size:12px;padding:12px 0;text-align:center">No data for this direction</div>';return;}
+          ctEl.innerHTML='<div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--bg3)">Showing'+dirLabel+' · '+combined.length+' clients</div>'
+          +'<div style="display:grid;grid-template-columns:130px 1fr 46px 1fr 46px 54px 44px 44px 54px;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;padding-bottom:8px;box-shadow:rgba(0,0,0,0.06) 0 -1px 0 0 inset;margin-bottom:8px">'
           +'<div>Client</div><div>Period A</div><div style="text-align:right">A shp</div><div>Period B</div><div style="text-align:right">B shp</div><div style="text-align:right">Δ shp</div><div style="text-align:right">A TEU</div><div style="text-align:right">B TEU</div><div style="text-align:right">Δ TEU</div></div>'
           +combined.map(function(c){
             var d=delta(c.bShp,c.aShp),col=d.up?'#22c55e':'#ef4444',arr=d.up?'↑':'↓';
@@ -4719,6 +4766,10 @@ function renderActivityFeed(){
               +'<div style="font-size:11px;font-weight:600;color:#6c63ff;text-align:right">'+c.bTeu+'</div>'
               +'<div style="font-size:12px;font-weight:600;color:'+tc+';text-align:right">'+ta+' '+dt.pct+'</div></div>';
           }).join('');
+        }
+        window.cmpClientTab = renderCmpClientTable;
+        renderCmpClientTable(window._cmpClientDir||'all');
+
 
         /* mini bars */
         function miniBar(id,items,nKey,vKey,color){
@@ -4736,8 +4787,29 @@ function renderActivityFeed(){
               +'<div style="height:4px;background:'+color+';width:'+w+'%;border-radius:99px"></div></div></div>';
           }).join('');
         }
-        miniBar('cmp-routes-a',  a.top_routing||[],    'route','count','#94a3b8');
-        miniBar('cmp-routes-b',  b.top_routing||[],    'route','count','#3b82f6');
+        /* routes split — tab state persists */
+        window._cmpRouteDir_a = window._cmpRouteDir_a || 'all';
+        window._cmpRouteDir_b = window._cmpRouteDir_b || 'all';
+        function renderCmpRoute(period, dir){
+          if(period==='a') window._cmpRouteDir_a=dir;
+          else window._cmpRouteDir_b=dir;
+          var pd = period==='a' ? (window._cmpData_a||a) : (window._cmpData_b||b);
+          var color = period==='a' ? '#94a3b8' : '#3b82f6';
+          var items = dir==='exp' ? (pd.top_routing_export||[]) :
+                      dir==='imp' ? (pd.top_routing_import||[]) :
+                                    (pd.top_routing||[]);
+          // Tab highlight
+          ['all','exp','imp'].forEach(function(d){
+            var btn=document.getElementById('cmp-rt-'+period+'-'+d);
+            if(!btn)return;
+            btn.style.background = d===dir?'var(--text1)':'transparent';
+            btn.style.color      = d===dir?'var(--bg)':'var(--text2)';
+          });
+          miniBar('cmp-routes-'+period, items, 'route','count', color);
+        }
+        window.cmpRouteTab = renderCmpRoute;
+        renderCmpRoute('a', window._cmpRouteDir_a||'all');
+        renderCmpRoute('b', window._cmpRouteDir_b||'all');
         miniBar('cmp-pod-exp-a', a.top_pod_export||[], 'name','count','#94a3b8');
         miniBar('cmp-pod-exp-b', b.top_pod_export||[], 'name','count','#ef4444');
         miniBar('cmp-pod-imp-a', a.top_pod_import||[], 'name','count','#94a3b8');
