@@ -790,24 +790,24 @@ def _build_legacy_kpi_report(db):
         "by_carrier_import": sort_counts(carrier_import),
         "bycarrierimport": sort_counts(carrier_import),
         "bycarrierexport": sort_counts(carrier_export),
-        "toppol": sort_counts(pol_all),
-        "top_pol": sort_counts(pol_all),
-        "toppolimport": sort_counts(pol_import),
-        "top_pol_import": sort_counts(pol_import),
-        "toppolexport": sort_counts(pol_export),
-        "top_pol_export": sort_counts(pol_export),
-        "toppod": sort_counts(pod_all),
-        "top_pod": sort_counts(pod_all),
-        "toppodimport": sort_counts(pod_import),
-        "top_pod_import": sort_counts(pod_import),
-        "toppodexport": sort_counts(pod_export),
-        "top_pod_export": sort_counts(pod_export),
-        "toprouting": sort_counts(route_all, "route", "count"),
-        "top_routing": sort_counts(route_all, "route", "count"),
-        "toproutingimport": sort_counts(route_import, "route", "count"),
-        "top_routing_import": sort_counts(route_import, "route", "count"),
-        "toproutingexport": sort_counts(route_export, "route", "count"),
-        "top_routing_export": sort_counts(route_export, "route", "count"),
+        "toppol": sort_counts(pol_all, enrich_port=True),
+        "top_pol": sort_counts(pol_all, enrich_port=True),
+        "toppolimport": sort_counts(pol_import, enrich_port=True),
+        "top_pol_import": sort_counts(pol_import, enrich_port=True),
+        "toppolexport": sort_counts(pol_export, enrich_port=True),
+        "top_pol_export": sort_counts(pol_export, enrich_port=True),
+        "toppod": sort_counts(pod_all, enrich_port=True),
+        "top_pod": sort_counts(pod_all, enrich_port=True),
+        "toppodimport": sort_counts(pod_import, enrich_port=True),
+        "top_pod_import": sort_counts(pod_import, enrich_port=True),
+        "toppodexport": sort_counts(pod_export, enrich_port=True),
+        "top_pod_export": sort_counts(pod_export, enrich_port=True),
+        "toprouting": sort_counts(route_all, "route", "count", enrich_port=True),
+        "top_routing": sort_counts(route_all, "route", "count", enrich_port=True),
+        "toproutingimport": sort_counts(route_import, "route", "count", enrich_port=True),
+        "top_routing_import": sort_counts(route_import, "route", "count", enrich_port=True),
+        "toproutingexport": sort_counts(route_export, "route", "count", enrich_port=True),
+        "top_routing_export": sort_counts(route_export, "route", "count", enrich_port=True),
         "by_incoterm": dict(sorted(incoterm_all.items(), key=lambda x: -x[1])),
         "insights": [],
     }
@@ -1034,8 +1034,14 @@ def kpi_compare(
                     except: pass
             except Exception:
                 continue
-        def top8(d, key='name', val='count'):
-            return [{key:k,val:v} for k,v in sorted(d.items(),key=lambda x:-x[1])[:8]]
+        def top8(d, key='name', val='count', enrich_port=False):
+            rows = [{key:k,val:v} for k,v in sorted(d.items(),key=lambda x:-x[1])[:8]]
+            if enrich_port:
+                for r in rows:
+                    info = port_country_info(r.get(key,''))
+                    r['country'] = info['country']
+                    r['flag']    = info['flag']
+            return rows
         def top_clients(d):
             rows = [{'name':k,'shipments':int(v['shipments']),'teu':round(v['teu'],2)} for k,v in d.items()]
             return sorted(rows,key=lambda x:-x['shipments'])[:8]
@@ -1049,12 +1055,12 @@ def kpi_compare(
             'monthly':monthly,'by_client_all':top_clients(client_all),
             'by_client_export':top_clients(client_export),
             'by_client_import':top_clients(client_import),
-            'by_carrier':top8(carrier_all),'top_pol':top8(pol_all),
-            'top_pod':top8(pod_all),'top_pod_export':top8(pod_exp),
-            'top_pod_import':top8(pod_imp),
-            'top_routing':top8(route_all,key='route'),
-            'top_routing_export':top8(route_export,key='route'),
-            'top_routing_import':top8(route_import,key='route'),
+            'by_carrier':top8(carrier_all),'top_pol':top8(pol_all,enrich_port=True),
+            'top_pod':top8(pod_all,enrich_port=True),'top_pod_export':top8(pod_exp,enrich_port=True),
+            'top_pod_import':top8(pod_imp,enrich_port=True),
+            'top_routing':top8(route_all,key='route',enrich_port=True),
+            'top_routing_export':top8(route_export,key='route',enrich_port=True),
+            'top_routing_import':top8(route_import,key='route',enrich_port=True),
             'overdue':overdue,
         }
 
