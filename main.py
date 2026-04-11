@@ -907,9 +907,15 @@ def _build_legacy_kpi_report(db):
         except Exception:
             continue
 
-    def sort_counts(d, key_name='name', value_name='count', limit=8):
-        return [{key_name: k, value_name: v}
+    def sort_counts(d, key_name='name', value_name='count', limit=8, enrich_port=False):
+        rows = [{key_name: k, value_name: v}
                 for k, v in sorted(d.items(), key=lambda x: (-x[1], x[0]))[:limit]]
+        if enrich_port:
+            for r in rows:
+                info = port_country_info(r.get(key_name, ''))
+                r['country'] = info['country']
+                r['flag']    = info['flag']
+        return rows
 
     def sort_client(d, limit=8):
         rows = [{'name': k, 'shipments': int(v['shipments']), 'teu': round(v['teu'], 2)}
