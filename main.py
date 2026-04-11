@@ -579,6 +579,175 @@ _PORT_ALIASES = {
 }
 normalize_port = _build_fuzzy_normaliser(_PORT_ALIASES)
 
+# ── Port → Country lookup (250+ ports) ────────────────────────────────────
+_PORT_COUNTRY = {
+    # Morocco
+    'casablanca':'Morocco','tanger med':'Morocco','tanger':'Morocco','tangier':'Morocco',
+    'agadir':'Morocco','nador':'Morocco','mohammedia':'Morocco','kenitra':'Morocco',
+    'safi':'Morocco','jorf lasfar':'Morocco','dakhla':'Morocco',
+    # Spain
+    'algeciras':'Spain','barcelona':'Spain','valencia':'Spain','bilbao':'Spain',
+    'vigo':'Spain','tarragona':'Spain','alicante':'Spain','murcia':'Spain',
+    'malaga':'Spain','cartagena':'Spain','cadiz':'Spain','huelva':'Spain',
+    'palma':'Spain','las palmas':'Spain','santa cruz de tenerife':'Spain','ferrol':'Spain',
+    # France
+    'le havre':'France','marseille':'France','dunkirk':'France','dunkerque':'France',
+    'bordeaux':'France','nantes':'France','rouen':'France','fos sur mer':'France',
+    'montoir':'France','strasbourg':'France',
+    # Netherlands
+    'rotterdam':'Netherlands','amsterdam':'Netherlands','vlissingen':'Netherlands','moerdijk':'Netherlands',
+    # Belgium
+    'antwerp':'Belgium','anvers':'Belgium','ghent':'Belgium','zeebrugge':'Belgium','liege':'Belgium',
+    # Germany
+    'hamburg':'Germany','bremen':'Germany','bremerhaven':'Germany','duisburg':'Germany',
+    # Italy
+    'genoa':'Italy','genes':'Italy','la spezia':'Italy','livorno':'Italy',
+    'naples':'Italy','napoli':'Italy','venice':'Italy','venezia':'Italy',
+    'gioia tauro':'Italy','trieste':'Italy','palermo':'Italy','bari':'Italy',
+    # Greece
+    'piraeus':'Greece','thessaloniki':'Greece','patras':'Greece',
+    # Portugal
+    'lisbon':'Portugal','lisbonne':'Portugal','setubal':'Portugal',
+    'leixoes':'Portugal','sines':'Portugal',
+    # UK
+    'felixstowe':'UK','southampton':'UK','london':'UK','tilbury':'UK',
+    'liverpool':'UK','glasgow':'UK','bristol':'UK','hull':'UK','immingham':'UK',
+    # Turkey
+    'istanbul':'Turkey','izmir':'Turkey','mersin':'Turkey','ambarli':'Turkey','gemlik':'Turkey',
+    # Egypt
+    'port said':'Egypt','alexandria':'Egypt','damietta':'Egypt','suez':'Egypt','ain sokhna':'Egypt',
+    # UAE
+    'dubai':'UAE','jebel ali':'UAE','abu dhabi':'UAE','sharjah':'UAE',
+    # Saudi Arabia
+    'jeddah':'Saudi Arabia','dammam':'Saudi Arabia','jubail':'Saudi Arabia',
+    # China
+    'shanghai':'China','ningbo':'China','shenzhen':'China','yantian':'China',
+    'guangzhou':'China','nansha':'China','tianjin':'China','qingdao':'China',
+    'dalian':'China','xiamen':'China','fuzhou':'China','lianyungang':'China',
+    'nanjing':'China','wuhan':'China','chongqing':'China','zhongshan':'China',
+    'zhuhai':'China','chiwan':'China','shekou':'China','dachan bay':'China',
+    'taicang':'China','changsha':'China','hefei':'China','zhengzhou':'China',
+    'xian':'China','chengdu':'China','kunming':'China','nanning':'China',
+    # Hong Kong
+    'hong kong':'Hong Kong',
+    # Taiwan
+    'kaohsiung':'Taiwan','keelung':'Taiwan','taichung':'Taiwan',
+    # South Korea
+    'busan':'South Korea','incheon':'South Korea','gwangyang':'South Korea',
+    # Japan
+    'tokyo':'Japan','yokohama':'Japan','osaka':'Japan','kobe':'Japan',
+    'nagoya':'Japan','hakata':'Japan',
+    # Singapore
+    'singapore':'Singapore',
+    # Malaysia
+    'port klang':'Malaysia','klang':'Malaysia','penang':'Malaysia',
+    'tanjung pelepas':'Malaysia','pasir gudang':'Malaysia',
+    # Vietnam
+    'ho chi minh':'Vietnam','haiphong':'Vietnam','da nang':'Vietnam',
+    'cat lai':'Vietnam','cai mep':'Vietnam',
+    # Thailand
+    'bangkok':'Thailand','laem chabang':'Thailand',
+    # Indonesia
+    'jakarta':'Indonesia','surabaya':'Indonesia','tanjung priok':'Indonesia',
+    # India
+    'mumbai':'India','nhava sheva':'India','chennai':'India','kolkata':'India',
+    'cochin':'India','mundra':'India','hazira':'India','pipavav':'India','tuticorin':'India',
+    # Sri Lanka
+    'colombo':'Sri Lanka',
+    # Pakistan
+    'karachi':'Pakistan','qasim':'Pakistan',
+    # Bangladesh
+    'chittagong':'Bangladesh',
+    # USA
+    'new york':'USA','los angeles':'USA','long beach':'USA','houston':'USA',
+    'savannah':'USA','charleston':'USA','norfolk':'USA','seattle':'USA',
+    'tacoma':'USA','baltimore':'USA','miami':'USA','new orleans':'USA',
+    # Canada
+    'vancouver':'Canada','montreal':'Canada','halifax':'Canada',
+    # Mexico
+    'manzanillo':'Mexico','veracruz':'Mexico','lazaro cardenas':'Mexico','altamira':'Mexico',
+    # Brazil
+    'santos':'Brazil','paranagua':'Brazil','rio de janeiro':'Brazil',
+    'vitoria':'Brazil','itajai':'Brazil','suape':'Brazil',
+    # Argentina
+    'buenos aires':'Argentina','rosario':'Argentina',
+    # Chile
+    'san antonio':'Chile','valparaiso':'Chile','iquique':'Chile',
+    # Colombia
+    'cartagena colombia':'Colombia','buenaventura':'Colombia','barranquilla':'Colombia',
+    # Peru
+    'callao':'Peru',
+    # Panama
+    'colon':'Panama','balboa':'Panama',
+    # Nigeria
+    'lagos':'Nigeria','apapa':'Nigeria','tin can':'Nigeria','onne':'Nigeria',
+    # Senegal
+    'dakar':'Senegal',
+    # Ivory Coast
+    'abidjan':'Ivory Coast',
+    # Togo
+    'lome':'Togo',
+    # Ghana
+    'tema':'Ghana',
+    # Cameroon
+    'douala':'Cameroon',
+    # Kenya
+    'mombasa':'Kenya',
+    # Tanzania
+    'dar es salaam':'Tanzania',
+    # South Africa
+    'durban':'South Africa','cape town':'South Africa','port elizabeth':'South Africa',
+    # Mozambique
+    'maputo':'Mozambique','beira':'Mozambique',
+    # Djibouti
+    'djibouti':'Djibouti',
+    # Jordan
+    'aqaba':'Jordan',
+    # Israel
+    'haifa':'Israel','ashdod':'Israel',
+    # Kuwait
+    'kuwait':'Kuwait','shuaiba':'Kuwait',
+    # Oman
+    'muscat':'Oman','sohar':'Oman','salalah':'Oman',
+    # Qatar
+    'doha':'Qatar','hamad port':'Qatar',
+    # Australia
+    'sydney':'Australia','melbourne':'Australia','brisbane':'Australia',
+    'fremantle':'Australia','adelaide':'Australia',
+    # New Zealand
+    'auckland':'New Zealand','tauranga':'New Zealand',
+}
+
+_COUNTRY_FLAG = {
+    'Morocco':'🇲🇦','Spain':'🇪🇸','France':'🇫🇷','Netherlands':'🇳🇱','Belgium':'🇧🇪',
+    'Germany':'🇩🇪','Italy':'🇮🇹','Greece':'🇬🇷','Portugal':'🇵🇹','UK':'🇬🇧',
+    'Turkey':'🇹🇷','Egypt':'🇪🇬','UAE':'🇦🇪','Saudi Arabia':'🇸🇦','China':'🇨🇳',
+    'Hong Kong':'🇭🇰','Taiwan':'🇹🇼','South Korea':'🇰🇷','Japan':'🇯🇵','Singapore':'🇸🇬',
+    'Malaysia':'🇲🇾','Vietnam':'🇻🇳','Thailand':'🇹🇭','Indonesia':'🇮🇩','India':'🇮🇳',
+    'Sri Lanka':'🇱🇰','Pakistan':'🇵🇰','Bangladesh':'🇧🇩','USA':'🇺🇸','Canada':'🇨🇦',
+    'Mexico':'🇲🇽','Brazil':'🇧🇷','Argentina':'🇦🇷','Chile':'🇨🇱','Colombia':'🇨🇴',
+    'Peru':'🇵🇪','Panama':'🇵🇦','Nigeria':'🇳🇬','Senegal':'🇸🇳','Ivory Coast':'🇨🇮',
+    'Togo':'🇹🇬','Ghana':'🇬🇭','Cameroon':'🇨🇲','Kenya':'🇰🇪','Tanzania':'🇹🇿',
+    'South Africa':'🇿🇦','Mozambique':'🇲🇿','Djibouti':'🇩🇯','Jordan':'🇯🇴',
+    'Israel':'🇮🇱','Kuwait':'🇰🇼','Oman':'🇴🇲','Qatar':'🇶🇦','Australia':'🇦🇺',
+    'New Zealand':'🇳🇿',
+}
+
+def port_country_info(port_name: str) -> dict:
+    """Return {country, flag} for a port name, or empty strings if unknown."""
+    if not port_name:
+        return {'country': '', 'flag': ''}
+    key = _slug(port_name.lower())
+    for p, c in _PORT_COUNTRY.items():
+        if _slug(p) == key:
+            return {'country': c, 'flag': _COUNTRY_FLAG.get(c, '')}
+    for p, c in _PORT_COUNTRY.items():
+        ps = _slug(p)
+        if len(ps) >= 4 and (ps in key or key in ps):
+            return {'country': c, 'flag': _COUNTRY_FLAG.get(c, '')}
+    return {'country': '', 'flag': ''}
+
+
 
 # ── Client normalisation ───────────────────────────────────────────────────
 # Only known aliases — unknown clients fall back to title-case dedup
