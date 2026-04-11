@@ -4783,6 +4783,7 @@ function renderActivityFeed(){
           var totV=items.reduce(function(s,i){return s+(i[vKey]||0);},0)||1;
           el.innerHTML=items.slice(0,6).map(function(item){
             var v=item[vKey]||0,pct=Math.round(v/totV*100),w=Math.round(v/maxV*100);
+            var geo=(item.flag||item.country)?(' <span style="font-size:9px;opacity:.7;font-weight:400">'+(item.flag?item.flag+' ':'')+item.country+'</span>'):'';
             return '<div style="margin-bottom:7px">'
               +'<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">'
               +'<span style="font-weight:600;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%">'+item[nKey]+geo+'</span>'
@@ -4938,7 +4939,7 @@ function renderActivityFeed(){
           return items.slice(0,7).map(function(item){
             var v=item[vKey]||0,pct=Math.round(v/totV*100),w=Math.round(v/maxV*100);
             var geo=(item.flag||item.country)?(' <span style="font-size:9px;color:#94a3b8;font-weight:400">'+(item.flag?item.flag+' ':'')+item.country+'</span>'):'';
-            return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%">'+item[nKey]+'</span><span style="color:#64748b">'+v+' <b style="color:'+color+'">'+pct+'%</b></span></div><div style="height:6px;background:#f1f5f9;border-radius:99px"><div style="height:6px;background:'+color+';width:'+w+'%;border-radius:99px"></div></div></div>';
+            return '<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span style="font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%">'+item[nKey]+geo+'</span><span style="color:#64748b">'+v+' <b style="color:'+color+'">'+pct+'%</b></span></div><div style="height:6px;background:#f1f5f9;border-radius:99px"><div style="height:6px;background:'+color+';width:'+w+'%;border-radius:99px"></div></div></div>';
           }).join('');
         }
 
