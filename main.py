@@ -774,9 +774,12 @@ def kpi_compare(
         total_teu = round(sum((lambda v: float(v) if v else 0.0)(getattr(s,'teu',None)) for s in ships), 2)
         by_status = defaultdict(int); by_mode = defaultdict(int); by_dir = defaultdict(int)
         monthly_imp = defaultdict(int); monthly_exp = defaultdict(int)
-        client_all = defaultdict(lambda: {'shipments':0,'teu':0.0})
+        client_all    = defaultdict(lambda: {'shipments':0,'teu':0.0})
+        client_export = defaultdict(lambda: {'shipments':0,'teu':0.0})
+        client_import = defaultdict(lambda: {'shipments':0,'teu':0.0})
         carrier_all = defaultdict(int); pol_all = defaultdict(int); pod_all = defaultdict(int)
-        pod_exp = defaultdict(int); pod_imp = defaultdict(int); route_all = defaultdict(int)
+        pod_exp = defaultdict(int); pod_imp = defaultdict(int)
+        route_all = defaultdict(int); route_export = defaultdict(int); route_import = defaultdict(int)
         now = datetime.utcnow(); overdue = 0
         for s in ships:
             try:
@@ -801,13 +804,22 @@ def kpi_compare(
                 if client:
                     client_all[client]['shipments'] += 1
                     client_all[client]['teu'] += teu_val
+                    if direction == 'Export':
+                        client_export[client]['shipments'] += 1
+                        client_export[client]['teu'] += teu_val
+                    else:
+                        client_import[client]['shipments'] += 1
+                        client_import[client]['teu'] += teu_val
                 if carrier: carrier_all[carrier] += 1
                 if pol: pol_all[pol] += 1
                 if pod:
                     pod_all[pod] += 1
                     if direction == 'Export': pod_exp[pod] += 1
                     else: pod_imp[pod] += 1
-                if pol and pod: route_all[f'{pol} to {pod}'] += 1
+                if pol and pod:
+                    route_all[f'{pol} to {pod}'] += 1
+                    if direction == 'Export': route_export[f'{pol} to {pod}'] += 1
+                    else: route_import[f'{pol} to {pod}'] += 1
                 eta = getattr(s,'eta',None)
                 if eta and status not in ('Arrived','Closed','Canceled'):
                     try:
@@ -828,9 +840,14 @@ def kpi_compare(
             'by_status':dict(by_status),'by_mode':dict(by_mode),
             'by_direction':{'Export':by_dir['Export'],'Import':by_dir['Import']},
             'monthly':monthly,'by_client_all':top_clients(client_all),
+            'by_client_export':top_clients(client_export),
+            'by_client_import':top_clients(client_import),
             'by_carrier':top8(carrier_all),'top_pol':top8(pol_all),
             'top_pod':top8(pod_all),'top_pod_export':top8(pod_exp),
-            'top_pod_import':top8(pod_imp),'top_routing':top8(route_all,key='route'),
+            'top_pod_import':top8(pod_imp),
+            'top_routing':top8(route_all,key='route'),
+            'top_routing_export':top8(route_export,key='route'),
+            'top_routing_import':top8(route_import,key='route'),
             'overdue':overdue,
         }
 
