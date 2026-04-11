@@ -408,6 +408,213 @@ def seed_samples(db: Session = Depends(get_db), current=Depends(require_admin)):
     return {"added": added, "message": f"Seeded {added} sample shipments"}
 
 
+# ── Carrier name normalisation ─────────────────────────────────────────────
+_CARRIER_ALIASES = {
+    # Maersk family
+    'msk':            'Maersk',
+    'maersk':         'Maersk',
+    'maersk line':    'Maersk',
+    'maerskline':     'Maersk',
+    # MSC
+    'msc':            'MSC',
+    'mediterranean shipping': 'MSC',
+    # CMA CGM
+    'cma':            'CMA CGM',
+    'cma cgm':        'CMA CGM',
+    'cmacgm':         'CMA CGM',
+    # Hapag-Lloyd
+    'hapag':          'Hapag-Lloyd',
+    'hapag lloyd':    'Hapag-Lloyd',
+    'hapag-lloyd':    'Hapag-Lloyd',
+    # Evergreen
+    'evergreen':      'Evergreen',
+    # ONE
+    'one':            'ONE',
+    'ocean network':  'ONE',
+    # Cosco
+    'cosco':          'COSCO',
+    # Yang Ming
+    'yang ming':      'Yang Ming',
+    'yangming':       'Yang Ming',
+    # HMM
+    'hmm':            'HMM',
+    'hyundai':        'HMM',
+    # PIL
+    'pil':            'PIL',
+    'pacific international': 'PIL',
+    # Ceva
+    'ceva':           'Ceva Logistics',
+    # DB Schenker
+    'schenker':       'DB Schenker',
+    'db schenker':    'DB Schenker',
+    # DHL
+    'dhl':            'DHL',
+    # Royal Air Maroc
+    'ram':            'Royal Air Maroc',
+    'royal air maroc':'Royal Air Maroc',
+    # Marfret
+    'marfret':        'Marfret',
+    # Aterimar
+    'aterimar':       'Aterimar',
+    # Autransa
+    'autransa':       'Autransa',
+    # KM Trans
+    'km trans':       'KM Trans',
+    'kmtrans':        'KM Trans',
+}
+
+def normalize_carrier(raw: str) -> str:
+    """Normalise carrier name: alias map + title-case dedup."""
+    if not raw:
+        return raw
+    cleaned = raw.strip()
+    key = cleaned.lower()
+    # 1. exact alias match
+    if key in _CARRIER_ALIASES:
+        return _CARRIER_ALIASES[key]
+    # 2. substring alias match (longest match wins)
+    best = None
+    for alias, canonical in _CARRIER_ALIASES.items():
+        if alias in key and (best is None or len(alias) > len(best[0])):
+            best = (alias, canonical)
+    if best:
+        return best[1]
+    # 3. fallback: title-case so MAERSK == Maersk (case-insensitive grouping)
+    return cleaned.title()
+
+
+# ── Generic fuzzy name normaliser ─────────────────────────────────────────
+import unicodedata as _ud, re as _re
+
+def _slug(s: str) -> str:
+    """Lowercase, strip accents, remove non-alphanumeric for comparison."""
+    s = _ud.normalize('NFKD', s).encode('ascii', 'ignore').decode()
+    return _re.sub(r'[^a-z0-9]', '', s.lower())
+
+def _build_fuzzy_normaliser(alias_map: dict):
+    """
+    Returns a normalise(raw) function.
+    alias_map: {slug_or_variant -> canonical_display_name}
+    Matching order:
+      1. exact slug match in alias_map
+      2. slug of raw is a substring of a known alias slug (or vice-versa),
+         pick longest overlap → canonical
+      3. title-case fallback (deduplicates case variants)
+    """
+    # pre-build: {slug -> canonical}
+    slug_map = {_slug(k): v for k, v in alias_map.items()}
+    # also index canonical slugs so we can find them
+    canonical_slugs = {_slug(v): v for v in alias_map.values()}
+
+    def normalise(raw: str) -> str:
+        if not raw:
+            return raw
+        cleaned = raw.strip()
+        s = _slug(cleaned)
+        if not s:
+            return cleaned
+        # 1. exact slug match
+        if s in slug_map:
+            return slug_map[s]
+        if s in canonical_slugs:
+            return canonical_slugs[s]
+        # 2. substring fuzzy (longest alias that is contained in raw slug)
+        best_len, best_canon = 0, None
+        for alias_slug, canon in slug_map.items():
+            if len(alias_slug) < 3:
+                continue
+            if alias_slug in s or s in alias_slug:
+                if len(alias_slug) > best_len:
+                    best_len, best_canon = len(alias_slug), canon
+        if best_canon:
+            return best_canon
+        # 3. title-case fallback for plain case dedup
+        return cleaned.title()
+
+    return normalise
+
+
+# ── POL / POD normalisation ────────────────────────────────────────────────
+_PORT_ALIASES = {
+    # Morocco
+    'casablanca': 'Casablanca', 'casa': 'Casablanca', 'csa': 'Casablanca',
+    'tanger': 'Tanger Med', 'tangier': 'Tanger Med', 'tangermed': 'Tanger Med',
+    'tanger med': 'Tanger Med', 'tgm': 'Tanger Med',
+    'agadir': 'Agadir', 'aga': 'Agadir',
+    'nador': 'Nador', 'ndo': 'Nador',
+    # Europe
+    'algeciras': 'Algeciras', 'alg': 'Algeciras',
+    'barcelona': 'Barcelona', 'bcn': 'Barcelona',
+    'valencia': 'Valencia', 'vlc': 'Valencia',
+    'marseille': 'Marseille', 'mrs': 'Marseille',
+    'le havre': 'Le Havre', 'leh': 'Le Havre', 'lehavre': 'Le Havre',
+    'rotterdam': 'Rotterdam', 'rtm': 'Rotterdam',
+    'hamburg': 'Hamburg', 'ham': 'Hamburg',
+    'antwerp': 'Antwerp', 'ant': 'Antwerp', 'anvers': 'Antwerp',
+    'genoa': 'Genoa', 'gen': 'Genoa', 'genes': 'Genoa',
+    'felixstowe': 'Felixstowe', 'fel': 'Felixstowe',
+    'piraeus': 'Piraeus', 'pir': 'Piraeus',
+    'gioia tauro': 'Gioia Tauro', 'git': 'Gioia Tauro',
+    'liverpool': 'Liverpool',
+    # Asia
+    'shanghai': 'Shanghai', 'sha': 'Shanghai',
+    'shenzhen': 'Shenzhen', 'szx': 'Shenzhen',
+    'guangzhou': 'Guangzhou', 'can': 'Guangzhou',
+    'ningbo': 'Ningbo', 'ngb': 'Ningbo',
+    'tianjin': 'Tianjin', 'tij': 'Tianjin',
+    'qingdao': 'Qingdao', 'tao': 'Qingdao',
+    'hong kong': 'Hong Kong', 'hkg': 'Hong Kong', 'hongkong': 'Hong Kong',
+    'busan': 'Busan', 'pus': 'Busan',
+    'singapore': 'Singapore', 'sin': 'Singapore',
+    'port klang': 'Port Klang', 'pkw': 'Port Klang', 'portklang': 'Port Klang',
+    # Middle East / Africa
+    'dubai': 'Dubai', 'dxb': 'Dubai', 'jebel ali': 'Jebel Ali', 'jea': 'Jebel Ali',
+    'dakar': 'Dakar', 'dkr': 'Dakar',
+    'abidjan': 'Abidjan', 'abj': 'Abidjan',
+    'lome': 'Lomé', 'lomé': 'Lomé',
+    # Americas
+    'new york': 'New York', 'nyc': 'New York',
+    'los angeles': 'Los Angeles', 'lax': 'Los Angeles',
+    'miami': 'Miami',
+}
+normalize_port = _build_fuzzy_normaliser(_PORT_ALIASES)
+
+
+# ── Client normalisation ───────────────────────────────────────────────────
+# Only known aliases — unknown clients fall back to title-case dedup
+_CLIENT_ALIASES = {}   # populated at runtime via learning (see below)
+
+def normalize_client(raw: str) -> str:
+    """
+    Normalise client name:
+    1. Strip & title-case (handles ALL-CAPS vs mixed-case)
+    2. Apply any known alias
+    """
+    if not raw:
+        return raw
+    cleaned = raw.strip()
+    s = _slug(cleaned)
+    if not s:
+        return cleaned
+    # exact slug alias
+    for alias, canon in _CLIENT_ALIASES.items():
+        if _slug(alias) == s:
+            return canon
+    # substring fuzzy
+    best_len, best_canon = 0, None
+    for alias, canon in _CLIENT_ALIASES.items():
+        a_slug = _slug(alias)
+        if len(a_slug) < 3:
+            continue
+        if a_slug in s or s in a_slug:
+            if len(a_slug) > best_len:
+                best_len, best_canon = len(a_slug), canon
+    if best_canon:
+        return best_canon
+    # fallback: title-case dedup (ATLAS PHARMA == Atlas Pharma)
+    return cleaned.title()
+
+
 def _build_legacy_kpi_report(db):
     from collections import defaultdict
     import re
@@ -477,10 +684,10 @@ def _build_legacy_kpi_report(db):
             mode = norm_mode(s)
             teu = num(getattr(s, 'teu', 0))
             ref = getattr(s, 'ref', None)
-            client = (getattr(s, 'client', None) or '').strip() or None
-            carrier = (getattr(s, 'carrier', None) or '').strip() or None
-            pol = (getattr(s, 'pol', None) or '').strip().upper()
-            pod = (getattr(s, 'pod', None) or '').strip().upper()
+            client = normalize_client((getattr(s, 'client', None) or '').strip()) or None
+            carrier = normalize_carrier((getattr(s, 'carrier', None) or '').strip()) or None
+            pol = normalize_port((getattr(s, 'pol', None) or '').strip()) or ''
+            pod = normalize_port((getattr(s, 'pod', None) or '').strip()) or ''
 
             bystatus[status] += 1
             bymode[mode] += 1
@@ -790,10 +997,10 @@ def kpi_compare(
                             ('Export' if d in ('export','exp','x') else 'Import')
                 status = (getattr(s,'status',None) or 'Pending').strip()
                 teu_val = (lambda v: float(v) if v else 0.0)(getattr(s,'teu',None))
-                client = (getattr(s,'client',None) or '').strip() or None
-                carrier = (getattr(s,'carrier',None) or '').strip() or None
-                pol = (getattr(s,'pol',None) or '').strip().upper()
-                pod = (getattr(s,'pod',None) or '').strip().upper()
+                client = normalize_client((getattr(s,'client',None) or '').strip()) or None
+                carrier = normalize_carrier((getattr(s,'carrier',None) or '').strip()) or None
+                pol = normalize_port((getattr(s,'pol',None) or '').strip()) or ''
+                pod = normalize_port((getattr(s,'pod',None) or '').strip()) or ''
                 mode = (getattr(s,'mode',None) or 'Ocean').strip()
                 m2 = me or mi
                 if m2:
