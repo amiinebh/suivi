@@ -408,382 +408,6 @@ def seed_samples(db: Session = Depends(get_db), current=Depends(require_admin)):
     return {"added": added, "message": f"Seeded {added} sample shipments"}
 
 
-# ── Carrier name normalisation ─────────────────────────────────────────────
-_CARRIER_ALIASES = {
-    # Maersk family
-    'msk':            'Maersk',
-    'maersk':         'Maersk',
-    'maersk line':    'Maersk',
-    'maerskline':     'Maersk',
-    # MSC
-    'msc':            'MSC',
-    'mediterranean shipping': 'MSC',
-    # CMA CGM
-    'cma':            'CMA CGM',
-    'cma cgm':        'CMA CGM',
-    'cmacgm':         'CMA CGM',
-    # Hapag-Lloyd
-    'hapag':          'Hapag-Lloyd',
-    'hapag lloyd':    'Hapag-Lloyd',
-    'hapag-lloyd':    'Hapag-Lloyd',
-    # Evergreen
-    'evergreen':      'Evergreen',
-    # ONE
-    'one':            'ONE',
-    'ocean network':  'ONE',
-    # Cosco
-    'cosco':          'COSCO',
-    # Yang Ming
-    'yang ming':      'Yang Ming',
-    'yangming':       'Yang Ming',
-    # HMM
-    'hmm':            'HMM',
-    'hyundai':        'HMM',
-    # PIL
-    'pil':            'PIL',
-    'pacific international': 'PIL',
-    # Ceva
-    'ceva':           'Ceva Logistics',
-    # DB Schenker
-    'schenker':       'DB Schenker',
-    'db schenker':    'DB Schenker',
-    # DHL
-    'dhl':            'DHL',
-    # Royal Air Maroc
-    'ram':            'Royal Air Maroc',
-    'royal air maroc':'Royal Air Maroc',
-    # Marfret
-    'marfret':        'Marfret',
-    # Aterimar
-    'aterimar':       'Aterimar',
-    # Autransa
-    'autransa':       'Autransa',
-    # KM Trans
-    'km trans':       'KM Trans',
-    'kmtrans':        'KM Trans',
-}
-
-def normalize_carrier(raw: str) -> str:
-    """Normalise carrier name: alias map + title-case dedup."""
-    if not raw:
-        return raw
-    cleaned = raw.strip()
-    key = cleaned.lower()
-    # 1. exact alias match
-    if key in _CARRIER_ALIASES:
-        return _CARRIER_ALIASES[key]
-    # 2. substring alias match (longest match wins)
-    best = None
-    for alias, canonical in _CARRIER_ALIASES.items():
-        if alias in key and (best is None or len(alias) > len(best[0])):
-            best = (alias, canonical)
-    if best:
-        return best[1]
-    # 3. fallback: title-case so MAERSK == Maersk (case-insensitive grouping)
-    return cleaned.title()
-
-
-# ── Generic fuzzy name normaliser ─────────────────────────────────────────
-import unicodedata as _ud, re as _re
-
-def _slug(s: str) -> str:
-    """Lowercase, strip accents, remove non-alphanumeric for comparison."""
-    s = _ud.normalize('NFKD', s).encode('ascii', 'ignore').decode()
-    return _re.sub(r'[^a-z0-9]', '', s.lower())
-
-def _build_fuzzy_normaliser(alias_map: dict):
-    """
-    Returns a normalise(raw) function.
-    alias_map: {slug_or_variant -> canonical_display_name}
-    Matching order:
-      1. exact slug match in alias_map
-      2. slug of raw is a substring of a known alias slug (or vice-versa),
-         pick longest overlap → canonical
-      3. title-case fallback (deduplicates case variants)
-    """
-    # pre-build: {slug -> canonical}
-    slug_map = {_slug(k): v for k, v in alias_map.items()}
-    # also index canonical slugs so we can find them
-    canonical_slugs = {_slug(v): v for v in alias_map.values()}
-
-    def normalise(raw: str) -> str:
-        if not raw:
-            return raw
-        cleaned = raw.strip()
-        s = _slug(cleaned)
-        if not s:
-            return cleaned
-        # 1. exact slug match
-        if s in slug_map:
-            return slug_map[s]
-        if s in canonical_slugs:
-            return canonical_slugs[s]
-        # 2. substring fuzzy (longest alias that is contained in raw slug)
-        best_len, best_canon = 0, None
-        for alias_slug, canon in slug_map.items():
-            if len(alias_slug) < 3:
-                continue
-            if alias_slug in s or s in alias_slug:
-                if len(alias_slug) > best_len:
-                    best_len, best_canon = len(alias_slug), canon
-        if best_canon:
-            return best_canon
-        # 3. title-case fallback for plain case dedup
-        return cleaned.title()
-
-    return normalise
-
-
-# ── POL / POD normalisation ────────────────────────────────────────────────
-_PORT_ALIASES = {
-    # Morocco
-    'casablanca': 'Casablanca', 'casa': 'Casablanca', 'csa': 'Casablanca',
-    'tanger': 'Tanger Med', 'tangier': 'Tanger Med', 'tangermed': 'Tanger Med',
-    'tanger med': 'Tanger Med', 'tgm': 'Tanger Med',
-    'agadir': 'Agadir', 'aga': 'Agadir',
-    'nador': 'Nador', 'ndo': 'Nador',
-    # Europe
-    'algeciras': 'Algeciras', 'alg': 'Algeciras',
-    'barcelona': 'Barcelona', 'bcn': 'Barcelona',
-    'valencia': 'Valencia', 'vlc': 'Valencia',
-    'marseille': 'Marseille', 'mrs': 'Marseille',
-    'le havre': 'Le Havre', 'leh': 'Le Havre', 'lehavre': 'Le Havre',
-    'rotterdam': 'Rotterdam', 'rtm': 'Rotterdam',
-    'hamburg': 'Hamburg', 'ham': 'Hamburg',
-    'antwerp': 'Antwerp', 'ant': 'Antwerp', 'anvers': 'Antwerp',
-    'genoa': 'Genoa', 'gen': 'Genoa', 'genes': 'Genoa',
-    'felixstowe': 'Felixstowe', 'fel': 'Felixstowe',
-    'piraeus': 'Piraeus', 'pir': 'Piraeus',
-    'gioia tauro': 'Gioia Tauro', 'git': 'Gioia Tauro',
-    'liverpool': 'Liverpool',
-    # Asia
-    'shanghai': 'Shanghai', 'sha': 'Shanghai',
-    'shenzhen': 'Shenzhen', 'szx': 'Shenzhen',
-    'guangzhou': 'Guangzhou', 'can': 'Guangzhou',
-    'ningbo': 'Ningbo', 'ngb': 'Ningbo',
-    'tianjin': 'Tianjin', 'tij': 'Tianjin',
-    'qingdao': 'Qingdao', 'tao': 'Qingdao',
-    'hong kong': 'Hong Kong', 'hkg': 'Hong Kong', 'hongkong': 'Hong Kong',
-    'busan': 'Busan', 'pus': 'Busan',
-    'singapore': 'Singapore', 'sin': 'Singapore',
-    'port klang': 'Port Klang', 'pkw': 'Port Klang', 'portklang': 'Port Klang',
-    # Middle East / Africa
-    'dubai': 'Dubai', 'dxb': 'Dubai', 'jebel ali': 'Jebel Ali', 'jea': 'Jebel Ali',
-    'dakar': 'Dakar', 'dkr': 'Dakar',
-    'abidjan': 'Abidjan', 'abj': 'Abidjan',
-    'lome': 'Lomé', 'lomé': 'Lomé',
-    # Americas
-    'new york': 'New York', 'nyc': 'New York',
-    'los angeles': 'Los Angeles', 'lax': 'Los Angeles',
-    'miami': 'Miami',
-}
-normalize_port = _build_fuzzy_normaliser(_PORT_ALIASES)
-
-# ── Port → Country lookup (250+ ports) ────────────────────────────────────
-_PORT_COUNTRY = {
-    # Morocco
-    'casablanca':'Morocco','tanger med':'Morocco','tanger':'Morocco','tangier':'Morocco',
-    'agadir':'Morocco','nador':'Morocco','mohammedia':'Morocco','kenitra':'Morocco',
-    'safi':'Morocco','jorf lasfar':'Morocco','dakhla':'Morocco',
-    # Spain
-    'algeciras':'Spain','barcelona':'Spain','valencia':'Spain','bilbao':'Spain',
-    'vigo':'Spain','tarragona':'Spain','alicante':'Spain','murcia':'Spain',
-    'malaga':'Spain','cartagena':'Spain','cadiz':'Spain','huelva':'Spain',
-    'palma':'Spain','las palmas':'Spain','santa cruz de tenerife':'Spain','ferrol':'Spain',
-    # France
-    'le havre':'France','marseille':'France','dunkirk':'France','dunkerque':'France',
-    'bordeaux':'France','nantes':'France','rouen':'France','fos sur mer':'France',
-    'montoir':'France','strasbourg':'France',
-    # Netherlands
-    'rotterdam':'Netherlands','amsterdam':'Netherlands','vlissingen':'Netherlands','moerdijk':'Netherlands',
-    # Belgium
-    'antwerp':'Belgium','anvers':'Belgium','ghent':'Belgium','zeebrugge':'Belgium','liege':'Belgium',
-    # Germany
-    'hamburg':'Germany','bremen':'Germany','bremerhaven':'Germany','duisburg':'Germany',
-    # Italy
-    'genoa':'Italy','genes':'Italy','la spezia':'Italy','livorno':'Italy',
-    'naples':'Italy','napoli':'Italy','venice':'Italy','venezia':'Italy',
-    'gioia tauro':'Italy','trieste':'Italy','palermo':'Italy','bari':'Italy',
-    # Greece
-    'piraeus':'Greece','thessaloniki':'Greece','patras':'Greece',
-    # Portugal
-    'lisbon':'Portugal','lisbonne':'Portugal','setubal':'Portugal',
-    'leixoes':'Portugal','sines':'Portugal',
-    # UK
-    'felixstowe':'UK','southampton':'UK','london':'UK','tilbury':'UK',
-    'liverpool':'UK','glasgow':'UK','bristol':'UK','hull':'UK','immingham':'UK',
-    # Turkey
-    'istanbul':'Turkey','izmir':'Turkey','mersin':'Turkey','ambarli':'Turkey','gemlik':'Turkey',
-    # Egypt
-    'port said':'Egypt','alexandria':'Egypt','damietta':'Egypt','suez':'Egypt','ain sokhna':'Egypt',
-    # UAE
-    'dubai':'UAE','jebel ali':'UAE','abu dhabi':'UAE','sharjah':'UAE',
-    # Saudi Arabia
-    'jeddah':'Saudi Arabia','dammam':'Saudi Arabia','jubail':'Saudi Arabia',
-    # China
-    'shanghai':'China','ningbo':'China','shenzhen':'China','yantian':'China',
-    'guangzhou':'China','nansha':'China','tianjin':'China','qingdao':'China',
-    'dalian':'China','xiamen':'China','fuzhou':'China','lianyungang':'China',
-    'nanjing':'China','wuhan':'China','chongqing':'China','zhongshan':'China',
-    'zhuhai':'China','chiwan':'China','shekou':'China','dachan bay':'China',
-    'taicang':'China','changsha':'China','hefei':'China','zhengzhou':'China',
-    'xian':'China','chengdu':'China','kunming':'China','nanning':'China',
-    # Hong Kong
-    'hong kong':'Hong Kong',
-    # Taiwan
-    'kaohsiung':'Taiwan','keelung':'Taiwan','taichung':'Taiwan',
-    # South Korea
-    'busan':'South Korea','incheon':'South Korea','gwangyang':'South Korea',
-    # Japan
-    'tokyo':'Japan','yokohama':'Japan','osaka':'Japan','kobe':'Japan',
-    'nagoya':'Japan','hakata':'Japan',
-    # Singapore
-    'singapore':'Singapore',
-    # Malaysia
-    'port klang':'Malaysia','klang':'Malaysia','penang':'Malaysia',
-    'tanjung pelepas':'Malaysia','pasir gudang':'Malaysia',
-    # Vietnam
-    'ho chi minh':'Vietnam','haiphong':'Vietnam','da nang':'Vietnam',
-    'cat lai':'Vietnam','cai mep':'Vietnam',
-    # Thailand
-    'bangkok':'Thailand','laem chabang':'Thailand',
-    # Indonesia
-    'jakarta':'Indonesia','surabaya':'Indonesia','tanjung priok':'Indonesia',
-    # India
-    'mumbai':'India','nhava sheva':'India','chennai':'India','kolkata':'India',
-    'cochin':'India','mundra':'India','hazira':'India','pipavav':'India','tuticorin':'India',
-    # Sri Lanka
-    'colombo':'Sri Lanka',
-    # Pakistan
-    'karachi':'Pakistan','qasim':'Pakistan',
-    # Bangladesh
-    'chittagong':'Bangladesh',
-    # USA
-    'new york':'USA','los angeles':'USA','long beach':'USA','houston':'USA',
-    'savannah':'USA','charleston':'USA','norfolk':'USA','seattle':'USA',
-    'tacoma':'USA','baltimore':'USA','miami':'USA','new orleans':'USA',
-    # Canada
-    'vancouver':'Canada','montreal':'Canada','halifax':'Canada',
-    # Mexico
-    'manzanillo':'Mexico','veracruz':'Mexico','lazaro cardenas':'Mexico','altamira':'Mexico',
-    # Brazil
-    'santos':'Brazil','paranagua':'Brazil','rio de janeiro':'Brazil',
-    'vitoria':'Brazil','itajai':'Brazil','suape':'Brazil',
-    # Argentina
-    'buenos aires':'Argentina','rosario':'Argentina',
-    # Chile
-    'san antonio':'Chile','valparaiso':'Chile','iquique':'Chile',
-    # Colombia
-    'cartagena colombia':'Colombia','buenaventura':'Colombia','barranquilla':'Colombia',
-    # Peru
-    'callao':'Peru',
-    # Panama
-    'colon':'Panama','balboa':'Panama',
-    # Nigeria
-    'lagos':'Nigeria','apapa':'Nigeria','tin can':'Nigeria','onne':'Nigeria',
-    # Senegal
-    'dakar':'Senegal',
-    # Ivory Coast
-    'abidjan':'Ivory Coast',
-    # Togo
-    'lome':'Togo',
-    # Ghana
-    'tema':'Ghana',
-    # Cameroon
-    'douala':'Cameroon',
-    # Kenya
-    'mombasa':'Kenya',
-    # Tanzania
-    'dar es salaam':'Tanzania',
-    # South Africa
-    'durban':'South Africa','cape town':'South Africa','port elizabeth':'South Africa',
-    # Mozambique
-    'maputo':'Mozambique','beira':'Mozambique',
-    # Djibouti
-    'djibouti':'Djibouti',
-    # Jordan
-    'aqaba':'Jordan',
-    # Israel
-    'haifa':'Israel','ashdod':'Israel',
-    # Kuwait
-    'kuwait':'Kuwait','shuaiba':'Kuwait',
-    # Oman
-    'muscat':'Oman','sohar':'Oman','salalah':'Oman',
-    # Qatar
-    'doha':'Qatar','hamad port':'Qatar',
-    # Australia
-    'sydney':'Australia','melbourne':'Australia','brisbane':'Australia',
-    'fremantle':'Australia','adelaide':'Australia',
-    # New Zealand
-    'auckland':'New Zealand','tauranga':'New Zealand',
-}
-
-_COUNTRY_FLAG = {
-    'Morocco':'🇲🇦','Spain':'🇪🇸','France':'🇫🇷','Netherlands':'🇳🇱','Belgium':'🇧🇪',
-    'Germany':'🇩🇪','Italy':'🇮🇹','Greece':'🇬🇷','Portugal':'🇵🇹','UK':'🇬🇧',
-    'Turkey':'🇹🇷','Egypt':'🇪🇬','UAE':'🇦🇪','Saudi Arabia':'🇸🇦','China':'🇨🇳',
-    'Hong Kong':'🇭🇰','Taiwan':'🇹🇼','South Korea':'🇰🇷','Japan':'🇯🇵','Singapore':'🇸🇬',
-    'Malaysia':'🇲🇾','Vietnam':'🇻🇳','Thailand':'🇹🇭','Indonesia':'🇮🇩','India':'🇮🇳',
-    'Sri Lanka':'🇱🇰','Pakistan':'🇵🇰','Bangladesh':'🇧🇩','USA':'🇺🇸','Canada':'🇨🇦',
-    'Mexico':'🇲🇽','Brazil':'🇧🇷','Argentina':'🇦🇷','Chile':'🇨🇱','Colombia':'🇨🇴',
-    'Peru':'🇵🇪','Panama':'🇵🇦','Nigeria':'🇳🇬','Senegal':'🇸🇳','Ivory Coast':'🇨🇮',
-    'Togo':'🇹🇬','Ghana':'🇬🇭','Cameroon':'🇨🇲','Kenya':'🇰🇪','Tanzania':'🇹🇿',
-    'South Africa':'🇿🇦','Mozambique':'🇲🇿','Djibouti':'🇩🇯','Jordan':'🇯🇴',
-    'Israel':'🇮🇱','Kuwait':'🇰🇼','Oman':'🇴🇲','Qatar':'🇶🇦','Australia':'🇦🇺',
-    'New Zealand':'🇳🇿',
-}
-
-def port_country_info(port_name: str) -> dict:
-    """Return {country, flag} for a port name, or empty strings if unknown."""
-    if not port_name:
-        return {'country': '', 'flag': ''}
-    key = _slug(port_name.lower())
-    for p, c in _PORT_COUNTRY.items():
-        if _slug(p) == key:
-            return {'country': c, 'flag': _COUNTRY_FLAG.get(c, '')}
-    for p, c in _PORT_COUNTRY.items():
-        ps = _slug(p)
-        if len(ps) >= 4 and (ps in key or key in ps):
-            return {'country': c, 'flag': _COUNTRY_FLAG.get(c, '')}
-    return {'country': '', 'flag': ''}
-
-
-
-# ── Client normalisation ───────────────────────────────────────────────────
-# Only known aliases — unknown clients fall back to title-case dedup
-_CLIENT_ALIASES = {}   # populated at runtime via learning (see below)
-
-def normalize_client(raw: str) -> str:
-    """
-    Normalise client name:
-    1. Strip & title-case (handles ALL-CAPS vs mixed-case)
-    2. Apply any known alias
-    """
-    if not raw:
-        return raw
-    cleaned = raw.strip()
-    s = _slug(cleaned)
-    if not s:
-        return cleaned
-    # exact slug alias
-    for alias, canon in _CLIENT_ALIASES.items():
-        if _slug(alias) == s:
-            return canon
-    # substring fuzzy
-    best_len, best_canon = 0, None
-    for alias, canon in _CLIENT_ALIASES.items():
-        a_slug = _slug(alias)
-        if len(a_slug) < 3:
-            continue
-        if a_slug in s or s in a_slug:
-            if len(a_slug) > best_len:
-                best_len, best_canon = len(a_slug), canon
-    if best_canon:
-        return best_canon
-    # fallback: title-case dedup (ATLAS PHARMA == Atlas Pharma)
-    return cleaned.title()
-
-
 def _build_legacy_kpi_report(db):
     from collections import defaultdict
     import re
@@ -856,10 +480,10 @@ def _build_legacy_kpi_report(db):
             mode = norm_mode(s)
             teu = num(getattr(s, 'teu', 0))
             ref = getattr(s, 'ref', None)
-            client = normalize_client((getattr(s, 'client', None) or '').strip()) or None
-            carrier = normalize_carrier((getattr(s, 'carrier', None) or '').strip()) or None
-            pol = normalize_port((getattr(s, 'pol', None) or '').strip()) or ''
-            pod = normalize_port((getattr(s, 'pod', None) or '').strip()) or ''
+            client = (getattr(s, 'client', None) or '').strip() or None
+            carrier = (getattr(s, 'carrier', None) or '').strip() or None
+            pol = (getattr(s, 'pol', None) or '').strip().upper()
+            pod = (getattr(s, 'pod', None) or '').strip().upper()
 
             bystatus[status] += 1
             bymode[mode] += 1
@@ -894,6 +518,12 @@ def _build_legacy_kpi_report(db):
                 else:
                     client_export[client]['shipments'] += 1
                     client_export[client]['teu'] += teu
+                if mode == 'Ocean':
+                    client_fcl[client]['shipments'] += 1
+                    client_fcl[client]['teu'] += teu
+                else:
+                    client_ftl[client]['shipments'] += 1
+                    client_ftl[client]['teu'] += teu
 
             if pol:
                 pol_all[pol] += 1
@@ -911,15 +541,9 @@ def _build_legacy_kpi_report(db):
         except Exception:
             continue
 
-    def sort_counts(d, key_name='name', value_name='count', limit=8, enrich_port=False):
-        rows = [{key_name: k, value_name: v}
+    def sort_counts(d, key_name='name', value_name='count', limit=8):
+        return [{key_name: k, value_name: v}
                 for k, v in sorted(d.items(), key=lambda x: (-x[1], x[0]))[:limit]]
-        if enrich_port:
-            for r in rows:
-                info = port_country_info(r.get(key_name, ''))
-                r['country'] = info['country']
-                r['flag']    = info['flag']
-        return rows
 
     def sort_client(d, limit=8):
         rows = [{'name': k, 'shipments': int(v['shipments']), 'teu': round(v['teu'], 2)}
@@ -958,6 +582,8 @@ def _build_legacy_kpi_report(db):
         "by_client_all": sort_client(client_all),
         "byclientimport": sort_client(client_import),
         "by_client_import": sort_client(client_import),
+        "by_client_fcl": sort_client(client_fcl),
+        "by_client_ftl": sort_client(client_ftl),
         "byclientexport": sort_client(client_export),
         "by_client_export": sort_client(client_export),
         "bycarrier": sort_counts(carrier_all),
@@ -970,24 +596,24 @@ def _build_legacy_kpi_report(db):
         "by_carrier_import": sort_counts(carrier_import),
         "bycarrierimport": sort_counts(carrier_import),
         "bycarrierexport": sort_counts(carrier_export),
-        "toppol": sort_counts(pol_all, enrich_port=True),
-        "top_pol": sort_counts(pol_all, enrich_port=True),
-        "toppolimport": sort_counts(pol_import, enrich_port=True),
-        "top_pol_import": sort_counts(pol_import, enrich_port=True),
-        "toppolexport": sort_counts(pol_export, enrich_port=True),
-        "top_pol_export": sort_counts(pol_export, enrich_port=True),
-        "toppod": sort_counts(pod_all, enrich_port=True),
-        "top_pod": sort_counts(pod_all, enrich_port=True),
-        "toppodimport": sort_counts(pod_import, enrich_port=True),
-        "top_pod_import": sort_counts(pod_import, enrich_port=True),
-        "toppodexport": sort_counts(pod_export, enrich_port=True),
-        "top_pod_export": sort_counts(pod_export, enrich_port=True),
-        "toprouting": sort_counts(route_all, "route", "count", enrich_port=True),
-        "top_routing": sort_counts(route_all, "route", "count", enrich_port=True),
-        "toproutingimport": sort_counts(route_import, "route", "count", enrich_port=True),
-        "top_routing_import": sort_counts(route_import, "route", "count", enrich_port=True),
-        "toproutingexport": sort_counts(route_export, "route", "count", enrich_port=True),
-        "top_routing_export": sort_counts(route_export, "route", "count", enrich_port=True),
+        "toppol": sort_counts(pol_all),
+        "top_pol": sort_counts(pol_all),
+        "toppolimport": sort_counts(pol_import),
+        "top_pol_import": sort_counts(pol_import),
+        "toppolexport": sort_counts(pol_export),
+        "top_pol_export": sort_counts(pol_export),
+        "toppod": sort_counts(pod_all),
+        "top_pod": sort_counts(pod_all),
+        "toppodimport": sort_counts(pod_import),
+        "top_pod_import": sort_counts(pod_import),
+        "toppodexport": sort_counts(pod_export),
+        "top_pod_export": sort_counts(pod_export),
+        "toprouting": sort_counts(route_all, "route", "count"),
+        "top_routing": sort_counts(route_all, "route", "count"),
+        "toproutingimport": sort_counts(route_import, "route", "count"),
+        "top_routing_import": sort_counts(route_import, "route", "count"),
+        "toproutingexport": sort_counts(route_export, "route", "count"),
+        "top_routing_export": sort_counts(route_export, "route", "count"),
         "by_incoterm": dict(sorted(incoterm_all.items(), key=lambda x: -x[1])),
         "insights": [],
     }
@@ -1161,14 +787,11 @@ def kpi_compare(
         total_teu = round(sum((lambda v: float(v) if v else 0.0)(getattr(s,'teu',None)) for s in ships), 2)
         by_status = defaultdict(int); by_mode = defaultdict(int); by_dir = defaultdict(int)
         monthly_imp = defaultdict(int); monthly_exp = defaultdict(int)
-        client_all    = defaultdict(lambda: {'shipments':0,'teu':0.0})
-        client_export = defaultdict(lambda: {'shipments':0,'teu':0.0})
-        client_import = defaultdict(lambda: {'shipments':0,'teu':0.0})
-        client_fcl    = defaultdict(lambda: {'shipments':0,'teu':0.0})
-        client_ftl    = defaultdict(lambda: {'shipments':0,'teu':0.0})
+        client_all = defaultdict(lambda: {'shipments':0,'teu':0.0})
+        client_fcl = defaultdict(lambda: {'shipments':0,'teu':0.0})
+        client_ftl = defaultdict(lambda: {'shipments':0,'teu':0.0})
         carrier_all = defaultdict(int); pol_all = defaultdict(int); pod_all = defaultdict(int)
-        pod_exp = defaultdict(int); pod_imp = defaultdict(int)
-        route_all = defaultdict(int); route_export = defaultdict(int); route_import = defaultdict(int)
+        pod_exp = defaultdict(int); pod_imp = defaultdict(int); route_all = defaultdict(int)
         now = datetime.utcnow(); overdue = 0
         for s in ships:
             try:
@@ -1179,10 +802,10 @@ def kpi_compare(
                             ('Export' if d in ('export','exp','x') else 'Import')
                 status = (getattr(s,'status',None) or 'Pending').strip()
                 teu_val = (lambda v: float(v) if v else 0.0)(getattr(s,'teu',None))
-                client = normalize_client((getattr(s,'client',None) or '').strip()) or None
-                carrier = normalize_carrier((getattr(s,'carrier',None) or '').strip()) or None
-                pol = normalize_port((getattr(s,'pol',None) or '').strip()) or ''
-                pod = normalize_port((getattr(s,'pod',None) or '').strip()) or ''
+                client = (getattr(s,'client',None) or '').strip() or None
+                carrier = (getattr(s,'carrier',None) or '').strip() or None
+                pol = (getattr(s,'pol',None) or '').strip().upper()
+                pod = (getattr(s,'pod',None) or '').strip().upper()
                 mode = (getattr(s,'mode',None) or 'Ocean').strip()
                 m2 = me or mi
                 if m2:
@@ -1193,12 +816,6 @@ def kpi_compare(
                 if client:
                     client_all[client]['shipments'] += 1
                     client_all[client]['teu'] += teu_val
-                    if direction == 'Export':
-                        client_export[client]['shipments'] += 1
-                        client_export[client]['teu'] += teu_val
-                    else:
-                        client_import[client]['shipments'] += 1
-                        client_import[client]['teu'] += teu_val
                     m_lower = (getattr(s,'mode',None) or 'Ocean').lower()
                     if any(t in m_lower for t in ['ocean','sea','fcl','lcl']):
                         client_fcl[client]['shipments'] += 1
@@ -1212,10 +829,7 @@ def kpi_compare(
                     pod_all[pod] += 1
                     if direction == 'Export': pod_exp[pod] += 1
                     else: pod_imp[pod] += 1
-                if pol and pod:
-                    route_all[f'{pol} to {pod}'] += 1
-                    if direction == 'Export': route_export[f'{pol} to {pod}'] += 1
-                    else: route_import[f'{pol} to {pod}'] += 1
+                if pol and pod: route_all[f'{pol} to {pod}'] += 1
                 eta = getattr(s,'eta',None)
                 if eta and status not in ('Arrived','Closed','Canceled'):
                     try:
@@ -1223,14 +837,8 @@ def kpi_compare(
                     except: pass
             except Exception:
                 continue
-        def top8(d, key='name', val='count', enrich_port=False):
-            rows = [{key:k,val:v} for k,v in sorted(d.items(),key=lambda x:-x[1])[:8]]
-            if enrich_port:
-                for r in rows:
-                    info = port_country_info(r.get(key,''))
-                    r['country'] = info['country']
-                    r['flag']    = info['flag']
-            return rows
+        def top8(d, key='name', val='count'):
+            return [{key:k,val:v} for k,v in sorted(d.items(),key=lambda x:-x[1])[:8]]
         def top_clients(d):
             rows = [{'name':k,'shipments':int(v['shipments']),'teu':round(v['teu'],2)} for k,v in d.items()]
             return sorted(rows,key=lambda x:-x['shipments'])[:8]
@@ -1242,16 +850,11 @@ def kpi_compare(
             'by_status':dict(by_status),'by_mode':dict(by_mode),
             'by_direction':{'Export':by_dir['Export'],'Import':by_dir['Import']},
             'monthly':monthly,'by_client_all':top_clients(client_all),
-            'by_client_export':top_clients(client_export),
-            'by_client_import':top_clients(client_import),
             'by_client_fcl':top_clients(client_fcl),
             'by_client_ftl':top_clients(client_ftl),
-            'by_carrier':top8(carrier_all),'top_pol':top8(pol_all,enrich_port=True),
-            'top_pod':top8(pod_all,enrich_port=True),'top_pod_export':top8(pod_exp,enrich_port=True),
-            'top_pod_import':top8(pod_imp,enrich_port=True),
-            'top_routing':top8(route_all,key='route',enrich_port=True),
-            'top_routing_export':top8(route_export,key='route',enrich_port=True),
-            'top_routing_import':top8(route_import,key='route',enrich_port=True),
+            'by_carrier':top8(carrier_all),'top_pol':top8(pol_all),
+            'top_pod':top8(pod_all),'top_pod_export':top8(pod_exp),
+            'top_pod_import':top8(pod_imp),'top_routing':top8(route_all,key='route'),
             'overdue':overdue,
         }
 
