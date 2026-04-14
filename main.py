@@ -840,9 +840,11 @@ def _build_legacy_kpi_report(db):
     carrier_road_import = defaultdict(int)
     carrier_road_export = defaultdict(int)
     incoterm_all = defaultdict(int)
-    client_all = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
+    client_all    = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     client_import = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     client_export = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
+    client_fcl    = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
+    client_ftl    = defaultdict(lambda: {'shipments': 0, 'teu': 0.0})
     pol_all = defaultdict(int); pol_import = defaultdict(int); pol_export = defaultdict(int)
     pod_all = defaultdict(int); pod_import = defaultdict(int); pod_export = defaultdict(int)
     route_all = defaultdict(int); route_import = defaultdict(int); route_export = defaultdict(int)
@@ -1162,6 +1164,8 @@ def kpi_compare(
         client_all    = defaultdict(lambda: {'shipments':0,'teu':0.0})
         client_export = defaultdict(lambda: {'shipments':0,'teu':0.0})
         client_import = defaultdict(lambda: {'shipments':0,'teu':0.0})
+        client_fcl    = defaultdict(lambda: {'shipments':0,'teu':0.0})
+        client_ftl    = defaultdict(lambda: {'shipments':0,'teu':0.0})
         carrier_all = defaultdict(int); pol_all = defaultdict(int); pod_all = defaultdict(int)
         pod_exp = defaultdict(int); pod_imp = defaultdict(int)
         route_all = defaultdict(int); route_export = defaultdict(int); route_import = defaultdict(int)
@@ -1195,6 +1199,13 @@ def kpi_compare(
                     else:
                         client_import[client]['shipments'] += 1
                         client_import[client]['teu'] += teu_val
+                    m_lower = (getattr(s,'mode',None) or 'Ocean').lower()
+                    if any(t in m_lower for t in ['ocean','sea','fcl','lcl']):
+                        client_fcl[client]['shipments'] += 1
+                        client_fcl[client]['teu'] += teu_val
+                    else:
+                        client_ftl[client]['shipments'] += 1
+                        client_ftl[client]['teu'] += teu_val
                 if carrier: carrier_all[carrier] += 1
                 if pol: pol_all[pol] += 1
                 if pod:
@@ -1233,6 +1244,8 @@ def kpi_compare(
             'monthly':monthly,'by_client_all':top_clients(client_all),
             'by_client_export':top_clients(client_export),
             'by_client_import':top_clients(client_import),
+            'by_client_fcl':top_clients(client_fcl),
+            'by_client_ftl':top_clients(client_ftl),
             'by_carrier':top8(carrier_all),'top_pol':top8(pol_all,enrich_port=True),
             'top_pod':top8(pod_all,enrich_port=True),'top_pod_export':top8(pod_exp,enrich_port=True),
             'top_pod_import':top8(pod_imp,enrich_port=True),
