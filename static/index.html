@@ -1467,6 +1467,18 @@ button[onclick*="closeEmailModal"]:hover{
               <div id="cmp-client-table"></div>
             </div>
             <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-person" style="color:#4f8ef7"></i> Top Clients by Mode &mdash; Shipments</div>
+                <div class="kpi-mini-tabs"><button class="kmtab active" id="cmp-cli-mode-tab-all" onclick="cmpClientModeTab('all')">All</button><button class="kmtab" id="cmp-cli-mode-tab-fcl" onclick="cmpClientModeTab('fcl')">&#9750; FCL</button><button class="kmtab" id="cmp-cli-mode-tab-ftl" onclick="cmpClientModeTab('ftl')">&#128664; FTL</button></div></div>
+              <div id="cmp-client-mode-table"></div>
+            </div>
+            <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-shipping-container" style="color:#6c63ff"></i> Top Clients by Mode &mdash; TEU</div>
+                <div class="kpi-mini-tabs"><button class="kmtab active" id="cmp-cli-mode-teu-tab-all" onclick="cmpClientModeTeuTab('all')">All</button><button class="kmtab" id="cmp-cli-mode-teu-tab-fcl" onclick="cmpClientModeTeuTab('fcl')">&#9750; FCL</button><button class="kmtab" id="cmp-cli-mode-teu-tab-ftl" onclick="cmpClientModeTeuTab('ftl')">&#128664; FTL</button></div></div>
+              <div id="cmp-client-mode-teu-table"></div>
+            </div>
+            <div style="background:var(--bg);box-shadow:var(--shadow-card);border-radius:8px;padding:16px;margin-bottom:14px">
               <div style="font-size:12px;font-weight:600;color:var(--text1);margin-bottom:10px">
                 <i class="ph ph-chart-polar" style="color:#a855f7"></i> Period Comparison Radar
               </div>
@@ -1577,6 +1589,18 @@ button[onclick*="closeEmailModal"]:hover{
             <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-shipping-container" style="color:#6c63ff"></i> Top Clients — TEU</div>
             <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTab(this,'kpi-bar-teu','all')">All</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-teu','exp')">&#8593; Exp</button><button class="kmtab" onclick="kpiMiniTab(this,'kpi-bar-teu','imp')">&#8595; Imp</button></div>
           </div><div id="kpi-bar-teu"></div>
+        </div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div class="card"><div class="card__body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-person" style="color:#4f8ef7"></i> Top Clients &mdash; Shipments (Mode)</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTabFcl(this,'kpi-bar-clients-mode-ship','all')">All</button><button class="kmtab" onclick="kpiMiniTabFcl(this,'kpi-bar-clients-mode-ship','fcl')">&#9750; FCL</button><button class="kmtab" onclick="kpiMiniTabFcl(this,'kpi-bar-clients-mode-ship','ftl')">&#128664; FTL</button></div></div><div id="kpi-bar-clients-mode-ship"></div>
+        </div></div>
+        <div class="card"><div class="card__body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--text1)"><i class="ph ph-shipping-container" style="color:#6c63ff"></i> Top Clients &mdash; TEU (Mode)</div>
+            <div class="kpi-mini-tabs"><button class="kmtab active" onclick="kpiMiniTabFcl(this,'kpi-bar-clients-mode-teu','all')">All</button><button class="kmtab" onclick="kpiMiniTabFcl(this,'kpi-bar-clients-mode-teu','fcl')">&#9750; FCL</button><button class="kmtab" onclick="kpiMiniTabFcl(this,'kpi-bar-clients-mode-teu','ftl')">&#128664; FTL</button></div></div><div id="kpi-bar-clients-mode-teu"></div>
         </div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
@@ -2964,6 +2988,8 @@ async function loadAnalytics(){
       bl('kpi-bar-carriers-road',bc(['road','truck','ftl']),'name','count','#f97316');
     })();
     bl('kpi-bar-clients',clientAll,'name','shipments','#4f8ef7');
+    bl('kpi-bar-clients-mode-ship',k.by_client_fcl||[],'name','shipments','#4f8ef7');
+    bl('kpi-bar-clients-mode-teu',(k.by_client_fcl||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
     bl('kpi-bar-teu',clientAll.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
     bl('kpi-bar-pod',k.top_pod||[],'name','count','#ef4444');
     bl('kpi-bar-pol',k.top_pol||[],'name','count','#22c55e');
@@ -3050,6 +3076,32 @@ function setPreset(key){
   g('cmp-b-from',p.bFrom); g('cmp-b-to',p.bTo);
   var panel=document.getElementById('compare-panel');
   if(panel&&panel.style.display==='none') toggleComparePanel();
+}
+function kpiMiniTabFcl(btn,targetId,mode){
+  var k=window.kpiData,bl=window.barListFn;if(!bl||!k)return;
+  btn.closest('.kpi-mini-tabs').querySelectorAll('.kmtab').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  var src=mode==='fcl'?(k.by_client_fcl||[]):mode==='ftl'?(k.by_client_ftl||[]):(k.by_client_all||[]);
+  if(targetId.indexOf('teu')>-1) src=src.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);});
+  bl(targetId,src,'name',targetId.indexOf('teu')>-1?'teu':'shipments',targetId.indexOf('teu')>-1?'#6c63ff':'#4f8ef7');
+}
+function cmpClientModeTab(mode){
+  ['all','fcl','ftl'].forEach(function(m){var el=document.getElementById('cmp-cli-mode-tab-'+m);if(el)el.classList.remove('active');});
+  var btn=document.getElementById('cmp-cli-mode-tab-'+mode);if(btn)btn.classList.add('active');
+  var _a=window._cmpA||{},_b=window._cmpB||{};
+  var aD=mode==='fcl'?(_a.by_client_fcl||[]):mode==='ftl'?(_a.by_client_ftl||[]):(_a.by_client_all||[]);
+  var bD=mode==='fcl'?(_b.by_client_fcl||[]):mode==='ftl'?(_b.by_client_ftl||[]):(_b.by_client_all||[]);
+  renderCmpClientTable(aD,bD,'shipments','cmp-client-mode-table');
+}
+function cmpClientModeTeuTab(mode){
+  ['all','fcl','ftl'].forEach(function(m){var el=document.getElementById('cmp-cli-mode-teu-tab-'+m);if(el)el.classList.remove('active');});
+  var btn=document.getElementById('cmp-cli-mode-teu-tab-'+mode);if(btn)btn.classList.add('active');
+  var _a=window._cmpA||{},_b=window._cmpB||{};
+  var aD=mode==='fcl'?(_a.by_client_fcl||[]):mode==='ftl'?(_a.by_client_ftl||[]):(_a.by_client_all||[]);
+  var bD=mode==='fcl'?(_b.by_client_fcl||[]):mode==='ftl'?(_b.by_client_ftl||[]):(_b.by_client_all||[]);
+  aD=aD.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);});
+  bD=bD.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);});
+  renderCmpClientTable(aD,bD,'teu','cmp-client-mode-teu-table');
 }
 function setKpiDir(dir,btn){window._kpiDir=dir;loadAnalytics();}
 function setKpiPeriod(p,btn){window._kpiPeriod=p;
@@ -4773,6 +4825,8 @@ function renderActivityFeed(){
         }
         window.cmpClientTab = renderCmpClientTable;
         renderCmpClientTable(window._cmpClientDir||'all');
+        cmpClientModeTab('all');
+        cmpClientModeTeuTab('all');
 
 
         /* mini bars */
@@ -5595,7 +5649,7 @@ function generateReport(){
       +(monthly.length?'<div class="card"><div class="ct">Monthly Volume</div><table><thead><tr><th>Month</th><th>Export</th><th>Import</th><th>Total</th><th>TEU</th></tr></thead><tbody>'+monthly.map(function(m){return '<tr><td>'+m.month+'</td><td>'+(m.export_count||0)+'</td><td>'+(m.import_count||0)+'</td><td>'+((m.export_count||0)+(m.import_count||0))+'</td><td>'+(m.teu||0)+'</td></tr>';}).join('')+'</tbody></table></div>':'')
       +SP('Ocean Carriers','&#9973;','#4f8ef7',BR(cOE,'name','count','#4f8ef7'),BR(cOI,'name','count','#4f8ef7'))
       +SP('Road Carriers','&#128664;','#f97316',BR(cRE,'name','count','#f97316'),BR(cRI,'name','count','#f97316'))
-      +SP('Top Clients by Shipments','&#128100;','#4f8ef7',BR(k.by_client_export||[],'name','shipments','#4f8ef7'),BR(k.by_client_import||[],'name','shipments','#4f8ef7'))+SP('Top Clients by TEU','&#128230;','#6c63ff',BR((k.by_client_export||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'),BR((k.by_client_import||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'))
+      +SP('Top Clients by Shipments (Direction)','&#128100;','#4f8ef7',BR(k.by_client_export||[],'name','shipments','#4f8ef7'),BR(k.by_client_import||[],'name','shipments','#4f8ef7'))+SP('Top Clients by TEU (Direction)','&#128230;','#6c63ff',BR((k.by_client_export||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'),BR((k.by_client_import||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'))+SP('Top Clients by Shipments (Mode)','&#9750;','#4f8ef7',BR(k.by_client_fcl||[],'name','shipments','#4f8ef7'),BR(k.by_client_ftl||[],'name','shipments','#f97316'))+SP('Top Clients by TEU (Mode)','&#128664;','#6c63ff',BR((k.by_client_fcl||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'),BR((k.by_client_ftl||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#a855f7'))
       +'<div class="card"><div class="ct">Incoterm Distribution</div>'+BR(incArr,'name','count')+'</div>'
       +SP('Top Destinations (POD)','&#128205;','#ef4444',BR(pDE,'name','count','#ef4444'),BR(pDI,'name','count','#ef4444'))
       +SP('Top Origins (POL)','&#128204;','#22c55e',BR(pLE,'name','count','#22c55e'),BR(pLI,'name','count','#22c55e'))
