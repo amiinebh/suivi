@@ -2988,8 +2988,8 @@ async function loadAnalytics(){
       bl('kpi-bar-carriers-road',bc(['road','truck','ftl']),'name','count','#f97316');
     })();
     bl('kpi-bar-clients',clientAll,'name','shipments','#4f8ef7');
-    bl('kpi-bar-clients-mode-ship',k.by_client_fcl||[],'name','shipments','#4f8ef7');
-    bl('kpi-bar-clients-mode-teu',(k.by_client_fcl||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
+    bl('kpi-bar-clients-mode-ship',k.by_client_all||[],'name','shipments','#4f8ef7');
+    bl('kpi-bar-clients-mode-teu',(k.by_client_all||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
     bl('kpi-bar-teu',clientAll.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
     bl('kpi-bar-pod',k.top_pod||[],'name','count','#ef4444');
     bl('kpi-bar-pol',k.top_pol||[],'name','count','#22c55e');
@@ -3106,11 +3106,11 @@ function _renderModeCmpTable(aD,bD,metric,containerId){
         +'<td style="padding:6px 4px;font-weight:600;color:var(--text1)">'+c.name+'</td>'
         +'<td style="padding:6px 4px;width:120px">'
           +'<div style="display:flex;gap:3px;align-items:center">'
-          +'<div style="height:6px;width:'+Math.round(c.aVal/mx*80)+'px;background:#4f8ef7;border-radius:3px"></div>'
-          +'<span style="color:#4f8ef7;font-size:10px">'+c.aVal+'</span></div>'
+          +'<div style="height:6px;width:'+Math.round(c.aVal/mx*80)+'px;background:#94a3b8;border-radius:3px"></div>'
+          +'<span style="color:#94a3b8;font-size:10px">'+c.aVal+'</span></div>'
           +'<div style="display:flex;gap:3px;align-items:center;margin-top:2px">'
-          +'<div style="height:6px;width:'+Math.round(c.bVal/mx*80)+'px;background:#94a3b8;border-radius:3px"></div>'
-          +'<span style="color:var(--text2);font-size:10px">'+c.bVal+'</span></div>'
+          +'<div style="height:6px;width:'+Math.round(c.bVal/mx*80)+'px;background:#4f8ef7;border-radius:3px"></div>'
+          +'<span <span style="color:#4f8ef7;font-size:10px">'+c.bVal+'</span></div>'
         +'</td>'
         +'<td style="padding:6px 4px;text-align:right;font-weight:600;color:'+dc+'">'+ds+'</td>'
         +'</tr>';
@@ -5675,7 +5675,7 @@ function generateReport(){
       +(monthly.length?'<div class="card"><div class="ct">Monthly Volume</div><table><thead><tr><th>Month</th><th>Export</th><th>Import</th><th>Total</th><th>TEU</th></tr></thead><tbody>'+monthly.map(function(m){return '<tr><td>'+m.month+'</td><td>'+(m.export_count||0)+'</td><td>'+(m.import_count||0)+'</td><td>'+((m.export_count||0)+(m.import_count||0))+'</td><td>'+(m.teu||0)+'</td></tr>';}).join('')+'</tbody></table></div>':'')
       +SP('Ocean Carriers','&#9973;','#4f8ef7',BR(cOE,'name','count','#4f8ef7'),BR(cOI,'name','count','#4f8ef7'))
       +SP('Road Carriers','&#128664;','#f97316',BR(cRE,'name','count','#f97316'),BR(cRI,'name','count','#f97316'))
-      +SP('Top Clients by Shipments (Direction)','&#128100;','#4f8ef7',BR(k.by_client_export||[],'name','shipments','#4f8ef7'),BR(k.by_client_import||[],'name','shipments','#4f8ef7'))+SP('Top Clients by TEU (Direction)','&#128230;','#6c63ff',BR((k.by_client_export||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'),BR((k.by_client_import||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'))+SP('Top Clients by Shipments (Mode)','&#9750;','#4f8ef7',BR(k.by_client_fcl||[],'name','shipments','#4f8ef7'),BR(k.by_client_ftl||[],'name','shipments','#f97316'))+SP('Top Clients by TEU (Mode)','&#128664;','#6c63ff',BR((k.by_client_fcl||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'),BR((k.by_client_ftl||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#a855f7'))
+      +SP('Top Clients by Shipments (Direction)','&#128100;','#4f8ef7',BR(k.by_client_export||[],'name','shipments','#4f8ef7'),BR(k.by_client_import||[],'name','shipments','#4f8ef7'))+SP('Top Clients by TEU (Direction)','&#128230;','#6c63ff',BR((k.by_client_export||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'),BR((k.by_client_import||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'))+SP('Top Clients by Shipments (Mode)','&#9750;','#4f8ef7',BR(k.by_client_all||[],'name','shipments','#4f8ef7'),BR(k.by_client_ftl||[],'name','shipments','#f97316'))+SP('Top Clients by TEU (Mode)','&#128664;','#6c63ff',BR((k.by_client_all||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'),BR((k.by_client_ftl||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#a855f7'))
       +'<div class="card"><div class="ct">Incoterm Distribution</div>'+BR(incArr,'name','count')+'</div>'
       +SP('Top Destinations (POD)','&#128205;','#ef4444',BR(pDE,'name','count','#ef4444'),BR(pDI,'name','count','#ef4444'))
       +SP('Top Origins (POL)','&#128204;','#22c55e',BR(pLE,'name','count','#22c55e'),BR(pLI,'name','count','#22c55e'))
