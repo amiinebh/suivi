@@ -3099,7 +3099,7 @@ function _renderModeCmpTable(aD,bD,metric,containerId){
   var mx=Math.max.apply(null,combined.map(function(c){return Math.max(c.aVal,c.bVal);}).concat([1]));
   el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11px">'
     +combined.map(function(c){
-      var d=c.bVal>0?Math.round((c.aVal-c.bVal)/c.bVal*100):null;
+      var d=c.aVal>0?Math.round((c.bVal-c.aVal)/c.aVal*100):null;
       var dc=d===null?'var(--text2)':d>0?'#22c55e':'#ef4444';
       var ds=d===null?'—':(d>0?'▲':'▼')+Math.abs(d)+'%';
       return '<tr style="border-bottom:1px solid var(--border)">'
@@ -3110,7 +3110,7 @@ function _renderModeCmpTable(aD,bD,metric,containerId){
           +'<span style="color:#94a3b8;font-size:10px">'+c.aVal+'</span></div>'
           +'<div style="display:flex;gap:3px;align-items:center;margin-top:2px">'
           +'<div style="height:6px;width:'+Math.round(c.bVal/mx*80)+'px;background:#4f8ef7;border-radius:3px"></div>'
-          +'<span <span style="color:#4f8ef7;font-size:10px">'+c.bVal+'</span></div>'
+          +'<span style="color:#4f8ef7;font-size:10px">'+c.bVal+'</span></div>'
         +'</td>'
         +'<td style="padding:6px 4px;text-align:right;font-weight:600;color:'+dc+'">'+ds+'</td>'
         +'</tr>';
@@ -5675,7 +5675,7 @@ function generateReport(){
       +(monthly.length?'<div class="card"><div class="ct">Monthly Volume</div><table><thead><tr><th>Month</th><th>Export</th><th>Import</th><th>Total</th><th>TEU</th></tr></thead><tbody>'+monthly.map(function(m){return '<tr><td>'+m.month+'</td><td>'+(m.export_count||0)+'</td><td>'+(m.import_count||0)+'</td><td>'+((m.export_count||0)+(m.import_count||0))+'</td><td>'+(m.teu||0)+'</td></tr>';}).join('')+'</tbody></table></div>':'')
       +SP('Ocean Carriers','&#9973;','#4f8ef7',BR(cOE,'name','count','#4f8ef7'),BR(cOI,'name','count','#4f8ef7'))
       +SP('Road Carriers','&#128664;','#f97316',BR(cRE,'name','count','#f97316'),BR(cRI,'name','count','#f97316'))
-      +SP('Top Clients by Shipments (Direction)','&#128100;','#4f8ef7',BR(k.by_client_export||[],'name','shipments','#4f8ef7'),BR(k.by_client_import||[],'name','shipments','#4f8ef7'))+SP('Top Clients by TEU (Direction)','&#128230;','#6c63ff',BR((k.by_client_export||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'),BR((k.by_client_import||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'))+SP('Top Clients by Shipments (Mode)','&#9750;','#4f8ef7',BR(k.by_client_all||[],'name','shipments','#4f8ef7'),BR(k.by_client_ftl||[],'name','shipments','#f97316'))+SP('Top Clients by TEU (Mode)','&#128664;','#6c63ff',BR((k.by_client_all||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'),BR((k.by_client_ftl||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#a855f7'))
+      +SP('Top Clients by Shipments (Direction)','&#128100;','#4f8ef7',BR(k.by_client_export||[],'name','shipments','#4f8ef7'),BR(k.by_client_import||[],'name','shipments','#4f8ef7'))+SP('Top Clients by TEU (Direction)','&#128230;','#6c63ff',BR((k.by_client_export||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'),BR((k.by_client_import||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'))+SP('Top Clients by Shipments (Mode)','&#9750;','#4f8ef7',BR(k.by_client_fcl||[],'name','shipments','#4f8ef7'),BR(k.by_client_ftl||[],'name','shipments','#f97316'))+SP('Top Clients by TEU (Mode)','&#128664;','#6c63ff',BR((k.by_client_fcl||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff'),BR((k.by_client_ftl||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#a855f7'))
       +'<div class="card"><div class="ct">Incoterm Distribution</div>'+BR(incArr,'name','count')+'</div>'
       +SP('Top Destinations (POD)','&#128205;','#ef4444',BR(pDE,'name','count','#ef4444'),BR(pDI,'name','count','#ef4444'))
       +SP('Top Origins (POL)','&#128204;','#22c55e',BR(pLE,'name','count','#22c55e'),BR(pLI,'name','count','#22c55e'))
