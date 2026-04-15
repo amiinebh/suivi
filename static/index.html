@@ -2988,8 +2988,8 @@ async function loadAnalytics(){
       bl('kpi-bar-carriers-road',bc(['road','truck','ftl']),'name','count','#f97316');
     })();
     bl('kpi-bar-clients',clientAll,'name','shipments','#4f8ef7');
-    bl('kpi-bar-clients-mode-ship',k.by_client_all||[],'name','shipments','#4f8ef7');
-    bl('kpi-bar-clients-mode-teu',(k.by_client_all||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
+    bl('kpi-bar-clients-mode-ship',k.by_client_fcl||[],'name','shipments','#4f8ef7');
+    bl('kpi-bar-clients-mode-teu',(k.by_client_fcl||[]).slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
     bl('kpi-bar-teu',clientAll.slice().sort(function(a,b){return(b.teu||0)-(a.teu||0);}),'name','teu','#6c63ff');
     bl('kpi-bar-pod',k.top_pod||[],'name','count','#ef4444');
     bl('kpi-bar-pol',k.top_pol||[],'name','count','#22c55e');
@@ -3099,18 +3099,18 @@ function _renderModeCmpTable(aD,bD,metric,containerId){
   var mx=Math.max.apply(null,combined.map(function(c){return Math.max(c.aVal,c.bVal);}).concat([1]));
   el.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11px">'
     +combined.map(function(c){
-      var d=c.aVal>0?Math.round((c.bVal-c.aVal)/c.aVal*100):null;
+      var d=c.bVal>0?Math.round((c.aVal-c.bVal)/c.bVal*100):null;
       var dc=d===null?'var(--text2)':d>0?'#22c55e':'#ef4444';
       var ds=d===null?'—':(d>0?'▲':'▼')+Math.abs(d)+'%';
       return '<tr style="border-bottom:1px solid var(--border)">'
         +'<td style="padding:6px 4px;font-weight:600;color:var(--text1)">'+c.name+'</td>'
         +'<td style="padding:6px 4px;width:120px">'
           +'<div style="display:flex;gap:3px;align-items:center">'
-          +'<div style="height:6px;width:'+Math.round(c.aVal/mx*80)+'px;background:#94a3b8;border-radius:3px"></div>'
-          +'<span style="color:#94a3b8;font-size:10px">'+c.aVal+'</span></div>'
+          +'<div style="height:6px;width:'+Math.round(c.aVal/mx*80)+'px;background:#4f8ef7;border-radius:3px"></div>'
+          +'<span style="color:#4f8ef7;font-size:10px">'+c.aVal+'</span></div>'
           +'<div style="display:flex;gap:3px;align-items:center;margin-top:2px">'
-          +'<div style="height:6px;width:'+Math.round(c.bVal/mx*80)+'px;background:#4f8ef7;border-radius:3px"></div>'
-          +'<span style="color:#4f8ef7;font-size:10px">'+c.bVal+'</span></div>'
+          +'<div style="height:6px;width:'+Math.round(c.bVal/mx*80)+'px;background:#94a3b8;border-radius:3px"></div>'
+          +'<span style="color:var(--text2);font-size:10px">'+c.bVal+'</span></div>'
         +'</td>'
         +'<td style="padding:6px 4px;text-align:right;font-weight:600;color:'+dc+'">'+ds+'</td>'
         +'</tr>';
@@ -5189,6 +5189,92 @@ function renderActivityFeed(){
             }).join('');
             return '<div class="section"><div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:10px">&#9881; Transport Mode Breakdown</div>'              +'<table><thead><tr><th>Mode</th><th style="text-align:right">Period A</th><th style="text-align:right">Period B</th><th style="text-align:center">Change</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
           })()
+          
+          /* Carriers A vs B */
+          +(function(){
+            var aCar=a.by_carrier||[],bCar=b.by_carrier||[];
+            if(!aCar.length&&!bCar.length) return '';
+            return '<div class="grid2">'
+              +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>Top Carriers — A</div>'+barHTML(aCar.map(function(x){return{name:x.name||x.key,count:x.count||x.value||0};}),'name','count','#94a3b8')+'</div>'
+              +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:6px"></span>Top Carriers — B</div>'+barHTML(bCar.map(function(x){return{name:x.name||x.key,count:x.count||x.value||0};}),'name','count','#3b82f6')+'</div>'
+              +'</div>';
+          })()
+          /* Top Clients by Mode — Shipments */
+          +(function(){
+            var aFcl=a.by_client_fcl||[],bFcl=b.by_client_fcl||[];
+            var aFtl=a.by_client_ftl||[],bFtl=b.by_client_ftl||[];
+            if(!aFcl.length&&!bFcl.length&&!aFtl.length&&!bFtl.length) return '';
+            return '<div class="section"><div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:14px">&#128100; Top Clients by Mode — Shipments (FCL vs FTL)</div>'
+              +'<div class="grid2">'
+              +'<div><div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:8px">FCL — Period A</div>'+barHTML(aFcl,'name','shipments','#94a3b8')+'</div>'
+              +'<div><div style="font-size:11px;font-weight:600;color:#1d4ed8;margin-bottom:8px">FCL — Period B</div>'+barHTML(bFcl,'name','shipments','#3b82f6')+'</div>'
+              +'<div><div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:8px">FTL — Period A</div>'+barHTML(aFtl,'name','shipments','#94a3b8')+'</div>'
+              +'<div><div style="font-size:11px;font-weight:600;color:#1d4ed8;margin-bottom:8px">FTL — Period B</div>'+barHTML(bFtl,'name','shipments','#f97316')+'</div>'
+              +'</div></div>';
+          })()
+          /* Top Clients by Mode — TEU */
+          +(function(){
+            var aFcl=a.by_client_fcl||[],bFcl=b.by_client_fcl||[];
+            if(!aFcl.length&&!bFcl.length) return '';
+            var sortTeu=function(arr){return arr.slice().sort(function(x,y){return (y.teu||0)-(x.teu||0);});};
+            return '<div class="section"><div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:14px">&#128230; Top Clients by Mode — TEU</div>'
+              +'<div class="grid2">'
+              +'<div><div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:8px">FCL TEU — Period A</div>'+barHTML(sortTeu(aFcl),'name','teu','#94a3b8')+'</div>'
+              +'<div><div style="font-size:11px;font-weight:600;color:#6c63ff;margin-bottom:8px">FCL TEU — Period B</div>'+barHTML(sortTeu(bFcl),'name','teu','#6c63ff')+'</div>'
+              +'</div></div>';
+          })()
+          /* Top POL */
+          +(function(){
+            var aPol=a.top_pol||[],bPol=b.top_pol||[];
+            if(!aPol.length&&!bPol.length) return '';
+            return '<div class="grid2">'
+              +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>Top Origins (POL) — A</div>'+barHTML(aPol,'name','count','#94a3b8')+'</div>'
+              +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#22c55e;margin-right:6px"></span>Top Origins (POL) — B</div>'+barHTML(bPol,'name','count','#22c55e')+'</div>'
+              +'</div>';
+          })()
+          /* Carriers A vs B */
+          +(function(){
+            var aCar=(a.by_carrier||[]).map(function(x){return{name:x.name||x.key||'Unknown',count:x.count||x.value||0};});
+            var bCar=(b.by_carrier||[]).map(function(x){return{name:x.name||x.key||'Unknown',count:x.count||x.value||0};});
+            if(!aCar.length&&!bCar.length) return '';
+            return '<div class="grid2">'
+              +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>Top Carriers \u2014 A</div>'+barHTML(aCar,'name','count','#94a3b8')+'</div>'
+              +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#3b82f6;margin-right:6px"></span>Top Carriers \u2014 B</div>'+barHTML(bCar,'name','count','#3b82f6')+'</div>'
+              +'</div>';
+          })()
+          /* Top Clients by Mode Shipments */
+          +(function(){
+            var aFcl=a.by_client_fcl||[],bFcl=b.by_client_fcl||[],aFtl=a.by_client_ftl||[],bFtl=b.by_client_ftl||[];
+            if(!aFcl.length&&!bFcl.length&&!aFtl.length&&!bFtl.length) return '';
+            return '<div class="section"><div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:14px">Top Clients by Mode \u2014 Shipments</div>'
+              +'<div class="grid2">'
+              +'<div><div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:8px">FCL Period A</div>'+barHTML(aFcl,'name','shipments','#94a3b8')+'</div>'
+              +'<div><div style="font-size:11px;font-weight:600;color:#1d4ed8;margin-bottom:8px">FCL Period B</div>'+barHTML(bFcl,'name','shipments','#3b82f6')+'</div>'
+              +'<div><div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:8px">FTL Period A</div>'+barHTML(aFtl,'name','shipments','#94a3b8')+'</div>'
+              +'<div><div style="font-size:11px;font-weight:600;color:#ea580c;margin-bottom:8px">FTL Period B</div>'+barHTML(bFtl,'name','shipments','#f97316')+'</div>'
+              +'</div></div>';
+          })()
+          /* Top Clients by Mode TEU */
+          +(function(){
+            var aFcl=a.by_client_fcl||[],bFcl=b.by_client_fcl||[];
+            if(!aFcl.length&&!bFcl.length) return '';
+            var st=function(arr){return arr.slice().sort(function(x,y){return (y.teu||0)-(x.teu||0);});};
+            return '<div class="section"><div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:14px">Top Clients by Mode \u2014 TEU</div>'
+              +'<div class="grid2">'
+              +'<div><div style="font-size:11px;font-weight:600;color:#64748b;margin-bottom:8px">FCL TEU Period A</div>'+barHTML(st(aFcl),'name','teu','#94a3b8')+'</div>'
+              +'<div><div style="font-size:11px;font-weight:600;color:#6c63ff;margin-bottom:8px">FCL TEU Period B</div>'+barHTML(st(bFcl),'name','teu','#6c63ff')+'</div>'
+              +'</div></div>';
+          })()
+          /* POL */
+          +(function(){
+            var aPol=a.top_pol||[],bPol=b.top_pol||[];
+            if(!aPol.length&&!bPol.length) return '';
+            return '<div class="grid2">'
+              +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#94a3b8;margin-right:6px"></span>Top Origins POL \u2014 A</div>'+barHTML(aPol,'name','count','#94a3b8')+'</div>'
+              +'<div class="section"><div style="font-size:12px;font-weight:600;color:#1e293b;margin-bottom:12px"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#22c55e;margin-right:6px"></span>Top Origins POL \u2014 B</div>'+barHTML(bPol,'name','count','#22c55e')+'</div>'
+              +'</div>';
+          })()
+          
           +'<div style="text-align:center;padding:16px 0 4px;font-size:11px;color:#94a3b8;border-top:1px solid #e2e8f0">FreightTrack Pro · Comparison Report · '+new Date().toLocaleString()+'</div>'
           +'</div>'
 
